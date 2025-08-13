@@ -13,6 +13,7 @@ import CalendarSync from "@/pages/calendar-sync";
 import Documents from "@/pages/documents";
 import SessionHistory from "@/pages/session-history";
 import NotFound from "@/pages/not-found";
+import { EnhancedClientDetailPage } from "@/components/therapeutic";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/clients" component={Clients} />
       <Route path="/clients/:clientId" component={ClientDetail} />
+      <Route path="/clients/:clientId/journey" component={EnhancedClientDetailPage} />
       <Route path="/progress-notes" component={ProgressNotes} />
       <Route path="/progress-notes-management" component={ProgressNotesManagement} />
       <Route path="/calendar" component={Calendar} />

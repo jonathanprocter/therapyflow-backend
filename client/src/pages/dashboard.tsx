@@ -6,6 +6,7 @@ import AIInsightsPanel from "@/components/dashboard/ai-insights-panel";
 import RecentNotes from "@/components/dashboard/recent-notes";
 import ClinicalWorkflows from "@/components/dashboard/clinical-workflows";
 import TherapeuticJourney from "@/components/dashboard/therapeutic-journey";
+import { TherapeuticDashboardWidget } from "@/components/therapeutic";
 
 export default function Dashboard() {
   return (
@@ -23,6 +24,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             <AppointmentsPanel />
             <AIInsightsPanel />
+            <TherapeuticDashboardWidget />
           </div>
 
           {/* Secondary Content Grid */}

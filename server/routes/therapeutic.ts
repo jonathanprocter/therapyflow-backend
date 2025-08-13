@@ -93,4 +93,25 @@ router.get('/tags/:clientId', async (req: Request, res: Response) => {
   }
 });
 
+// Get recent insights across all clients for dashboard widget
+router.get('/insights/recent', async (req: Request, res: Response) => {
+  try {
+    const therapistId = (req as any).user?.id;
+    const { limit = 10 } = req.query;
+
+    if (!therapistId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    // For now, return empty array - would need to implement cross-client insights
+    // This would typically aggregate recent insights from all therapist's clients
+    const insights: any[] = [];
+    
+    res.json({ success: true, insights });
+  } catch (error) {
+    console.error('Error getting recent insights:', error);
+    res.status(500).json({ success: false, error: 'Failed to get recent insights' });
+  }
+});
+
 export default router;

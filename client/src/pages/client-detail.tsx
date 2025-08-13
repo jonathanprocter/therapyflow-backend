@@ -1068,6 +1068,16 @@ export default function ClientDetail() {
                   <Redo className="h-4 w-4" />
                 </Button>
 
+                <Link href={`/clients/${clientId}/journey`}>
+                  <Button 
+                    variant="outline" 
+                    data-testid="therapeutic-journey"
+                    title="View Therapeutic Journey"
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    Therapeutic Journey
+                  </Button>
+                </Link>
                 <Button 
                   variant="outline" 
                   data-testid="edit-client"
