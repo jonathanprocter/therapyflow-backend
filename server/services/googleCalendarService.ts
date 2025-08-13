@@ -135,10 +135,10 @@ export class GoogleCalendarService {
 
       console.log(`Total events fetched from Google Calendar: ${allEvents.length}`);
       
-      // 100% INCLUSION - Capture EVERY single timed event (no filtering)
+      // 100% INCLUSION - Capture EVERY event (timed and all-day)
       const relevantEvents = allEvents.filter((event: any) => {
-        // Accept ANY event with a specific start time - NO EXCLUSIONS
-        return event.start?.dateTime;
+        // Accept ANY event with either dateTime OR date - NO EXCLUSIONS
+        return event.start?.dateTime || event.start?.date;
       });
 
       console.log(`Filtered to ${relevantEvents.length} relevant events`);
