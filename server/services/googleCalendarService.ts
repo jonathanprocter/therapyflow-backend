@@ -10,7 +10,7 @@ export class GoogleCalendarService {
     this.oauth2Client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      'urn:ietf:wg:oauth:2.0:oob' // For installed applications
+      'urn:ietf:wg:oauth:2.0:oob' // Out-of-band redirect URI for desktop/mobile apps
     );
 
     // Set the refresh token if available
