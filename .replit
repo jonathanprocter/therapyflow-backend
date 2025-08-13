@@ -57,4 +57,4 @@ localPort = 5000
 externalPort = 80
 
 [agent]
-integrations = ["javascript_openai==1.0.0", "javascript_object_storage==1.0.0", "javascript_anthropic==1.0.0"]
+integrations = ["javascript_websocket==1.0.0", "javascript_anthropic==1.0.0", "javascript_object_storage==1.0.0", "javascript_openai==1.0.0"]

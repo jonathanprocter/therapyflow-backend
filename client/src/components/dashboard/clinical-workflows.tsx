@@ -38,12 +38,37 @@ export default function ClinicalWorkflows() {
           </div>
         </div>
 
+        {/* Quick AI Workflow */}
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                <i className="fas fa-brain text-blue-600 dark:text-blue-400 text-sm"></i>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100">AI-Assisted Progress Notes</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Create notes with real-time AI suggestions
+                </p>
+              </div>
+            </div>
+            <Button 
+              size="sm"
+              onClick={() => window.location.href = '/interactive-notes'}
+              data-testid="ai-workflow-button"
+            >
+              <i className="fas fa-wand-magic-sparkles mr-2"></i>
+              Start
+            </Button>
+          </div>
+        </div>
+
         {/* Workflow Tasks */}
         {workflowTasks.length === 0 ? (
-          <div className="text-center py-8 text-gray-500" data-testid="no-workflows">
-            <i className="fas fa-tasks text-4xl mb-4 opacity-50"></i>
-            <p>No active workflows configured</p>
-            <Button variant="outline" size="sm" className="mt-4" data-testid="setup-workflows">
+          <div className="text-center py-6 text-gray-500" data-testid="no-workflows">
+            <i className="fas fa-tasks text-3xl mb-3 opacity-50"></i>
+            <p className="text-sm">No additional workflows configured</p>
+            <Button variant="outline" size="sm" className="mt-3" data-testid="setup-workflows">
               <i className="fas fa-plus mr-2"></i>
               Setup Workflows
             </Button>

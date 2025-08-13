@@ -12,6 +12,7 @@ import Calendar from "@/pages/calendar";
 import CalendarSync from "@/pages/calendar-sync";
 import Documents from "@/pages/documents";
 import SessionHistory from "@/pages/session-history";
+import InteractiveNoteCreator from "@/pages/InteractiveNoteCreator";
 import NotFound from "@/pages/not-found";
 import { EnhancedClientDetailPage } from "@/components/therapeutic";
 
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/clients/:clientId/journey" component={EnhancedClientDetailPage} />
       <Route path="/progress-notes" component={ProgressNotes} />
       <Route path="/progress-notes-management" component={ProgressNotesManagement} />
+      <Route path="/interactive-notes" component={InteractiveNoteCreator} />
       <Route path="/calendar" component={Calendar} />
       <Route path="/calendar-sync" component={CalendarSync} />
       <Route path="/documents" component={Documents} />

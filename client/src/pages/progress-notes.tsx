@@ -79,6 +79,15 @@ export default function ProgressNotes() {
                 </SelectContent>
               </Select>
 
+              <Button 
+                onClick={() => window.location.href = '/interactive-notes'}
+                variant="outline"
+                data-testid="ai-note-button"
+              >
+                <i className="fas fa-brain mr-2"></i>
+                AI-Assisted Note
+              </Button>
+              
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                   <Button data-testid="create-note-button">

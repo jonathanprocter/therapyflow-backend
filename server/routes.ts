@@ -659,6 +659,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Progress Note Suggestions endpoint
+  app.post('/api/ai/progress-note-suggestions', async (req: any, res) => {
+    try {
+      const { aiProgressNoteSuggestions } = await import('./services/aiProgressNoteSuggestions');
+      
+      const suggestions = await aiProgressNoteSuggestions.generateSuggestions(req.body);
+      
+      res.json({
+        success: true,
+        suggestions
+      });
+    } catch (error: any) {
+      console.error('Error generating progress note suggestions:', error);
+      res.status(500).json({
+        success: false,
+        error: error?.message || 'Failed to generate suggestions'
+      });
+    }
+  });
+
+  // Quick interventions endpoint
+  app.get('/api/ai/quick-interventions', async (req: any, res) => {
+    try {
+      const { aiProgressNoteSuggestions } = await import('./services/aiProgressNoteSuggestions');
+      
+      const suggestions = await aiProgressNoteSuggestions.generateQuickInterventions();
+      
+      res.json({
+        success: true,
+        suggestions
+      });
+    } catch (error: any) {
+      console.error('Error generating quick interventions:', error);
+      res.status(500).json({
+        success: false,
+        error: error?.message || 'Failed to generate interventions'
+      });
+    }
+  });
+
   // Document upload endpoint
   app.post("/api/documents/upload", upload.single('document'), async (req: any, res) => {
     try {
