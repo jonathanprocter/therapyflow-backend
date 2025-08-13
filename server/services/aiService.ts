@@ -55,7 +55,7 @@ export class AIService {
               content: prompt
             }
           ],
-          max_tokens: 1500,
+          max_tokens: 4096, // Maximum tokens for comprehensive clinical analysis
           temperature: 0.3,
           response_format: { type: "json_object" }
         });
@@ -72,7 +72,7 @@ export class AIService {
       // Fallback to Anthropic
       const anthropicResponse = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514", // The newest Anthropic model is "claude-sonnet-4-20250514"
-        max_tokens: 1500,
+        max_tokens: 4096, // Maximum tokens for comprehensive clinical analysis
         temperature: 0.3,
         system: "You are an expert clinical therapist with extensive training in psychotherapy, clinical documentation, and therapeutic modalities including ACT, DBT, Narrative Therapy, and Existentialism. Your task is to create comprehensive clinical analysis and documentation that demonstrates the depth, clinical sophistication, and analytical rigor of an experienced mental health professional. Always return valid JSON with both extracted data and comprehensive clinical analysis.",
         messages: [
