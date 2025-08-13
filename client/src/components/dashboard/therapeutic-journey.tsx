@@ -46,7 +46,14 @@ export default function TherapeuticJourney() {
           {/* Timeline line */}
           <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
 
-          {journeyMilestones.map((milestone, index) => (
+          {journeyMilestones.length === 0 ? (
+            <div className="text-center py-12 text-gray-500" data-testid="no-journey-data">
+              <i className="fas fa-route text-4xl mb-4 opacity-50"></i>
+              <p>No therapeutic journey data available</p>
+              <p className="text-sm mt-2">Journey milestones will appear here as treatment progresses</p>
+            </div>
+          ) : (
+            journeyMilestones.map((milestone, index) => (
             <div 
               key={index}
               className="relative flex items-start space-x-6 pb-8 last:pb-0"
@@ -89,7 +96,8 @@ export default function TherapeuticJourney() {
                 </div>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </CardContent>
     </Card>

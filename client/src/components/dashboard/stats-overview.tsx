@@ -10,9 +10,9 @@ const statsConfig = [
     icon: "fas fa-users",
     iconBg: "bg-primary/10",
     iconColor: "text-primary",
-    suffix: "+3 this week",
+    suffix: "",
     suffixColor: "text-secondary",
-    suffixIcon: "fas fa-arrow-up"
+    suffixIcon: ""
   },
   {
     key: "weeklySchedule" as keyof DashboardStats,
@@ -20,9 +20,9 @@ const statsConfig = [
     icon: "fas fa-calendar-alt",
     iconBg: "bg-secondary/10",
     iconColor: "text-secondary",
-    suffix: "5 today",
+    suffix: "",
     suffixColor: "text-secondary",
-    suffixIcon: "fas fa-calendar-check"
+    suffixIcon: ""
   },
   {
     key: "totalNotes" as keyof DashboardStats,
@@ -30,9 +30,9 @@ const statsConfig = [
     icon: "fas fa-notes-medical",
     iconBg: "bg-accent/10",
     iconColor: "text-accent",
-    suffix: "8 pending",
+    suffix: "",
     suffixColor: "text-accent",
-    suffixIcon: "fas fa-clock"
+    suffixIcon: ""
   },
   {
     key: "aiInsights" as keyof DashboardStats,
@@ -40,9 +40,9 @@ const statsConfig = [
     icon: "fas fa-robot",
     iconBg: "bg-primary/10",
     iconColor: "text-primary",
-    suffix: "New patterns found",
+    suffix: "",
     suffixColor: "text-primary",
-    suffixIcon: "fas fa-lightbulb"
+    suffixIcon: ""
   }
 ];
 
