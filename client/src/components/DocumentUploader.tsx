@@ -97,18 +97,27 @@ export function DocumentUploader({
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
     
-    const pdfFiles = acceptedFiles.filter(file => file.type === 'application/pdf');
+    const supportedTypes = [
+      'text/plain',
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'text/rtf',
+      'application/rtf'
+    ];
     
-    if (pdfFiles.length === 0) {
+    const validFiles = acceptedFiles.filter(file => supportedTypes.includes(file.type));
+    
+    if (validFiles.length === 0) {
       toast({
         title: "Invalid File Type",
-        description: "Only PDF files are supported",
+        description: "Supported formats: TXT (recommended), PDF, DOCX, DOC, RTF",
         variant: "destructive",
       });
       return;
     }
 
-    if (pdfFiles.length > maxFiles) {
+    if (validFiles.length > maxFiles) {
       toast({
         title: "Too Many Files",
         description: `Maximum ${maxFiles} files allowed`,
@@ -132,7 +141,7 @@ export function DocumentUploader({
       });
     }, 300);
 
-    uploadMutation.mutate(pdfFiles, {
+    uploadMutation.mutate(validFiles, {
       onSuccess: (data) => {
         clearInterval(progressInterval);
         setUploadProgress(100);
@@ -165,7 +174,12 @@ export function DocumentUploader({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/pdf': ['.pdf']
+      'text/plain': ['.txt'],
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc'],
+      'text/rtf': ['.rtf'],
+      'application/rtf': ['.rtf']
     },
     multiple: allowMultiple,
     maxFiles,
@@ -198,7 +212,7 @@ export function DocumentUploader({
             Progress Note Upload & Processing
           </CardTitle>
           <CardDescription>
-            Upload PDF progress notes for automatic client matching and session assignment
+            Upload progress notes (TXT recommended, PDF, DOCX, DOC, RTF supported) for automatic client matching and session assignment
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -218,15 +232,15 @@ export function DocumentUploader({
             <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             {isDragActive ? (
               <p className="text-blue-600 dark:text-blue-400 font-medium">
-                Drop PDF files here...
+                Drop files here...
               </p>
             ) : (
               <div>
                 <p className="text-lg font-medium mb-2">
-                  Drag & drop PDF progress notes here
+                  Drag & drop progress notes here
                 </p>
                 <p className="text-gray-500 mb-4">
-                  or click to browse files
+                  TXT (recommended), PDF, DOCX, DOC, RTF supported
                 </p>
                 <Button variant="outline" disabled={uploading} data-testid="button-browse">
                   Browse Files
@@ -236,7 +250,7 @@ export function DocumentUploader({
             
             {allowMultiple && (
               <p className="text-sm text-gray-500 mt-4">
-                Maximum {maxFiles} files • PDF only
+                Maximum {maxFiles} files • TXT, PDF, DOCX, DOC, RTF formats
               </p>
             )}
           </div>
