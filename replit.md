@@ -8,7 +8,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Current Configuration
 - Therapist: Dr. Jonathan Procter (License: Licensed Therapist)
-- Database: Successfully imported 151 current SimplePractice appointments (2025) + historical data
+- Database: Successfully imported 1,309 SimplePractice appointments (2018-2025) with complete historical therapy session data
 - Authentication: Mock system configured for Dr. Jonathan Procter (ID: dr-jonathan-procter)
 - Calendar Sync: Fully operational with comprehensive SimplePractice integration and 100% capture rate
 - SimplePractice Integration: Successfully capturing all therapy appointments from "Simple Practice" calendar with proper client name extraction (January 2025: 151 appointments imported)
