@@ -77,53 +77,68 @@ export class GoogleCalendarService {
         let pageToken: string | undefined;
         let chunkEvents = 0;
 
-        do {
-          const response = await this.calendar.events.list({
-            calendarId: 'primary',
-            timeMin: new Date(chunk.start).toISOString(),
-            timeMax: new Date(chunk.end).toISOString(),
-            singleEvents: true,
-            orderBy: 'startTime',
-            maxResults: 2500,
-            pageToken: pageToken,
-          });
+        // Fetch from ALL calendars, not just primary
+        try {
+          const calendars = await this.getCalendarList();
+          console.log(`  Found ${calendars.length} calendars to sync`);
+          
+          for (const calendar of calendars) {
+            try {
+              let calendarPageToken: string | undefined;
+              do {
+                const response = await this.calendar.events.list({
+                  calendarId: calendar.id,
+                  timeMin: new Date(chunk.start).toISOString(),
+                  timeMax: new Date(chunk.end).toISOString(),
+                  singleEvents: true,
+                  orderBy: 'startTime',
+                  maxResults: 2500,
+                  pageToken: calendarPageToken,
+                });
+                
+                const events = response.data.items || [];
+                allEvents.push(...events);
+                chunkEvents += events.length;
+                calendarPageToken = response.data.nextPageToken;
+                
+                console.log(`  Calendar "${calendar.summary}": fetched ${events.length} events`);
+              } while (calendarPageToken);
+              
+            } catch (calendarError) {
+              console.log(`  Skipping calendar "${calendar.summary}": ${calendarError.message}`);
+            }
+          }
+        } catch (calendarListError) {
+          // Fallback to primary calendar only
+          console.log(`  Falling back to primary calendar only: ${calendarListError.message}`);
+          
+          do {
+            const response = await this.calendar.events.list({
+              calendarId: 'primary',
+              timeMin: new Date(chunk.start).toISOString(),
+              timeMax: new Date(chunk.end).toISOString(),
+              singleEvents: true,
+              orderBy: 'startTime',
+              maxResults: 2500,
+              pageToken: pageToken,
+            });
 
-          const events = response.data.items || [];
-          allEvents.push(...events);
-          chunkEvents += events.length;
-          pageToken = response.data.nextPageToken;
-
-          console.log(`  Chunk ${chunk.start}: fetched ${events.length} events (chunk total: ${chunkEvents})`);
-        } while (pageToken);
+            const events = response.data.items || [];
+            allEvents.push(...events);
+            chunkEvents += events.length;
+            pageToken = response.data.nextPageToken;
+          } while (pageToken);
+        }
         
         console.log(`Completed chunk ${chunk.start}: ${chunkEvents} events`);
       }
 
       console.log(`Total events fetched from Google Calendar: ${allEvents.length}`);
       
-      // Maximum inclusion - capture virtually all timed events
+      // 100% INCLUSION - Capture EVERY single timed event (no filtering)
       const relevantEvents = allEvents.filter((event: any) => {
-        // Only require that the event has a specific start time
-        if (!event.start?.dateTime) return false;
-        
-        const summary = (event.summary || '').toLowerCase();
-        
-        // Only exclude the most obvious holidays
-        const excludeKeywords = ['birthday', 'christmas', 'thanksgiving'];
-        const isHoliday = excludeKeywords.some(keyword => summary.includes(keyword));
-        
-        if (isHoliday) return false;
-        
-        // Accept virtually all hours (24/7) - no time restrictions
-        // Accept virtually all durations (1 minute to 24 hours)
-        const startTime = new Date(event.start.dateTime);
-        const endTime = event.end?.dateTime ? new Date(event.end.dateTime) : null;
-        const duration = endTime ? (endTime.getTime() - startTime.getTime()) / (1000 * 60) : 60;
-        
-        // Only exclude events longer than 24 hours or negative durations
-        const isValidDuration = duration > 0 && duration <= 1440; // 1 minute to 24 hours
-        
-        return isValidDuration;
+        // Accept ANY event with a specific start time - NO EXCLUSIONS
+        return event.start?.dateTime;
       });
 
       console.log(`Filtered to ${relevantEvents.length} relevant events`);

@@ -536,7 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/calendar/sync", async (req: any, res) => {
     try {
-      const { startDate = '2015-01-01', endDate = '2030-12-31' } = req.body;
+      const { startDate = '2010-01-01', endDate = '2035-12-31' } = req.body;
       
       // Sync calendar events from Google Calendar (2015-2030 range)
       const syncedSessions = await googleCalendarService.syncCalendarEvents(
