@@ -6,7 +6,7 @@ import type { SessionWithClient } from "@/types/clinical";
 
 export default function AppointmentsPanel() {
   const { data: sessions, isLoading } = useQuery<SessionWithClient[]>({
-    queryKey: ["/api/sessions", { upcoming: true }],
+    queryKey: ["/api/sessions?upcoming=true"],
   });
 
   if (isLoading) {

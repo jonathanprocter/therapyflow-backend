@@ -34,16 +34,26 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
     try {
+      // Handle query key properly - if it's an array, join appropriately
+      let url: string;
+      if (Array.isArray(queryKey)) {
+        url = queryKey[0] as string;
+        // If there are additional parameters, they should already be in the URL string
+      } else {
+        url = queryKey as string;
+      }
+
+      const res = await fetch(url, {
+        credentials: "include",
+      });
+
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      
       const contentType = res.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         return await res.json();
@@ -51,8 +61,8 @@ export const getQueryFn: <T>(options: {
         return null; // Return null for non-JSON responses
       }
     } catch (error) {
-      // Silently handle JSON parsing errors for non-JSON responses
-      return null;
+      console.error('Query error:', error);
+      throw error; // Re-throw to be handled by React Query
     }
   };
 

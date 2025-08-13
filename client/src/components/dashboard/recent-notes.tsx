@@ -6,7 +6,7 @@ import type { ProgressNoteWithClient } from "@/types/clinical";
 
 export default function RecentNotes() {
   const { data: notes, isLoading } = useQuery<ProgressNoteWithClient[]>({
-    queryKey: ["/api/progress-notes", { recent: true }],
+    queryKey: ["/api/progress-notes?recent=true"],
   });
 
   if (isLoading) {
