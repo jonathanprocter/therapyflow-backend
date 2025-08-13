@@ -28,6 +28,7 @@ export interface IStorage {
   getSessions(clientId: string): Promise<Session[]>;
   getUpcomingSessions(therapistId: string, date?: Date): Promise<Session[]>;
   getSession(id: string): Promise<Session | undefined>;
+  getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined>;
   createSession(session: InsertSession): Promise<Session>;
   updateSession(id: string, session: Partial<InsertSession>): Promise<Session>;
 
@@ -151,6 +152,11 @@ export class DatabaseStorage implements IStorage {
 
   async getSession(id: string): Promise<Session | undefined> {
     const [session] = await db.select().from(sessions).where(eq(sessions.id, id));
+    return session || undefined;
+  }
+
+  async getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined> {
+    const [session] = await db.select().from(sessions).where(eq(sessions.googleEventId, googleEventId));
     return session || undefined;
   }
 

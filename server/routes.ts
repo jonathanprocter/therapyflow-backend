@@ -545,9 +545,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate
       );
 
+      // Save the synced sessions to the database
+      const savedSessions = [];
+      for (const session of syncedSessions) {
+        try {
+          // Check if session already exists (by googleEventId)
+          const existingSession = await storage.getSessionByGoogleEventId(session.googleEventId!);
+          
+          if (!existingSession) {
+            // Use the correct InsertSession format (camelCase)
+            const sessionData: any = {
+              id: session.id,
+              clientId: session.clientId,
+              therapistId: session.therapistId,
+              scheduledAt: session.scheduledAt,
+              duration: session.duration,
+              sessionType: session.sessionType,
+              status: session.status,
+              notes: session.notes,
+              googleEventId: session.googleEventId,
+              createdAt: session.createdAt,
+              updatedAt: session.updatedAt
+            };
+            
+            const savedSession = await storage.createSession(sessionData);
+            savedSessions.push(savedSession);
+          }
+        } catch (sessionError) {
+          console.error(`Error saving session ${session.id}:`, sessionError);
+          // Continue with other sessions
+        }
+      }
+
+      console.log(`Successfully saved ${savedSessions.length} sessions to database`);
+
       res.json({
         success: true,
         syncedCount: syncedSessions.length,
+        savedCount: savedSessions.length,
         sessions: syncedSessions,
         dateRange: { startDate, endDate }
       });
