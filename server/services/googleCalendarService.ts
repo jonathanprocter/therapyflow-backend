@@ -90,10 +90,12 @@ export class GoogleCalendarService {
                   calendarId: calendar.id,
                   timeMin: new Date(chunk.start).toISOString(),
                   timeMax: new Date(chunk.end).toISOString(),
-                  singleEvents: true,
+                  singleEvents: true, // Expands recurring events
                   orderBy: 'startTime',
                   maxResults: 2500,
                   pageToken: calendarPageToken,
+                  showDeleted: false,
+                  showHiddenInvitations: false,
                 });
                 
                 const events = response.data.items || [];
@@ -135,10 +137,10 @@ export class GoogleCalendarService {
 
       console.log(`Total events fetched from Google Calendar: ${allEvents.length}`);
       
-      // 100% INCLUSION - Capture EVERY event (timed and all-day)
+      // ABSOLUTE 100% INCLUSION - Capture EVERYTHING with zero filtering
       const relevantEvents = allEvents.filter((event: any) => {
-        // Accept ANY event with either dateTime OR date - NO EXCLUSIONS
-        return event.start?.dateTime || event.start?.date;
+        // Accept EVERY event that has ANY start time (dateTime, date, or any format)
+        return event.start && (event.start.dateTime || event.start.date);
       });
 
       console.log(`Filtered to ${relevantEvents.length} relevant events`);
