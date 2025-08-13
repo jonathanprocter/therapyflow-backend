@@ -592,7 +592,7 @@ Perform a comprehensive clinical analysis and extract the following information.
    - Provide alternative date interpretations if multiple dates are present
 
 3. CLINICAL CONTENT ANALYSIS:
-   - Session type (individual, group, family, couples, intake, etc.)
+   - Session type (ONLY: "individual", "couples", or "session without patient present")
    - Primary therapeutic themes and topics discussed
    - Emotional states and mood indicators
    - Interventions and techniques used
@@ -611,7 +611,7 @@ Return your analysis in this exact JSON format:
 {
   "clientName": "extracted client name",
   "sessionDate": "YYYY-MM-DD format",
-  "sessionType": "type of session",
+  "sessionType": "individual|couples|session without patient present",
   "content": "comprehensive session summary",
   "themes": ["theme1", "theme2", "theme3"],
   "emotions": ["emotion1", "emotion2", "emotion3"],
@@ -768,21 +768,25 @@ Be extremely thorough and professional. This is critical clinical documentation.
   }
 
   /**
-   * Manual session type extraction
+   * Manual session type extraction - only 3 valid types
    */
   extractSessionTypeManually(text: string): string {
-    const sessionTypes = [
-      'individual', 'group', 'family', 'couples', 'intake', 
-      'assessment', 'therapy', 'counseling', 'consultation'
-    ];
-    
     const lowerText = text.toLowerCase();
-    for (const type of sessionTypes) {
-      if (lowerText.includes(type)) {
-        return type;
-      }
+    
+    // Check for couples session
+    if (lowerText.includes('couples') || lowerText.includes('couple') || 
+        lowerText.includes('marital') || lowerText.includes('relationship therapy')) {
+      return 'couples';
     }
     
+    // Check for session without patient present
+    if (lowerText.includes('without patient') || lowerText.includes('no patient') ||
+        lowerText.includes('family meeting') || lowerText.includes('consultation only') ||
+        lowerText.includes('parent consultation') || lowerText.includes('caregiver meeting')) {
+      return 'session without patient present';
+    }
+    
+    // Default to individual for all other cases
     return 'individual';
   }
 
@@ -1308,14 +1312,7 @@ Be extremely thorough and professional. This is critical clinical documentation.
       processingNotes: aiAnalysis.clinicalNotes,
       // needsReview: needsManualReview, // Remove if not in schema
       // aiGenerated: true, // Remove if not in schema
-      metadata: {
-        extractedThemes: aiAnalysis.themes,
-        extractedEmotions: aiAnalysis.emotions,
-        interventions: aiAnalysis.interventions,
-        nextSteps: aiAnalysis.nextSteps,
-        clinicalNotes: aiAnalysis.clinicalNotes,
-        alternativeInterpretations: aiAnalysis.alternativeInterpretations
-      }
+      // metadata removed - not in schema
     });
     
     return progressNote;

@@ -6,6 +6,14 @@ TherapyFlow is a comprehensive clinical management platform designed for mental 
 
 Preferred communication style: Simple, everyday language.
 
+## Session Type Configuration
+- Session types are LIMITED to only 3 options:
+  1. "individual" (DEFAULT - used for all sessions unless specifically identified otherwise)
+  2. "couples" (for relationship/marital therapy sessions)  
+  3. "session without patient present" (for consultations, family meetings without the patient)
+- All AI processing and manual extraction must enforce these exact three session types
+- Default to "individual" in all ambiguous cases
+
 ## Current Configuration
 - Therapist: Dr. Jonathan Procter (License: Licensed Therapist)
 - Database: Successfully imported 2,251+ SimplePractice appointments (2018-2025) with complete historical therapy session data
