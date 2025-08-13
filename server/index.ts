@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { integrateTherapeuticFeatures } from "./integrate-therapeutic";
 
 const app = express();
 app.use(express.json());
@@ -39,6 +40,10 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Integrate therapeutic journey features
+  integrateTherapeuticFeatures(app);
+  log("✅ Therapeutic journey features integrated");
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -67,5 +72,10 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    log(`📍 Therapeutic API endpoints available at:`);
+    log(`   POST /api/therapeutic/synthesize/:clientId`);
+    log(`   POST /api/therapeutic/recall/:clientId`);
+    log(`   GET  /api/therapeutic/insights/:clientId`);
+    log(`   GET  /api/therapeutic/tags/:clientId`);
   });
 })();
