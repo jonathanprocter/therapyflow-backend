@@ -403,7 +403,7 @@ Important:
       fileType: 'application/pdf',
       filePath: `/documents/${progressNoteId}/${fileName}`,
       extractedText,
-      uploadedAt: new Date(),
+
       fileSize: file.length,
       metadata: { progressNoteId },
     });

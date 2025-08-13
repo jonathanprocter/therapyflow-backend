@@ -188,9 +188,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         therapistId: req.therapistId
       });
       
-      // Generate AI tags and embedding
-      const aiTags = await aiService.generateClinicalTags(noteData.content);
-      const embedding = await aiService.generateEmbedding(noteData.content);
+      // Generate AI tags and embedding if content exists
+      const aiTags = noteData.content ? await aiService.generateClinicalTags(noteData.content) : [];
+      const embedding = noteData.content ? await aiService.generateEmbedding(noteData.content) : [];
       
       const note = await storage.createProgressNote({
         ...noteData,
@@ -198,12 +198,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         embedding
       });
       
-      // Find cross-references with existing notes
-      const existingNotes = await storage.getProgressNotes(noteData.clientId);
-      const crossRefs = await aiService.findCrossReferences(
-        noteData.content,
-        existingNotes.map(n => ({ id: n.id, content: n.content, embedding: n.embedding || undefined }))
-      );
+      // Find cross-references with existing notes if content exists
+      let crossRefs = [];
+      if (noteData.content) {
+        const existingNotes = await storage.getProgressNotes(noteData.clientId);
+        crossRefs = await aiService.findCrossReferences(
+          noteData.content,
+          existingNotes.map(n => ({ id: n.id, content: n.content || '', embedding: n.embedding || undefined }))
+        );
+      }
       
       // Store cross-references (implement in storage if needed)
       
@@ -369,7 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             results.push({
               success: false,
               fileName: file.originalname,
-              error: error.message
+              error: (error as Error).message
             });
           }
         }
@@ -523,39 +526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Document processing endpoints for batch upload
-  app.post("/api/documents/batch-process", upload.array('documents'), async (req: any, res) => {
-    try {
-      if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: "No files provided" });
-      }
 
-      const files = req.files.map((file: any) => ({
-        buffer: file.buffer,
-        filename: file.originalname
-      }));
-
-      const results = await documentProcessor.batchProcess(files);
-      res.json(results);
-    } catch (error) {
-      console.error("Error processing documents:", error);
-      res.status(500).json({ error: "Failed to process documents" });
-    }
-  });
-
-  app.post("/api/documents/single-process", upload.single('document'), async (req: any, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file provided" });
-      }
-
-      const metadata = await documentProcessor.processDocument(req.file.buffer, req.file.originalname);
-      res.json(metadata);
-    } catch (error) {
-      console.error("Error processing document:", error);
-      res.status(500).json({ error: "Failed to process document" });
-    }
-  });
 
   // Treatment Plan endpoints
   app.get("/api/treatment-plan/:clientId", async (req, res) => {

@@ -124,22 +124,40 @@ export function DocumentUploader({
     // Simulate progress
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
-        if (prev >= 90) {
+        if (prev >= 85) {
           clearInterval(progressInterval);
-          return 90;
+          return 85;
         }
         return prev + 10;
       });
-    }, 200);
+    }, 300);
 
     uploadMutation.mutate(pdfFiles, {
-      onSettled: () => {
+      onSuccess: (data) => {
         clearInterval(progressInterval);
         setUploadProgress(100);
+        
+        toast({
+          title: "Processing Complete!",
+          description: `Successfully processed ${data.successful} out of ${data.processed} documents`,
+        });
+        
         setTimeout(() => {
           setUploading(false);
           setUploadProgress(0);
-        }, 1000);
+          onUploadComplete?.(data.results);
+        }, 1500);
+      },
+      onError: (error) => {
+        clearInterval(progressInterval);
+        setUploadProgress(0);
+        setUploading(false);
+        
+        toast({
+          title: "Processing Failed",
+          description: error.message,
+          variant: "destructive",
+        });
       }
     });
   }, [uploadMutation, maxFiles, toast]);
