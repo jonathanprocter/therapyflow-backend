@@ -12,7 +12,11 @@ Preferred communication style: Simple, everyday language.
 - Authentication: Mock system configured for Dr. Jonathan Procter (ID: dr-jonathan-procter)
 - Calendar Sync: Fully operational with comprehensive SimplePractice integration and 100% capture rate, proper EDT timezone handling
 - SimplePractice Integration: Successfully capturing all therapy appointments from "Simple Practice" calendar with proper client name extraction, intelligent client matching, and automatic client record creation
-- Timezone: System-wide EDT (Eastern Daylight Time) configuration for all calendar events, session times, and database operations
+- Timezone: Complete system-wide EDT (Eastern Daylight Time) configuration implemented across all components:
+  * Database queries use proper `AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York'` conversion
+  * Frontend displays use consistent EDT formatting utilities (client/src/utils/timezone.ts)
+  * All date/time displays throughout the application now show accurate EDT times
+  * Fixed appointments panel, client details, progress notes, and session displays
 - AI Document Processing: Fully operational with multi-format support - TXT files (perfect 95% confidence), DOCX/DOC files (basic text extraction), RTF files (formatted text support), PDF files (fallback with guidance message). Comprehensive clinical progress note generation using expert therapeutic framework (ACT, DBT, Narrative Therapy, Existentialism), dual AI provider analysis (OpenAI GPT-4o + Anthropic Claude Sonnet 4.0), intelligent client matching (Chris/Christopher variations), automatic session assignment, manual review workflow, and progress note deletion functionality. Uses sophisticated clinical documentation standards with SOAP format and supplemental analyses. **Recommended:** TXT format for optimal AI analysis and clinical accuracy.
 
 # System Architecture

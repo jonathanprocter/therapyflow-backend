@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Calendar, FileText, MessageSquare, User } from "lucide-react";
+import { formatEDTDate, formatEDTTime, formatEDTDateShort } from "@/utils/timezone";
 
 export default function ClientDetail() {
   const { clientId } = useParams<{ clientId: string }>();
@@ -148,7 +149,7 @@ export default function ClientDetail() {
                 {client.dateOfBirth && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-                    <p className="text-gray-900">{new Date(client.dateOfBirth).toLocaleDateString()}</p>
+                    <p className="text-gray-900">{formatEDTDate(client.dateOfBirth)}</p>
                   </div>
                 )}
                 {client.emergencyContact && (
@@ -165,7 +166,7 @@ export default function ClientDetail() {
                 )}
                 <div>
                   <label className="text-sm font-medium text-gray-500">Client Since</label>
-                  <p className="text-gray-900">{new Date(client.createdAt).toLocaleDateString()}</p>
+                  <p className="text-gray-900">{formatEDTDate(client.createdAt)}</p>
                 </div>
               </div>
             </CardContent>
@@ -218,7 +219,7 @@ export default function ClientDetail() {
                                 {session.sessionType.charAt(0).toUpperCase() + session.sessionType.slice(1)} Session
                               </h4>
                               <p className="text-sm text-gray-500">
-                                {new Date(session.scheduledAt).toLocaleDateString()} at {new Date(session.scheduledAt).toLocaleTimeString()}
+                                {formatEDTDateShort(session.scheduledAt)} at {formatEDTTime(session.scheduledAt)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -265,10 +266,10 @@ export default function ClientDetail() {
                         <div key={note.id} className="border rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-medium text-gray-900">
-                              {new Date(note.sessionDate).toLocaleDateString()}
+                              {formatEDTDateShort(note.sessionDate)}
                             </h4>
                             <span className="text-sm text-gray-500">
-                              {new Date(note.createdAt).toLocaleDateString()}
+                              {formatEDTDateShort(note.createdAt)}
                             </span>
                           </div>
                           <div className="prose max-w-none">
@@ -319,7 +320,7 @@ export default function ClientDetail() {
                             <div>
                               <h4 className="font-medium text-gray-900">{document.filename}</h4>
                               <p className="text-sm text-gray-500">
-                                Uploaded on {new Date(document.uploadedAt).toLocaleDateString()}
+                                Uploaded on {formatEDTDateShort(document.uploadedAt)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">

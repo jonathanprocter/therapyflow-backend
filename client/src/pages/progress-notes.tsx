@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ProgressNoteForm from "@/components/forms/progress-note-form";
+import { formatEDTDateShort } from "@/utils/timezone";
 import type { ProgressNoteWithClient } from "@/types/clinical";
 
 export default function ProgressNotes() {
@@ -148,11 +149,7 @@ export default function ProgressNotes() {
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <span data-testid={`note-date-${note.id}`}>
-                        {new Date(note.sessionDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
+                        {formatEDTDateShort(note.sessionDate)}
                       </span>
                       {note.progressRating && (
                         <div className="flex items-center space-x-1">
