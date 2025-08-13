@@ -181,8 +181,8 @@ export class DatabaseStorage implements IStorage {
           eq(sessions.isSimplePracticeEvent, true),
           // Filter out non-therapy events like birthdays
           sql`${sessions.duration} < 1440`, // Exclude all-day events (1440 min = 24 hours)
-          // Filter sessions for today only (in EDT timezone)
-          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'EDT') = DATE(NOW() AT TIME ZONE 'EDT')`
+          // Filter sessions for today only - manual EDT conversion (UTC-4 for August)
+          sql`DATE(${sessions.scheduledAt} - INTERVAL '4 hours') = DATE(NOW() - INTERVAL '4 hours')`
         )
       )
       .orderBy(sessions.scheduledAt);

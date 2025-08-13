@@ -68,8 +68,17 @@ export default function AppointmentsPanel() {
           </div>
         ) : (
           sessions.map((session, index) => {
+            // Convert UTC time to EDT for display
             const sessionTime = new Date(session.scheduledAt);
             const endTime = new Date(sessionTime.getTime() + session.duration * 60000);
+            
+            // Create EDT timezone formatter
+            const edtFormatter = new Intl.DateTimeFormat('en-US', {
+              timeZone: 'America/New_York',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
+            });
             
             const getSessionColor = (index: number) => {
               const colors = ['primary', 'secondary', 'accent'];
@@ -98,15 +107,7 @@ export default function AppointmentsPanel() {
                   <div className="flex items-center mt-1 text-xs text-gray-400">
                     <i className="fas fa-clock mr-1"></i>
                     <span data-testid={`appointment-time-${session.id}`}>
-                      {sessionTime.toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                      })} - {endTime.toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                      })}
+                      {edtFormatter.format(sessionTime)} - {edtFormatter.format(endTime)} EDT
                     </span>
                   </div>
                 </div>
