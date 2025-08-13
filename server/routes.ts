@@ -17,10 +17,11 @@ import multer from "multer";
 const upload = multer({ storage: multer.memoryStorage() });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Mock authentication middleware - replace with real auth
+  // Mock authentication middleware - Dr. Jonathan Procter
   const requireAuth = (req: any, res: any, next: any) => {
-    // For demo purposes, assume therapist ID is provided
-    req.therapistId = "therapist-1";
+    // Dr. Jonathan Procter as the authenticated therapist
+    req.therapistId = "dr-jonathan-procter";
+    req.therapistName = "Dr. Jonathan Procter";
     next();
   };
 

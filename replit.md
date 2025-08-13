@@ -6,6 +6,11 @@ TherapyFlow is a comprehensive clinical management platform designed for mental 
 
 Preferred communication style: Simple, everyday language.
 
+## Current Configuration
+- Therapist: Dr. Jonathan Procter (License: Licensed Therapist)
+- Database: Clean slate - all demo data removed
+- Authentication: Mock system configured for Dr. Jonathan Procter (ID: dr-jonathan-procter)
+
 # System Architecture
 
 ## Frontend Architecture

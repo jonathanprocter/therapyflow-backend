@@ -81,15 +81,12 @@ export default function Sidebar() {
       {/* User Profile */}
       <div className="p-4 border-t border-gray-200">
         <div className="flex items-center space-x-3">
-          <img
-            src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100"
-            alt="Dr. Sarah Johnson profile"
-            className="w-10 h-10 rounded-full object-cover"
-            data-testid="user-avatar"
-          />
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-primary font-semibold text-sm">JP</span>
+          </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-900" data-testid="user-name">
-              Dr. Sarah Johnson
+              Dr. Jonathan Procter
             </p>
             <p className="text-xs text-gray-500" data-testid="user-role">
               Licensed Therapist
