@@ -138,8 +138,6 @@ export class DatabaseStorage implements IStorage {
 
   async getUpcomingSessions(therapistId: string, date?: Date): Promise<Session[]> {
     const targetDate = date || new Date();
-    const startOfDay = new Date(targetDate);
-    startOfDay.setHours(0, 0, 0, 0);
     
     return await db
       .select()
@@ -147,16 +145,11 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(sessions.therapistId, therapistId),
-          sql`${sessions.scheduledAt} >= ${startOfDay}`,
           eq(sessions.status, "scheduled"),
-          // Filter out holidays, observances, and automatic calendar events
-          sql`${sessions.notes} NOT ILIKE '%Public holiday%'`,
-          sql`${sessions.notes} NOT ILIKE '%Observance%'`,
-          sql`${sessions.notes} NOT ILIKE '%gmail%'`,
-          sql`${sessions.notes} NOT ILIKE '%sunsama%'`,
-          sql`${sessions.notes} NOT ILIKE '%automatically created%'`,
-          // Only include actual therapy sessions (filter by client_id not being 'calendar-sync-client')
-          sql`${sessions.clientId} != 'calendar-sync-client'`
+          // Only include SimplePractice therapy appointments
+          eq(sessions.isSimplePracticeEvent, true),
+          // Filter out non-therapy events like birthdays
+          sql`${sessions.duration} < 1440` // Exclude all-day events (1440 min = 24 hours)
         )
       )
       .orderBy(sessions.scheduledAt);
