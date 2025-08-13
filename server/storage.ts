@@ -135,7 +135,10 @@ export class DatabaseStorage implements IStorage {
     await db.delete(progressNotes).where(eq(progressNotes.clientId, id));
     await db.delete(sessions).where(eq(sessions.clientId, id));
     await db.delete(documents).where(eq(documents.clientId, id));
-    
+    await db.delete(treatmentPlans).where(eq(treatmentPlans.clientId, id));
+    await db.delete(caseConceptualizations).where(eq(caseConceptualizations.clientId, id));
+    await db.delete(allianceScores).where(eq(allianceScores.clientId, id));
+
     // Delete the client
     await db.delete(clients).where(eq(clients.id, id));
   }
@@ -150,7 +153,7 @@ export class DatabaseStorage implements IStorage {
 
   async getUpcomingSessions(therapistId: string, date?: Date): Promise<Session[]> {
     const targetDate = date || new Date();
-    
+
     return await db
       .select()
       .from(sessions)

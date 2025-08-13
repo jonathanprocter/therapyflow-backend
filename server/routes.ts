@@ -91,11 +91,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/clients/:id", async (req, res) => {
     try {
-      await storage.deleteClient(req.params.id);
-      res.json({ success: true });
+      const clientId = req.params.id;
+      
+      // Verify the client exists first
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      
+      // Delete the client and all related data
+      await storage.deleteClient(clientId);
+      
+      res.json({ 
+        success: true, 
+        message: `Client ${client.name} and all associated data have been deleted successfully` 
+      });
     } catch (error) {
       console.error("Error deleting client:", error);
-      res.status(500).json({ error: "Failed to delete client" });
+      res.status(500).json({ 
+        error: "Failed to delete client", 
+        details: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   });
 
