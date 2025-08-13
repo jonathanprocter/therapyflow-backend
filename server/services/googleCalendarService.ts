@@ -137,10 +137,33 @@ export class GoogleCalendarService {
 
       console.log(`Total events fetched from Google Calendar: ${allEvents.length}`);
       
-      // ABSOLUTE 100% INCLUSION - Capture EVERYTHING with zero filtering
+      // Filter ONLY for SimplePractice events
       const relevantEvents = allEvents.filter((event: any) => {
-        // Accept EVERY event that has ANY start time (dateTime, date, or any format)
-        return event.start && (event.start.dateTime || event.start.date);
+        if (!event.start || !(event.start.dateTime || event.start.date)) {
+          return false;
+        }
+
+        const summary = (event.summary || '').toLowerCase();
+        const description = (event.description || '').toLowerCase();
+        const organizerEmail = event.organizer?.email || '';
+        const calendarName = event.organizer?.displayName || '';
+        
+        // ONLY include SimplePractice events
+        const isSimplePracticeEvent = 
+          organizerEmail.includes('simplepractice') ||
+          organizerEmail.includes('simple-practice') ||
+          calendarName.includes('simplepractice') ||
+          calendarName.includes('simple practice') ||
+          summary.includes('simplepractice') ||
+          description.includes('simplepractice') ||
+          description.includes('simple practice');
+        
+        if (isSimplePracticeEvent) {
+          console.log(`Found SimplePractice event: "${event.summary}" from ${organizerEmail || calendarName}`);
+          return true;
+        }
+        
+        return false;
       });
 
       console.log(`Filtered to ${relevantEvents.length} relevant events`);
@@ -229,43 +252,64 @@ export class GoogleCalendarService {
     return dayOfWeek >= 1 && dayOfWeek <= 5 && hour >= 8 && hour <= 18;
   }
 
+  private calculateEventDuration(event: any): number {
+    const startTime = event.start?.dateTime || event.start?.date;
+    const endTime = event.end?.dateTime || event.end?.date;
+    
+    if (!startTime || !endTime) return 50; // Default therapy session duration
+    
+    return Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60));
+  }
+
   private extractClientName(summary: string): string {
     // SimplePractice typically formats events as "Client Name - Therapy Session"
     // or "Session with Client Name"
     
     if (summary.includes(' - ')) {
-      return summary.split(' - ')[0].trim();
+      const clientName = summary.split(' - ')[0].trim();
+      // Avoid extracting therapy-related words as client names
+      if (!['therapy', 'session', 'appointment', 'consultation'].includes(clientName.toLowerCase())) {
+        return clientName;
+      }
     }
     
     if (summary.toLowerCase().includes('session with ')) {
       return summary.toLowerCase().replace('session with ', '').trim();
     }
     
-    if (summary.toLowerCase().includes('therapy ')) {
-      return summary.toLowerCase().replace('therapy', '').trim();
+    if (summary.toLowerCase().includes('therapy with ')) {
+      return summary.toLowerCase().replace('therapy with ', '').trim();
     }
     
-    return summary.trim();
+    // For events that might contain client names, try to extract meaningful names
+    const words = summary.trim().split(' ');
+    if (words.length >= 2 && words.length <= 4) {
+      // If it looks like a person's name (2-4 words, capitalized)
+      const hasCapitalizedWords = words.every(word => 
+        word.charAt(0) === word.charAt(0).toUpperCase()
+      );
+      if (hasCapitalizedWords) {
+        return summary.trim();
+      }
+    }
+    
+    return 'Unidentified Client';
   }
 
   private isSimplePracticeEvent(event: any): boolean {
     const summary = (event.summary || '').toLowerCase();
     const description = (event.description || '').toLowerCase();
     const organizerEmail = event.organizer?.email || '';
-    const calendarId = event.organizer?.displayName || '';
+    const calendarName = event.organizer?.displayName || '';
     
-    // Check for SimplePractice indicators
+    // Only check for explicit SimplePractice indicators
     return organizerEmail.includes('simplepractice') ||
            organizerEmail.includes('simple-practice') ||
-           calendarId.includes('simplepractice') ||
-           calendarId.includes('simple practice') ||
-           summary.includes('therapy') ||
-           summary.includes('session') ||
-           summary.includes('counseling') ||
-           summary.includes('appointment') ||
+           calendarName.includes('simplepractice') ||
+           calendarName.includes('simple practice') ||
+           summary.includes('simplepractice') ||
            description.includes('simplepractice') ||
-           description.includes('therapy') ||
-           description.includes('progress note');
+           description.includes('simple practice');
   }
 
   async createCalendarEvent(session: Session, clientName: string): Promise<string> {
