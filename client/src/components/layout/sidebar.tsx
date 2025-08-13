@@ -12,6 +12,7 @@ const navigation: Array<{
   { name: "Clients", href: "/clients", icon: "fas fa-users" },
   { name: "Progress Notes", href: "/progress-notes", icon: "fas fa-notes-medical" },
   { name: "Calendar", href: "/calendar", icon: "fas fa-calendar-alt", hasNotification: true },
+  { name: "Calendar Sync", href: "/calendar-sync", icon: "fas fa-sync", badge: "OAuth2" },
   { name: "Documents", href: "/documents", icon: "fas fa-file-upload" },
 ];
 

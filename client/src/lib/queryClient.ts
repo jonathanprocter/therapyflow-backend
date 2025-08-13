@@ -41,7 +41,7 @@ export const getQueryFn: <T>(options: {
         url = queryKey[0] as string;
         // If there are additional parameters, they should already be in the URL string
       } else {
-        url = queryKey as string;
+        url = String(queryKey);
       }
 
       const res = await fetch(url, {
