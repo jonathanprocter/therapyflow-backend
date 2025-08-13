@@ -51,6 +51,9 @@ export const sessions = pgTable("sessions", {
   status: text("status").notNull().default("scheduled"), // scheduled, completed, cancelled, no-show
   googleEventId: text("google_event_id"), // for calendar sync
   notes: text("notes"),
+  hasProgressNotePlaceholder: boolean("has_progress_note_placeholder").default(false),
+  progressNoteStatus: text("progress_note_status").default("pending"), // pending, uploaded, processed, needs_review
+  isSimplePracticeEvent: boolean("is_simple_practice_event").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -61,13 +64,19 @@ export const progressNotes = pgTable("progress_notes", {
   clientId: varchar("client_id").notNull().references(() => clients.id),
   sessionId: varchar("session_id").references(() => sessions.id),
   therapistId: varchar("therapist_id").notNull().references(() => users.id),
-  content: text("content").notNull(),
+  content: text("content"), // Made nullable for placeholders
   sessionDate: timestamp("session_date").notNull(),
   tags: text("tags").array().default([]),
   aiTags: text("ai_tags").array().default([]),
   embedding: real("embedding").array(), // for semantic search
   riskLevel: text("risk_level").default("low"), // low, moderate, high, critical
   progressRating: integer("progress_rating"), // 1-10 scale
+  status: text("status").notNull().default("placeholder"), // placeholder, uploaded, processed, manual_review, completed
+  isPlaceholder: boolean("is_placeholder").default(true),
+  requiresManualReview: boolean("requires_manual_review").default(false),
+  aiConfidenceScore: real("ai_confidence_score"), // AI processing confidence
+  processingNotes: text("processing_notes"), // AI processing details
+  originalDocumentId: varchar("original_document_id").references(() => documents.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -125,6 +134,8 @@ export const documents = pgTable("documents", {
   extractedText: text("extracted_text"),
   embedding: real("embedding").array(),
   tags: text("tags").array().default([]),
+  fileSize: integer("file_size"),
+  metadata: jsonb("metadata"),
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 

@@ -157,6 +157,9 @@ export class GoogleCalendarService {
 
         // Extract client name from event summary
         const clientName = this.extractClientName(event.summary || '');
+        
+        // Detect SimplePractice events
+        const isSimplePractice = this.isSimplePracticeEvent(event);
 
         return {
           id: `google-${event.id}`,
@@ -168,6 +171,9 @@ export class GoogleCalendarService {
           status: 'scheduled' as const,
           notes: event.description || null,
           googleEventId: event.id,
+          hasProgressNotePlaceholder: false,
+          progressNoteStatus: 'pending' as const,
+          isSimplePracticeEvent: isSimplePractice,
           createdAt: new Date(),
           updatedAt: new Date(),
           // @ts-ignore - Temporary field for client matching
@@ -240,6 +246,26 @@ export class GoogleCalendarService {
     }
     
     return summary.trim();
+  }
+
+  private isSimplePracticeEvent(event: any): boolean {
+    const summary = (event.summary || '').toLowerCase();
+    const description = (event.description || '').toLowerCase();
+    const organizerEmail = event.organizer?.email || '';
+    const calendarId = event.organizer?.displayName || '';
+    
+    // Check for SimplePractice indicators
+    return organizerEmail.includes('simplepractice') ||
+           organizerEmail.includes('simple-practice') ||
+           calendarId.includes('simplepractice') ||
+           calendarId.includes('simple practice') ||
+           summary.includes('therapy') ||
+           summary.includes('session') ||
+           summary.includes('counseling') ||
+           summary.includes('appointment') ||
+           description.includes('simplepractice') ||
+           description.includes('therapy') ||
+           description.includes('progress note');
   }
 
   async createCalendarEvent(session: Session, clientName: string): Promise<string> {

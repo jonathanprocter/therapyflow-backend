@@ -1,131 +1,174 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Upload, CheckCircle, XCircle, Clock, Users, Calendar } from 'lucide-react';
+import { Upload, FileText, Check, AlertCircle, X } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
-interface ProcessedDocument {
-  filename: string;
-  metadata: {
+interface UploadResult {
+  success: boolean;
+  clientId?: string;
+  sessionId?: string;
+  progressNoteId?: string;
+  confidence: number;
+  processingNotes: string;
+  needsManualReview: boolean;
+  extractedData: {
     clientName?: string;
-    appointmentDate?: string;
+    sessionDate?: Date;
+    content: string;
     sessionType?: string;
-    documentType: 'progress_note' | 'assessment' | 'treatment_plan' | 'other';
-    confidence: number;
-    extractedText: string;
-    processingNotes?: string[];
+    riskLevel?: string;
   };
-  suggestedClientId?: string;
-  suggestedSessionId?: string;
+  fileName?: string;
+  error?: string;
 }
 
-interface BatchResult {
-  totalFiles: number;
-  successfullyProcessed: number;
-  failedFiles: string[];
-  documents: ProcessedDocument[];
+interface DocumentUploaderProps {
+  onUploadComplete?: (results: UploadResult[]) => void;
+  allowMultiple?: boolean;
+  maxFiles?: number;
 }
 
-export function DocumentUploader() {
+export function DocumentUploader({ 
+  onUploadComplete, 
+  allowMultiple = true, 
+  maxFiles = 10 
+}: DocumentUploaderProps) {
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [results, setResults] = useState<BatchResult | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [results, setResults] = useState<UploadResult[]>([]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const uploadMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      const formData = new FormData();
+      
+      if (files.length === 1) {
+        formData.append('document', files[0]);
+        const response = await fetch('/api/documents/upload', {
+          method: 'POST',
+          body: formData
+        });
+        return response.json();
+      } else {
+        files.forEach(file => formData.append('documents', file));
+        const response = await fetch('/api/documents/process-batch', {
+          method: 'POST',
+          body: formData
+        });
+        return response.json();
+      }
+    },
+    onSuccess: (data: any) => {
+      if (Array.isArray(data.results)) {
+        setResults(data.results);
+        onUploadComplete?.(data.results);
+      } else {
+        setResults([data]);
+        onUploadComplete?.([data]);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/placeholders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/manual-review'] });
+      
+      toast({
+        title: "Upload Complete",
+        description: Array.isArray(data.results) 
+          ? `Processed ${data.successful} documents successfully`
+          : "Document processed successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to process documents",
+        variant: "destructive",
+      });
+    },
+  });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setSelectedFiles(acceptedFiles);
-    setResults(null);
-  }, []);
+    if (acceptedFiles.length === 0) return;
+    
+    const pdfFiles = acceptedFiles.filter(file => file.type === 'application/pdf');
+    
+    if (pdfFiles.length === 0) {
+      toast({
+        title: "Invalid File Type",
+        description: "Only PDF files are supported",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (pdfFiles.length > maxFiles) {
+      toast({
+        title: "Too Many Files",
+        description: `Maximum ${maxFiles} files allowed`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+    setResults([]);
+    
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 200);
+
+    uploadMutation.mutate(pdfFiles, {
+      onSettled: () => {
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+        setTimeout(() => {
+          setUploading(false);
+          setUploadProgress(0);
+        }, 1000);
+      }
+    });
+  }, [uploadMutation, maxFiles, toast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/pdf': ['.pdf'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'text/plain': ['.txt']
+      'application/pdf': ['.pdf']
     },
-    multiple: true
+    multiple: allowMultiple,
+    maxFiles,
   });
 
-  const processDocuments = async () => {
-    if (selectedFiles.length === 0) return;
-
-    setUploading(true);
-    setProgress(0);
-    let progressInterval: NodeJS.Timeout | null = null;
-
-    try {
-      const formData = new FormData();
-      selectedFiles.forEach((file) => {
-        formData.append('documents', file);
-      });
-
-      progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 10, 90));
-      }, 500);
-
-      const response = await fetch('/api/documents/batch-process', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error');
-        throw new Error(`Upload failed: ${response.status} ${errorText}`);
-      }
-      
-      const result = await response.json();
-
-      if (progressInterval) {
-        clearInterval(progressInterval);
-        progressInterval = null;
-      }
-      setProgress(100);
-
-      setResults(result);
-      toast({
-        title: "Processing Complete",
-        description: `Successfully processed ${result.successfullyProcessed} of ${result.totalFiles} documents.`,
-      });
-
-    } catch (error) {
-      console.error('Document processing error:', error);
-      if (progressInterval) {
-        clearInterval(progressInterval);
-      }
-      setProgress(0);
-      toast({
-        title: "Processing Error",
-        description: error instanceof Error ? error.message : "Failed to process documents. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-      setTimeout(() => setProgress(0), 2000);
-    }
-  };
-
-  const getDocumentTypeColor = (type: string) => {
-    const colors = {
-      progress_note: 'bg-blue-100 text-blue-800',
-      assessment: 'bg-green-100 text-green-800',
-      treatment_plan: 'bg-purple-100 text-purple-800',
-      other: 'bg-gray-100 text-gray-800'
-    };
-    return colors[type as keyof typeof colors] || colors.other;
-  };
-
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'bg-green-100 text-green-800';
-    if (confidence >= 0.6) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-red-100 text-red-800';
+    if (confidence >= 0.8) return 'bg-green-500';
+    if (confidence >= 0.6) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const getRiskLevelColor = (riskLevel?: string) => {
+    switch (riskLevel) {
+      case 'high':
+      case 'critical':
+        return 'destructive';
+      case 'moderate':
+        return 'secondary';
+      default:
+        return 'default';
+    }
   };
 
   return (
@@ -134,222 +177,153 @@ export function DocumentUploader() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Document Processing Center
+            Progress Note Upload & Processing
           </CardTitle>
+          <CardDescription>
+            Upload PDF progress notes for automatic client matching and session assignment
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {/* Drop Zone */}
-            <div
-              {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                isDragActive 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-              data-testid="drop-zone"
-            >
-              <input {...getInputProps()} />
-              <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              {isDragActive ? (
-                <p className="text-lg font-medium text-blue-600">Drop files here...</p>
-              ) : (
-                <div>
-                  <p className="text-lg font-medium text-gray-900 mb-2">
-                    Drag & drop documents here
-                  </p>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Supports PDF, DOCX, and TXT files
-                  </p>
-                  <Button variant="outline" data-testid="button-select-files">
-                    Select Files
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Selected Files */}
-            {selectedFiles.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium">Selected Files ({selectedFiles.length})</h4>
-                <ScrollArea className="h-32 border rounded p-2">
-                  {selectedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between py-1">
-                      <span className="text-sm truncate">{file.name}</span>
-                      <span className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</span>
-                    </div>
-                  ))}
-                </ScrollArea>
+          <div
+            {...getRootProps()}
+            className={`
+              border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+              ${isDragActive 
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50' 
+                : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
+              }
+              ${uploading ? 'pointer-events-none opacity-50' : ''}
+            `}
+            data-testid="upload-dropzone"
+          >
+            <input {...getInputProps()} />
+            <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            {isDragActive ? (
+              <p className="text-blue-600 dark:text-blue-400 font-medium">
+                Drop PDF files here...
+              </p>
+            ) : (
+              <div>
+                <p className="text-lg font-medium mb-2">
+                  Drag & drop PDF progress notes here
+                </p>
+                <p className="text-gray-500 mb-4">
+                  or click to browse files
+                </p>
+                <Button variant="outline" disabled={uploading} data-testid="button-browse">
+                  Browse Files
+                </Button>
               </div>
             )}
-
-            {/* Processing Controls */}
-            <div className="flex items-center gap-4">
-              <Button 
-                onClick={processDocuments}
-                disabled={selectedFiles.length === 0 || uploading}
-                className="flex-1"
-                data-testid="button-process-documents"
-              >
-                {uploading ? (
-                  <>
-                    <Clock className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Process Documents
-                  </>
-                )}
-              </Button>
-              
-              {selectedFiles.length > 0 && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setSelectedFiles([]);
-                    setResults(null);
-                  }}
-                  data-testid="button-clear-files"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-
-            {/* Progress */}
-            {uploading && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Processing documents...</span>
-                  <span>{progress}%</span>
-                </div>
-                <Progress value={progress} className="w-full" />
-              </div>
+            
+            {allowMultiple && (
+              <p className="text-sm text-gray-500 mt-4">
+                Maximum {maxFiles} files • PDF only
+              </p>
             )}
           </div>
+
+          {uploading && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Processing documents...</span>
+                <span className="text-sm text-gray-500">{uploadProgress}%</span>
+              </div>
+              <Progress value={uploadProgress} className="w-full" />
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Results */}
-      {results && (
+      {results.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Processing Results</span>
-              <div className="flex gap-2">
-                <Badge variant="outline" className="bg-green-50">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  {results.successfullyProcessed} Success
-                </Badge>
-                {results.failedFiles.length > 0 && (
-                  <Badge variant="outline" className="bg-red-50">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    {results.failedFiles.length} Failed
-                  </Badge>
-                )}
-              </div>
-            </CardTitle>
+            <CardTitle>Processing Results</CardTitle>
+            <CardDescription>
+              {results.filter(r => r.success).length} of {results.length} documents processed successfully
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="processed" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="processed">Processed Documents</TabsTrigger>
-                <TabsTrigger value="failed">Failed Files</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="processed" className="space-y-4">
-                {results.documents.length === 0 ? (
-                  <Alert>
-                    <AlertDescription>No documents were successfully processed.</AlertDescription>
-                  </Alert>
-                ) : (
-                  <ScrollArea className="h-96">
-                    <div className="space-y-4">
-                      {results.documents.map((doc, index) => (
-                        <Card key={index} className="border-l-4 border-l-blue-500">
-                          <CardContent className="pt-4">
-                            <div className="space-y-3">
-                              <div className="flex items-start justify-between">
-                                <h4 className="font-medium text-sm">{doc.filename}</h4>
-                                <div className="flex gap-2">
-                                  <Badge className={getDocumentTypeColor(doc.metadata.documentType)}>
-                                    {doc.metadata.documentType.replace('_', ' ')}
-                                  </Badge>
-                                  <Badge className={getConfidenceColor(doc.metadata.confidence)}>
-                                    {(doc.metadata.confidence * 100).toFixed(0)}% confidence
-                                  </Badge>
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <Users className="h-4 w-4 text-gray-400" />
-                                  <span className="text-gray-600">Client:</span>
-                                  <span className="font-medium">
-                                    {doc.metadata.clientName || 'Not identified'}
-                                  </span>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4 text-gray-400" />
-                                  <span className="text-gray-600">Date:</span>
-                                  <span className="font-medium">
-                                    {doc.metadata.appointmentDate || 'Not identified'}
-                                  </span>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                  <FileText className="h-4 w-4 text-gray-400" />
-                                  <span className="text-gray-600">Session:</span>
-                                  <span className="font-medium">
-                                    {doc.metadata.sessionType || 'Not identified'}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {doc.metadata.processingNotes && doc.metadata.processingNotes.length > 0 && (
-                                <div className="text-xs text-gray-500">
-                                  <strong>Notes:</strong> {doc.metadata.processingNotes.join(', ')}
-                                </div>
-                              )}
-
-                              <div className="flex gap-2 pt-2">
-                                <Button size="sm" variant="outline" data-testid={`button-review-${index}`}>
-                                  Review & Import
-                                </Button>
-                                <Button size="sm" variant="ghost" data-testid={`button-view-text-${index}`}>
-                                  View Text
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </TabsContent>
-
-              <TabsContent value="failed" className="space-y-4">
-                {results.failedFiles.length === 0 ? (
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>All files were processed successfully!</AlertDescription>
-                  </Alert>
-                ) : (
-                  <div className="space-y-2">
-                    {results.failedFiles.map((filename, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 bg-red-50 rounded">
-                        <XCircle className="h-4 w-4 text-red-500" />
-                        <span className="text-sm">{filename}</span>
+          <CardContent className="space-y-4">
+            {results.map((result, index) => (
+              <div 
+                key={index} 
+                className="border rounded-lg p-4 space-y-3"
+                data-testid={`result-${index}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {result.success ? (
+                      <Check className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <X className="h-5 w-5 text-red-500" />
+                    )}
+                    <span className="font-medium">
+                      {result.fileName || `Document ${index + 1}`}
+                    </span>
+                  </div>
+                  
+                  {result.success && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <div 
+                          className={`h-2 w-2 rounded-full ${getConfidenceColor(result.confidence)}`}
+                        />
+                        <span className="text-sm text-gray-600">
+                          {Math.round(result.confidence * 100)}% confidence
+                        </span>
                       </div>
-                    ))}
+                      
+                      {result.needsManualReview && (
+                        <Badge variant="secondary" className="gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          Manual Review
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {result.success ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <strong>Client:</strong> {result.extractedData.clientName || 'Unknown'}
+                    </div>
+                    <div>
+                      <strong>Session Date:</strong> {
+                        result.extractedData.sessionDate 
+                          ? new Date(result.extractedData.sessionDate).toLocaleDateString()
+                          : 'Not found'
+                      }
+                    </div>
+                    <div>
+                      <strong>Session Type:</strong> {result.extractedData.sessionType || 'Individual'}
+                    </div>
+                    <div>
+                      <strong>Risk Level:</strong> 
+                      <Badge 
+                        variant={getRiskLevelColor(result.extractedData.riskLevel)} 
+                        className="ml-2"
+                      >
+                        {result.extractedData.riskLevel || 'Low'}
+                      </Badge>
+                    </div>
+                  </div>
+                ) : (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {result.error || 'Processing failed'}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {result.processingNotes && (
+                  <div className="text-sm text-gray-600 bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                    <strong>Processing Notes:</strong> {result.processingNotes}
                   </div>
                 )}
-              </TabsContent>
-            </Tabs>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}

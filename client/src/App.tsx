@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
 import ProgressNotes from "@/pages/progress-notes";
+import ProgressNotesManagement from "@/pages/progress-notes-management";
 import Calendar from "@/pages/calendar";
 import CalendarSync from "@/pages/calendar-sync";
 import Documents from "@/pages/documents";
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/clients" component={Clients} />
       <Route path="/progress-notes" component={ProgressNotes} />
+      <Route path="/progress-notes-management" component={ProgressNotesManagement} />
       <Route path="/calendar" component={Calendar} />
       <Route path="/calendar-sync" component={CalendarSync} />
       <Route path="/documents" component={Documents} />

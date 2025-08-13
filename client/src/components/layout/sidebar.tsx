@@ -11,6 +11,7 @@ const navigation: Array<{
   { name: "Dashboard", href: "/", icon: "fas fa-chart-line" },
   { name: "Clients", href: "/clients", icon: "fas fa-users" },
   { name: "Progress Notes", href: "/progress-notes", icon: "fas fa-notes-medical" },
+  { name: "AI Document Processing", href: "/progress-notes-management", icon: "fas fa-robot", badge: "AI" },
   { name: "Calendar", href: "/calendar", icon: "fas fa-calendar-alt", hasNotification: true },
   { name: "Calendar Sync", href: "/calendar-sync", icon: "fas fa-sync", badge: "OAuth2" },
   { name: "Documents", href: "/documents", icon: "fas fa-file-upload" },

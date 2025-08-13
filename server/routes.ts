@@ -214,6 +214,184 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Progress Notes Management endpoints
+  app.get("/api/progress-notes/manual-review", async (req: any, res) => {
+    try {
+      const notes = await storage.getProgressNotesForManualReview(req.therapistId);
+      const notesWithClients = await Promise.all(
+        notes.map(async (note) => {
+          const client = await storage.getClient(note.clientId);
+          const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
+          return { ...note, client, session };
+        })
+      );
+      res.json(notesWithClients);
+    } catch (error) {
+      console.error("Error fetching notes for manual review:", error);
+      res.status(500).json({ error: "Failed to fetch notes for manual review" });
+    }
+  });
+
+  app.get("/api/progress-notes/placeholders", async (req: any, res) => {
+    try {
+      const placeholders = await storage.getProgressNotePlaceholders(req.therapistId);
+      const placeholdersWithClients = await Promise.all(
+        placeholders.map(async (note) => {
+          const client = await storage.getClient(note.clientId);
+          const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
+          return { ...note, client, session };
+        })
+      );
+      res.json(placeholdersWithClients);
+    } catch (error) {
+      console.error("Error fetching progress note placeholders:", error);
+      res.status(500).json({ error: "Failed to fetch placeholders" });
+    }
+  });
+
+  app.post("/api/progress-notes/create-placeholders", async (req: any, res) => {
+    try {
+      // Get all SimplePractice sessions without progress notes
+      const sessions = await storage.getSimplePracticeSessions(req.therapistId);
+      const placeholdersCreated = [];
+      
+      for (const session of sessions) {
+        // Check if placeholder already exists
+        const existingNotes = await storage.getProgressNotes(session.clientId);
+        const hasPlaceholder = existingNotes.some(note => note.sessionId === session.id);
+        
+        if (!hasPlaceholder) {
+          const placeholder = await storage.createProgressNotePlaceholder(
+            session.id,
+            session.clientId,
+            req.therapistId,
+            session.scheduledAt
+          );
+          placeholdersCreated.push(placeholder);
+          
+          // Update session to mark placeholder creation
+          await storage.updateSession(session.id, {
+            hasProgressNotePlaceholder: true,
+            progressNoteStatus: 'placeholder'
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        placeholdersCreated: placeholdersCreated.length,
+        message: `Created ${placeholdersCreated.length} progress note placeholders for SimplePractice appointments`
+      });
+    } catch (error) {
+      console.error("Error creating progress note placeholders:", error);
+      res.status(500).json({ error: "Failed to create placeholders" });
+    }
+  });
+
+  app.patch("/api/progress-notes/:id", async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // If content is being added to a placeholder, update status
+      if (updates.content && updates.isPlaceholder) {
+        updates.isPlaceholder = false;
+        updates.status = 'uploaded';
+      }
+      
+      const note = await storage.updateProgressNote(id, updates);
+      res.json(note);
+    } catch (error) {
+      console.error("Error updating progress note:", error);
+      res.status(500).json({ error: "Failed to update progress note" });
+    }
+  });
+
+  // Document Upload and Processing endpoints
+  app.post("/api/documents/upload", upload.single('document'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      if (req.file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ error: 'Only PDF files are supported' });
+      }
+
+      const result = await documentProcessor.processDocument(
+        req.file.buffer,
+        req.file.originalname,
+        req.therapistId
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      res.status(500).json({ error: 'Failed to process document' });
+    }
+  });
+
+  app.get("/api/documents/processing-status", async (req: any, res) => {
+    try {
+      const placeholders = await storage.getProgressNotePlaceholders(req.therapistId);
+      const manualReview = await storage.getProgressNotesForManualReview(req.therapistId);
+      
+      res.json({
+        placeholders: placeholders.length,
+        manualReview: manualReview.length,
+        totalSessions: await storage.getSessions('calendar-sync-client').then(s => s.length),
+        message: `${placeholders.length} placeholders ready for content, ${manualReview.length} notes need manual review`
+      });
+    } catch (error) {
+      console.error('Error fetching processing status:', error);
+      res.status(500).json({ error: 'Failed to fetch processing status' });
+    }
+  });
+
+  // Batch Processing endpoint
+  app.post("/api/documents/process-batch", upload.array('documents', 10), async (req: any, res) => {
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
+      }
+
+      const results = [];
+      for (const file of req.files) {
+        if (file.mimetype === 'application/pdf') {
+          try {
+            const result = await documentProcessor.processDocument(
+              file.buffer,
+              file.originalname,
+              req.therapistId
+            );
+            results.push(result);
+          } catch (error) {
+            results.push({
+              success: false,
+              fileName: file.originalname,
+              error: error.message
+            });
+          }
+        }
+      }
+
+      const successful = results.filter(r => r.success).length;
+      const failed = results.length - successful;
+
+      res.json({
+        success: true,
+        processed: results.length,
+        successful,
+        failed,
+        results,
+        message: `Processed ${successful} documents successfully, ${failed} failed`
+      });
+    } catch (error) {
+      console.error('Error processing batch documents:', error);
+      res.status(500).json({ error: 'Failed to process batch documents' });
+    }
+  });
+
   // Case Conceptualization endpoints
   app.get("/api/case-conceptualization/:clientId", async (req, res) => {
     try {

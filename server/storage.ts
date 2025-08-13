@@ -31,6 +31,8 @@ export interface IStorage {
   getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined>;
   createSession(session: InsertSession): Promise<Session>;
   updateSession(id: string, session: Partial<InsertSession>): Promise<Session>;
+  getSessionsWithoutProgressNotes(therapistId: string): Promise<Session[]>;
+  getSimplePracticeSessions(therapistId: string): Promise<Session[]>;
 
   // Progress Notes
   getProgressNotes(clientId: string): Promise<ProgressNote[]>;
@@ -39,6 +41,9 @@ export interface IStorage {
   createProgressNote(note: InsertProgressNote): Promise<ProgressNote>;
   updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote>;
   searchProgressNotes(therapistId: string, query: string): Promise<ProgressNote[]>;
+  getProgressNotesForManualReview(therapistId: string): Promise<ProgressNote[]>;
+  getProgressNotePlaceholders(therapistId: string): Promise<ProgressNote[]>;
+  createProgressNotePlaceholder(sessionId: string, clientId: string, therapistId: string, sessionDate: Date): Promise<ProgressNote>;
 
   // Case Conceptualizations
   getCaseConceptualization(clientId: string): Promise<CaseConceptualization | undefined>;
@@ -57,6 +62,7 @@ export interface IStorage {
   // Documents
   getDocuments(clientId: string): Promise<Document[]>;
   createDocument(document: InsertDocument): Promise<Document>;
+  getDocumentsByTherapist(therapistId: string): Promise<Document[]>;
 
   // AI Insights
   getAiInsights(therapistId: string, limit?: number): Promise<AiInsight[]>;
@@ -322,6 +328,14 @@ export class DatabaseStorage implements IStorage {
     return newDocument;
   }
 
+  async getDocumentsByTherapist(therapistId: string): Promise<Document[]> {
+    return await db
+      .select()
+      .from(documents)
+      .where(eq(documents.therapistId, therapistId))
+      .orderBy(desc(documents.uploadedAt));
+  }
+
   async getAiInsights(therapistId: string, limit = 10): Promise<AiInsight[]> {
     return await db
       .select()
@@ -405,6 +419,78 @@ export class DatabaseStorage implements IStorage {
       aiInsights: (aiInsightsResult as any)?.count || 0,
     };
   }
-}
+
+  // New Progress Note Management Methods
+  async getProgressNotesForManualReview(therapistId: string): Promise<ProgressNote[]> {
+    return await db
+      .select()
+      .from(progressNotes)
+      .where(
+        and(
+          eq(progressNotes.therapistId, therapistId),
+          eq(progressNotes.requiresManualReview, true)
+        )
+      )
+      .orderBy(desc(progressNotes.sessionDate));
+  }
+
+  async getProgressNotePlaceholders(therapistId: string): Promise<ProgressNote[]> {
+    return await db
+      .select()
+      .from(progressNotes)
+      .where(
+        and(
+          eq(progressNotes.therapistId, therapistId),
+          eq(progressNotes.isPlaceholder, true)
+        )
+      )
+      .orderBy(desc(progressNotes.sessionDate));
+  }
+
+  async createProgressNotePlaceholder(sessionId: string, clientId: string, therapistId: string, sessionDate: Date): Promise<ProgressNote> {
+    const [placeholder] = await db
+      .insert(progressNotes)
+      .values({
+        sessionId,
+        clientId,
+        therapistId,
+        sessionDate,
+        status: 'placeholder',
+        isPlaceholder: true,
+        requiresManualReview: false,
+        content: null // Empty content for placeholder
+      })
+      .returning();
+    return placeholder;
+  }
+
+  // New Session Management Methods
+  async getSessionsWithoutProgressNotes(therapistId: string): Promise<Session[]> {
+    return await db
+      .select()
+      .from(sessions)
+      .leftJoin(progressNotes, eq(sessions.id, progressNotes.sessionId))
+      .where(
+        and(
+          eq(sessions.therapistId, therapistId),
+          sql`${progressNotes.sessionId} IS NULL`
+        )
+      )
+      .orderBy(desc(sessions.scheduledAt));
+  }
+
+  async getSimplePracticeSessions(therapistId: string): Promise<Session[]> {
+    return await db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.therapistId, therapistId),
+          eq(sessions.isSimplePracticeEvent, true)
+        )
+      )
+      .orderBy(desc(sessions.scheduledAt));
+  }
+};
 
 export const storage = new DatabaseStorage();
