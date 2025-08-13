@@ -39,23 +39,60 @@ export class GoogleCalendarService {
   }
 
   async getAuthUrl(): Promise<string> {
-    const scopes = [
-      'https://www.googleapis.com/auth/calendar',
-      'https://www.googleapis.com/auth/calendar.events'
-    ];
+    try {
+      console.log('Google OAuth2 Configuration Check:');
+      console.log('- Client ID:', process.env.GOOGLE_CLIENT_ID ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...` : 'MISSING');
+      console.log('- Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'Present' : 'MISSING');
+      console.log('- Redirect URI:', this.oauth2Client.redirectUri);
+      
+      if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        throw new Error('Missing Google OAuth credentials. Please check your Secrets configuration.');
+      }
 
-    const url = this.oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: scopes,
-    });
+      const scopes = [
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/calendar.events'
+      ];
 
-    return url;
+      const url = this.oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: scopes,
+        prompt: 'consent', // Force consent screen to ensure refresh token
+      });
+
+      console.log('Generated auth URL successfully');
+      return url;
+    } catch (error) {
+      console.error('Error generating auth URL:', error);
+      throw error;
+    }
   }
 
   async exchangeCodeForTokens(code: string): Promise<any> {
-    const { tokens } = await this.oauth2Client.getToken(code);
-    this.oauth2Client.setCredentials(tokens);
-    return tokens;
+    try {
+      console.log('Attempting to exchange authorization code for tokens...');
+      const { tokens } = await this.oauth2Client.getToken(code);
+      
+      console.log('Token exchange successful:');
+      console.log('- Access token:', tokens.access_token ? 'Received' : 'Missing');
+      console.log('- Refresh token:', tokens.refresh_token ? 'Received' : 'Missing');
+      console.log('- Token type:', tokens.token_type);
+      console.log('- Expires in:', tokens.expiry_date ? new Date(tokens.expiry_date) : 'No expiry');
+      
+      this.oauth2Client.setCredentials(tokens);
+      
+      // Store the refresh token in environment for future use
+      if (tokens.refresh_token) {
+        console.log('💡 IMPORTANT: Save this refresh token to your Secrets as GOOGLE_REFRESH_TOKEN:');
+        console.log(tokens.refresh_token);
+      }
+      
+      return tokens;
+    } catch (error) {
+      console.error('Error exchanging authorization code:', error);
+      console.error('Error details:', error instanceof Error ? error.message : String(error));
+      throw new Error(`Failed to exchange authorization code: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   async syncCalendarEvents(therapistId: string, startDate = '2015-01-01', endDate = '2030-12-31'): Promise<Session[]> {

@@ -57,18 +57,39 @@ export default function CalendarSync() {
   const authMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('/api/calendar/auth-url', 'GET');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to get auth URL`);
+      }
       const data = await response.json();
       return data.authUrl;
     },
     onSuccess: (authUrl) => {
-      // Open Google OAuth in new window
+      console.log('Opening Google OAuth popup:', authUrl);
+      
+      // Check if popup blockers might be preventing this
       const authWindow = window.open(authUrl, 'google-auth', 'width=500,height=600,scrollbars=yes,resizable=yes');
+      
+      if (!authWindow) {
+        toast({
+          title: "Popup Blocked",
+          description: "Please allow popups for this site and try again",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setIsAuthenticating(true);
 
       // Listen for messages from the popup window
       const handleMessage = (event: MessageEvent) => {
+        console.log('Received message from popup:', event.data);
+        
         // Only accept messages from our domain
-        if (event.origin !== window.location.origin) return;
+        if (event.origin !== window.location.origin) {
+          console.log('Ignoring message from different origin:', event.origin);
+          return;
+        }
 
         if (event.data.success) {
           toast({
@@ -79,6 +100,7 @@ export default function CalendarSync() {
           setIsConnected(true);
           queryClient.invalidateQueries({ queryKey: ['/api/calendar/calendars'] });
         } else if (event.data.error) {
+          console.error('Auth error from popup:', event.data.error);
           toast({
             title: "Authentication Failed",
             description: event.data.error,
@@ -97,16 +119,26 @@ export default function CalendarSync() {
       // Handle case where user closes popup manually
       const checkClosed = setInterval(() => {
         if (authWindow?.closed) {
+          console.log('Auth popup was closed manually');
           clearInterval(checkClosed);
           setIsAuthenticating(false);
           window.removeEventListener('message', handleMessage);
+          
+          if (isAuthenticating) {
+            toast({
+              title: "Authentication Cancelled",
+              description: "The authentication window was closed",
+              variant: "destructive",
+            });
+          }
         }
       }, 1000);
     },
     onError: (error: any) => {
+      console.error('Auth URL error:', error);
       toast({
-        title: "Authentication Failed",
-        description: error.message || "Failed to get authorization URL",
+        title: "Authentication Setup Failed",
+        description: error.message || "Failed to get authorization URL. Check your Google OAuth credentials in Secrets.",
         variant: "destructive",
       });
       setIsAuthenticating(false);
