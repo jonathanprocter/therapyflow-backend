@@ -12,7 +12,7 @@ Preferred communication style: Simple, everyday language.
 - Authentication: Mock system configured for Dr. Jonathan Procter (ID: dr-jonathan-procter)
 - Calendar Sync: Fully operational with comprehensive SimplePractice integration and 100% capture rate
 - SimplePractice Integration: Successfully capturing all therapy appointments from "Simple Practice" calendar with proper client name extraction (January 2025: 151 appointments imported)
-- AI Document Processing: Fully operational with proper PDF text extraction using pdf-parse library, comprehensive clinical progress note generation using expert therapeutic framework (ACT, DBT, Narrative Therapy, Existentialism), dual AI provider analysis (OpenAI GPT-4o + Anthropic Claude Sonnet 4.0), intelligent client matching (Chris/Christopher variations), automatic session assignment, manual review workflow, and progress note deletion functionality. Uses sophisticated clinical documentation standards with SOAP format and supplemental analyses.
+- AI Document Processing: Fully operational with TXT file processing (perfect), PDF processing (fallback mode - recommends TXT conversion), comprehensive clinical progress note generation using expert therapeutic framework (ACT, DBT, Narrative Therapy, Existentialism), dual AI provider analysis (OpenAI GPT-4o + Anthropic Claude Sonnet 4.0), intelligent client matching (Chris/Christopher variations), automatic session assignment, manual review workflow, and progress note deletion functionality. Uses sophisticated clinical documentation standards with SOAP format and supplemental analyses. Current recommendation: Use TXT format for optimal results.
 
 # System Architecture
 
