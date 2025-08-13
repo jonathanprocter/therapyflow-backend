@@ -372,6 +372,11 @@ export class GoogleCalendarService {
     // Remove the lock emoji (indicates completed progress note)
     let clientName = summary.replace(/🔒\s*/, '').trim();
     
+    // Handle specific client name cleaning for Nick Dabreu
+    if (clientName.includes('Nick Dabreu')) {
+      clientName = clientName.replace(/🔒\s*/, '').replace(/Nick Dabreu/, 'Nick Dabreu').trim();
+    }
+    
     // Remove "Appointment" from the end if present
     clientName = clientName.replace(/\s+Appointment\s*$/i, '').trim();
     
