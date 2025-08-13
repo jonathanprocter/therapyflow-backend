@@ -61,14 +61,14 @@ export default function RecentNotes() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {!notes || notes.length === 0 ? (
+        {!notes || !Array.isArray(notes) || notes.length === 0 ? (
           <div className="text-center py-8 text-gray-500" data-testid="no-notes">
             <i className="fas fa-notes-medical text-4xl mb-4 opacity-50"></i>
             <p>No progress notes available</p>
           </div>
         ) : (
           <>
-            {notes.map((note) => (
+            {notes && notes.map((note) => (
               <div
                 key={note.id}
                 className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
@@ -85,12 +85,12 @@ export default function RecentNotes() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2" data-testid={`note-content-${note.id}`}>
-                      {note.content.length > 150 
+                      {note.content && note.content.length > 150 
                         ? `${note.content.substring(0, 150)}...`
-                        : note.content
+                        : note.content || "No content available"
                       }
                     </p>
-                    {note.aiTags.length > 0 && (
+                    {note.aiTags && note.aiTags.length > 0 && (
                       <div className="flex items-center space-x-2" data-testid={`note-tags-${note.id}`}>
                         {note.aiTags.slice(0, 3).map((tag, index) => {
                           const tagColors = [
