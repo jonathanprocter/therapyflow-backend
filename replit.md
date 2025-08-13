@@ -12,7 +12,7 @@ Preferred communication style: Simple, everyday language.
 - Authentication: Mock system configured for Dr. Jonathan Procter (ID: dr-jonathan-procter)
 - Calendar Sync: Fully operational with comprehensive SimplePractice integration and 100% capture rate
 - SimplePractice Integration: Successfully capturing recurring appointments and all-day events
-- AI Document Processing: Fully operational with PDF text extraction, intelligent client matching (Chris/Christopher variations), automatic session assignment, and manual review workflow
+- AI Document Processing: Fully operational with proper PDF text extraction using pdf-parse library, dual AI provider analysis (OpenAI GPT-4o + Anthropic Claude Sonnet 4.0), intelligent client matching (Chris/Christopher variations), automatic session assignment, and manual review workflow. Fixed PDF binary data extraction issue for proper text analysis.
 
 # System Architecture
 

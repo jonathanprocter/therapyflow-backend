@@ -1,5 +1,10 @@
 import OpenAI from "openai";
+import Anthropic from '@anthropic-ai/sdk';
 import { anthropicService } from "./anthropicService";
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
@@ -28,6 +33,68 @@ export interface SessionPreparation {
 }
 
 export class AIService {
+
+  /**
+   * Process therapy documents with AI analysis
+   */
+  async processTherapyDocument(text: string, prompt: string): Promise<string> {
+    try {
+      console.log('Processing therapy document with AI...');
+      
+      // Try OpenAI first
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+          messages: [
+            {
+              role: "system", 
+              content: "You are a clinical AI assistant specialized in analyzing therapy progress notes. Always return valid JSON."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          max_tokens: 1500,
+          temperature: 0.3,
+          response_format: { type: "json_object" }
+        });
+
+        const result = response.choices[0]?.message?.content;
+        if (result) {
+          console.log('OpenAI analysis completed successfully');
+          return result;
+        }
+      } catch (openaiError) {
+        console.warn('OpenAI failed, falling back to Anthropic:', openaiError);
+      }
+
+      // Fallback to Anthropic
+      const anthropicResponse = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514", // The newest Anthropic model is "claude-sonnet-4-20250514"
+        max_tokens: 1500,
+        temperature: 0.3,
+        system: "You are a clinical AI assistant specialized in analyzing therapy progress notes. Always return valid JSON.",
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ]
+      });
+
+      const content = anthropicResponse.content[0];
+      if (content && 'text' in content) {
+        console.log('Anthropic analysis completed successfully');
+        return content.text;
+      }
+
+      throw new Error('No valid response from AI providers');
+    } catch (error) {
+      console.error('AI document processing failed:', error);
+      throw new Error(`AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
   async generateEmbedding(text: string): Promise<number[]> {
     try {
       const response = await openai.embeddings.create({

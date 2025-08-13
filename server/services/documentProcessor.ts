@@ -105,28 +105,23 @@ export class DocumentProcessor {
   }
 
   /**
-   * Extract text from PDF using a simple buffer text extraction
+   * Extract text from PDF using proper PDF parsing
    */
   private async extractTextFromPDF(buffer: Buffer): Promise<string> {
     try {
-      // Convert buffer to string and extract readable text
-      const text = buffer.toString('utf8');
+      // Use the PDFService for proper text extraction
+      const pdfService = await import('./pdfService');
+      const extractedData = await pdfService.pdfService.extractText(buffer);
       
-      // Basic PDF text extraction - look for readable content
-      // This is a simplified approach - in production, you'd use a proper PDF parser
-      const textContent = text
-        .replace(/[^\x20-\x7E\n\r\t]/g, ' ') // Remove non-printable characters
-        .replace(/\s+/g, ' ') // Normalize whitespace
-        .trim();
-      
-      if (textContent.length < 50) {
+      if (!extractedData.text || extractedData.text.trim().length < 10) {
         throw new Error('No readable text found in PDF');
       }
       
-      return textContent;
+      console.log(`Successfully extracted ${extractedData.text.length} characters from PDF (${extractedData.pages} pages)`);
+      return extractedData.text;
     } catch (error: any) {
-      // Fallback: return a basic structure for processing
-      return `PDF Document Content - Extracted from ${buffer.length} byte file. Manual text entry required for processing.`;
+      console.error('PDF text extraction failed:', error);
+      throw new Error(`Failed to extract text from PDF: ${error.message}`);
     }
   }
 
@@ -162,26 +157,48 @@ Important:
 `;
 
     try {
-      // Use the AI service to analyze the text
-      const analysisResult = await aiService.generateClinicalTags(text);
-      // Parse a basic analysis structure for now
+      console.log('Analyzing progress note with AI...');
+      console.log('Text length:', text.length);
+      console.log('First 200 characters:', text.substring(0, 200));
+      
+      // Use the AI service to get comprehensive analysis
+      const aiAnalysis = await aiService.processTherapyDocument(text, prompt);
+      
+      // Parse AI response or use fallbacks
+      let parsedAnalysis;
+      try {
+        parsedAnalysis = JSON.parse(aiAnalysis);
+      } catch (parseError) {
+        console.warn('AI response not valid JSON, using fallbacks');
+        parsedAnalysis = {
+          content: text,
+          confidence: 0.6,
+          clientName: this.extractClientNameFallback(text),
+          sessionDate: this.extractDateFallback(text),
+          riskLevel: 'low',
+          keyTopics: [],
+          interventions: [],
+          sessionType: 'individual',
+          nextSteps: 'Review required'
+        };
+      }
+      
+      console.log('AI Analysis Result:', parsedAnalysis);
+      return parsedAnalysis;
+      
+    } catch (error: any) {
+      console.error('Error analyzing progress note with AI:', error);
+      // Return fallback structure with extracted text
       return {
         content: text,
-        confidence: 0.8,
+        confidence: 0.5,
         clientName: this.extractClientNameFallback(text),
         sessionDate: this.extractDateFallback(text),
         riskLevel: 'low',
-        keyTopics: analysisResult.slice(0, 5).map(tag => tag.name),
+        keyTopics: [],
         interventions: [],
-        sessionType: 'individual'
-      };
-    } catch (error: any) {
-      console.error('Error analyzing progress note with AI:', error);
-      return {
-        content: text,
-        confidence: 0.1,
-        clientName: this.extractClientNameFallback(text),
-        sessionDate: this.extractDateFallback(text),
+        sessionType: 'individual',
+        nextSteps: 'Review required - AI analysis failed'
       };
     }
   }
