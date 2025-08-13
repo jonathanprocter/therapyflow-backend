@@ -225,7 +225,7 @@ export class GoogleCalendarService {
         const clientName = this.extractClientName(event.summary || '');
         
         // Detect SimplePractice events (pass calendar name for better detection)
-        const isSimplePractice = this.isSimplePracticeEvent(event, calendar.summary);
+        const isSimplePractice = this.isSimplePracticeEvent(event, event.sourceCalendarName);
 
         return {
           id: `google-${event.id}`,
@@ -366,7 +366,7 @@ export class GoogleCalendarService {
         description: `Therapy session with ${clientName}\n\nSession Type: ${session.sessionType}\nNotes: ${session.notes || 'No notes'}`,
         start: {
           dateTime: session.scheduledAt.toISOString(),
-          timeZone: 'America/New_York', // Adjust timezone as needed
+          timeZone: 'America/New_York', // EDT timezone
         },
         end: {
           dateTime: new Date(session.scheduledAt.getTime() + session.duration * 60000).toISOString(),
