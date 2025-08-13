@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
+import ClientDetail from "@/pages/client-detail";
 import ProgressNotes from "@/pages/progress-notes";
 import ProgressNotesManagement from "@/pages/progress-notes-management";
 import Calendar from "@/pages/calendar";
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/clients" component={Clients} />
+      <Route path="/clients/:clientId" component={ClientDetail} />
       <Route path="/progress-notes" component={ProgressNotes} />
       <Route path="/progress-notes-management" component={ProgressNotesManagement} />
       <Route path="/calendar" component={Calendar} />

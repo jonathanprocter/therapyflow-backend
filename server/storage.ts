@@ -23,6 +23,7 @@ export interface IStorage {
   getClient(id: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: string, client: Partial<InsertClient>): Promise<Client>;
+  deleteClient(id: string): Promise<void>;
 
   // Sessions
   getSessions(clientId: string): Promise<Session[]>;
@@ -126,6 +127,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(clients.id, id))
       .returning();
     return updatedClient;
+  }
+
+  async deleteClient(id: string): Promise<void> {
+    // Delete related data first (cascading delete)
+    await db.delete(progressNotes).where(eq(progressNotes.clientId, id));
+    await db.delete(sessions).where(eq(sessions.clientId, id));
+    await db.delete(documents).where(eq(documents.clientId, id));
+    
+    // Delete the client
+    await db.delete(clients).where(eq(clients.id, id));
   }
 
   async getSessions(clientId: string): Promise<Session[]> {

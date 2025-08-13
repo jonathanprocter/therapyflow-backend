@@ -1,13 +1,46 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Link } from "wouter";
 import Sidebar from "@/components/layout/sidebar";
 import TopBar from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { MoreVertical, Trash2, Eye } from "lucide-react";
+import { useState } from "react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Clients() {
+  const [clientToDelete, setClientToDelete] = useState<any>(null);
+  const { toast } = useToast();
+  
   const { data: clients, isLoading } = useQuery({
     queryKey: ["/api/clients"],
+  });
+
+  const deleteClientMutation = useMutation({
+    mutationFn: async (clientId: string) => {
+      return apiRequest(`/api/clients/${clientId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      toast({
+        title: "Client deleted",
+        description: "The client and all associated data have been removed.",
+      });
+      setClientToDelete(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting client",
+        description: "Failed to delete the client. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   return (
@@ -58,18 +91,43 @@ export default function Clients() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.isArray(clients) && clients.map((client: any) => (
-                <Card key={client.id} className="hover:shadow-md transition-shadow cursor-pointer" data-testid={`client-card-${client.id}`}>
+                <Card key={client.id} className="hover:shadow-md transition-shadow" data-testid={`client-card-${client.id}`}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold text-gray-900" data-testid={`client-name-${client.id}`}>
                         {client.name}
                       </h3>
-                      <Badge 
-                        variant={client.status === 'active' ? 'default' : 'secondary'}
-                        data-testid={`client-status-${client.id}`}
-                      >
-                        {client.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={client.status === 'active' ? 'default' : 'secondary'}
+                          data-testid={`client-status-${client.id}`}
+                        >
+                          {client.status}
+                        </Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" data-testid={`client-menu-${client.id}`}>
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/clients/${client.id}`} className="flex items-center">
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => setClientToDelete(client)}
+                              className="text-red-600 focus:text-red-600"
+                              data-testid={`delete-client-${client.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Client
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                     
                     {client.email && (
@@ -86,23 +144,59 @@ export default function Clients() {
                       </p>
                     )}
 
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-                      <span className="text-xs text-gray-500" data-testid={`client-created-${client.id}`}>
-                        Since {new Date(client.createdAt).toLocaleDateString()}
-                      </span>
-                      <div className="flex space-x-2">
-                        <Button size="sm" variant="outline" data-testid={`view-client-${client.id}`}>
-                          <i className="fas fa-eye"></i>
-                        </Button>
-                        <Button size="sm" variant="outline" data-testid={`edit-client-${client.id}`}>
-                          <i className="fas fa-edit"></i>
-                        </Button>
+                    {client.tags && client.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        {client.tags.slice(0, 3).map((tag: string, index: number) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {client.tags.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{client.tags.length - 3} more
+                          </Badge>
+                        )}
                       </div>
+                    )}
+                    
+                    <div className="mt-4 pt-4 border-t">
+                      <Link href={`/clients/${client.id}`}>
+                        <Button variant="outline" size="sm" className="w-full" data-testid={`view-client-${client.id}`}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Complete Record
+                        </Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
+          )}
+          
+          {/* Delete Confirmation Dialog */}
+          {clientToDelete && (
+            <AlertDialog open={true} onOpenChange={() => setClientToDelete(null)}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Client</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete <strong>{clientToDelete.name}</strong>? 
+                    This will permanently remove the client and all associated sessions, progress notes, and documents. 
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => deleteClientMutation.mutate(clientToDelete.id)}
+                    className="bg-red-600 hover:bg-red-700"
+                    disabled={deleteClientMutation.isPending}
+                  >
+                    {deleteClientMutation.isPending ? "Deleting..." : "Delete Client"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </main>
