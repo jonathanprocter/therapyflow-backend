@@ -40,6 +40,7 @@ export interface IStorage {
   getProgressNote(id: string): Promise<ProgressNote | undefined>;
   createProgressNote(note: InsertProgressNote): Promise<ProgressNote>;
   updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote>;
+  deleteProgressNote(id: string): Promise<void>;
   searchProgressNotes(therapistId: string, query: string): Promise<ProgressNote[]>;
   getProgressNotesForManualReview(therapistId: string): Promise<ProgressNote[]>;
   getProgressNotePlaceholders(therapistId: string): Promise<ProgressNote[]>;
@@ -225,6 +226,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(progressNotes.id, id))
       .returning();
     return updatedNote;
+  }
+
+  async deleteProgressNote(id: string): Promise<void> {
+    await db
+      .delete(progressNotes)
+      .where(eq(progressNotes.id, id));
   }
 
   async searchProgressNotes(therapistId: string, query: string): Promise<ProgressNote[]> {

@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { FileText, Calendar, User, Upload, AlertCircle, CheckCircle, Clock, Edit } from 'lucide-react';
+import { FileText, Calendar, User, Upload, AlertCircle, CheckCircle, Clock, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { DocumentUploader } from '@/components/DocumentUploader';
@@ -73,6 +73,15 @@ export default function ProgressNotesManagement() {
     },
   });
 
+  // Delete progress note mutation
+  const deleteNoteMutation = useMutation({
+    mutationFn: (id: string) => apiRequest(`/api/progress-notes/${id}`, 'DELETE'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/placeholders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/manual-review'] });
+    },
+  });
+
   const handleEditNote = (note: ProgressNote) => {
     setSelectedNote(note);
     setEditContent(note.content || '');
@@ -90,6 +99,12 @@ export default function ProgressNotesManagement() {
         isPlaceholder: false,
       },
     });
+  };
+
+  const handleDeleteNote = (noteId: string, noteName: string) => {
+    if (confirm(`Are you sure you want to delete the progress note for "${noteName}"? This action cannot be undone.`)) {
+      deleteNoteMutation.mutate(noteId);
+    }
   };
 
   const getStatusBadge = (note: ProgressNote) => {
@@ -199,15 +214,27 @@ export default function ProgressNotesManagement() {
                               </p>
                             )}
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditNote(note)}
-                            className="flex items-center gap-2"
-                          >
-                            <Edit className="w-4 h-4" />
-                            {note.content ? 'Edit' : 'Add Content'}
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditNote(note)}
+                              className="flex items-center gap-1"
+                            >
+                              <Edit className="w-4 h-4" />
+                              {note.content ? 'Edit' : 'Add Content'}
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeleteNote(note.id, note.client?.name || 'Unknown Client')}
+                              disabled={deleteNoteMutation.isPending}
+                              className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                              data-testid={`delete-note-${note.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -271,15 +298,27 @@ export default function ProgressNotesManagement() {
                               </p>
                             )}
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditNote(note)}
-                            className="flex items-center gap-2"
-                          >
-                            <Edit className="w-4 h-4" />
-                            Review & Edit
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditNote(note)}
+                              className="flex items-center gap-1"
+                            >
+                              <Edit className="w-4 h-4" />
+                              Review & Edit
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeleteNote(note.id, note.client?.name || 'Unknown Client')}
+                              disabled={deleteNoteMutation.isPending}
+                              className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                              data-testid={`delete-note-${note.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

@@ -319,6 +319,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/progress-notes/:id", async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify the note belongs to the authenticated therapist
+      const note = await storage.getProgressNote(id);
+      if (!note) {
+        return res.status(404).json({ error: "Progress note not found" });
+      }
+      if (note.therapistId !== req.therapistId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      await storage.deleteProgressNote(id);
+      res.json({ success: true, message: "Progress note deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting progress note:", error);
+      res.status(500).json({ error: "Failed to delete progress note" });
+    }
+  });
+
   // Document Upload and Processing endpoints
   app.post("/api/documents/upload", upload.single('document'), async (req: any, res) => {
     try {
