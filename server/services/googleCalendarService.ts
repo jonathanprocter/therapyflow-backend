@@ -7,10 +7,14 @@ export class GoogleCalendarService {
   private calendar: any;
 
   constructor() {
+    const redirectUri = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:5000/api/calendar/callback'
+      : `https://${process.env.REPLIT_DOMAINS}/api/calendar/callback`;
+      
     this.oauth2Client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      'urn:ietf:wg:oauth:2.0:oob' // Out-of-band redirect URI for desktop/mobile apps
+      redirectUri
     );
 
     // Set the refresh token if available

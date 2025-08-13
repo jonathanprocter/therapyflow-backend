@@ -443,6 +443,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/calendar/callback", async (req, res) => {
+    try {
+      const { code, error } = req.query;
+      
+      if (error) {
+        return res.send(`
+          <html>
+            <body>
+              <h2>Authorization Failed</h2>
+              <p>Error: ${error}</p>
+              <script>
+                window.opener && window.opener.postMessage({ success: false, error: '${error}' }, '*');
+                window.close();
+              </script>
+            </body>
+          </html>
+        `);
+      }
+      
+      if (!code) {
+        return res.status(400).send(`
+          <html>
+            <body>
+              <h2>Authorization Failed</h2>
+              <p>No authorization code received</p>
+              <script>
+                window.opener && window.opener.postMessage({ success: false, error: 'No authorization code' }, '*');
+                window.close();
+              </script>
+            </body>
+          </html>
+        `);
+      }
+      
+      const tokens = await googleCalendarService.exchangeCodeForTokens(code as string);
+      
+      res.send(`
+        <html>
+          <head>
+            <title>Calendar Connected</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+              .success { color: #4CAF50; }
+              .container { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h2 class="success">✓ Google Calendar Connected!</h2>
+              <p>Your calendar is now connected to TherapyFlow.</p>
+              <p><small>You can close this window and return to the app.</small></p>
+            </div>
+            <script>
+              window.opener && window.opener.postMessage({ success: true, tokens: ${JSON.stringify(tokens)} }, '*');
+              setTimeout(() => window.close(), 2000);
+            </script>
+          </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("Error in calendar callback:", error);
+      res.send(`
+        <html>
+          <body>
+            <h2>Authorization Failed</h2>
+            <p>Error: ${(error as Error).message}</p>
+            <script>
+              window.opener && window.opener.postMessage({ success: false, error: '${(error as Error).message}' }, '*');
+              window.close();
+            </script>
+          </body>
+        </html>
+      `);
+    }
+  });
+
   app.post("/api/calendar/auth", async (req, res) => {
     try {
       const { code } = req.body;

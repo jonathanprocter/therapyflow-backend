@@ -18,6 +18,7 @@ interface SyncResult {
 export default function CalendarSync() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
 
   const { data: calendars, isLoading: calendarsLoading } = useQuery({
     queryKey: ['/api/calendar/calendars'],
@@ -57,8 +58,46 @@ export default function CalendarSync() {
     },
     onSuccess: (authUrl) => {
       // Open Google OAuth in new window
-      window.open(authUrl, 'google-auth', 'width=500,height=600');
+      const authWindow = window.open(authUrl, 'google-auth', 'width=500,height=600,scrollbars=yes,resizable=yes');
       setIsAuthenticating(true);
+
+      // Listen for messages from the popup window
+      const handleMessage = (event: MessageEvent) => {
+        // Only accept messages from our domain
+        if (event.origin !== window.location.origin) return;
+        
+        if (event.data.success) {
+          toast({
+            title: "Calendar Connected!",
+            description: "Google Calendar is now connected to TherapyFlow",
+          });
+          setIsAuthenticating(false);
+          setIsConnected(true);
+          queryClient.invalidateQueries({ queryKey: ['/api/calendar/calendars'] });
+        } else if (event.data.error) {
+          toast({
+            title: "Authentication Failed",
+            description: event.data.error,
+            variant: "destructive",
+          });
+          setIsAuthenticating(false);
+        }
+        
+        // Clean up the event listener
+        window.removeEventListener('message', handleMessage);
+        authWindow?.close();
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      // Handle case where user closes popup manually
+      const checkClosed = setInterval(() => {
+        if (authWindow?.closed) {
+          clearInterval(checkClosed);
+          setIsAuthenticating(false);
+          window.removeEventListener('message', handleMessage);
+        }
+      }, 1000);
     },
     onError: (error: any) => {
       toast({
@@ -122,14 +161,23 @@ export default function CalendarSync() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert className="border-green-200 bg-green-50">
-              <i className="fas fa-check-circle text-green-600"></i>
-              <AlertDescription className="text-green-800">
-                <strong>OAuth2 Ready:</strong> Google Calendar credentials are configured with Client ID: 
-                <code className="bg-green-100 px-1 rounded">839967078225-sjhemk0h654iv9jbc58lears67ntt877</code>
-                <br />Complete the authentication flow below to start syncing.
-              </AlertDescription>
-            </Alert>
+            {isConnected ? (
+              <Alert className="border-green-200 bg-green-50">
+                <i className="fas fa-check-circle text-green-600"></i>
+                <AlertDescription className="text-green-800">
+                  <strong>Connected:</strong> Google Calendar is successfully connected to TherapyFlow.
+                  <br />You can now sync your calendar appointments.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert className="border-blue-200 bg-blue-50">
+                <i className="fas fa-info-circle text-blue-600"></i>
+                <AlertDescription className="text-blue-800">
+                  <strong>OAuth2 Ready:</strong> Google Calendar credentials are configured.
+                  <br />Complete the authentication flow below to start syncing.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {syncProgress > 0 && (
               <div className="space-y-2">
