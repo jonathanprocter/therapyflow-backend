@@ -1,0 +1,108 @@
+# Create API routes for the therapeutic features
+cat > server/routes/therapeutic-routes.ts << 'EOF'
+import { Router } from 'express';
+import { enhancedStorage } from '../storage-extensions';
+
+const router = Router();
+
+// Get insights for a client
+router.get('/insights/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { limit = 10, sessionId } = req.query;
+    
+    const insights = await enhancedStorage.getTherapeuticInsights(
+      clientId, 
+      Number(limit)
+    );
+    
+    res.json({ success: true, insights });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get tags for a client
+router.get('/tags/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { category, sessionId } = req.query;
+    
+    const tags = await enhancedStorage.getSessionTags(
+      clientId,
+      category as string
+    );
+    
+    res.json({ success: true, tags });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Quick recall search
+router.post('/recall/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { query } = req.body;
+    const therapistId = req.user?.id; // Assuming auth middleware
+    
+    const results = await enhancedStorage.quickRecall(
+      therapistId || '',
+      clientId,
+      query
+    );
+    
+    res.json({ success: true, results });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Generate synthesis
+router.post('/synthesize/:clientId', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { startDate, endDate } = req.body;
+    const therapistId = req.user?.id;
+    
+    const synthesis = await enhancedStorage.synthesizeClientJourney(
+      clientId,
+      therapistId || '',
+      {
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined
+      }
+    );
+    
+    res.json({ success: true, synthesis });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get recent insights across all clients
+router.get('/insights/recent', async (req, res) => {
+  try {
+    const therapistId = req.user?.id;
+    // Implementation would fetch recent insights for therapist's clients
+    res.json({ success: true, insights: [] });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+export default router;
+EOF
+
+echo "✅ API routes created!"
+echo ""
+echo "📊 Best Practice Integration Summary:"
+echo ""
+echo "  ✅ Multiple integration patterns to choose from"
+echo "  ✅ Custom hooks for data fetching"
+echo "  ✅ TypeScript support throughout"
+echo "  ✅ Responsive and accessible components"
+echo "  ✅ API routes for backend communication"
+echo ""
+echo "🎯 Recommended: Start with Option 1 (Enhanced Client Detail Page)"
+echo "   This gives you the full therapeutic journey experience!"

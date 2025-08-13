@@ -1,0 +1,523 @@
+# Create the integration file
+cat > client/src/components/therapeutic/ClientTherapeuticIntegration.tsx << 'EOF'
+/**
+ * Therapeutic Journey Integration for Client Pages
+ * 
+ * This file provides best-practice integration patterns for adding
+ * therapeutic journey features to your existing client pages.
+ */
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  TherapeuticJourneyDashboard,
+  InsightsPanel,
+  EmotionalTrajectory,
+  ThemeCloud,
+  QuickRecall
+} from '@/components/therapeutic';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Brain, 
+  FileText, 
+  Calendar, 
+  User, 
+  Activity,
+  Sparkles,
+  ChevronRight,
+  Eye
+} from 'lucide-react';
+
+/**
+ * OPTION 1: Enhanced Client Detail Page
+ * Integrates therapeutic journey as a primary tab
+ */
+export function EnhancedClientDetailPage() {
+  const { clientId } = useParams<{ clientId: string }>();
+  const navigate = useNavigate();
+  const [client, setClient] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [insightCount, setInsightCount] = useState(0);
+
+  useEffect(() => {
+    // Fetch client data
+    if (clientId) {
+      fetch(`/api/clients/${clientId}`)
+        .then(res => res.json())
+        .then(data => setClient(data.client))
+        .catch(console.error);
+
+      // Get insight count for badge
+      fetch(`/api/therapeutic/insights/${clientId}`)
+        .then(res => res.json())
+        .then(data => setInsightCount(data.insights?.length || 0))
+        .catch(console.error);
+    }
+  }, [clientId]);
+
+  if (!client) return <div>Loading...</div>;
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Client Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {client.firstName} {client.lastName}
+          </h1>
+          <p className="text-muted-foreground">{client.email}</p>
+        </div>
+        <div className="flex gap-2">
+          {insightCount > 0 && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <Brain className="h-3 w-3" />
+              {insightCount} insights
+            </Badge>
+          )}
+          <Button 
+            variant="outline"
+            onClick={() => navigate(`/clients/${clientId}/sessions/new`)}
+          >
+            New Session
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="sessions" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Sessions
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Notes
+          </TabsTrigger>
+          <TabsTrigger value="journey" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            Journey
+            {insightCount > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1">
+                {insightCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="metrics" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Metrics
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          {/* Your existing client overview content */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Client Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Client details */}
+            </CardContent>
+          </Card>
+
+          {/* Quick Insights Preview */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-yellow-500" />
+                Recent Insights
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setActiveTab('journey')}
+              >
+                View All
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <InsightsPreview clientId={clientId!} limit={3} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sessions">
+          {/* Your existing sessions list */}
+        </TabsContent>
+
+        <TabsContent value="notes">
+          {/* Your existing progress notes */}
+        </TabsContent>
+
+        <TabsContent value="journey">
+          <TherapeuticJourneyDashboard clientId={clientId!} />
+        </TabsContent>
+
+        <TabsContent value="metrics">
+          {/* Your existing metrics/reports */}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+/**
+ * OPTION 2: Sidebar Integration
+ * Adds therapeutic insights to existing client page sidebar
+ */
+export function ClientPageWithTherapeuticSidebar({ clientId }: { clientId: string }) {
+  return (
+    <div className="flex gap-6">
+      {/* Main Content Area */}
+      <div className="flex-1 space-y-6">
+        {/* Your existing client content */}
+      </div>
+
+      {/* Therapeutic Insights Sidebar */}
+      <div className="w-96 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              Therapeutic Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <InsightsPanel clientId={clientId} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Quick Search</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <QuickRecall clientId={clientId} />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * OPTION 3: Progress Note Enhancement
+ * Adds therapeutic insights to progress note view
+ */
+export function EnhancedProgressNoteView({ 
+  noteId, 
+  clientId 
+}: { 
+  noteId: string; 
+  clientId: string;
+}) {
+  const [note, setNote] = useState<any>(null);
+  const [tags, setTags] = useState<any[]>([]);
+  const [insights, setInsights] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Fetch note and related therapeutic data
+    Promise.all([
+      fetch(`/api/progress-notes/${noteId}`).then(r => r.json()),
+      fetch(`/api/therapeutic/tags/${clientId}?sessionId=${noteId}`).then(r => r.json()),
+      fetch(`/api/therapeutic/insights/${clientId}?sessionId=${noteId}`).then(r => r.json())
+    ]).then(([noteData, tagsData, insightsData]) => {
+      setNote(noteData.note);
+      setTags(tagsData.tags || []);
+      setInsights(insightsData.insights || []);
+    });
+  }, [noteId, clientId]);
+
+  if (!note) return <div>Loading...</div>;
+
+  return (
+    <div className="space-y-6">
+      {/* Original Note Content */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Progress Note</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {new Date(note.sessionDate).toLocaleDateString()}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <p className="whitespace-pre-wrap">{note.content}</p>
+        </CardContent>
+      </Card>
+
+      {/* AI-Extracted Information */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Extracted Themes & Emotions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {tags.map((tag, idx) => (
+                <div key={idx} className="flex flex-wrap gap-1">
+                  <Badge variant="outline" className="text-xs">
+                    {tag.category}
+                  </Badge>
+                  {tag.tags?.map((t: string, i: number) => (
+                    <Badge key={i} variant="secondary" className="text-xs">
+                      {t}
+                    </Badge>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Key Insights</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {insights.map((insight, idx) => (
+                <div key={idx} className="text-sm p-2 bg-secondary rounded">
+                  {insight.insight}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * OPTION 4: Dashboard Widget
+ * Adds therapeutic summary to main dashboard
+ */
+export function TherapeuticDashboardWidget() {
+  const [recentInsights, setRecentInsights] = useState<any[]>([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch recent insights across all clients
+    fetch('/api/therapeutic/insights/recent')
+      .then(res => res.json())
+      .then(data => setRecentInsights(data.insights || []))
+      .catch(console.error);
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Brain className="h-5 w-5 text-purple-500" />
+          Therapeutic Insights
+        </CardTitle>
+        <Badge variant="outline">AI-Powered</Badge>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {recentInsights.slice(0, 5).map((insight) => (
+            <div 
+              key={insight.id}
+              className="p-3 bg-secondary rounded-lg cursor-pointer hover:bg-secondary/80 transition-colors"
+              onClick={() => navigate(`/clients/${insight.clientId}/journey`)}
+            >
+              <div className="flex items-start justify-between mb-1">
+                <span className="text-sm font-medium">
+                  {insight.clientName}
+                </span>
+                <Badge variant="secondary" className="text-xs">
+                  {insight.insightType}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {insight.insight}
+              </p>
+            </div>
+          ))}
+        </div>
+        
+        {recentInsights.length === 0 && (
+          <p className="text-center text-muted-foreground py-4">
+            Insights will appear as sessions are analyzed
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Helper Component: Insights Preview
+ */
+function InsightsPreview({ clientId, limit = 3 }: { clientId: string; limit?: number }) {
+  const [insights, setInsights] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch(`/api/therapeutic/insights/${clientId}?limit=${limit}`)
+      .then(res => res.json())
+      .then(data => setInsights(data.insights || []))
+      .catch(console.error);
+  }, [clientId, limit]);
+
+  if (insights.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No insights yet. They'll appear as sessions progress.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {insights.map((insight) => (
+        <div key={insight.id} className="flex items-start gap-2">
+          <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5" />
+          <p className="text-sm">{insight.insight}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * OPTION 5: Floating Action Button
+ * Quick access to therapeutic insights from any client page
+ */
+export function TherapeuticFloatingButton({ clientId }: { clientId: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        className="fixed bottom-6 right-6 rounded-full h-14 w-14 shadow-lg"
+        onClick={() => setIsOpen(true)}
+      >
+        <Brain className="h-6 w-6" />
+      </Button>
+
+      {isOpen && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50">
+          <div className="fixed right-0 top-0 h-full w-[600px] bg-background border-l shadow-xl">
+            <div className="p-6 space-y-6 h-full overflow-y-auto">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Therapeutic Journey</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+              
+              <InsightsPanel clientId={clientId} />
+              <EmotionalTrajectory clientId={clientId} />
+              <ThemeCloud clientId={clientId} />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export default EnhancedClientDetailPage;
+EOF
+
+# Create a hook for easy therapeutic data access
+cat > client/src/components/therapeutic/useTherapeuticData.ts << 'EOF'
+/**
+ * Custom hook for accessing therapeutic data
+ */
+
+import { useState, useEffect } from 'react';
+
+interface TherapeuticData {
+  insights: any[];
+  tags: any[];
+  synthesis: any;
+  loading: boolean;
+  error: Error | null;
+}
+
+export function useTherapeuticData(clientId: string): TherapeuticData {
+  const [data, setData] = useState<TherapeuticData>({
+    insights: [],
+    tags: [],
+    synthesis: null,
+    loading: true,
+    error: null
+  });
+
+  useEffect(() => {
+    if (!clientId) return;
+
+    const fetchData = async () => {
+      try {
+        const [insightsRes, tagsRes] = await Promise.all([
+          fetch(`/api/therapeutic/insights/${clientId}`),
+          fetch(`/api/therapeutic/tags/${clientId}`)
+        ]);
+
+        const [insightsData, tagsData] = await Promise.all([
+          insightsRes.json(),
+          tagsRes.json()
+        ]);
+
+        setData({
+          insights: insightsData.insights || [],
+          tags: tagsData.tags || [],
+          synthesis: null,
+          loading: false,
+          error: null
+        });
+      } catch (error) {
+        setData(prev => ({
+          ...prev,
+          loading: false,
+          error: error as Error
+        }));
+      }
+    };
+
+    fetchData();
+  }, [clientId]);
+
+  return data;
+}
+
+export function useTherapeuticInsightCount(clientId: string): number {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!clientId) return;
+
+    fetch(`/api/therapeutic/insights/${clientId}/count`)
+      .then(res => res.json())
+      .then(data => setCount(data.count || 0))
+      .catch(() => setCount(0));
+  }, [clientId]);
+
+  return count;
+}
+EOF
+
+echo "✅ Integration files created!"
+echo ""
+echo "📋 Integration Options Created:"
+echo "  1. Enhanced Client Detail Page - Full tabbed interface"
+echo "  2. Sidebar Integration - Insights in sidebar"
+echo "  3. Progress Note Enhancement - AI analysis on notes"
+echo "  4. Dashboard Widget - Overview on main dashboard"
+echo "  5. Floating Action Button - Quick access from anywhere"
+echo ""
+echo "🚀 To use, import the option that fits your needs:"
+echo "  import { EnhancedClientDetailPage } from '@/components/therapeutic/ClientTherapeuticIntegration';"
