@@ -343,38 +343,38 @@ export class GoogleCalendarService {
   }
 
   private extractClientName(summary: string): string {
-    // SimplePractice typically formats events as "Client Name - Therapy Session"
-    // or "Session with Client Name"
+    // SimplePractice formats events as "Client Name Appointment" 
+    // Example: "Chris Balabanick Appointment", "Brian Kolsch Appointment"
     
-    if (summary.includes(' - ')) {
-      const clientName = summary.split(' - ')[0].trim();
-      // Avoid extracting therapy-related words as client names
-      if (!['therapy', 'session', 'appointment', 'consultation'].includes(clientName.toLowerCase())) {
+    // Remove "Appointment" from the end if present
+    let clientName = summary.replace(/\s+Appointment\s*$/i, '').trim();
+    
+    // Remove other common session indicators
+    clientName = clientName
+      .replace(/\s+(Session|Therapy|Consultation|Meeting)\s*$/i, '')
+      .replace(/^(Session|Therapy|Meeting)\s+with\s+/i, '')
+      .trim();
+    
+    // Handle "- " separators
+    if (clientName.includes(' - ')) {
+      const parts = clientName.split(' - ');
+      clientName = parts[0].trim();
+    }
+    
+    // Validate it looks like a person's name (2-4 words, capitalized)
+    const words = clientName.split(' ').filter(word => word.length > 0);
+    if (words.length >= 2 && words.length <= 4) {
+      const hasCapitalizedWords = words.every(word => 
+        word.charAt(0) === word.charAt(0).toUpperCase() && 
+        !['appointment', 'session', 'therapy', 'consultation', 'meeting'].includes(word.toLowerCase())
+      );
+      if (hasCapitalizedWords) {
         return clientName;
       }
     }
     
-    if (summary.toLowerCase().includes('session with ')) {
-      return summary.toLowerCase().replace('session with ', '').trim();
-    }
-    
-    if (summary.toLowerCase().includes('therapy with ')) {
-      return summary.toLowerCase().replace('therapy with ', '').trim();
-    }
-    
-    // For events that might contain client names, try to extract meaningful names
-    const words = summary.trim().split(' ');
-    if (words.length >= 2 && words.length <= 4) {
-      // If it looks like a person's name (2-4 words, capitalized)
-      const hasCapitalizedWords = words.every(word => 
-        word.charAt(0) === word.charAt(0).toUpperCase()
-      );
-      if (hasCapitalizedWords) {
-        return summary.trim();
-      }
-    }
-    
-    return 'Unidentified Client';
+    // If we can't parse a good name, return the original summary for manual review
+    return summary.trim();
   }
 
   private isSimplePracticeEvent(event: any, calendarDisplayName?: string): boolean {

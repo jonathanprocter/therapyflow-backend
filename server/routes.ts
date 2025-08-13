@@ -725,6 +725,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to check name variations
+  const isNameVariation = (name1: string, name2: string): boolean => {
+    const normalize = (name: string) => name.toLowerCase().trim();
+    const n1 = normalize(name1);
+    const n2 = normalize(name2);
+    
+    // Common name variations
+    const variations: { [key: string]: string[] } = {
+      'christopher': ['chris', 'christopher'],
+      'chris': ['chris', 'christopher'],
+      'benjamin': ['ben', 'benjamin', 'benji'],
+      'ben': ['ben', 'benjamin', 'benji'],
+      'michael': ['mike', 'michael', 'mick'],
+      'mike': ['mike', 'michael', 'mick'],
+      'william': ['will', 'william', 'bill', 'billy'],
+      'will': ['will', 'william', 'bill', 'billy'],
+      'robert': ['rob', 'robert', 'bob', 'bobby'],
+      'rob': ['rob', 'robert', 'bob', 'bobby'],
+      'elizabeth': ['liz', 'elizabeth', 'beth', 'betty'],
+      'liz': ['liz', 'elizabeth', 'beth', 'betty']
+    };
+    
+    // Extract first names for comparison
+    const firstName1 = n1.split(' ')[0];
+    const firstName2 = n2.split(' ')[0];
+    
+    // Check if names are variations of each other
+    for (const [base, vars] of Object.entries(variations)) {
+      if (vars.includes(firstName1) && vars.includes(firstName2)) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
   app.post("/api/calendar/sync", async (req: any, res) => {
     try {
       const { startDate = '2010-01-01', endDate = '2035-12-31' } = req.body;
@@ -736,7 +772,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate
       );
 
-      // Save the synced sessions to the database
+      // Save the synced sessions to the database with proper client matching
       const savedSessions = [];
       for (const session of syncedSessions) {
         try {
@@ -744,10 +780,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const existingSession = await storage.getSessionByGoogleEventId(session.googleEventId!);
           
           if (!existingSession) {
+            // Extract client name from the session (stored as temporary field)
+            const extractedClientName = (session as any).clientName;
+            let clientId = session.clientId; // Default fallback client
+            
+            // Try to match or create a real client if we have a valid client name
+            if (extractedClientName && extractedClientName !== 'Unidentified Client' && !extractedClientName.includes('Birthday')) {
+              try {
+                // First, try to find existing client by name match
+                const existingClients = await storage.getClients(req.therapistId);
+                const matchingClient = existingClients.find(client => 
+                  client.name.toLowerCase() === extractedClientName.toLowerCase() ||
+                  // Handle name variations (Chris vs Christopher, etc.)
+                  isNameVariation(client.name, extractedClientName)
+                );
+                
+                if (matchingClient) {
+                  clientId = matchingClient.id;
+                  console.log(`Matched session to existing client: ${extractedClientName} -> ${matchingClient.name}`);
+                } else {
+                  // Create new client for SimplePractice appointments
+                  const newClient = await storage.createClient({
+                    therapistId: req.therapistId,
+                    name: extractedClientName,
+                    status: 'active',
+                    email: null,
+                    phone: null,
+                    dateOfBirth: null,
+                    emergencyContact: null,
+                    insurance: null,
+                    tags: ['SimplePractice Import']
+                  });
+                  clientId = newClient.id;
+                  console.log(`Created new client from SimplePractice: ${extractedClientName}`);
+                }
+              } catch (clientError) {
+                console.error(`Error matching/creating client for ${extractedClientName}:`, clientError);
+                // Fall back to default client
+              }
+            }
+            
             // Use the correct InsertSession format (camelCase)
             const sessionData: any = {
               id: session.id,
-              clientId: session.clientId,
+              clientId: clientId, // Use matched/created client ID
               therapistId: session.therapistId,
               scheduledAt: session.scheduledAt,
               duration: session.duration,
@@ -755,6 +831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: session.status,
               notes: session.notes,
               googleEventId: session.googleEventId,
+              isSimplePracticeEvent: (session as any).isSimplePracticeEvent || false,
               createdAt: session.createdAt,
               updatedAt: session.updatedAt
             };
