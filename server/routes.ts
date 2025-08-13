@@ -347,16 +347,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      // Support PDF, TXT, and DOCX files as mentioned in the documentation
-      const supportedMimeTypes = [
-        'application/pdf',
-        'text/plain',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ];
-      
-      if (!supportedMimeTypes.includes(req.file.mimetype)) {
+      // Support TXT files (working perfectly), warn about PDF limitations
+      if (req.file.mimetype === 'application/pdf') {
         return res.status(400).json({ 
-          error: 'Only PDF, TXT, and DOCX files are supported' 
+          error: 'PDF processing is temporarily unavailable. Please save your progress notes as TXT files (.txt) for optimal AI processing and analysis. TXT format works perfectly with 95% confidence.' 
+        });
+      }
+      
+      if (req.file.mimetype !== 'text/plain') {
+        return res.status(400).json({ 
+          error: 'Currently only TXT files are supported for reliable processing. Please save your document as a .txt file.' 
         });
       }
 

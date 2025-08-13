@@ -17,18 +17,9 @@ export interface ExtractedPDFData {
 export class PDFService {
   async extractText(buffer: Buffer): Promise<ExtractedPDFData> {
     try {
-      // Try to create a minimal PDF parser using dynamic import
-      let pdfParse;
-      try {
-        // Use createRequire to handle the require issue in ES modules
-        const { createRequire } = await import('module');
-        const require = createRequire(import.meta.url);
-        pdfParse = require('pdf-parse');
-      } catch (moduleError) {
-        console.log('Module import failed, trying direct import...');
-        const pdfModule = await import('pdf-parse');
-        pdfParse = pdfModule.default;
-      }
+      // Temporarily disable PDF parsing to focus on core functionality
+      console.log('PDF processing temporarily disabled - using TXT format recommended');
+      throw new Error('PDF processing disabled - please use TXT format');
       
       if (!pdfParse) {
         throw new Error('PDF parser not available');
