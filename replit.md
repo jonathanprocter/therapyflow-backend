@@ -12,6 +12,7 @@ Preferred communication style: Simple, everyday language.
 - Authentication: Mock system configured for Dr. Jonathan Procter (ID: dr-jonathan-procter)
 - Calendar Sync: Fully operational with comprehensive SimplePractice integration and 100% capture rate
 - SimplePractice Integration: Successfully capturing recurring appointments and all-day events
+- AI Document Processing: Fully operational with PDF text extraction, intelligent client matching (Chris/Christopher variations), automatic session assignment, and manual review workflow
 
 # System Architecture
 
@@ -29,7 +30,7 @@ The data layer utilizes PostgreSQL with Drizzle ORM for type-safe database opera
 ## AI Integration
 The application integrates dual AI providers (OpenAI GPT-4o and Anthropic Claude Sonnet 4.0) with comprehensive fallback mechanisms for maximum reliability. AI capabilities include embedding generation for semantic search across clinical documents, automatic clinical tagging of progress notes, pattern recognition and risk assessment analysis, treatment recommendation generation, session preparation assistance, and advanced document processing with client identification and appointment date extraction. Both AI providers use maximum token utilization (4096 tokens) with optimized temperature settings for clinical consistency. The system automatically falls back to Anthropic when OpenAI is unavailable, ensuring continuous AI-powered functionality.
 
-**Document Intelligence**: Advanced AI-powered document analysis extracts client names, appointment dates, session types, and document classification with confidence scoring. Supports batch processing of multiple documents with automatic tagging and metadata extraction.
+**Document Intelligence**: Advanced AI-powered document analysis extracts client names, appointment dates, session types, and document classification with confidence scoring. Supports batch processing of multiple documents with automatic tagging and metadata extraction. Features intelligent client name matching with fuzzy logic (Chris/Christopher variations), automatic new client creation, session date assignment within 24-hour windows, and manual review workflow for uncertain matches or high-risk content.
 
 ## Authentication and Security
 The current implementation includes a placeholder authentication system designed for easy replacement with production-grade solutions. The system assumes therapist identification through middleware and includes role-based access patterns in the database schema. All database queries are scoped to the authenticated therapist to ensure data isolation and privacy compliance.
