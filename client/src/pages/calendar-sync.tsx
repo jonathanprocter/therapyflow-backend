@@ -27,7 +27,7 @@ export default function CalendarSync() {
 
   const syncMutation = useMutation({
     mutationFn: async ({ startDate, endDate }: { startDate: string; endDate: string }) => {
-      const response = await apiRequest('POST', '/api/calendar/sync', {
+      const response = await apiRequest('/api/calendar/sync', 'POST', {
         startDate,
         endDate
       });
@@ -40,6 +40,9 @@ export default function CalendarSync() {
       });
       queryClient.invalidateQueries({ queryKey: ['/api/sessions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      setSyncProgress(100);
+      // Reset progress after a delay
+      setTimeout(() => setSyncProgress(0), 2000);
     },
     onError: (error: any) => {
       toast({
@@ -47,12 +50,13 @@ export default function CalendarSync() {
         description: error.message || "Failed to sync calendar events",
         variant: "destructive",
       });
+      setSyncProgress(0);
     },
   });
 
   const authMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('GET', '/api/calendar/auth-url');
+      const response = await apiRequest('/api/calendar/auth-url', 'GET');
       const data = await response.json();
       return data.authUrl;
     },
@@ -65,7 +69,7 @@ export default function CalendarSync() {
       const handleMessage = (event: MessageEvent) => {
         // Only accept messages from our domain
         if (event.origin !== window.location.origin) return;
-        
+
         if (event.data.success) {
           toast({
             title: "Calendar Connected!",
@@ -82,7 +86,7 @@ export default function CalendarSync() {
           });
           setIsAuthenticating(false);
         }
-        
+
         // Clean up the event listener
         window.removeEventListener('message', handleMessage);
         authWindow?.close();
@@ -105,12 +109,13 @@ export default function CalendarSync() {
         description: error.message || "Failed to get authorization URL",
         variant: "destructive",
       });
+      setIsAuthenticating(false);
     },
   });
 
   const handleSync = () => {
     setSyncProgress(0);
-    
+
     // Simulate progress
     const progressInterval = setInterval(() => {
       setSyncProgress(prev => {
@@ -126,8 +131,6 @@ export default function CalendarSync() {
       startDate: '2015-01-01',
       endDate: '2030-12-31'
     });
-
-    // The mutation will complete progress automatically
   };
 
   const handleAuthenticate = () => {
@@ -217,7 +220,7 @@ export default function CalendarSync() {
             <div className="pt-4 space-y-3">
               <Button 
                 onClick={handleAuthenticate}
-                disabled={authMutation.isPending || isAuthenticating}
+                disabled={authMutation.isPending || isAuthenticating || isConnected}
                 className="w-full"
                 data-testid="authenticate-button"
               >
@@ -231,6 +234,11 @@ export default function CalendarSync() {
                     <i className="fas fa-external-link-alt mr-2"></i>
                     Complete Auth in Popup
                   </>
+                ) : isConnected ? (
+                  <>
+                    <i className="fas fa-check-circle mr-2"></i>
+                    Connected to Google
+                  </>
                 ) : (
                   <>
                     <i className="fab fa-google mr-2"></i>
@@ -241,7 +249,7 @@ export default function CalendarSync() {
 
               <Button 
                 onClick={handleSync}
-                disabled={syncMutation.isPending || syncProgress > 0}
+                disabled={!isConnected || syncMutation.isPending || syncProgress > 0}
                 variant="outline"
                 className="w-full"
                 data-testid="sync-button"
@@ -314,7 +322,9 @@ export default function CalendarSync() {
               <div className="text-center py-8 text-gray-500">
                 <i className="fas fa-calendar-plus text-4xl mb-4 opacity-50"></i>
                 <p>No sync results yet</p>
-                <p className="text-sm mt-2">Click "Sync Calendar" to begin</p>
+                <p className="text-sm mt-2">
+                  {!isConnected ? "Authenticate first, then sync" : "Click 'Sync Calendar' to begin"}
+                </p>
               </div>
             )}
           </CardContent>
@@ -352,7 +362,7 @@ export default function CalendarSync() {
                 </li>
               </ul>
             </div>
-            
+
             <div className="space-y-3">
               <h4 className="font-semibold text-gray-900">Security & Privacy</h4>
               <ul className="space-y-2 text-sm text-gray-600">
