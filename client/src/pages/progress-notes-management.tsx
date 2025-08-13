@@ -80,6 +80,10 @@ export default function ProgressNotesManagement() {
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/placeholders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/manual-review'] });
     },
+    onError: (error) => {
+      console.error('Delete error:', error);
+      alert('Failed to delete progress note. Please try again.');
+    },
   });
 
   const handleEditNote = (note: ProgressNote) => {
@@ -102,8 +106,13 @@ export default function ProgressNotesManagement() {
   };
 
   const handleDeleteNote = (noteId: string, noteName: string) => {
-    if (confirm(`Are you sure you want to delete the progress note for "${noteName}"? This action cannot be undone.`)) {
-      deleteNoteMutation.mutate(noteId);
+    if (window.confirm(`Are you sure you want to delete the progress note for "${noteName}"? This action cannot be undone.`)) {
+      try {
+        deleteNoteMutation.mutate(noteId);
+      } catch (error) {
+        console.error('Error initiating delete:', error);
+        alert('Failed to delete progress note. Please try again.');
+      }
     }
   };
 
