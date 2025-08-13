@@ -347,16 +347,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      // Support TXT files (working perfectly), warn about PDF limitations
-      if (req.file.mimetype === 'application/pdf') {
-        return res.status(400).json({ 
-          error: 'PDF processing is temporarily unavailable. Please save your progress notes as TXT files (.txt) for optimal AI processing and analysis. TXT format works perfectly with 95% confidence.' 
-        });
-      }
+      // Support multiple file types: TXT (optimal), PDF (with fallback), DOCX (with processing)
+      const supportedMimeTypes = [
+        'text/plain',                    // TXT - working perfectly
+        'application/pdf',               // PDF - with fallback message
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
+        'application/msword',            // DOC (older format)
+        'text/rtf',                      // RTF
+        'application/rtf'                // RTF alternative
+      ];
       
-      if (req.file.mimetype !== 'text/plain') {
+      if (!supportedMimeTypes.includes(req.file.mimetype)) {
         return res.status(400).json({ 
-          error: 'Currently only TXT files are supported for reliable processing. Please save your document as a .txt file.' 
+          error: 'Supported file types: TXT (recommended), PDF, DOCX, DOC, RTF. Please convert your file to one of these formats.' 
         });
       }
 

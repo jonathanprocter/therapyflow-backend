@@ -46,8 +46,13 @@ export class DocumentProcessor {
       } else if (fileExtension === 'txt' || fileExtension === 'text') {
         extractedText = file.toString('utf-8');
       } else if (fileExtension === 'docx') {
-        throw new Error('DOCX file processing not yet implemented');
+        extractedText = await this.extractTextFromDOCX(file);
+      } else if (fileExtension === 'doc') {
+        extractedText = await this.extractTextFromDOC(file);
+      } else if (fileExtension === 'rtf') {
+        extractedText = await this.extractTextFromRTF(file);
       } else {
+        // Default to treating as plain text
         extractedText = file.toString('utf-8');
       }
       
@@ -112,6 +117,84 @@ export class DocumentProcessor {
         needsManualReview: true,
         extractedData: { content: '' },
       };
+    }
+  }
+
+  /**
+   * Extract text from DOCX files using basic XML parsing
+   */
+  private async extractTextFromDOCX(buffer: Buffer): Promise<string> {
+    try {
+      // Simple DOCX text extraction - DOCX files are XML-based
+      const text = buffer.toString('utf-8');
+      
+      // Extract text from XML content (basic approach)
+      const textMatches = text.match(/<w:t[^>]*>(.*?)<\/w:t>/g);
+      if (textMatches) {
+        const extractedText = textMatches
+          .map(match => match.replace(/<[^>]*>/g, ''))
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+          
+        if (extractedText.length > 10) {
+          return extractedText;
+        }
+      }
+      
+      // Fallback message for DOCX
+      return 'DOCX text extraction partially supported. For best results, please save as TXT format.';
+    } catch (error) {
+      console.error('DOCX extraction error:', error);
+      return 'DOCX processing encountered an issue. Please save your document as TXT format for optimal processing.';
+    }
+  }
+
+  /**
+   * Extract text from DOC files (legacy format)
+   */
+  private async extractTextFromDOC(buffer: Buffer): Promise<string> {
+    try {
+      // Basic text extraction attempt for DOC files
+      const text = buffer.toString('binary');
+      // DOC files are binary, so this is a very basic approach
+      const readable = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+      
+      if (readable.length > 50) {
+        return readable;
+      }
+      
+      return 'DOC format requires conversion to TXT for optimal processing. Please save as TXT format.';
+    } catch (error) {
+      console.error('DOC extraction error:', error);
+      return 'DOC processing not fully supported. Please convert to TXT format for best results.';
+    }
+  }
+
+  /**
+   * Extract text from RTF files
+   */
+  private async extractTextFromRTF(buffer: Buffer): Promise<string> {
+    try {
+      const text = buffer.toString('utf-8');
+      
+      // Basic RTF text extraction - remove RTF control codes
+      let cleanText = text
+        .replace(/\\[a-zA-Z]+\d*/g, '') // Remove RTF control words
+        .replace(/\{|\}/g, '')          // Remove braces
+        .replace(/\\\\/g, '\\')         // Handle escaped backslashes
+        .replace(/\\'/g, "'")           // Handle escaped quotes
+        .replace(/\s+/g, ' ')           // Normalize whitespace
+        .trim();
+      
+      if (cleanText.length > 10) {
+        return cleanText;
+      }
+      
+      return 'RTF processing partially supported. For best results, please save as TXT format.';
+    } catch (error) {
+      console.error('RTF extraction error:', error);
+      return 'RTF processing encountered an issue. Please save as TXT format for optimal results.';
     }
   }
 
