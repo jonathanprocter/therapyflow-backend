@@ -59,14 +59,15 @@ export function DocumentUploader() {
 
     setUploading(true);
     setProgress(0);
+    let progressInterval: NodeJS.Timeout | null = null;
 
     try {
       const formData = new FormData();
-      selectedFiles.forEach((file, index) => {
-        formData.append(`documents`, file);
+      selectedFiles.forEach((file) => {
+        formData.append('documents', file);
       });
 
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setProgress(prev => Math.min(prev + 10, 90));
       }, 500);
 
@@ -76,12 +77,16 @@ export function DocumentUploader() {
       });
       
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
       }
       
       const result = await response.json();
 
-      clearInterval(progressInterval);
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
       setProgress(100);
 
       setResults(result);
@@ -92,9 +97,13 @@ export function DocumentUploader() {
 
     } catch (error) {
       console.error('Document processing error:', error);
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+      setProgress(0);
       toast({
         title: "Processing Error",
-        description: "Failed to process documents. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to process documents. Please try again.",
         variant: "destructive",
       });
     } finally {

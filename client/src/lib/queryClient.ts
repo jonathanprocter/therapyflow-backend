@@ -2,7 +2,12 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
+    let text: string;
+    try {
+      text = await res.text();
+    } catch {
+      text = res.statusText || 'Unknown error';
+    }
     throw new Error(`${res.status}: ${text}`);
   }
 }
@@ -38,7 +43,12 @@ export const getQueryFn: <T>(options: {
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+    try {
+      return await res.json();
+    } catch (error) {
+      console.error('Failed to parse JSON response:', error);
+      throw new Error('Invalid response format');
+    }
   };
 
 export const queryClient = new QueryClient({
@@ -54,4 +64,5 @@ export const queryClient = new QueryClient({
       retry: false,
     },
   },
+  errorBoundary: false,
 });
