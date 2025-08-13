@@ -7,6 +7,7 @@ import { pdfService } from "./services/pdfService";
 import { documentProcessor } from "./services/documentProcessor";
 import { enhancedDocumentProcessor } from "./services/enhanced-document-processor";
 import { googleCalendarService } from "./services/googleCalendarService";
+import { sessionSummaryGenerator } from "./services/session-summary-generator";
 import { 
   insertClientSchema, 
   insertSessionSchema, 
@@ -695,6 +696,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         error: error?.message || 'Failed to generate interventions'
+      });
+    }
+  });
+
+  // Session Summary Generation endpoints
+  app.post('/api/sessions/:sessionId/generate-summary', async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { clientId, summaryType = 'comprehensive', includeProgressNotes = true, includePreviousSessions = true } = req.body;
+      
+      if (!clientId) {
+        return res.status(400).json({ error: 'clientId is required' });
+      }
+      
+      const summary = await sessionSummaryGenerator.generateSessionSummary({
+        sessionId,
+        clientId,
+        therapistId: req.therapistId,
+        summaryType,
+        includeProgressNotes,
+        includePreviousSessions
+      });
+      
+      res.json(summary);
+    } catch (error: any) {
+      console.error('Error generating session summary:', error);
+      res.status(500).json({
+        success: false,
+        error: error?.message || 'Failed to generate session summary'
+      });
+    }
+  });
+
+  // Quick session insights endpoint
+  app.get('/api/sessions/:sessionId/quick-insights', async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { clientId } = req.query;
+      
+      if (!clientId) {
+        return res.status(400).json({ error: 'clientId is required' });
+      }
+      
+      const insights = await sessionSummaryGenerator.generateQuickInsights(sessionId, clientId as string);
+      
+      res.json({
+        success: true,
+        insights
+      });
+    } catch (error: any) {
+      console.error('Error generating quick insights:', error);
+      res.status(500).json({
+        success: false,
+        error: error?.message || 'Failed to generate quick insights'
       });
     }
   });

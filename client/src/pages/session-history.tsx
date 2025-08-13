@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarDays, Clock, FileText, Users, CheckCircle, AlertCircle } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import type { Session, Client } from "@shared/schema";
+import SessionSummaryGenerator from "@/components/sessions/SessionSummaryGenerator";
 
 type SessionWithClient = Session & { client: Client };
 
@@ -17,6 +18,7 @@ export default function SessionHistory() {
   const [filterType, setFilterType] = useState<"all" | "completed" | "scheduled">("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<string>("all");
+  const [selectedSessionForSummary, setSelectedSessionForSummary] = useState<SessionWithClient | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -336,6 +338,17 @@ export default function SessionHistory() {
                             SimplePractice
                           </Badge>
                         )}
+                        {session.status === "completed" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedSessionForSummary(session)}
+                            data-testid={`generate-summary-${session.id}`}
+                          >
+                            <i className="fas fa-magic mr-2 text-xs"></i>
+                            Summary
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -355,6 +368,21 @@ export default function SessionHistory() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Session Summary Modal */}
+      {selectedSessionForSummary && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <SessionSummaryGenerator
+              sessionId={selectedSessionForSummary.id}
+              clientId={selectedSessionForSummary.clientId}
+              clientName={selectedSessionForSummary.client?.name || "Unknown Client"}
+              sessionDate={selectedSessionForSummary.scheduledAt}
+              onClose={() => setSelectedSessionForSummary(null)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

@@ -34,6 +34,7 @@ export interface IStorage {
   getTodaysSessions(therapistId: string): Promise<Session[]>;
   getSession(id: string): Promise<Session | undefined>;
   getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined>;
+  getRecentSessionsForClient(clientId: string, limit?: number): Promise<Session[]>;
   createSession(session: InsertSession): Promise<Session>;
   updateSession(id: string, session: Partial<InsertSession>): Promise<Session>;
   markPastSessionsAsCompleted(therapistId: string): Promise<number>;
@@ -45,6 +46,7 @@ export interface IStorage {
   getProgressNotes(clientId: string): Promise<ProgressNote[]>;
   getRecentProgressNotes(therapistId: string, limit?: number): Promise<ProgressNote[]>;
   getProgressNote(id: string): Promise<ProgressNote | undefined>;
+  getProgressNotesBySession(sessionId: string): Promise<ProgressNote[]>;
   createProgressNote(note: InsertProgressNote): Promise<ProgressNote>;
   updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote>;
   deleteProgressNote(id: string): Promise<void>;
@@ -60,6 +62,7 @@ export interface IStorage {
 
   // Treatment Plans
   getTreatmentPlan(clientId: string): Promise<TreatmentPlan | undefined>;
+  getTreatmentPlanByClient(clientId: string): Promise<TreatmentPlan | undefined>;
   createTreatmentPlan(plan: InsertTreatmentPlan): Promise<TreatmentPlan>;
   updateTreatmentPlan(id: string, plan: Partial<InsertTreatmentPlan>): Promise<TreatmentPlan>;
 
@@ -251,6 +254,15 @@ export class DatabaseStorage implements IStorage {
     return session || undefined;
   }
 
+  async getRecentSessionsForClient(clientId: string, limit: number = 5): Promise<Session[]> {
+    return await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.clientId, clientId))
+      .orderBy(desc(sessions.scheduledAt))
+      .limit(limit);
+  }
+
   async createSession(session: InsertSession): Promise<Session> {
     const [newSession] = await db
       .insert(sessions)
@@ -351,6 +363,14 @@ export class DatabaseStorage implements IStorage {
     return note || undefined;
   }
 
+  async getProgressNotesBySession(sessionId: string): Promise<ProgressNote[]> {
+    return await db
+      .select()
+      .from(progressNotes)
+      .where(eq(progressNotes.sessionId, sessionId))
+      .orderBy(desc(progressNotes.createdAt));
+  }
+
   async createProgressNote(note: InsertProgressNote): Promise<ProgressNote> {
     const [newNote] = await db
       .insert(progressNotes)
@@ -429,6 +449,10 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(treatmentPlans.createdAt));
     return plan || undefined;
+  }
+
+  async getTreatmentPlanByClient(clientId: string): Promise<TreatmentPlan | undefined> {
+    return this.getTreatmentPlan(clientId);
   }
 
   async createTreatmentPlan(plan: InsertTreatmentPlan): Promise<TreatmentPlan> {
@@ -624,7 +648,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(sessions.therapistId, therapistId),
-          eq(sessions.hasProgressNoteePlaceholder, false),
+          eq(sessions.hasProgressNotePlaceholder, false),
           eq(sessions.status, "scheduled"),
           // Filter out holidays, observances, and automatic calendar events
           sql`${sessions.notes} NOT ILIKE '%Public holiday%'`,
@@ -634,20 +658,6 @@ export class DatabaseStorage implements IStorage {
           sql`${sessions.notes} NOT ILIKE '%automatically created%'`,
           // Only include actual therapy sessions
           sql`${sessions.clientId} != 'calendar-sync-client'`
-        )
-      )
-      .orderBy(desc(sessions.scheduledAt));
-  }
-
-  async getSimplePracticeSessions(therapistId: string): Promise<Session[]> {
-    return await db
-      .select()
-      .from(sessions)
-      .leftJoin(progressNotes, eq(sessions.id, progressNotes.sessionId))
-      .where(
-        and(
-          eq(sessions.therapistId, therapistId),
-          sql`${progressNotes.sessionId} IS NULL`
         )
       )
       .orderBy(desc(sessions.scheduledAt));
