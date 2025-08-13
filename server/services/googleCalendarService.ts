@@ -55,35 +55,109 @@ export class GoogleCalendarService {
       // Refresh token if needed
       await this.oauth2Client.getAccessToken();
 
-      const response = await this.calendar.events.list({
+      const allEvents: any[] = [];
+      let pageToken: string | undefined;
+      let totalFetched = 0;
+
+      console.log(`Starting calendar sync for ${startDate} to ${endDate}`);
+
+      // First, get a sample to check what we're working with
+      const sampleResponse = await this.calendar.events.list({
         calendarId: 'primary',
         timeMin: new Date(startDate).toISOString(),
         timeMax: new Date(endDate).toISOString(),
         singleEvents: true,
         orderBy: 'startTime',
-        maxResults: 2500, // Google Calendar API limit
+        maxResults: 10,
       });
 
-      const events = response.data.items || [];
+      console.log('Sample events:');
+      sampleResponse.data.items?.slice(0, 3).forEach((event: any, i: number) => {
+        console.log(`  ${i + 1}. "${event.summary}" - ${event.start?.dateTime || event.start?.date}`);
+      });
+
+      // Now paginate through all events
+      do {
+        const response = await this.calendar.events.list({
+          calendarId: 'primary',
+          timeMin: new Date(startDate).toISOString(),
+          timeMax: new Date(endDate).toISOString(),
+          singleEvents: true,
+          orderBy: 'startTime',
+          maxResults: 2500, // Max per page
+          pageToken: pageToken,
+        });
+
+        const events = response.data.items || [];
+        allEvents.push(...events);
+        totalFetched += events.length;
+        pageToken = response.data.nextPageToken;
+
+        console.log(`Fetched ${events.length} events (total: ${totalFetched}). Next page token: ${pageToken ? 'yes' : 'no'}`);
+        
+        // Safety break - prevent infinite loops
+        if (totalFetched > 50000) {
+          console.log('Hit safety limit of 50,000 events');
+          break;
+        }
+      } while (pageToken);
+
+      console.log(`Total events fetched: ${allEvents.length}`);
       
-      // Filter for therapy appointments (SimplePractice integration patterns)
-      const therapyEvents = events.filter((event: any) => {
+      // More inclusive filtering - sync more events and let user decide what's relevant
+      const relevantEvents = allEvents.filter((event: any) => {
         const summary = event.summary || '';
         const description = event.description || '';
+        const location = event.location || '';
         
-        // Look for SimplePractice patterns or therapy-related keywords
-        return (
-          summary.toLowerCase().includes('therapy') ||
-          summary.toLowerCase().includes('session') ||
-          summary.toLowerCase().includes('appointment') ||
-          summary.toLowerCase().includes('simplepractice') ||
-          description.toLowerCase().includes('simplepractice') ||
-          description.toLowerCase().includes('therapy')
+        // Skip all-day events without specific times (likely not appointments)
+        if (!event.start?.dateTime) return false;
+        
+        // Skip events that are clearly not appointments
+        const lowerSummary = summary.toLowerCase();
+        const lowerDescription = description.toLowerCase();
+        const lowerLocation = location.toLowerCase();
+        
+        // Exclude common non-appointment events
+        const excludeKeywords = [
+          'holiday', 'birthday', 'vacation', 'meeting', 'lunch', 'dinner', 
+          'conference', 'webinar', 'training', 'workshop', 'reminder'
+        ];
+        
+        const hasExcludedKeywords = excludeKeywords.some(keyword => 
+          lowerSummary.includes(keyword) || lowerDescription.includes(keyword)
         );
+        
+        if (hasExcludedKeywords) return false;
+        
+        // Include events that look like appointments
+        const includeKeywords = [
+          'therapy', 'session', 'appointment', 'simplepractice', 'client', 
+          'patient', 'consultation', 'counseling', 'treatment', 'visit',
+          'assessment', 'intake', 'follow-up', 'followup', 'check-in'
+        ];
+        
+        // Also include events that have typical appointment patterns
+        const hasAppointmentPattern = (
+          // Has person names (contains common name patterns)
+          /[A-Z][a-z]+ [A-Z][a-z]+/.test(summary) ||
+          // Has time duration patterns
+          /\d{1,2}:\d{2}/.test(summary) ||
+          // Is during typical business hours and has reasonable duration
+          this.isBusinessHours(event.start?.dateTime) ||
+          // Contains any include keywords
+          includeKeywords.some(keyword => 
+            lowerSummary.includes(keyword) || lowerDescription.includes(keyword) || lowerLocation.includes(keyword)
+          )
+        );
+        
+        return hasAppointmentPattern;
       });
 
+      console.log(`Filtered to ${relevantEvents.length} relevant events`);
+
       // Convert Google Calendar events to Session format
-      const sessions: Session[] = therapyEvents.map((event: any, index: number) => {
+      const sessions: Session[] = relevantEvents.map((event: any, index: number) => {
         const startTime = event.start?.dateTime || event.start?.date;
         const endTime = event.end?.dateTime || event.end?.date;
         
@@ -110,11 +184,21 @@ export class GoogleCalendarService {
         };
       });
 
+      console.log(`Converted ${sessions.length} events to sessions`);
       return sessions;
     } catch (error) {
       console.error('Error syncing Google Calendar:', error);
       throw new Error('Failed to sync calendar events');
     }
+  }
+
+  private isBusinessHours(dateTimeStr: string): boolean {
+    const date = new Date(dateTimeStr);
+    const hour = date.getHours();
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    // Monday-Friday, 8 AM to 6 PM
+    return dayOfWeek >= 1 && dayOfWeek <= 5 && hour >= 8 && hour <= 18;
   }
 
   private extractClientName(summary: string): string {
