@@ -95,7 +95,7 @@ export class GoogleCalendarService {
     }
   }
 
-  async syncCalendarEvents(therapistId: string, startDate = '2015-01-01', endDate = '2030-12-31'): Promise<Session[]> {
+  async syncCalendarEvents(therapistId: string, startDate = '2010-01-01', endDate = '2030-12-31'): Promise<Session[]> {
     try {
       // Check if we have any credentials
       const currentCredentials = this.oauth2Client.credentials;

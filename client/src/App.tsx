@@ -11,6 +11,7 @@ import ProgressNotesManagement from "@/pages/progress-notes-management";
 import Calendar from "@/pages/calendar";
 import CalendarSync from "@/pages/calendar-sync";
 import Documents from "@/pages/documents";
+import SessionHistory from "@/pages/session-history";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/calendar" component={Calendar} />
       <Route path="/calendar-sync" component={CalendarSync} />
       <Route path="/documents" component={Documents} />
+      <Route path="/session-history" component={SessionHistory} />
       <Route component={NotFound} />
     </Switch>
   );

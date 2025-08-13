@@ -14,6 +14,7 @@ const navigation: Array<{
   { name: "AI Document Processing", href: "/progress-notes-management", icon: "fas fa-robot", badge: "AI" },
   { name: "Calendar", href: "/calendar", icon: "fas fa-calendar-alt", hasNotification: true },
   { name: "Calendar Sync", href: "/calendar-sync", icon: "fas fa-sync", badge: "OAuth2" },
+  { name: "Session History", href: "/session-history", icon: "fas fa-history" },
   { name: "Documents", href: "/documents", icon: "fas fa-file-upload" },
 ];
 

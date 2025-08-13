@@ -10,7 +10,7 @@ import {
   type AiInsight, type InsertAiInsight
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, like, sql } from "drizzle-orm";
+import { eq, desc, and, or, like, sql, isNull, ne } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -27,12 +27,17 @@ export interface IStorage {
 
   // Sessions
   getSessions(clientId: string): Promise<Session[]>;
+  getAllHistoricalSessions(therapistId: string, includeCompleted?: boolean): Promise<Session[]>;
+  getSessionsInDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<Session[]>;
+  getCompletedSessions(therapistId: string, clientId?: string): Promise<Session[]>;
   getUpcomingSessions(therapistId: string, date?: Date): Promise<Session[]>;
   getTodaysSessions(therapistId: string): Promise<Session[]>;
   getSession(id: string): Promise<Session | undefined>;
   getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined>;
   createSession(session: InsertSession): Promise<Session>;
   updateSession(id: string, session: Partial<InsertSession>): Promise<Session>;
+  markPastSessionsAsCompleted(therapistId: string): Promise<number>;
+  createProgressNotePlaceholdersForHistoricalSessions(therapistId: string): Promise<number>;
   getSessionsWithoutProgressNotes(therapistId: string): Promise<Session[]>;
   getSimplePracticeSessions(therapistId: string): Promise<Session[]>;
 
@@ -151,6 +156,51 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(sessions.scheduledAt));
   }
 
+  async getAllHistoricalSessions(therapistId: string, includeCompleted: boolean = true): Promise<Session[]> {
+    const conditions = [eq(sessions.therapistId, therapistId)];
+    
+    if (!includeCompleted) {
+      conditions.push(ne(sessions.status, "completed"));
+    }
+
+    return await db
+      .select()
+      .from(sessions)
+      .where(and(...conditions))
+      .orderBy(desc(sessions.scheduledAt));
+  }
+
+  async getSessionsInDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<Session[]> {
+    return await db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.therapistId, therapistId),
+          sql`${sessions.scheduledAt} >= ${startDate}`,
+          sql`${sessions.scheduledAt} <= ${endDate}`
+        )
+      )
+      .orderBy(desc(sessions.scheduledAt));
+  }
+
+  async getCompletedSessions(therapistId: string, clientId?: string): Promise<Session[]> {
+    const conditions = [
+      eq(sessions.therapistId, therapistId),
+      eq(sessions.status, "completed")
+    ];
+
+    if (clientId) {
+      conditions.push(eq(sessions.clientId, clientId));
+    }
+
+    return await db
+      .select()
+      .from(sessions)
+      .where(and(...conditions))
+      .orderBy(desc(sessions.scheduledAt));
+  }
+
   async getUpcomingSessions(therapistId: string, date?: Date): Promise<Session[]> {
     const targetDate = date || new Date();
 
@@ -216,6 +266,67 @@ export class DatabaseStorage implements IStorage {
       .where(eq(sessions.id, id))
       .returning();
     return updatedSession;
+  }
+
+  async markPastSessionsAsCompleted(therapistId: string): Promise<number> {
+    const now = new Date();
+    
+    const result = await db
+      .update(sessions)
+      .set({ 
+        status: "completed",
+        updatedAt: now
+      })
+      .where(
+        and(
+          eq(sessions.therapistId, therapistId),
+          eq(sessions.status, "scheduled"),
+          sql`${sessions.scheduledAt} < ${now}`
+        )
+      );
+
+    return result.rowCount || 0;
+  }
+
+  async createProgressNotePlaceholdersForHistoricalSessions(therapistId: string): Promise<number> {
+    // Get all completed sessions that don't have progress notes
+    const sessionsWithoutNotes = await db
+      .select({
+        sessionId: sessions.id,
+        clientId: sessions.clientId,
+        scheduledAt: sessions.scheduledAt,
+        therapistId: sessions.therapistId
+      })
+      .from(sessions)
+      .leftJoin(progressNotes, eq(sessions.id, progressNotes.sessionId))
+      .where(
+        and(
+          eq(sessions.therapistId, therapistId),
+          eq(sessions.status, "completed"),
+          isNull(progressNotes.id) // No existing progress note
+        )
+      );
+
+    if (sessionsWithoutNotes.length === 0) {
+      return 0;
+    }
+
+    // Create placeholder progress notes for these sessions
+    const placeholderNotes = sessionsWithoutNotes.map(session => ({
+      clientId: session.clientId,
+      sessionId: session.sessionId,
+      therapistId: session.therapistId,
+      sessionDate: session.scheduledAt,
+      content: null,
+      status: "placeholder" as const,
+      isPlaceholder: true,
+      tags: [],
+      aiTags: []
+    }));
+
+    await db.insert(progressNotes).values(placeholderNotes);
+    
+    return placeholderNotes.length;
   }
 
   async getProgressNotes(clientId: string): Promise<ProgressNote[]> {

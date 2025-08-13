@@ -145,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(sessions);
       } else {
         // Return all upcoming and recent sessions for the therapist if no specific filter
-        const sessions = await storage.getUpcomingSessions(req.therapistId, new Date('2015-01-01'));
+        const sessions = await storage.getUpcomingSessions(req.therapistId, new Date('2010-01-01'));
         // Fetch client data for each session
         const sessionsWithClients = await Promise.all(
           sessions.map(async (session) => {
@@ -193,6 +193,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating session:", error);
       res.status(400).json({ error: "Failed to create session" });
+    }
+  });
+
+  // Historical session management endpoints
+  app.get("/api/sessions/historical", async (req: any, res) => {
+    try {
+      const { includeCompleted = "true" } = req.query;
+      const sessions = await storage.getAllHistoricalSessions(req.therapistId, includeCompleted === "true");
+      
+      // Fetch client data for each session
+      const sessionsWithClients = await Promise.all(
+        sessions.map(async (session) => {
+          const client = await storage.getClient(session.clientId);
+          return { ...session, client };
+        })
+      );
+      
+      res.json(sessionsWithClients);
+    } catch (error) {
+      console.error("Error fetching historical sessions:", error);
+      res.status(500).json({ error: "Failed to fetch historical sessions" });
+    }
+  });
+
+  app.get("/api/sessions/completed", async (req: any, res) => {
+    try {
+      const { clientId } = req.query;
+      const sessions = await storage.getCompletedSessions(req.therapistId, clientId);
+      
+      // Fetch client data for each session
+      const sessionsWithClients = await Promise.all(
+        sessions.map(async (session) => {
+          const client = await storage.getClient(session.clientId);
+          return { ...session, client };
+        })
+      );
+      
+      res.json(sessionsWithClients);
+    } catch (error) {
+      console.error("Error fetching completed sessions:", error);
+      res.status(500).json({ error: "Failed to fetch completed sessions" });
+    }
+  });
+
+  app.post("/api/sessions/mark-past-completed", async (req: any, res) => {
+    try {
+      const updatedCount = await storage.markPastSessionsAsCompleted(req.therapistId);
+      res.json({ 
+        success: true, 
+        message: `Marked ${updatedCount} past sessions as completed`,
+        updatedCount 
+      });
+    } catch (error) {
+      console.error("Error marking past sessions as completed:", error);
+      res.status(500).json({ error: "Failed to mark past sessions as completed" });
+    }
+  });
+
+  app.post("/api/sessions/create-progress-placeholders", async (req: any, res) => {
+    try {
+      const createdCount = await storage.createProgressNotePlaceholdersForHistoricalSessions(req.therapistId);
+      res.json({ 
+        success: true, 
+        message: `Created ${createdCount} progress note placeholders for historical sessions`,
+        createdCount 
+      });
+    } catch (error) {
+      console.error("Error creating progress note placeholders:", error);
+      res.status(500).json({ error: "Failed to create progress note placeholders" });
     }
   });
 
