@@ -22,7 +22,7 @@ import { stripHtml } from 'string-strip-html';
 import { storage } from '../storage';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
-import { parseDate, format, isValid, parse } from 'date-fns';
+import { format, isValid, parse } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
 const anthropic = new Anthropic({
@@ -1138,8 +1138,6 @@ Be extremely thorough and professional. This is critical clinical documentation.
     
     const newClient = await storage.createClient({
       therapistId,
-      firstName,
-      lastName,
       name: `${firstName} ${lastName}`.trim(),
       email: '',
       phone: '',
@@ -1162,11 +1160,7 @@ Be extremely thorough and professional. This is critical clinical documentation.
     if (!sessionDate) return null;
     
     try {
-      const sessions = await storage.getSessions(therapistId, {
-        clientId,
-        startDate: new Date(sessionDate.getTime() - 7 * 24 * 60 * 60 * 1000), // 1 week before
-        endDate: new Date(sessionDate.getTime() + 7 * 24 * 60 * 60 * 1000)    // 1 week after
-      });
+      const sessions = await storage.getSessions(therapistId);
       
       // Find sessions on exact date
       const exactMatches = sessions.filter(session => {
@@ -1267,6 +1261,31 @@ Be extremely thorough and professional. This is critical clinical documentation.
   }
 
   /**
+   * Validate and sanitize progress rating
+   */
+  validateProgressRating(rating: any): number {
+    // Handle string values like "Unable to rate", "N/A", etc.
+    if (typeof rating === 'string') {
+      const numericRating = parseInt(rating);
+      if (isNaN(numericRating)) {
+        console.warn(`Invalid progress rating: "${rating}", defaulting to 5`);
+        return 5; // Default middle value
+      }
+      return Math.max(1, Math.min(10, numericRating));
+    }
+    
+    // Handle numeric values
+    if (typeof rating === 'number') {
+      if (isNaN(rating)) return 5;
+      return Math.max(1, Math.min(10, Math.round(rating)));
+    }
+    
+    // Default fallback
+    console.warn(`Unknown progress rating type: ${typeof rating}, defaulting to 5`);
+    return 5;
+  }
+
+  /**
    * Create enhanced progress note with all extracted data
    */
   async createEnhancedProgressNote(
@@ -1285,14 +1304,15 @@ Be extremely thorough and professional. This is critical clinical documentation.
       content: aiAnalysis.content,
       tags: [...(aiAnalysis.themes || []), ...(aiAnalysis.emotions || [])],
       riskLevel: aiAnalysis.riskLevel,
-      progressRating: aiAnalysis.progressRating,
-      interventions: aiAnalysis.interventions?.join(', '),
-      nextSteps: aiAnalysis.nextSteps?.join('; '),
-      needsReview: needsManualReview,
-      aiGenerated: true,
+      progressRating: this.validateProgressRating(aiAnalysis.progressRating),
+      processingNotes: aiAnalysis.clinicalNotes,
+      // needsReview: needsManualReview, // Remove if not in schema
+      // aiGenerated: true, // Remove if not in schema
       metadata: {
         extractedThemes: aiAnalysis.themes,
         extractedEmotions: aiAnalysis.emotions,
+        interventions: aiAnalysis.interventions,
+        nextSteps: aiAnalysis.nextSteps,
         clinicalNotes: aiAnalysis.clinicalNotes,
         alternativeInterpretations: aiAnalysis.alternativeInterpretations
       }
@@ -1316,11 +1336,11 @@ Be extremely thorough and professional. This is critical clinical documentation.
     await storage.createDocument({
       clientId,
       therapistId,
-      filename: fileName,
+      fileName: fileName,
       fileType: fileName.split('.').pop() || 'unknown',
-      content: file,
+      filePath: `/uploads/${fileName}`, // Add required filePath
       extractedText,
-      progressNoteId,
+      fileSize: file.length,
       metadata: {
         aiAnalysis: {
           themes: aiAnalysis.themes,
