@@ -16,7 +16,7 @@ export default function ProgressNotes() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { data: notes, isLoading } = useQuery<ProgressNoteWithClient[]>({
-    queryKey: ["/api/progress-notes?recent=true"],
+    queryKey: ["/api/progress-notes", { recent: "true" }],
   });
 
   const { data: clients } = useQuery({

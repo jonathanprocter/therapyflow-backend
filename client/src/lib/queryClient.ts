@@ -47,11 +47,15 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     try {
-      // Handle query key properly - if it's an array, join appropriately
+      // Handle query key properly - if it's an array, construct URL with parameters
       let url: string;
       if (Array.isArray(queryKey)) {
         url = queryKey[0] as string;
-        // If there are additional parameters, they should already be in the URL string
+        // If there are additional parameters, construct query string
+        if (queryKey[1] && typeof queryKey[1] === 'object') {
+          const params = new URLSearchParams(queryKey[1] as Record<string, string>);
+          url += `?${params.toString()}`;
+        }
       } else {
         url = String(queryKey);
       }
