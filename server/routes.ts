@@ -108,7 +108,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sessions = await storage.getSessions(clientId);
         res.json(sessions);
       } else {
-        res.status(400).json({ error: "clientId or upcoming parameter required" });
+        // Return all upcoming and recent sessions for the therapist if no specific filter
+        const sessions = await storage.getUpcomingSessions(req.therapistId, new Date('2015-01-01'));
+        // Fetch client data for each session
+        const sessionsWithClients = await Promise.all(
+          sessions.map(async (session) => {
+            const client = await storage.getClient(session.clientId);
+            return { ...session, client };
+          })
+        );
+        res.json(sessionsWithClients);
       }
     } catch (error) {
       console.error("Error fetching sessions:", error);

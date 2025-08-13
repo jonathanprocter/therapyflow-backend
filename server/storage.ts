@@ -139,9 +139,7 @@ export class DatabaseStorage implements IStorage {
     const targetDate = date || new Date();
     const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(targetDate);
-    endOfDay.setHours(23, 59, 59, 999);
-
+    
     return await db
       .select()
       .from(sessions)
@@ -149,8 +147,15 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(sessions.therapistId, therapistId),
           sql`${sessions.scheduledAt} >= ${startOfDay}`,
-          sql`${sessions.scheduledAt} <= ${endOfDay}`,
-          eq(sessions.status, "scheduled")
+          eq(sessions.status, "scheduled"),
+          // Filter out holidays, observances, and automatic calendar events
+          sql`${sessions.notes} NOT ILIKE '%Public holiday%'`,
+          sql`${sessions.notes} NOT ILIKE '%Observance%'`,
+          sql`${sessions.notes} NOT ILIKE '%gmail%'`,
+          sql`${sessions.notes} NOT ILIKE '%sunsama%'`,
+          sql`${sessions.notes} NOT ILIKE '%automatically created%'`,
+          // Only include actual therapy sessions (filter by client_id not being 'calendar-sync-client')
+          sql`${sessions.clientId} != 'calendar-sync-client'`
         )
       )
       .orderBy(sessions.scheduledAt);
@@ -466,6 +471,28 @@ export class DatabaseStorage implements IStorage {
 
   // New Session Management Methods
   async getSessionsWithoutProgressNotes(therapistId: string): Promise<Session[]> {
+    return await db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.therapistId, therapistId),
+          eq(sessions.hasProgressNoteePlaceholder, false),
+          eq(sessions.status, "scheduled"),
+          // Filter out holidays, observances, and automatic calendar events
+          sql`${sessions.notes} NOT ILIKE '%Public holiday%'`,
+          sql`${sessions.notes} NOT ILIKE '%Observance%'`,
+          sql`${sessions.notes} NOT ILIKE '%gmail%'`,
+          sql`${sessions.notes} NOT ILIKE '%sunsama%'`,
+          sql`${sessions.notes} NOT ILIKE '%automatically created%'`,
+          // Only include actual therapy sessions
+          sql`${sessions.clientId} != 'calendar-sync-client'`
+        )
+      )
+      .orderBy(desc(sessions.scheduledAt));
+  }
+
+  async getSimplePracticeSessions(therapistId: string): Promise<Session[]> {
     return await db
       .select()
       .from(sessions)
