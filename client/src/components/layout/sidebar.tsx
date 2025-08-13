@@ -1,7 +1,13 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
-const navigation = [
+const navigation: Array<{
+  name: string;
+  href: string;
+  icon: string;
+  badge?: string;
+  hasNotification?: boolean;
+}> = [
   { name: "Dashboard", href: "/", icon: "fas fa-chart-line" },
   { name: "Clients", href: "/clients", icon: "fas fa-users" },
   { name: "Progress Notes", href: "/progress-notes", icon: "fas fa-notes-medical" },
@@ -36,9 +42,9 @@ export default function Sidebar() {
           const isActive = location === item.href;
           return (
             <Link key={item.name} href={item.href}>
-              <a
+              <div
                 className={cn(
-                  "flex items-center px-4 py-3 rounded-lg font-medium transition-colors",
+                  "flex items-center px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer",
                   isActive
                     ? "text-primary bg-primary/10"
                     : "text-gray-700 hover:bg-gray-50"
@@ -55,7 +61,7 @@ export default function Sidebar() {
                 {item.hasNotification && (
                   <span className="ml-auto w-2 h-2 bg-accent rounded-full"></span>
                 )}
-              </a>
+              </div>
             </Link>
           );
         })}
@@ -67,13 +73,13 @@ export default function Sidebar() {
           </p>
           {clinicalTools.map((item) => (
             <Link key={item.name} href={item.href}>
-              <a
-                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm transition-colors"
+              <div
+                className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg text-sm transition-colors cursor-pointer"
                 data-testid={`tool-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <i className={`${item.icon} mr-3`}></i>
                 {item.name}
-              </a>
+              </div>
             </Link>
           ))}
         </div>
