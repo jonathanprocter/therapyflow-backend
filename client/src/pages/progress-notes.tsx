@@ -15,7 +15,7 @@ export default function ProgressNotes() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { data: notes, isLoading } = useQuery<ProgressNoteWithClient[]>({
-    queryKey: ["/api/progress-notes", { recent: true }],
+    queryKey: ["/api/progress-notes?recent=true"],
   });
 
   const { data: clients } = useQuery({
@@ -47,10 +47,10 @@ export default function ProgressNotes() {
   return (
     <div className="flex h-screen bg-gray-50" data-testid="progress-notes-page">
       <Sidebar />
-      
+
       <main className="flex-1 flex flex-col overflow-hidden">
         <TopBar />
-        
+
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -75,7 +75,7 @@ export default function ProgressNotes() {
                   ))}
                 </SelectContent>
               </Select>
-              
+
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                   <Button data-testid="create-note-button">
@@ -167,12 +167,12 @@ export default function ProgressNotes() {
                       )}
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="pt-0">
                     <p className="text-sm text-gray-600 mb-4 line-clamp-4" data-testid={`note-content-${note.id}`}>
                       {note.content}
                     </p>
-                    
+
                     {/* AI Tags */}
                     {note.aiTags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3" data-testid={`note-ai-tags-${note.id}`}>
@@ -195,7 +195,7 @@ export default function ProgressNotes() {
                         })}
                       </div>
                     )}
-                    
+
                     {/* Manual Tags */}
                     {note.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3" data-testid={`note-tags-${note.id}`}>
