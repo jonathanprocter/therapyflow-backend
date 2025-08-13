@@ -126,34 +126,59 @@ export class DocumentProcessor {
   }
 
   /**
-   * Use AI to analyze progress note and extract structured data
+   * Use AI to analyze progress note and extract structured data using comprehensive clinical framework
    */
   private async analyzeProgressNote(text: string): Promise<any> {
-    const prompt = `
-Analyze this therapy progress note and extract the following information in JSON format:
+    const comprehensivePrompt = `
+You are an expert clinical therapist with extensive training in psychotherapy, clinical documentation, and therapeutic modalities including ACT, DBT, Narrative Therapy, and Existentialism. 
+
+Your task is to analyze the provided therapy session transcript or progress note and extract key clinical information in JSON format.
+
+First, extract the essential data needed for our clinical system:
 
 {
-  "clientName": "exact client name mentioned",
-  "sessionDate": "session date in ISO format (YYYY-MM-DD)",
+  "clientName": "exact client name mentioned (look for patterns like 'Client: John Doe', 'Patient: Jane Smith', or names in headers)",
+  "sessionDate": "session date in ISO format (YYYY-MM-DD) - look for patterns like '01/15/2024', 'January 15, 2024', '1-15-24'",
   "sessionTime": "session time if mentioned",
-  "sessionType": "individual/couples/family/group",
-  "content": "full progress note content",
-  "riskLevel": "low/moderate/high/critical based on content",
-  "keyTopics": ["array", "of", "main", "topics"],
-  "interventions": ["interventions", "used"],
-  "progressRating": "1-10 scale if mentioned",
-  "nextSteps": "planned next steps",
-  "confidence": "0-1 confidence score for extraction accuracy"
+  "sessionType": "individual/couples/family/group (assume individual if not specified)",
+  "riskLevel": "low/moderate/high/critical based on mentions of self-harm, substance use, crisis, suicidal ideation, etc.",
+  "keyTopics": ["primary therapeutic themes", "presenting problems", "core issues addressed"],
+  "interventions": ["specific therapeutic techniques used", "treatment modalities", "interventions applied"],
+  "progressRating": "1-10 scale if mentioned or can be inferred from content",
+  "nextSteps": "planned follow-up actions, homework, future session focus",
+  "clinicalSummary": "brief clinical assessment of session content and therapeutic progress",
+  "confidence": "0-1 confidence score for extraction accuracy based on text clarity and completeness"
 }
 
-Progress Note Text:
+THEN, if this appears to be a raw session transcript (not already a formatted progress note), also generate a comprehensive clinical progress note following this structure:
+
+Create a comprehensive progress note with the following sections:
+
+**SUBJECTIVE:** Client's self-reported experiences, emotional state, presenting concerns, and direct quotes that capture their perspective and internal experience.
+
+**OBJECTIVE:** Observable clinical data including presentation, behavior, affect, speech patterns, thought processes, and any notable changes from previous sessions.
+
+**ASSESSMENT:** Clinical analysis including diagnostic considerations, treatment progress, risk assessment, therapeutic alliance, and integration of various therapeutic frameworks (ACT, DBT, etc.).
+
+**PLAN:** Specific interventions planned, therapeutic approaches to continue, homework assignments, safety planning if needed, and next session objectives.
+
+**SUPPLEMENTAL ANALYSES:**
+- Tonal Analysis: Significant emotional or tonal shifts during the session
+- Key Points: Critical therapeutic insights and patterns identified
+- Significant Quotes: Important client statements with clinical interpretation
+- Comprehensive Narrative Summary: Overall therapeutic narrative and progress assessment
+
+Text to analyze:
 ${text}
 
-Important: 
-- Look for date patterns like "01/15/2024", "January 15, 2024", "1-15-24"
-- Client names are often at the top or in headers
-- Session types may be implicit (assume "individual" if not specified)
-- Assess risk level based on mentions of self-harm, substance use, crisis, etc.
+Important clinical considerations:
+- Assess for risk factors (self-harm, substance use, crisis situations)
+- Identify therapeutic alliance quality and client engagement
+- Note any resistance, breakthroughs, or significant emotional processing
+- Consider cultural, socioeconomic, and systemic factors affecting treatment
+- Evaluate treatment modality effectiveness and needed adjustments
+
+Return your analysis in JSON format with both the extracted data and the comprehensive progress note (if applicable).
 `;
 
     try {
@@ -161,8 +186,8 @@ Important:
       console.log('Text length:', text.length);
       console.log('First 200 characters:', text.substring(0, 200));
       
-      // Use the AI service to get comprehensive analysis
-      const aiAnalysis = await aiService.processTherapyDocument(text, prompt);
+      // Use the AI service to get comprehensive clinical analysis
+      const aiAnalysis = await aiService.processTherapyDocument(text, comprehensivePrompt);
       
       // Parse AI response or use fallbacks
       let parsedAnalysis;
@@ -176,10 +201,11 @@ Important:
           clientName: this.extractClientNameFallback(text),
           sessionDate: this.extractDateFallback(text),
           riskLevel: 'low',
-          keyTopics: [],
-          interventions: [],
+          keyTopics: ['Requires manual review'],
+          interventions: ['Clinical assessment needed'],
           sessionType: 'individual',
-          nextSteps: 'Review required'
+          nextSteps: 'Manual review required - AI parsing failed',
+          clinicalSummary: 'Comprehensive clinical analysis pending manual review'
         };
       }
       
@@ -195,10 +221,11 @@ Important:
         clientName: this.extractClientNameFallback(text),
         sessionDate: this.extractDateFallback(text),
         riskLevel: 'low',
-        keyTopics: [],
-        interventions: [],
+        keyTopics: ['Clinical review needed'],
+        interventions: ['Assessment pending'],
         sessionType: 'individual',
-        nextSteps: 'Review required - AI analysis failed'
+        nextSteps: 'Comprehensive clinical analysis required - AI processing failed',
+        clinicalSummary: 'Manual clinical documentation needed due to processing error'
       };
     }
   }
