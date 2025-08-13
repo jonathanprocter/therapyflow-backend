@@ -128,7 +128,13 @@ export class GoogleCalendarService {
                 });
                 
                 const events = response.data.items || [];
-                allEvents.push(...events);
+                // Add calendar info to each event for filtering
+                const eventsWithCalendar = events.map(event => ({
+                  ...event,
+                  sourceCalendarName: calendar.summary,
+                  sourceCalendarId: calendar.id
+                }));
+                allEvents.push(...eventsWithCalendar);
                 chunkEvents += events.length;
                 calendarPageToken = response.data.nextPageToken;
                 
@@ -176,9 +182,12 @@ export class GoogleCalendarService {
         const description = (event.description || '').toLowerCase();
         const organizerEmail = event.organizer?.email || '';
         const calendarName = event.organizer?.displayName || '';
+        const sourceCalendar = (event.sourceCalendarName || '').toLowerCase();
         
-        // ONLY include SimplePractice events
+        // ONLY include SimplePractice events - check source calendar name first
         const isSimplePracticeEvent = 
+          sourceCalendar.includes('simple practice') ||
+          sourceCalendar.includes('simplepractice') ||
           organizerEmail.includes('simplepractice') ||
           organizerEmail.includes('simple-practice') ||
           calendarName.includes('simplepractice') ||
@@ -190,6 +199,11 @@ export class GoogleCalendarService {
         if (isSimplePracticeEvent) {
           console.log(`Found SimplePractice event: "${event.summary}" from ${organizerEmail || calendarName}`);
           return true;
+        }
+        
+        // Debug: Log some sample events to see what's being filtered out
+        if (Math.random() < 0.01) { // Log 1% of events for debugging
+          console.log(`Sample filtered out event: "${event.summary}" | Organizer: ${organizerEmail} | Calendar: ${calendarName} | Source: ${event.sourceCalendarName}`);
         }
         
         return false;
@@ -210,8 +224,8 @@ export class GoogleCalendarService {
         // Extract client name from event summary
         const clientName = this.extractClientName(event.summary || '');
         
-        // Detect SimplePractice events
-        const isSimplePractice = this.isSimplePracticeEvent(event);
+        // Detect SimplePractice events (pass calendar name for better detection)
+        const isSimplePractice = this.isSimplePracticeEvent(event, calendar.summary);
 
         return {
           id: `google-${event.id}`,
@@ -326,14 +340,17 @@ export class GoogleCalendarService {
     return 'Unidentified Client';
   }
 
-  private isSimplePracticeEvent(event: any): boolean {
+  private isSimplePracticeEvent(event: any, calendarDisplayName?: string): boolean {
     const summary = (event.summary || '').toLowerCase();
     const description = (event.description || '').toLowerCase();
     const organizerEmail = event.organizer?.email || '';
-    const calendarName = event.organizer?.displayName || '';
+    const calendarName = (event.organizer?.displayName || '').toLowerCase();
+    const sourceCalendar = (calendarDisplayName || '').toLowerCase();
     
-    // Only check for explicit SimplePractice indicators
-    return organizerEmail.includes('simplepractice') ||
+    // Check if event is from SimplePractice calendar or has SimplePractice indicators
+    return sourceCalendar.includes('simple practice') ||
+           sourceCalendar.includes('simplepractice') ||
+           organizerEmail.includes('simplepractice') ||
            organizerEmail.includes('simple-practice') ||
            calendarName.includes('simplepractice') ||
            calendarName.includes('simple practice') ||
