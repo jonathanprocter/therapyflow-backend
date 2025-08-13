@@ -8,10 +8,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Current Configuration
 - Therapist: Dr. Jonathan Procter (License: Licensed Therapist)
-- Database: Successfully imported 2,804 therapy appointments from Google Calendar (2015-2025)
+- Database: Successfully imported 151 current SimplePractice appointments (2025) + historical data
 - Authentication: Mock system configured for Dr. Jonathan Procter (ID: dr-jonathan-procter)
 - Calendar Sync: Fully operational with comprehensive SimplePractice integration and 100% capture rate
-- SimplePractice Integration: Successfully capturing recurring appointments and all-day events
+- SimplePractice Integration: Successfully capturing all therapy appointments from "Simple Practice" calendar with proper client name extraction (January 2025: 151 appointments imported)
 - AI Document Processing: Fully operational with proper PDF text extraction using pdf-parse library, comprehensive clinical progress note generation using expert therapeutic framework (ACT, DBT, Narrative Therapy, Existentialism), dual AI provider analysis (OpenAI GPT-4o + Anthropic Claude Sonnet 4.0), intelligent client matching (Chris/Christopher variations), automatic session assignment, and manual review workflow. Uses sophisticated clinical documentation standards with SOAP format and supplemental analyses.
 
 # System Architecture
