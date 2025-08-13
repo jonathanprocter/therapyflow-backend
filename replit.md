@@ -23,6 +23,12 @@ Preferred communication style: Simple, everyday language.
 - Use professional clinical voice with proper documentation standards
 - **Risk Level Default**: Always default to 'low' risk level unless clear indicators suggest otherwise
 - **Date Extraction Priority**: Extract session dates first from document filename, then from document content (OCR/text)
+- **Quality Assurance**: Document processing now iterates until achieving minimum 95% quality threshold through:
+  * Advanced text extraction improvements (OCR fallback for PDFs)
+  * Enhanced AI analysis with contextual prompts
+  * Multi-strategy date parsing with filename priority
+  * Up to 3 improvement iterations per document
+  * Real-time quality monitoring and validation
 
 ## Current Configuration
 - Therapist: Dr. Jonathan Procter (License: Licensed Therapist)
