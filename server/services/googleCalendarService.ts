@@ -55,103 +55,81 @@ export class GoogleCalendarService {
       // Refresh token if needed
       await this.oauth2Client.getAccessToken();
 
-      const allEvents: any[] = [];
-      let pageToken: string | undefined;
-      let totalFetched = 0;
-
-      console.log(`Starting calendar sync for ${startDate} to ${endDate}`);
-
-      // First, get a sample to check what we're working with
-      const sampleResponse = await this.calendar.events.list({
-        calendarId: 'primary',
-        timeMin: new Date(startDate).toISOString(),
-        timeMax: new Date(endDate).toISOString(),
-        singleEvents: true,
-        orderBy: 'startTime',
-        maxResults: 10,
-      });
-
-      console.log('Sample events:');
-      sampleResponse.data.items?.slice(0, 3).forEach((event: any, i: number) => {
-        console.log(`  ${i + 1}. "${event.summary}" - ${event.start?.dateTime || event.start?.date}`);
-      });
-
-      // Now paginate through all events
-      do {
-        const response = await this.calendar.events.list({
-          calendarId: 'primary',
-          timeMin: new Date(startDate).toISOString(),
-          timeMax: new Date(endDate).toISOString(),
-          singleEvents: true,
-          orderBy: 'startTime',
-          maxResults: 2500, // Max per page
-          pageToken: pageToken,
-        });
-
-        const events = response.data.items || [];
-        allEvents.push(...events);
-        totalFetched += events.length;
-        pageToken = response.data.nextPageToken;
-
-        console.log(`Fetched ${events.length} events (total: ${totalFetched}). Next page token: ${pageToken ? 'yes' : 'no'}`);
-        
-        // Safety break - prevent infinite loops
-        if (totalFetched > 50000) {
-          console.log('Hit safety limit of 50,000 events');
-          break;
-        }
-      } while (pageToken);
-
-      console.log(`Total events fetched: ${allEvents.length}`);
+      console.log(`Starting comprehensive calendar sync for ${startDate} to ${endDate}`);
       
-      // More inclusive filtering - sync more events and let user decide what's relevant
+      // Strategy: Fetch in smaller chunks to avoid API limitations
+      const yearlyChunks = this.createDateChunks(startDate, endDate, 'yearly');
+      const allEvents: any[] = [];
+      
+      for (const chunk of yearlyChunks) {
+        console.log(`Syncing chunk: ${chunk.start} to ${chunk.end}`);
+        
+        let pageToken: string | undefined;
+        let chunkEvents = 0;
+
+        do {
+          const response = await this.calendar.events.list({
+            calendarId: 'primary',
+            timeMin: new Date(chunk.start).toISOString(),
+            timeMax: new Date(chunk.end).toISOString(),
+            singleEvents: true,
+            orderBy: 'startTime',
+            maxResults: 2500,
+            pageToken: pageToken,
+          });
+
+          const events = response.data.items || [];
+          allEvents.push(...events);
+          chunkEvents += events.length;
+          pageToken = response.data.nextPageToken;
+
+          console.log(`  Chunk ${chunk.start}: fetched ${events.length} events (chunk total: ${chunkEvents})`);
+        } while (pageToken);
+        
+        console.log(`Completed chunk ${chunk.start}: ${chunkEvents} events`);
+      }
+
+      console.log(`Total events fetched from Google Calendar: ${allEvents.length}`);
+      
+      // Much more inclusive filtering - include most events with specific times
       const relevantEvents = allEvents.filter((event: any) => {
         const summary = event.summary || '';
         const description = event.description || '';
         const location = event.location || '';
         
-        // Skip all-day events without specific times (likely not appointments)
+        // Skip all-day events without specific times (likely holidays/birthdays)
         if (!event.start?.dateTime) return false;
         
-        // Skip events that are clearly not appointments
         const lowerSummary = summary.toLowerCase();
         const lowerDescription = description.toLowerCase();
         const lowerLocation = location.toLowerCase();
         
-        // Exclude common non-appointment events
+        // Only exclude very obvious non-appointments
         const excludeKeywords = [
-          'holiday', 'birthday', 'vacation', 'meeting', 'lunch', 'dinner', 
-          'conference', 'webinar', 'training', 'workshop', 'reminder'
+          'birthday', 'vacation', 'holiday', 'christmas', 'thanksgiving', 'new year'
         ];
         
         const hasExcludedKeywords = excludeKeywords.some(keyword => 
-          lowerSummary.includes(keyword) || lowerDescription.includes(keyword)
+          lowerSummary.includes(keyword)
         );
         
         if (hasExcludedKeywords) return false;
         
-        // Include events that look like appointments
-        const includeKeywords = [
-          'therapy', 'session', 'appointment', 'simplepractice', 'client', 
-          'patient', 'consultation', 'counseling', 'treatment', 'visit',
-          'assessment', 'intake', 'follow-up', 'followup', 'check-in'
-        ];
+        // Include almost all events with specific times during reasonable hours
+        const startTime = new Date(event.start.dateTime);
+        const hour = startTime.getHours();
         
-        // Also include events that have typical appointment patterns
-        const hasAppointmentPattern = (
-          // Has person names (contains common name patterns)
-          /[A-Z][a-z]+ [A-Z][a-z]+/.test(summary) ||
-          // Has time duration patterns
-          /\d{1,2}:\d{2}/.test(summary) ||
-          // Is during typical business hours and has reasonable duration
-          this.isBusinessHours(event.start?.dateTime) ||
-          // Contains any include keywords
-          includeKeywords.some(keyword => 
-            lowerSummary.includes(keyword) || lowerDescription.includes(keyword) || lowerLocation.includes(keyword)
-          )
-        );
+        // Include events between 6 AM and 10 PM (very broad range)
+        const isReasonableHour = hour >= 6 && hour <= 22;
         
-        return hasAppointmentPattern;
+        // Calculate duration
+        const endTime = event.end?.dateTime ? new Date(event.end.dateTime) : null;
+        const duration = endTime ? (endTime.getTime() - startTime.getTime()) / (1000 * 60) : 60;
+        
+        // Include events that are 15 minutes to 8 hours long (very broad range)
+        const isReasonableDuration = duration >= 15 && duration <= 480;
+        
+        return isReasonableHour && isReasonableDuration;
       });
 
       console.log(`Filtered to ${relevantEvents.length} relevant events`);
@@ -190,6 +168,37 @@ export class GoogleCalendarService {
       console.error('Error syncing Google Calendar:', error);
       throw new Error('Failed to sync calendar events');
     }
+  }
+
+  private createDateChunks(startDate: string, endDate: string, chunkType: 'yearly' | 'monthly'): Array<{ start: string; end: string }> {
+    const chunks: Array<{ start: string; end: string }> = [];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    let current = new Date(start);
+    
+    while (current < end) {
+      const chunkStart = new Date(current);
+      let chunkEnd: Date;
+      
+      if (chunkType === 'yearly') {
+        chunkEnd = new Date(current.getFullYear() + 1, 0, 1);
+      } else {
+        chunkEnd = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+      }
+      
+      // Don't go beyond the specified end date
+      if (chunkEnd > end) chunkEnd = end;
+      
+      chunks.push({
+        start: chunkStart.toISOString().split('T')[0],
+        end: chunkEnd.toISOString().split('T')[0]
+      });
+      
+      current = chunkEnd;
+    }
+    
+    return chunks;
   }
 
   private isBusinessHours(dateTimeStr: string): boolean {
