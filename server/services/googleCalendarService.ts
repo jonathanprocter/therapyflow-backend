@@ -52,8 +52,18 @@ export class GoogleCalendarService {
 
   async syncCalendarEvents(therapistId: string, startDate = '2015-01-01', endDate = '2030-12-31'): Promise<Session[]> {
     try {
-      // Refresh token if needed
-      await this.oauth2Client.getAccessToken();
+      // Check if we have valid credentials
+      const credentials = this.oauth2Client.credentials;
+      if (!credentials || !credentials.access_token) {
+        throw new Error('No valid authentication tokens. Please re-authenticate with Google Calendar.');
+      }
+
+      // Try to refresh token if needed
+      try {
+        await this.oauth2Client.getAccessToken();
+      } catch (error) {
+        throw new Error('Authentication tokens expired. Please re-authenticate with Google Calendar.');
+      }
 
       console.log(`Starting comprehensive calendar sync for ${startDate} to ${endDate}`);
       
@@ -153,10 +163,12 @@ export class GoogleCalendarService {
           therapistId,
           scheduledAt: new Date(startTime),
           duration,
-          sessionType: 'individual',
-          status: 'scheduled',
-          notes: event.description || '',
+          sessionType: 'individual' as const,
+          status: 'scheduled' as const,
+          notes: event.description || null,
           googleEventId: event.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
           // @ts-ignore - Temporary field for client matching
           clientName,
         };
