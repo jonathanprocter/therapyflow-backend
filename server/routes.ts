@@ -347,8 +347,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      if (req.file.mimetype !== 'application/pdf') {
-        return res.status(400).json({ error: 'Only PDF files are supported' });
+      // Support PDF, TXT, and DOCX files as mentioned in the documentation
+      const supportedMimeTypes = [
+        'application/pdf',
+        'text/plain',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      
+      if (!supportedMimeTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ 
+          error: 'Only PDF, TXT, and DOCX files are supported' 
+        });
       }
 
       const result = await documentProcessor.processDocument(

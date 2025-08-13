@@ -17,8 +17,8 @@ export interface ExtractedPDFData {
 export class PDFService {
   async extractText(buffer: Buffer): Promise<ExtractedPDFData> {
     try {
-      const pdf = await import('pdf-parse');
-      const data = await pdf.default(buffer);
+      const { default: pdfParse } = await import('pdf-parse');
+      const data = await pdfParse(buffer);
       
       return {
         text: data.text,

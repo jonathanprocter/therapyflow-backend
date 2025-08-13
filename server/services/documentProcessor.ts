@@ -37,8 +37,19 @@ export class DocumentProcessor {
     therapistId: string
   ): Promise<ProcessingResult> {
     try {
-      // Extract text from PDF
-      const extractedText = await this.extractTextFromPDF(file);
+      // Extract text based on file type
+      const fileExtension = fileName.toLowerCase().split('.').pop();
+      let extractedText = '';
+      
+      if (fileExtension === 'pdf') {
+        extractedText = await this.extractTextFromPDF(file);
+      } else if (fileExtension === 'txt' || fileExtension === 'text') {
+        extractedText = file.toString('utf-8');
+      } else if (fileExtension === 'docx') {
+        throw new Error('DOCX file processing not yet implemented');
+      } else {
+        extractedText = file.toString('utf-8');
+      }
       
       // Use AI to analyze and extract structured data
       const extractedData = await this.analyzeProgressNote(extractedText);
@@ -110,8 +121,9 @@ export class DocumentProcessor {
   private async extractTextFromPDF(buffer: Buffer): Promise<string> {
     try {
       // Use the PDFService for proper text extraction
-      const pdfService = await import('./pdfService');
-      const extractedData = await pdfService.pdfService.extractText(buffer);
+      const { PDFService } = await import('./pdfService');
+      const pdfService = new PDFService();
+      const extractedData = await pdfService.extractText(buffer);
       
       if (!extractedData.text || extractedData.text.trim().length < 10) {
         throw new Error('No readable text found in PDF');
