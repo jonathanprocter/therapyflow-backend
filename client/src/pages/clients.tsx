@@ -94,9 +94,11 @@ export default function Clients() {
                 <Card key={client.id} className="hover:shadow-md transition-shadow" data-testid={`client-card-${client.id}`}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-gray-900" data-testid={`client-name-${client.id}`}>
-                        {client.name}
-                      </h3>
+                      <Link href={`/clients/${client.id}`}>
+                        <h3 className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer transition-colors" data-testid={`client-name-${client.id}`}>
+                          {client.name}
+                        </h3>
+                      </Link>
                       <div className="flex items-center gap-2">
                         <Badge 
                           variant={client.status === 'active' ? 'default' : 'secondary'}

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "wouter";
 import type { SessionWithClient } from "@/types/clinical";
 
 export default function AppointmentsPanel() {
@@ -98,9 +99,11 @@ export default function AppointmentsPanel() {
                 </div>
                 
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900" data-testid={`appointment-client-${session.id}`}>
-                    {session.client?.name || "Unknown Client"}
-                  </h4>
+                  <Link href={`/clients/${session.client?.id}`}>
+                    <h4 className="font-medium text-gray-900 hover:text-blue-600 cursor-pointer transition-colors" data-testid={`appointment-client-${session.id}`}>
+                      {session.client?.name || "Unknown Client"}
+                    </h4>
+                  </Link>
                   <p className="text-sm text-gray-500" data-testid={`appointment-type-${session.id}`}>
                     {session.sessionType}
                   </p>
