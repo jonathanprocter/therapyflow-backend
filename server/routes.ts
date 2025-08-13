@@ -102,9 +102,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sessions endpoints
   app.get("/api/sessions", async (req: any, res) => {
     try {
-      const { clientId, upcoming } = req.query;
+      const { clientId, upcoming, today } = req.query;
       
-      if (upcoming === "true") {
+      if (today === "true") {
+        const sessions = await storage.getTodaysSessions(req.therapistId);
+        // Fetch client data for each session
+        const sessionsWithClients = await Promise.all(
+          sessions.map(async (session) => {
+            const client = await storage.getClient(session.clientId);
+            return { ...session, client };
+          })
+        );
+        res.json(sessionsWithClients);
+      } else if (upcoming === "true") {
         const sessions = await storage.getUpcomingSessions(req.therapistId);
         // Fetch client data for each session
         const sessionsWithClients = await Promise.all(

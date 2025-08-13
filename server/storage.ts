@@ -28,6 +28,7 @@ export interface IStorage {
   // Sessions
   getSessions(clientId: string): Promise<Session[]>;
   getUpcomingSessions(therapistId: string, date?: Date): Promise<Session[]>;
+  getTodaysSessions(therapistId: string): Promise<Session[]>;
   getSession(id: string): Promise<Session | undefined>;
   getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined>;
   createSession(session: InsertSession): Promise<Session>;
@@ -160,7 +161,28 @@ export class DatabaseStorage implements IStorage {
           // Only include SimplePractice therapy appointments
           eq(sessions.isSimplePracticeEvent, true),
           // Filter out non-therapy events like birthdays
-          sql`${sessions.duration} < 1440` // Exclude all-day events (1440 min = 24 hours)
+          sql`${sessions.duration} < 1440`, // Exclude all-day events (1440 min = 24 hours)
+          // Filter sessions for the specific date (in EDT timezone)
+          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'EDT') >= DATE(${targetDate} AT TIME ZONE 'EDT')`
+        )
+      )
+      .orderBy(sessions.scheduledAt);
+  }
+
+  async getTodaysSessions(therapistId: string): Promise<Session[]> {
+    return await db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.therapistId, therapistId),
+          eq(sessions.status, "scheduled"),
+          // Only include SimplePractice therapy appointments
+          eq(sessions.isSimplePracticeEvent, true),
+          // Filter out non-therapy events like birthdays
+          sql`${sessions.duration} < 1440`, // Exclude all-day events (1440 min = 24 hours)
+          // Filter sessions for today only (in EDT timezone)
+          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'EDT') = DATE(NOW() AT TIME ZONE 'EDT')`
         )
       )
       .orderBy(sessions.scheduledAt);
