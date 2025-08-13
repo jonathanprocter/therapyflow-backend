@@ -1,4 +1,11 @@
 // Lazy load pdf-parse to avoid startup issues
+let pdfParse: any = null;
+
+try {
+  pdfParse = require('pdf-parse');
+} catch (error) {
+  console.warn('pdf-parse not available, using fallback extraction');
+}
 
 export interface ExtractedPDFData {
   text: string;
@@ -17,47 +24,117 @@ export interface ExtractedPDFData {
 export class PDFService {
   async extractText(buffer: Buffer): Promise<ExtractedPDFData> {
     try {
-      // PDF processing with helpful fallback message
-      console.log('PDF processing has limitations - TXT format recommended for optimal results');
+      console.log('🔍 Starting PDF text extraction...');
       
-      // Instead of completely failing, provide a helpful message
-      return {
-        text: 'PDF text extraction is currently limited. For the most accurate AI analysis and clinical documentation, please save your progress notes as TXT files. TXT format provides 95% confidence and full feature support.',
-        pages: 1,
-        metadata: {
-          title: 'PDF Processing Limited'
+      if (pdfParse) {
+        console.log('📄 Using pdf-parse library for extraction');
+        const data = await pdfParse(buffer, {
+          normalizeWhitespace: true,
+          disableCombineTextItems: false
+        });
+        
+        if (data.text && data.text.length > 20) {
+          console.log(`✅ PDF extraction successful: ${data.text.length} characters extracted`);
+          return {
+            text: data.text,
+            pages: data.numpages || 1,
+            metadata: {
+              title: data.info?.Title,
+              author: data.info?.Author,
+              subject: data.info?.Subject,
+              creator: data.info?.Creator,
+              producer: data.info?.Producer,
+              creationDate: data.info?.CreationDate ? new Date(data.info.CreationDate) : undefined,
+              modificationDate: data.info?.ModDate ? new Date(data.info.ModDate) : undefined,
+            }
+          };
         }
-      };
-      
-      if (!pdfParse) {
-        throw new Error('PDF parser not available');
       }
       
-      const data = await pdfParse(buffer);
+      // Fallback extraction method
+      console.log('⚠️ Primary PDF extraction failed, trying alternative method...');
+      const fallbackText = this.extractPDFTextFallback(buffer);
       
+      if (fallbackText && fallbackText.length > 50) {
+        console.log(`✅ Fallback extraction successful: ${fallbackText.length} characters`);
+        return {
+          text: fallbackText,
+          pages: 1,
+          metadata: {
+            title: 'PDF (Fallback Extraction)'
+          }
+        };
+      }
+      
+      // Final fallback with user guidance
+      console.log('❌ PDF extraction failed - returning guidance message');
       return {
-        text: data.text || '',
-        pages: data.numpages || 1,
+        text: 'PDF text extraction encountered difficulties. The enhanced AI processor can still analyze the document, but for optimal results, consider saving your progress notes as TXT files which provide 95% confidence and full feature support.',
+        pages: 1,
         metadata: {
-          title: data.info?.Title,
-          author: data.info?.Author,
-          subject: data.info?.Subject,
-          creator: data.info?.Creator,
-          producer: data.info?.Producer,
-          creationDate: data.info?.CreationDate ? new Date(data.info.CreationDate) : undefined,
-          modificationDate: data.info?.ModDate ? new Date(data.info.ModDate) : undefined,
+          title: 'PDF Processing Guidance'
         }
       };
-    } catch (error) {
-      console.error('Error extracting PDF text:', error);
-      console.log('PDF parsing failed. For now, please use TXT format for reliable processing.');
       
-      // For production use, we'd recommend converting PDFs to TXT first
+    } catch (error) {
+      console.error('❌ Error extracting PDF text:', error);
+      
+      // Try one more fallback
+      const emergencyText = this.extractPDFTextFallback(buffer);
+      
       return {
-        text: 'PDF processing temporarily unavailable. Please save your progress notes as TXT files for optimal processing. The system works perfectly with TXT format and provides the same comprehensive AI analysis.',
+        text: emergencyText || 'PDF processing encountered an error. For reliable processing with comprehensive AI analysis, please save your document as TXT format.',
         pages: 1,
-        metadata: {}
+        metadata: {
+          title: 'PDF Error Recovery'
+        }
       };
+    }
+  }
+
+  /**
+   * Fallback PDF text extraction using basic byte parsing
+   */
+  private extractPDFTextFallback(buffer: Buffer): string {
+    try {
+      // Convert buffer to string and look for text patterns
+      const pdfString = buffer.toString('latin1');
+      
+      // Extract text between parentheses (common PDF text encoding)
+      const textMatches = pdfString.match(/\(([^)]+)\)/g);
+      let extractedText = '';
+      
+      if (textMatches) {
+        extractedText = textMatches
+          .map(match => match.slice(1, -1)) // Remove parentheses
+          .join(' ')
+          .replace(/\\[rn]/g, ' ') // Replace escape sequences
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+      
+      // If no text found, try alternative patterns
+      if (!extractedText || extractedText.length < 20) {
+        const streamMatches = pdfString.match(/stream\s*(.*?)\s*endstream/gs);
+        if (streamMatches) {
+          const streamText = streamMatches
+            .map(match => match.replace(/stream|endstream/g, ''))
+            .join(' ')
+            .replace(/[^\x20-\x7E\s]/g, ' ') // Keep only printable chars
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          if (streamText.length > extractedText.length) {
+            extractedText = streamText;
+          }
+        }
+      }
+      
+      return extractedText.length > 20 ? extractedText : '';
+      
+    } catch (error) {
+      console.error('Fallback PDF extraction failed:', error);
+      return '';
     }
   }
 

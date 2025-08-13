@@ -5,6 +5,7 @@ import { aiService } from "./services/aiService";
 import { calendarService } from "./services/calendarService";
 import { pdfService } from "./services/pdfService";
 import { documentProcessor } from "./services/documentProcessor";
+import { enhancedDocumentProcessor } from "./services/enhanced-document-processor";
 import { googleCalendarService } from "./services/googleCalendarService";
 import { 
   insertClientSchema, 
@@ -445,17 +446,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Document Upload and Processing endpoints
+  // Enhanced Document Upload and Processing endpoints
   app.post("/api/documents/upload", upload.single('document'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      // Support multiple file types: TXT (optimal), PDF (with fallback), DOCX (with processing)
+      // Support multiple file types with enhanced processing
       const supportedMimeTypes = [
-        'text/plain',                    // TXT - working perfectly
-        'application/pdf',               // PDF - with fallback message
+        'text/plain',                    // TXT - optimal for AI analysis
+        'application/pdf',               // PDF - robust extraction now available
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
         'application/msword',            // DOC (older format)
         'text/rtf',                      // RTF
@@ -464,8 +465,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!supportedMimeTypes.includes(req.file.mimetype)) {
         return res.status(400).json({ 
-          error: 'Supported file types: TXT (recommended), PDF, DOCX, DOC, RTF. Please convert your file to one of these formats.' 
+          error: 'Supported file types: TXT, PDF, DOCX, DOC, RTF. Enhanced AI analysis now supports all formats.' 
         });
+      }
+
+      console.log(`🚀 Processing ${req.file.originalname} with enhanced AI analysis...`);
+      
+      const result = await enhancedDocumentProcessor.processDocument(
+        req.file.buffer,
+        req.file.originalname,
+        req.therapistId
+      );
+
+      // Log success metrics
+      if (result.success) {
+        console.log(`✅ Enhanced processing completed: ${result.confidence}% confidence`);
+        console.log(`📊 Validation scores: Text:${result.validationDetails?.textExtractionScore}% AI:${result.validationDetails?.aiAnalysisScore}% Date:${result.validationDetails?.dateValidationScore}% Client:${result.validationDetails?.clientMatchScore}%`);
+      } else {
+        console.log(`❌ Enhanced processing failed: ${result.processingNotes}`);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      res.status(500).json({ error: 'Failed to process document with enhanced AI analysis' });
+    }
+  });
+
+  // Legacy document upload endpoint (fallback)
+  app.post("/api/documents/upload-legacy", upload.single('document'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
       }
 
       const result = await documentProcessor.processDocument(
@@ -476,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result);
     } catch (error) {
-      console.error('Error uploading document:', error);
+      console.error('Error uploading document (legacy):', error);
       res.status(500).json({ error: 'Failed to process document' });
     }
   });

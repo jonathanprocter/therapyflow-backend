@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProgressNoteForm from "@/components/forms/progress-note-form";
+import EnhancedDocumentUpload from "@/components/enhanced-document-upload";
 import { formatEDTDateShort } from "@/utils/timezone";
 import type { ProgressNoteWithClient } from "@/types/clinical";
 
@@ -84,11 +86,26 @@ export default function ProgressNotes() {
                     New Progress Note
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Create Progress Note</DialogTitle>
                   </DialogHeader>
-                  <ProgressNoteForm onSuccess={() => setIsCreateDialogOpen(false)} />
+                  <Tabs defaultValue="upload" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="upload">Enhanced Document Upload</TabsTrigger>
+                      <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="upload" className="space-y-4">
+                      <div className="text-sm text-gray-600 mb-4">
+                        Upload your progress notes in TXT, PDF, DOCX, DOC, or RTF format. 
+                        Our enhanced AI will extract client information, session dates, themes, and create comprehensive clinical documentation.
+                      </div>
+                      <EnhancedDocumentUpload />
+                    </TabsContent>
+                    <TabsContent value="manual" className="space-y-4">
+                      <ProgressNoteForm onSuccess={() => setIsCreateDialogOpen(false)} />
+                    </TabsContent>
+                  </Tabs>
                 </DialogContent>
               </Dialog>
             </div>
