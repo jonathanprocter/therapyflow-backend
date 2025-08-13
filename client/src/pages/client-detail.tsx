@@ -1837,7 +1837,7 @@ export default function ClientDetail() {
       </main>
 
       {/* Print Styles */}
-      <style jsx>{`
+      <style>{`
         @media print {
           .no-print {
             display: none !important;
