@@ -7,6 +7,7 @@ import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
 import ProgressNotes from "@/pages/progress-notes";
 import Calendar from "@/pages/calendar";
+import Documents from "@/pages/documents";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/clients" component={Clients} />
       <Route path="/progress-notes" component={ProgressNotes} />
       <Route path="/calendar" component={Calendar} />
+      <Route path="/documents" component={Documents} />
       <Route component={NotFound} />
     </Switch>
   );

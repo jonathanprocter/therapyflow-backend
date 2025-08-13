@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { anthropicService } from "./anthropicService";
 
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
@@ -44,6 +45,8 @@ export class AIService {
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        max_tokens: 4096, // Maximum tokens for comprehensive analysis
+        temperature: 0.3, // Lower temperature for more consistent clinical analysis
         messages: [
           {
             role: "system",
@@ -69,8 +72,18 @@ export class AIService {
       const result = JSON.parse(response.choices[0].message.content || "{}");
       return result.tags || [];
     } catch (error) {
-      console.error("Error generating clinical tags:", error);
-      return [];
+      console.error("OpenAI error generating clinical tags, trying Anthropic fallback:", error);
+      try {
+        const anthropicTags = await anthropicService.generateClinicalTags(content);
+        return anthropicTags.map(tag => ({
+          name: tag.name,
+          category: "general",
+          confidence: tag.confidence
+        }));
+      } catch (anthropicError) {
+        console.error("Anthropic fallback also failed:", anthropicError);
+        return [];
+      }
     }
   }
 
@@ -82,6 +95,8 @@ export class AIService {
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        max_tokens: 4096, // Maximum tokens for comprehensive insights
+        temperature: 0.2, // Low temperature for clinical consistency
         messages: [
           {
             role: "system",
@@ -105,8 +120,24 @@ export class AIService {
       const result = JSON.parse(response.choices[0].message.content || "{}");
       return result.insights || [];
     } catch (error) {
-      console.error("Error generating clinical insights:", error);
-      return [];
+      console.error("OpenAI error generating clinical insights, trying Anthropic fallback:", error);
+      try {
+        const anthropicInsight = await anthropicService.generateClinicalInsight(recentNotes.join('\n\n'), clientHistory);
+        return [{
+          type: "pattern_recognition",
+          title: "Clinical Analysis",
+          description: anthropicInsight.insight,
+          priority: anthropicInsight.riskLevel === 'high' ? 'high' : anthropicInsight.riskLevel === 'medium' ? 'medium' : 'low',
+          metadata: {
+            recommendations: anthropicInsight.recommendations,
+            patterns: anthropicInsight.patterns,
+            source: 'anthropic'
+          }
+        }];
+      } catch (anthropicError) {
+        console.error("Anthropic fallback also failed:", anthropicError);
+        return [];
+      }
     }
   }
 
@@ -118,6 +149,8 @@ export class AIService {
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        max_tokens: 4096, // Maximum tokens for comprehensive session preparation
+        temperature: 0.2, // Low temperature for consistent therapeutic guidance
         messages: [
           {
             role: "system",

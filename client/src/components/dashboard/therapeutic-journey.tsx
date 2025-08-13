@@ -2,35 +2,19 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const journeyMilestones = [
-  {
-    title: "Initial Assessment Complete",
-    description: "Michael Chen - Completed comprehensive intake and established treatment goals focusing on anxiety management and work-life balance.",
-    date: "Dec 1, 2024",
-    type: "assessment",
-    allianceScore: 8.2,
-    goalsSet: 3,
-    color: "primary"
-  },
-  {
-    title: "Mid-Treatment Review", 
-    description: "Significant progress noted in anxiety management. Client reporting 40% reduction in panic episodes and improved sleep quality.",
-    date: "Dec 8, 2024",
-    type: "milestone",
-    allianceScore: 9.1,
-    goalsMet: 2,
-    goalsTotal: 3,
-    color: "secondary"
-  },
-  {
-    title: "Treatment Adjustment",
-    description: "Incorporated EMDR techniques for trauma processing. Updated treatment plan to address underlying childhood experiences.",
-    date: "Dec 14, 2024", 
-    type: "adjustment",
-    newModality: "EMDR",
-    color: "accent"
-  }
-];
+// Journey milestones will be dynamically loaded from the database
+const journeyMilestones: Array<{
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+  allianceScore?: number;
+  goalsSet?: number;
+  goalsMet?: number;
+  goalsTotal?: number;
+  newModality?: string;
+  color: string;
+}> = [];
 
 export default function TherapeuticJourney() {
   return (
@@ -47,9 +31,7 @@ export default function TherapeuticJourney() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Clients</SelectItem>
-                <SelectItem value="michael-chen">Michael Chen</SelectItem>
-                <SelectItem value="emma-rodriguez">Emma Rodriguez</SelectItem>
-                <SelectItem value="david-kim">David Kim</SelectItem>
+                {/* Client options will be dynamically populated */}
               </SelectContent>
             </Select>
             <Button variant="outline" size="sm" data-testid="generate-report">

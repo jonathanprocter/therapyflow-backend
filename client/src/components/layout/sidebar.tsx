@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: "fas fa-chart-line" },
-  { name: "Clients", href: "/clients", icon: "fas fa-users", badge: "24" },
+  { name: "Clients", href: "/clients", icon: "fas fa-users" },
   { name: "Progress Notes", href: "/progress-notes", icon: "fas fa-notes-medical" },
   { name: "Calendar", href: "/calendar", icon: "fas fa-calendar-alt", hasNotification: true },
+  { name: "Documents", href: "/documents", icon: "fas fa-file-upload" },
 ];
 
 const clinicalTools = [

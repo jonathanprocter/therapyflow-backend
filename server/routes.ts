@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { aiService } from "./services/aiService";
 import { calendarService } from "./services/calendarService";
 import { pdfService } from "./services/pdfService";
+import { documentProcessor } from "./services/documentProcessor";
 import { 
   insertClientSchema, 
   insertSessionSchema, 
@@ -340,6 +341,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading document:", error);
       res.status(500).json({ error: "Failed to upload document" });
+    }
+  });
+
+  // Document processing endpoints for batch upload
+  app.post("/api/documents/batch-process", upload.array('documents'), async (req: any, res) => {
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: "No files provided" });
+      }
+
+      const files = req.files.map((file: any) => ({
+        buffer: file.buffer,
+        filename: file.originalname
+      }));
+
+      const results = await documentProcessor.batchProcess(files);
+      res.json(results);
+    } catch (error) {
+      console.error("Error processing documents:", error);
+      res.status(500).json({ error: "Failed to process documents" });
+    }
+  });
+
+  app.post("/api/documents/single-process", upload.single('document'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file provided" });
+      }
+
+      const metadata = await documentProcessor.processDocument(req.file.buffer, req.file.originalname);
+      res.json(metadata);
+    } catch (error) {
+      console.error("Error processing document:", error);
+      res.status(500).json({ error: "Failed to process document" });
     }
   });
 
