@@ -1,10 +1,30 @@
-# Google OAuth2 Java Configuration
+# Google OAuth2 Java Web Application Configuration
 
 ## Current Configuration Details
 
 **Client ID:** `839967078225-sjhemk0h654iv9jbc58lears67ntt877.apps.googleusercontent.com`
 
-**Current Redirect URI:** `urn:ietf:wg:oauth:2.0:oob`
+**Required for Java Web App:**
+
+### Google Cloud Console Configuration
+
+**ADD THESE REDIRECT URIs TO YOUR GOOGLE CLOUD CONSOLE:**
+
+1. **Development (Local):**
+   ```
+   http://localhost:8080/oauth2/callback/google
+   ```
+
+2. **Production:**
+   ```
+   https://yourdomain.com/oauth2/callback/google
+   ```
+
+3. **Alternative Development Ports:**
+   ```
+   http://localhost:9090/oauth2/callback/google
+   http://localhost:3000/oauth2/callback/google
+   ```
 
 ## Java Implementation
 
@@ -34,15 +54,24 @@ public class GoogleCalendarAuth {
 }
 ```
 
-### Option 2: Web Application Flow
-If you want to use a web callback instead:
+### Java Web Application Configuration
 
 ```java
-// For local development
-private static final String REDIRECT_URI = "http://localhost:8080/oauth/callback";
-
-// For production
-private static final String REDIRECT_URI = "https://yourdomain.com/oauth/google/callback";
+public class GoogleOAuth2Config {
+    // Client credentials
+    private static final String CLIENT_ID = "839967078225-sjhemk0h654iv9jbc58lears67ntt877.apps.googleusercontent.com";
+    private static final String CLIENT_SECRET = "your-client-secret";
+    
+    // Redirect URIs (choose based on environment)
+    private static final String DEV_REDIRECT_URI = "http://localhost:8080/oauth2/callback/google";
+    private static final String PROD_REDIRECT_URI = "https://yourdomain.com/oauth2/callback/google";
+    
+    // Use this method to get the appropriate redirect URI
+    public static String getRedirectUri() {
+        String environment = System.getProperty("app.environment", "development");
+        return "production".equals(environment) ? PROD_REDIRECT_URI : DEV_REDIRECT_URI;
+    }
+}
 ```
 
 ### Option 3: Android Application
@@ -51,21 +80,34 @@ For Android apps:
 private static final String REDIRECT_URI = "com.yourpackage.therapyflow://oauth/callback";
 ```
 
-## Google Cloud Console Setup
+## Google Cloud Console Setup Steps
 
-To configure the redirect URI in Google Cloud Console:
+**IMPORTANT: Add these URIs to your Google Cloud Console**
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Select your project
-3. Navigate to APIs & Services > Credentials
-4. Click on your OAuth 2.0 Client ID: `839967078225-sjhemk0h654iv9jbc58lears67ntt877`
-5. Add your redirect URI to "Authorized redirect URIs":
+1. **Go to Google Cloud Console:**
+   - Visit: https://console.cloud.google.com/
+   - Select your project
 
-**Available Options:**
-- `urn:ietf:wg:oauth:2.0:oob` (Already configured - for desktop apps)
-- `http://localhost:8080/oauth/callback` (For local Java web apps)
-- `https://yourdomain.com/oauth/callback` (For production web apps)
-- `com.yourpackage.therapyflow://oauth/callback` (For mobile apps)
+2. **Navigate to Credentials:**
+   - Go to: APIs & Services > Credentials
+   - Find OAuth 2.0 Client ID: `839967078225-sjhemk0h654iv9jbc58lears67ntt877`
+   - Click "Edit" (pencil icon)
+
+3. **Add Authorized Redirect URIs:**
+   
+   **Copy and paste these EXACT URIs:**
+   ```
+   http://localhost:8080/oauth2/callback/google
+   https://yourdomain.com/oauth2/callback/google
+   http://localhost:9090/oauth2/callback/google
+   ```
+
+4. **Click "Save"**
+
+**Current URIs you should see:**
+- `urn:ietf:wg:oauth:2.0:oob` (existing - for desktop)
+- `http://localhost:8080/oauth2/callback/google` (ADD THIS)
+- `https://yourdomain.com/oauth2/callback/google` (ADD THIS)
 
 ## Complete Java OAuth Flow
 
