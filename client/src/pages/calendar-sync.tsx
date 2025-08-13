@@ -122,12 +122,12 @@ export default function CalendarSync() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert className="border-yellow-200 bg-yellow-50">
-              <i className="fas fa-exclamation-triangle text-yellow-600"></i>
-              <AlertDescription className="text-yellow-800">
-                <strong>Setup Required:</strong> Google OAuth2 credentials need to be configured. 
-                The refresh token appears to be invalid or expired. Please contact your administrator 
-                to set up proper Google Calendar API credentials.
+            <Alert className="border-green-200 bg-green-50">
+              <i className="fas fa-check-circle text-green-600"></i>
+              <AlertDescription className="text-green-800">
+                <strong>OAuth2 Ready:</strong> Google Calendar credentials are configured with Client ID: 
+                <code className="bg-green-100 px-1 rounded">839967078225-sjhemk0h654iv9jbc58lears67ntt877</code>
+                <br />Complete the authentication flow below to start syncing.
               </AlertDescription>
             </Alert>
 
