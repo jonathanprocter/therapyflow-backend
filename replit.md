@@ -14,6 +14,14 @@ Preferred communication style: Simple, everyday language.
 - All AI processing and manual extraction must enforce these exact three session types
 - Default to "individual" in all ambiguous cases
 
+## Document Processing Configuration
+- All uploaded documents should be processed using comprehensive clinical progress note generation
+- Unless already identified as a formatted progress note by AI logic, documents should be transformed into full clinical progress notes
+- Progress notes must follow professional structure: Title, Subjective, Objective, Assessment, Plan, Supplemental Analyses
+- Include: Tonal Analysis, Key Points, Significant Quotes, Comprehensive Narrative Summary
+- Demonstrate clinical sophistication using therapeutic modalities (ACT, DBT, Narrative Therapy, Existentialism)
+- Use professional clinical voice with proper documentation standards
+
 ## Current Configuration
 - Therapist: Dr. Jonathan Procter (License: Licensed Therapist)
 - Database: Successfully imported 2,251+ SimplePractice appointments (2018-2025) with complete historical therapy session data

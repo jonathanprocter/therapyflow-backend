@@ -569,7 +569,7 @@ export class EnhancedDocumentProcessor {
     console.log('🤖 Starting multi-pass AI analysis...');
     
     const analysisPrompt = `
-You are an expert clinical psychologist with 20+ years of experience in therapeutic documentation and clinical assessment. Analyze this clinical document with the highest level of professional expertise.
+You are an expert clinical therapist with extensive training in psychotherapy, clinical documentation, and therapeutic modalities including ACT, DBT, Narrative Therapy, and Existentialism. Your task is to analyze this therapy session document and create comprehensive clinical documentation.
 
 DOCUMENT TO ANALYZE:
 """
@@ -578,57 +578,53 @@ ${text}
 
 FILENAME: ${fileName}
 
-Perform a comprehensive clinical analysis and extract the following information. Be extremely thorough and clinically sophisticated in your analysis:
+First, determine if this document is already a formatted progress note or if it's raw session content that needs full clinical analysis.
 
-1. CLIENT IDENTIFICATION:
-   - Extract the client's name with high confidence
-   - Consider variations, nicknames, or partial names
-   - Provide alternative interpretations if ambiguous
+If this is RAW SESSION CONTENT (transcripts, notes, recordings), create a comprehensive clinical progress note following this structure:
 
-2. SESSION DATE EXTRACTION:
-   - Identify the exact session date
-   - Support multiple date formats (MM/DD/YYYY, DD/MM/YYYY, Month DD, YYYY, etc.)
-   - Consider context clues and document metadata
-   - Provide alternative date interpretations if multiple dates are present
+**COMPREHENSIVE CLINICAL PROGRESS NOTE**
 
-3. CLINICAL CONTENT ANALYSIS:
-   - Session type (ONLY: "individual", "couples", or "session without patient present")
-   - Primary therapeutic themes and topics discussed
-   - Emotional states and mood indicators
-   - Interventions and techniques used
-   - Risk assessment and safety concerns
-   - Progress indicators and therapeutic gains
-   - Homework assignments or next steps
-   - Treatment plan updates
+**Title**: "Comprehensive Clinical Progress Note for [Client's Full Name]'s Therapy Session on [Date]"
 
-4. PROFESSIONAL ASSESSMENT:
-   - Rate the session progress (1-10 scale)
-   - Identify risk level (low, moderate, high, critical)
-   - Extract clinical insights and patterns
-   - Note any immediate concerns or follow-up needs
+**Subjective Section**: Document the client's reported experience, direct quotes, and subjective presentation. Include emotional state, chief concerns, and how they describe their current functioning. Use direct quotes where clinically meaningful.
+
+**Objective Section**: Describe observable behaviors, appearance, mental status, affect, mood, thought process, and any notable clinical observations during the session. Be specific about nonverbal communication and presentation.
+
+**Assessment Section**: Provide clinical formulation, diagnostic considerations, therapeutic progress, risk assessment, and integration with ongoing treatment goals. Demonstrate depth of clinical thinking with evidence-based observations.
+
+**Plan Section**: Detail specific therapeutic interventions used, homework assignments, treatment plan modifications, and next session focus areas. Include specific modalities (ACT, DBT, etc.) when applicable.
+
+**Supplemental Analyses**:
+- **Tonal Analysis**: Identify significant emotional shifts during session with clinical interpretation
+- **Key Points**: Extract 3-4 most clinically significant insights with therapeutic implications  
+- **Significant Quotes**: Include meaningful client statements with clinical interpretation
+- **Comprehensive Narrative Summary**: Integrate all elements into cohesive clinical understanding
+
+If this is ALREADY A PROGRESS NOTE, extract key data elements only.
 
 Return your analysis in this exact JSON format:
 {
+  "documentType": "raw_content|progress_note",
   "clientName": "extracted client name",
-  "sessionDate": "YYYY-MM-DD format",
+  "sessionDate": "YYYY-MM-DD format", 
   "sessionType": "individual|couples|session without patient present",
-  "content": "comprehensive session summary",
-  "themes": ["theme1", "theme2", "theme3"],
-  "emotions": ["emotion1", "emotion2", "emotion3"],
-  "interventions": ["intervention1", "intervention2"],
+  "content": "full comprehensive clinical progress note OR extracted summary if already formatted",
+  "themes": ["clinical themes identified"],
+  "emotions": ["emotional states observed"],
+  "interventions": ["therapeutic interventions used"],
   "riskLevel": "low|moderate|high|critical",
   "progressRating": 1-10,
-  "nextSteps": ["step1", "step2"],
-  "clinicalNotes": "professional clinical observations",
+  "nextSteps": ["treatment plan next steps"],
+  "clinicalNotes": "key clinical observations and formulation",
   "confidence": 1-100,
   "alternativeInterpretations": {
-    "clientName": ["alternative1", "alternative2"],
-    "sessionDate": ["date1", "date2"],
-    "reasoning": "explanation of alternatives"
+    "clientName": ["alternative name interpretations"],
+    "sessionDate": ["alternative date interpretations"],
+    "reasoning": "explanation of any ambiguities"
   }
 }
 
-Be extremely thorough and professional. This is critical clinical documentation.
+Demonstrate clinical sophistication, therapeutic wisdom, and professional documentation standards. This is critical clinical documentation that must meet the highest professional standards.
 `;
 
     try {
