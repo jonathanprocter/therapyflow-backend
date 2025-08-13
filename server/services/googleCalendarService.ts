@@ -143,7 +143,7 @@ export class GoogleCalendarService {
 
         return {
           id: `google-${event.id}`,
-          clientId: `sync-client-${index}`, // Will need proper client matching
+          clientId: 'calendar-sync-client', // Use default client for calendar sync
           therapistId,
           scheduledAt: new Date(startTime),
           duration,
