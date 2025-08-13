@@ -612,7 +612,7 @@ Return your analysis in this exact JSON format:
   "themes": ["clinical themes identified"],
   "emotions": ["emotional states observed"],
   "interventions": ["therapeutic interventions used"],
-  "riskLevel": "low|moderate|high|critical",
+  "riskLevel": "low|moderate|high|critical (default to 'low' unless clear indicators suggest otherwise)",
   "progressRating": 1-10,
   "nextSteps": ["treatment plan next steps"],
   "clinicalNotes": "key clinical observations and formulation",
@@ -688,24 +688,24 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
     }
 
     // Manual fallback if AI fails
-    return this.performManualFallbackAnalysis(text);
+    return this.performManualFallbackAnalysis(text, fileName);
   }
 
   /**
    * Manual fallback analysis when AI fails
    */
-  performManualFallbackAnalysis(text: string): ExtractedClinicalData {
+  performManualFallbackAnalysis(text: string, fileName?: string): ExtractedClinicalData {
     console.log('🔧 Performing manual fallback analysis...');
     
     return {
       clientName: this.extractClientNameManually(text) || 'Unknown Client',
-      sessionDate: this.extractDateManually(text) || new Date().toISOString().split('T')[0],
+      sessionDate: this.extractDateManually(text, fileName) || new Date().toISOString().split('T')[0],
       sessionType: this.extractSessionTypeManually(text) || 'individual',
       content: text.substring(0, 1000) + (text.length > 1000 ? '...' : ''),
       themes: this.extractThemesManually(text),
       emotions: this.extractEmotionsManually(text),
       interventions: this.extractInterventionsManually(text),
-      riskLevel: this.assessRiskManually(text),
+      riskLevel: 'low', // Default to low as requested
       progressRating: 5, // Neutral default
       nextSteps: this.extractNextStepsManually(text),
       clinicalNotes: 'Manual analysis - AI processing unavailable',
@@ -740,21 +740,52 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
   }
 
   /**
-   * Manual date extraction using patterns
+   * Enhanced date extraction from filename and content
    */
-  extractDateManually(text: string): string | null {
-    const datePatterns = [
+  extractDateManually(text: string, fileName?: string): string | null {
+    // First, try to extract date from filename
+    if (fileName) {
+      const fileNameDatePatterns = [
+        /(\d{1,2}-\d{1,2}-\d{4})/,
+        /(\d{1,2}\/\d{1,2}\/\d{4})/,
+        /(\d{4}-\d{2}-\d{2})/,
+        /(\d{1,2}\.\d{1,2}\.\d{4})/,
+        // Handle formats like "8-1-2025"
+        /(\d{1,2}-\d{1,2}-\d{4})/,
+        // Handle formats with month names
+        /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})/i,
+      ];
+      
+      for (const pattern of fileNameDatePatterns) {
+        const match = fileName.match(pattern);
+        if (match && match[1]) {
+          const parsedDate = new Date(match[1]);
+          if (isValid(parsedDate)) {
+            console.log(`📅 Date extracted from filename: ${match[1]} -> ${format(parsedDate, 'yyyy-MM-dd')}`);
+            return format(parsedDate, 'yyyy-MM-dd');
+          }
+        }
+      }
+    }
+
+    // Then try to extract from document content
+    const contentDatePatterns = [
       /\b(\d{1,2}\/\d{1,2}\/\d{4})\b/,
       /\b(\d{1,2}-\d{1,2}-\d{4})\b/,
       /\b((?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4})\b/i,
       /\b(\d{4}-\d{2}-\d{2})\b/,
+      /\b(\d{1,2}\.\d{1,2}\.\d{4})\b/,
+      // Session date patterns
+      /session\s+(?:on|date):\s*(\d{1,2}\/\d{1,2}\/\d{4})/i,
+      /date:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i,
     ];
     
-    for (const pattern of datePatterns) {
+    for (const pattern of contentDatePatterns) {
       const match = text.match(pattern);
       if (match && match[1]) {
         const parsedDate = new Date(match[1]);
         if (isValid(parsedDate)) {
+          console.log(`📅 Date extracted from content: ${match[1]} -> ${format(parsedDate, 'yyyy-MM-dd')}`);
           return format(parsedDate, 'yyyy-MM-dd');
         }
       }

@@ -21,6 +21,8 @@ Preferred communication style: Simple, everyday language.
 - Include: Tonal Analysis, Key Points, Significant Quotes, Comprehensive Narrative Summary
 - Demonstrate clinical sophistication using therapeutic modalities (ACT, DBT, Narrative Therapy, Existentialism)
 - Use professional clinical voice with proper documentation standards
+- **Risk Level Default**: Always default to 'low' risk level unless clear indicators suggest otherwise
+- **Date Extraction Priority**: Extract session dates first from document filename, then from document content (OCR/text)
 
 ## Current Configuration
 - Therapist: Dr. Jonathan Procter (License: Licensed Therapist)
