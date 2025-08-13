@@ -60,21 +60,35 @@ export class GoogleCalendarService {
 
   async syncCalendarEvents(therapistId: string, startDate = '2015-01-01', endDate = '2030-12-31'): Promise<Session[]> {
     try {
-      // Check if we have refresh token
-      if (!process.env.GOOGLE_REFRESH_TOKEN) {
-        throw new Error('No refresh token available. Please re-authenticate with Google Calendar.');
-      }
-
-      // Ensure we have the refresh token set
-      this.oauth2Client.setCredentials({
-        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+      // Check if we have any credentials
+      const currentCredentials = this.oauth2Client.credentials;
+      console.log('Current credentials status:', {
+        hasAccessToken: !!currentCredentials.access_token,
+        hasRefreshToken: !!currentCredentials.refresh_token,
+        envRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN,
+        accessTokenPreview: currentCredentials.access_token ? `${currentCredentials.access_token.substring(0, 20)}...` : 'none',
+        refreshTokenPreview: currentCredentials.refresh_token ? `${currentCredentials.refresh_token.substring(0, 20)}...` : 'none'
       });
 
-      // Get a fresh access token
+      // If no current credentials, try using environment refresh token (new or old)
+      if (!currentCredentials.access_token && !currentCredentials.refresh_token) {
+        const refreshToken = process.env.GOOGLE_REFRESH_TOKEN_NEW || process.env.GOOGLE_REFRESH_TOKEN;
+        if (!refreshToken) {
+          throw new Error('No authentication available. Please authenticate with Google Calendar first.');
+        }
+        
+        this.oauth2Client.setCredentials({
+          refresh_token: refreshToken,
+        });
+      }
+
+      // Get a fresh access token if needed
       try {
-        const { credentials } = await this.oauth2Client.refreshAccessToken();
-        this.oauth2Client.setCredentials(credentials);
-        console.log('Successfully refreshed access token');
+        if (!this.oauth2Client.credentials.access_token) {
+          const { credentials } = await this.oauth2Client.refreshAccessToken();
+          this.oauth2Client.setCredentials(credentials);
+          console.log('Successfully refreshed access token');
+        }
       } catch (error) {
         console.error('Error refreshing access token:', error);
         throw new Error('Failed to refresh authentication token. Please re-authenticate with Google Calendar.');
