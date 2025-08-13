@@ -56,12 +56,7 @@ export default function CalendarSync() {
 
   const authMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('/api/calendar/auth-url', 'GET');
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}: Failed to get auth URL`);
-      }
-      const data = await response.json();
+      const data = await apiRequest('/api/calendar/auth-url', 'GET');
       return data.authUrl;
     },
     onSuccess: (authUrl) => {
