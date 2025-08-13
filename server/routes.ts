@@ -5,6 +5,7 @@ import { aiService } from "./services/aiService";
 import { calendarService } from "./services/calendarService";
 import { pdfService } from "./services/pdfService";
 import { documentProcessor } from "./services/documentProcessor";
+import { googleCalendarService } from "./services/googleCalendarService";
 import { 
   insertClientSchema, 
   insertSessionSchema, 
@@ -428,6 +429,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating alliance score:", error);
       res.status(400).json({ error: "Failed to create alliance score" });
+    }
+  });
+
+  // Google Calendar Integration Routes (OAuth2 with 2015-2030 sync)
+  app.get("/api/calendar/auth-url", async (req, res) => {
+    try {
+      const authUrl = await googleCalendarService.getAuthUrl();
+      res.json({ authUrl });
+    } catch (error) {
+      console.error("Error getting auth URL:", error);
+      res.status(500).json({ error: "Failed to get authorization URL" });
+    }
+  });
+
+  app.post("/api/calendar/auth", async (req, res) => {
+    try {
+      const { code } = req.body;
+      if (!code) {
+        return res.status(400).json({ error: "Authorization code required" });
+      }
+      
+      const tokens = await googleCalendarService.exchangeCodeForTokens(code);
+      res.json({ success: true, tokens });
+    } catch (error) {
+      console.error("Error exchanging auth code:", error);
+      res.status(500).json({ error: "Failed to exchange authorization code" });
+    }
+  });
+
+  app.post("/api/calendar/sync", async (req: any, res) => {
+    try {
+      const { startDate = '2015-01-01', endDate = '2030-12-31' } = req.body;
+      
+      // Sync calendar events from Google Calendar (2015-2030 range)
+      const syncedSessions = await googleCalendarService.syncCalendarEvents(
+        req.therapistId,
+        startDate,
+        endDate
+      );
+
+      res.json({
+        success: true,
+        syncedCount: syncedSessions.length,
+        sessions: syncedSessions,
+        dateRange: { startDate, endDate }
+      });
+    } catch (error) {
+      console.error("Error syncing calendar:", error);
+      res.status(500).json({ error: "Failed to sync calendar events" });
+    }
+  });
+
+  app.get("/api/calendar/calendars", async (req, res) => {
+    try {
+      const calendars = await googleCalendarService.getCalendarList();
+      res.json(calendars);
+    } catch (error) {
+      console.error("Error fetching calendars:", error);
+      res.status(500).json({ error: "Failed to fetch calendar list" });
     }
   });
 

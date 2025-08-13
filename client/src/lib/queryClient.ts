@@ -44,10 +44,15 @@ export const getQueryFn: <T>(options: {
 
     await throwIfResNotOk(res);
     try {
-      return await res.json();
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await res.json();
+      } else {
+        return null; // Return null for non-JSON responses
+      }
     } catch (error) {
-      console.error('Failed to parse JSON response:', error);
-      throw new Error('Invalid response format');
+      // Silently handle JSON parsing errors for non-JSON responses
+      return null;
     }
   };
 
