@@ -25,6 +25,14 @@ export class GoogleCalendarService {
       this.oauth2Client.setCredentials({
         refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
       });
+      
+      // Automatically refresh the access token when needed
+      this.oauth2Client.on('tokens', (tokens) => {
+        console.log('Received new tokens:', tokens.access_token ? 'Access token refreshed' : 'No access token');
+        if (tokens.refresh_token) {
+          console.log('New refresh token received');
+        }
+      });
     }
 
     this.calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
@@ -52,18 +60,24 @@ export class GoogleCalendarService {
 
   async syncCalendarEvents(therapistId: string, startDate = '2015-01-01', endDate = '2030-12-31'): Promise<Session[]> {
     try {
-      // Check if we have valid credentials
-      const credentials = this.oauth2Client.credentials;
-      if (!credentials || !credentials.access_token) {
-        throw new Error('No valid authentication tokens. Please re-authenticate with Google Calendar.');
+      // Check if we have refresh token
+      if (!process.env.GOOGLE_REFRESH_TOKEN) {
+        throw new Error('No refresh token available. Please re-authenticate with Google Calendar.');
       }
 
-      // Try to refresh token if needed
+      // Ensure we have the refresh token set
+      this.oauth2Client.setCredentials({
+        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+      });
+
+      // Get a fresh access token
       try {
-        await this.oauth2Client.getAccessToken();
+        const { credentials } = await this.oauth2Client.refreshAccessToken();
+        this.oauth2Client.setCredentials(credentials);
+        console.log('Successfully refreshed access token');
       } catch (error) {
         console.error('Error refreshing access token:', error);
-        throw new Error('Authentication tokens expired. Please re-authenticate with Google Calendar.');
+        throw new Error('Failed to refresh authentication token. Please re-authenticate with Google Calendar.');
       }
 
       console.log(`Starting comprehensive calendar sync for ${startDate} to ${endDate}`);
