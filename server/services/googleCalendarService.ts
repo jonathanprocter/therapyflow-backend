@@ -101,45 +101,29 @@ export class GoogleCalendarService {
 
       console.log(`Total events fetched from Google Calendar: ${allEvents.length}`);
       
-      // Much more inclusive filtering - include most events with specific times
+      // Maximum inclusion - capture virtually all timed events
       const relevantEvents = allEvents.filter((event: any) => {
-        const summary = event.summary || '';
-        const description = event.description || '';
-        const location = event.location || '';
-        
-        // Skip all-day events without specific times (likely holidays/birthdays)
+        // Only require that the event has a specific start time
         if (!event.start?.dateTime) return false;
         
-        const lowerSummary = summary.toLowerCase();
-        const lowerDescription = description.toLowerCase();
-        const lowerLocation = location.toLowerCase();
+        const summary = (event.summary || '').toLowerCase();
         
-        // Only exclude very obvious non-appointments
-        const excludeKeywords = [
-          'birthday', 'vacation', 'holiday', 'christmas', 'thanksgiving', 'new year'
-        ];
+        // Only exclude the most obvious holidays
+        const excludeKeywords = ['birthday', 'christmas', 'thanksgiving'];
+        const isHoliday = excludeKeywords.some(keyword => summary.includes(keyword));
         
-        const hasExcludedKeywords = excludeKeywords.some(keyword => 
-          lowerSummary.includes(keyword)
-        );
+        if (isHoliday) return false;
         
-        if (hasExcludedKeywords) return false;
-        
-        // Include almost all events with specific times during reasonable hours
+        // Accept virtually all hours (24/7) - no time restrictions
+        // Accept virtually all durations (1 minute to 24 hours)
         const startTime = new Date(event.start.dateTime);
-        const hour = startTime.getHours();
-        
-        // Include events between 6 AM and 10 PM (very broad range)
-        const isReasonableHour = hour >= 6 && hour <= 22;
-        
-        // Calculate duration
         const endTime = event.end?.dateTime ? new Date(event.end.dateTime) : null;
         const duration = endTime ? (endTime.getTime() - startTime.getTime()) / (1000 * 60) : 60;
         
-        // Include events that are 15 minutes to 8 hours long (very broad range)
-        const isReasonableDuration = duration >= 15 && duration <= 480;
+        // Only exclude events longer than 24 hours or negative durations
+        const isValidDuration = duration > 0 && duration <= 1440; // 1 minute to 24 hours
         
-        return isReasonableHour && isReasonableDuration;
+        return isValidDuration;
       });
 
       console.log(`Filtered to ${relevantEvents.length} relevant events`);
