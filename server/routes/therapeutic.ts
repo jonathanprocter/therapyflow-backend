@@ -7,7 +7,7 @@ router.post('/synthesize/:clientId', async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
     const { startDate, endDate, focusTags } = req.body;
-    const therapistId = (req as any).user?.id;
+    const therapistId = (req as any).therapistId;
 
     if (!therapistId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -34,7 +34,7 @@ router.post('/recall/:clientId', async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
     const { query } = req.body;
-    const therapistId = (req as any).user?.id;
+    const therapistId = (req as any).therapistId;
 
     if (!therapistId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -56,7 +56,7 @@ router.post('/recall/:clientId', async (req: Request, res: Response) => {
 router.get('/insights/:clientId', async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
-    const therapistId = (req as any).user?.id;
+    const therapistId = (req as any).therapistId;
 
     if (!therapistId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -75,7 +75,7 @@ router.get('/tags/:clientId', async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
     const { category } = req.query;
-    const therapistId = (req as any).user?.id;
+    const therapistId = (req as any).therapistId;
 
     if (!therapistId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
