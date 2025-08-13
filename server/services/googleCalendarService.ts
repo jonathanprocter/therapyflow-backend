@@ -235,6 +235,7 @@ export class GoogleCalendarService {
         
         // Additional filter: Only include events that look like appointments
         // Exclude birthdays, holidays, and other non-appointment events
+        // Include events with 🔒 emoji (completed progress notes) and standard appointment formats
         const isActualAppointment = isSimplePracticeEvent && 
           !summary.toLowerCase().includes('birthday') &&
           !summary.toLowerCase().includes('holiday') &&
@@ -242,7 +243,8 @@ export class GoogleCalendarService {
           !summary.toLowerCase().includes('break') &&
           !summary.toLowerCase().includes('lunch') &&
           !summary.toLowerCase().includes('meeting') &&
-          (summary.toLowerCase().includes('appointment') || 
+          (summary.includes('🔒') || // Completed progress note indicator
+           summary.toLowerCase().includes('appointment') || 
            summary.toLowerCase().includes('session') || 
            /^[A-Z][a-z]+ [A-Z][a-z]+( [A-Z][a-z]+)?\s*(appointment|session)?$/i.test(summary.trim()));
         
@@ -363,11 +365,15 @@ export class GoogleCalendarService {
   }
 
   private extractClientName(summary: string): string {
-    // SimplePractice formats events as "Client Name Appointment" 
-    // Example: "Chris Balabanick Appointment", "Brian Kolsch Appointment"
+    // SimplePractice formats events as "Client Name Appointment" or "🔒 Client Name Appointment"
+    // The 🔒 emoji indicates a completed progress note in SimplePractice
+    // Examples: "🔒 Chris Balabanick Appointment", "Brian Kolsch Appointment"
+    
+    // Remove the lock emoji (indicates completed progress note)
+    let clientName = summary.replace(/🔒\s*/, '').trim();
     
     // Remove "Appointment" from the end if present
-    let clientName = summary.replace(/\s+Appointment\s*$/i, '').trim();
+    clientName = clientName.replace(/\s+Appointment\s*$/i, '').trim();
     
     // Remove other common session indicators
     clientName = clientName
