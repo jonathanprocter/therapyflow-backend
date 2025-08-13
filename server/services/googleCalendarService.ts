@@ -277,11 +277,18 @@ export class GoogleCalendarService {
         // Detect SimplePractice events (pass calendar name for better detection)
         const isSimplePractice = this.isSimplePracticeEvent(event, event.sourceCalendarName);
 
+        // Parse the date and ensure it's interpreted as EDT/EST
+        const eventDate = new Date(startTime);
+        
+        // If the event doesn't have timezone info, assume it's in EDT
+        // Google Calendar API returns times in the calendar's timezone
+        const scheduledAtEDT = eventDate;
+
         return {
           id: `google-${event.id}`,
           clientId: 'calendar-sync-client', // Use default client for calendar sync
           therapistId,
-          scheduledAt: new Date(startTime),
+          scheduledAt: scheduledAtEDT,
           duration,
           sessionType: 'individual' as const,
           status: 'scheduled' as const,

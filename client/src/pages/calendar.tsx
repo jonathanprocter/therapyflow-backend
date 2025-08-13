@@ -46,26 +46,18 @@ export default function Calendar() {
     const start = new Date(scheduledAt);
     const end = new Date(start.getTime() + duration * 60000);
     
+    // Format times in EDT timezone
+    const edtOptions: Intl.DateTimeFormatOptions = {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'America/New_York'
+    };
+    
     return {
-      startTime: start.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }),
-      endTime: end.toLocaleTimeString('en-US', {
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true
-      }),
-      timeRange: `${start.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      })} - ${end.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit', 
-        hour12: true
-      })}`
+      startTime: start.toLocaleTimeString('en-US', edtOptions),
+      endTime: end.toLocaleTimeString('en-US', edtOptions),
+      timeRange: `${start.toLocaleTimeString('en-US', edtOptions)} - ${end.toLocaleTimeString('en-US', edtOptions)}`
     };
   };
 

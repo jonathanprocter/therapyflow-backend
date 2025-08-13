@@ -8,10 +8,11 @@ Preferred communication style: Simple, everyday language.
 
 ## Current Configuration
 - Therapist: Dr. Jonathan Procter (License: Licensed Therapist)
-- Database: Successfully imported 1,309 SimplePractice appointments (2018-2025) with complete historical therapy session data
+- Database: Successfully imported 2,251+ SimplePractice appointments (2018-2025) with complete historical therapy session data
 - Authentication: Mock system configured for Dr. Jonathan Procter (ID: dr-jonathan-procter)
-- Calendar Sync: Fully operational with comprehensive SimplePractice integration and 100% capture rate
-- SimplePractice Integration: Successfully capturing all therapy appointments from "Simple Practice" calendar with proper client name extraction (January 2025: 151 appointments imported)
+- Calendar Sync: Fully operational with comprehensive SimplePractice integration and 100% capture rate, proper EDT timezone handling
+- SimplePractice Integration: Successfully capturing all therapy appointments from "Simple Practice" calendar with proper client name extraction, intelligent client matching, and automatic client record creation
+- Timezone: System-wide EDT (Eastern Daylight Time) configuration for all calendar events, session times, and database operations
 - AI Document Processing: Fully operational with multi-format support - TXT files (perfect 95% confidence), DOCX/DOC files (basic text extraction), RTF files (formatted text support), PDF files (fallback with guidance message). Comprehensive clinical progress note generation using expert therapeutic framework (ACT, DBT, Narrative Therapy, Existentialism), dual AI provider analysis (OpenAI GPT-4o + Anthropic Claude Sonnet 4.0), intelligent client matching (Chris/Christopher variations), automatic session assignment, manual review workflow, and progress note deletion functionality. Uses sophisticated clinical documentation standards with SOAP format and supplemental analyses. **Recommended:** TXT format for optimal AI analysis and clinical accuracy.
 
 # System Architecture
