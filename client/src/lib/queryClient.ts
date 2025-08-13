@@ -13,10 +13,10 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
   url: string,
+  method: string,
   data?: unknown | undefined,
-): Promise<Response> {
+): Promise<any> {
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -25,6 +25,18 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
+  
+  // For DELETE requests that return JSON, parse it
+  if (method === 'DELETE' && res.headers.get('content-type')?.includes('application/json')) {
+    return res.json();
+  }
+  
+  // For other requests, try to parse JSON if available
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return res.json();
+  }
+  
   return res;
 }
 
