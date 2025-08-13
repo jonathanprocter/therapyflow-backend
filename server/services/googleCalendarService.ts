@@ -7,9 +7,12 @@ export class GoogleCalendarService {
   private calendar: any;
 
   constructor() {
-    const redirectUri = process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:5000/api/calendar/callback'
-      : `https://${process.env.REPLIT_DOMAINS}/api/calendar/callback`;
+    // Always use Replit domain for consistency
+    const redirectUri = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS}/api/calendar/callback`
+      : 'http://localhost:5000/api/calendar/callback';
+      
+    console.log('Using OAuth2 redirect URI:', redirectUri);
       
     this.oauth2Client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,

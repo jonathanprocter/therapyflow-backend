@@ -175,6 +175,7 @@ export default function CalendarSync() {
                 <AlertDescription className="text-blue-800">
                   <strong>OAuth2 Ready:</strong> Google Calendar credentials are configured.
                   <br />Complete the authentication flow below to start syncing.
+                  <br /><small className="text-blue-600">Make sure popups are allowed for this site.</small>
                 </AlertDescription>
               </Alert>
             )}
