@@ -1,16 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
+import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import TopBar from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, FileText, MessageSquare, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Calendar, FileText, MessageSquare, User, Clock, CheckCircle, XCircle } from "lucide-react";
 import { formatEDTDate, formatEDTTime, formatEDTDateShort } from "@/utils/timezone";
 
 export default function ClientDetail() {
   const { clientId } = useParams<{ clientId: string }>();
+  const [sessionFilter, setSessionFilter] = useState<string>("all");
   
   const { data: client, isLoading: clientLoading } = useQuery({
     queryKey: ["/api/clients", clientId],
@@ -72,6 +75,21 @@ export default function ClientDetail() {
   const clientSessions = Array.isArray(sessions) ? sessions.filter((session: any) => session.clientId === clientId) : [];
   const clientNotes = Array.isArray(progressNotes) ? progressNotes.filter((note: any) => note.clientId === clientId) : [];
   const clientDocuments = Array.isArray(documents) ? documents.filter((doc: any) => doc.clientId === clientId) : [];
+
+  // Filter sessions based on selected filter
+  const filteredSessions = clientSessions.filter((session: any) => {
+    if (sessionFilter === "all") return true;
+    return session.status === sessionFilter;
+  });
+
+  // Calculate session statistics
+  const sessionStats = {
+    total: clientSessions.length,
+    completed: clientSessions.filter((s: any) => s.status === 'completed').length,
+    scheduled: clientSessions.filter((s: any) => s.status === 'scheduled').length,
+    cancelled: clientSessions.filter((s: any) => s.status === 'cancelled').length,
+    totalHours: Math.round(clientSessions.reduce((total: number, s: any) => total + (s.duration || 0), 0) / 60 * 10) / 10
+  };
 
   return (
     <div className="flex h-screen bg-gray-50" data-testid="client-detail-page">
@@ -191,9 +209,79 @@ export default function ClientDetail() {
 
             {/* Sessions Tab */}
             <TabsContent value="sessions" className="space-y-4">
+              {/* Session Statistics */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Total Sessions</p>
+                        <p className="text-2xl font-bold text-gray-900">{sessionStats.total}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Completed</p>
+                        <p className="text-2xl font-bold text-gray-900">{sessionStats.completed}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-5 w-5 text-yellow-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Scheduled</p>
+                        <p className="text-2xl font-bold text-gray-900">{sessionStats.scheduled}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-5 w-5 text-purple-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Total Hours</p>
+                        <p className="text-2xl font-bold text-gray-900">{sessionStats.totalHours}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Session History */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Session History</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Complete Session History</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Select value={sessionFilter} onValueChange={setSessionFilter}>
+                        <SelectTrigger className="w-[140px]" data-testid="session-filter">
+                          <SelectValue placeholder="Filter sessions" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Sessions</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="scheduled">Scheduled</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Showing {filteredSessions.length} of {clientSessions.length} total appointments
+                  </p>
                 </CardHeader>
                 <CardContent>
                   {sessionsLoading ? (
@@ -204,15 +292,21 @@ export default function ClientDetail() {
                         </div>
                       ))}
                     </div>
-                  ) : clientSessions.length === 0 ? (
+                  ) : filteredSessions.length === 0 ? (
                     <div className="text-center py-8">
                       <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500">No sessions recorded for this client</p>
+                      <p className="text-gray-500">
+                        {sessionFilter === "all" 
+                          ? "No sessions recorded for this client"
+                          : `No ${sessionFilter} sessions found`}
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {clientSessions.map((session: any) => (
-                        <div key={session.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      {filteredSessions
+                        .sort((a: any, b: any) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
+                        .map((session: any) => (
+                        <div key={session.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors" data-testid={`session-${session.id}`}>
                           <div className="flex items-center justify-between mb-2">
                             <div>
                               <h4 className="font-medium text-gray-900">
@@ -223,7 +317,12 @@ export default function ClientDetail() {
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
+                              <Badge 
+                                variant={session.status === 'completed' ? 'default' : 
+                                        session.status === 'scheduled' ? 'secondary' : 
+                                        session.status === 'cancelled' ? 'destructive' : 'outline'}
+                                data-testid={`session-status-${session.id}`}
+                              >
                                 {session.status}
                               </Badge>
                               <span className="text-sm text-gray-500">{session.duration} min</span>
@@ -231,6 +330,16 @@ export default function ClientDetail() {
                           </div>
                           {session.notes && (
                             <p className="text-sm text-gray-600 mt-2">{session.notes}</p>
+                          )}
+                          {session.googleEventId && (
+                            <div className="text-xs text-gray-400 mt-2">
+                              Google Event ID: {session.googleEventId}
+                            </div>
+                          )}
+                          {session.isSimplePracticeEvent && (
+                            <div className="text-xs text-blue-500 mt-1">
+                              SimplePractice Import
+                            </div>
                           )}
                         </div>
                       ))}
