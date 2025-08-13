@@ -233,8 +233,21 @@ export class GoogleCalendarService {
           description.includes('simplepractice') ||
           description.includes('simple practice');
         
-        if (isSimplePracticeEvent) {
-          console.log(`Found SimplePractice event: "${event.summary}" from ${organizerEmail || calendarName}`);
+        // Additional filter: Only include events that look like appointments
+        // Exclude birthdays, holidays, and other non-appointment events
+        const isActualAppointment = isSimplePracticeEvent && 
+          !summary.toLowerCase().includes('birthday') &&
+          !summary.toLowerCase().includes('holiday') &&
+          !summary.toLowerCase().includes('vacation') &&
+          !summary.toLowerCase().includes('break') &&
+          !summary.toLowerCase().includes('lunch') &&
+          !summary.toLowerCase().includes('meeting') &&
+          (summary.toLowerCase().includes('appointment') || 
+           summary.toLowerCase().includes('session') || 
+           /^[A-Z][a-z]+ [A-Z][a-z]+( [A-Z][a-z]+)?\s*(appointment|session)?$/i.test(summary.trim()));
+        
+        if (isActualAppointment) {
+          console.log(`Found SimplePractice appointment: "${event.summary}" from ${organizerEmail || calendarName}`);
           return true;
         }
         
