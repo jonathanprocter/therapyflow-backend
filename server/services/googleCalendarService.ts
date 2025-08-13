@@ -62,6 +62,7 @@ export class GoogleCalendarService {
       try {
         await this.oauth2Client.getAccessToken();
       } catch (error) {
+        console.error('Error refreshing access token:', error);
         throw new Error('Authentication tokens expired. Please re-authenticate with Google Calendar.');
       }
 
@@ -208,7 +209,8 @@ export class GoogleCalendarService {
       return sessions;
     } catch (error) {
       console.error('Error syncing Google Calendar:', error);
-      throw new Error('Failed to sync calendar events');
+      console.error('Full error details:', error instanceof Error ? error.message : String(error));
+      throw error; // Re-throw the original error for better debugging
     }
   }
 
@@ -392,7 +394,8 @@ export class GoogleCalendarService {
       return response.data.items || [];
     } catch (error) {
       console.error('Error fetching calendar list:', error);
-      throw new Error('Failed to fetch calendar list');
+      console.error('Calendar list error details:', error instanceof Error ? error.message : String(error));
+      throw error; // Re-throw original error for better debugging
     }
   }
 }
