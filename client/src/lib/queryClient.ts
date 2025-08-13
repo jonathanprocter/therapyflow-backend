@@ -17,8 +17,16 @@ export async function apiRequest(
   method: string,
   data?: unknown | undefined,
 ): Promise<any> {
+  // Validate HTTP method
+  const validMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+  const upperMethod = method.toUpperCase();
+  
+  if (!validMethods.includes(upperMethod)) {
+    throw new Error(`Invalid HTTP method: ${method}`);
+  }
+
   const res = await fetch(url, {
-    method,
+    method: upperMethod,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
@@ -27,7 +35,7 @@ export async function apiRequest(
   await throwIfResNotOk(res);
   
   // For DELETE requests that return JSON, parse it
-  if (method === 'DELETE' && res.headers.get('content-type')?.includes('application/json')) {
+  if (upperMethod === 'DELETE' && res.headers.get('content-type')?.includes('application/json')) {
     return res.json();
   }
   
@@ -51,6 +59,10 @@ export const getQueryFn: <T>(options: {
       let url: string;
       if (Array.isArray(queryKey)) {
         url = queryKey[0] as string;
+        // Validate URL format
+        if (!url || typeof url !== 'string' || !url.startsWith('/')) {
+          throw new Error(`Invalid query key URL: ${url}`);
+        }
         // If there are additional parameters, construct query string
         if (queryKey[1] && typeof queryKey[1] === 'object') {
           const params = new URLSearchParams(queryKey[1] as Record<string, string>);
@@ -58,9 +70,13 @@ export const getQueryFn: <T>(options: {
         }
       } else {
         url = String(queryKey);
+        if (!url || !url.startsWith('/')) {
+          throw new Error(`Invalid query key URL: ${url}`);
+        }
       }
 
       const res = await fetch(url, {
+        method: 'GET',
         credentials: "include",
       });
 
