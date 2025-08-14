@@ -52,6 +52,7 @@ Preferred communication style: Simple, everyday language.
 - Enhanced AI Document Processing: **MASSIVELY IMPROVED** comprehensive document processing system with:
   * **Robust PDF Extraction**: Multiple extraction methods including pdf-parse library, fallback byte parsing, and OCR-like text detection
   * **Advanced Text Preprocessing**: OCR error correction, clinical terminology standardization, header/footer removal, and intelligent text cleaning
+  * **Comprehensive Markdown Removal**: Complete markdown syntax stripping including headers, formatting, links, code blocks, tables, and all markdown elements before AI processing
   * **Multi-Pass AI Analysis**: Sophisticated clinical data extraction using both Anthropic Claude Sonnet 4.0 and OpenAI GPT-4o with comprehensive fallback mechanisms
   * **Intelligent Date Parsing**: Support for multiple date formats with fuzzy logic and context-aware extraction
   * **Advanced Client Matching**: Levenshtein distance algorithms, token similarity, and intelligent name variation handling (Chris/Christopher, etc.)

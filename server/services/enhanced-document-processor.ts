@@ -684,6 +684,9 @@ export class EnhancedDocumentProcessor {
     // First clean for database safety
     cleaned = this.cleanTextForDatabase(cleaned);
     
+    // Remove markdown syntax
+    cleaned = this.removeMarkdownSyntax(cleaned);
+    
     // Remove HTML if present
     if (cleaned.includes('<') && cleaned.includes('>')) {
       cleaned = stripHtml(cleaned).result;
@@ -716,6 +719,61 @@ export class EnhancedDocumentProcessor {
     cleaned = this.standardizeClinicalTerms(cleaned);
     
     return cleaned.trim();
+  }
+
+  /**
+   * Remove markdown syntax from text
+   */
+  removeMarkdownSyntax(text: string): string {
+    let cleaned = text;
+    
+    // Remove headers (# ## ### #### ##### ######)
+    cleaned = cleaned.replace(/^#{1,6}\s+(.*)$/gm, '$1');
+    
+    // Remove bold and italic formatting (**text**, *text*, __text__, _text_)
+    cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1');
+    cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1');
+    cleaned = cleaned.replace(/__([^_]+)__/g, '$1');
+    cleaned = cleaned.replace(/_([^_]+)_/g, '$1');
+    
+    // Remove strikethrough (~~text~~)
+    cleaned = cleaned.replace(/~~([^~]+)~~/g, '$1');
+    
+    // Remove code blocks (```code``` and `code`)
+    cleaned = cleaned.replace(/```[\s\S]*?```/g, '');
+    cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
+    
+    // Remove links ([text](url) and [text]: url)
+    cleaned = cleaned.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    cleaned = cleaned.replace(/\[([^\]]+)\]:\s*[^\s]+/g, '$1');
+    
+    // Remove images (![alt](url))
+    cleaned = cleaned.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
+    
+    // Remove horizontal rules (--- or ***)
+    cleaned = cleaned.replace(/^[-*]{3,}\s*$/gm, '');
+    
+    // Remove list markers (- + * for unordered, 1. 2. for ordered)
+    cleaned = cleaned.replace(/^[\s]*[-+*]\s+/gm, '');
+    cleaned = cleaned.replace(/^[\s]*\d+\.\s+/gm, '');
+    
+    // Remove blockquotes (> text)
+    cleaned = cleaned.replace(/^[\s]*>\s*/gm, '');
+    
+    // Remove tables (| cell | cell |)
+    cleaned = cleaned.replace(/^\|.*\|$/gm, '');
+    cleaned = cleaned.replace(/^[\s]*\|?[\s]*:?-+:?[\s]*\|?.*$/gm, '');
+    
+    // Remove footnotes ([^1])
+    cleaned = cleaned.replace(/\[\^[^\]]+\]/g, '');
+    
+    // Remove HTML comments (<!-- comment -->)
+    cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
+    
+    // Clean up extra whitespace that may have been left
+    cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n');
+    
+    return cleaned;
   }
 
   /**
@@ -1634,7 +1692,7 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
         }
       }
       
-      return this.cleanExtractedText(extractedText);
+      return this.cleanTextForDatabase(extractedText);
     } catch (error) {
       throw new Error('OCR fallback extraction failed');
     }

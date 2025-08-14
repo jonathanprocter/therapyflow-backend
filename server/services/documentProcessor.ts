@@ -56,8 +56,11 @@ export class DocumentProcessor {
         extractedText = file.toString('utf-8');
       }
       
+      // Clean and preprocess the text before AI analysis
+      const preprocessedText = this.preprocessText(extractedText);
+      
       // Use AI to analyze and extract structured data
-      const extractedData = await this.analyzeProgressNote(extractedText);
+      const extractedData = await this.analyzeProgressNote(preprocessedText);
       
       // Find or create client
       const clientMatch = await this.findOrCreateClient(
@@ -522,6 +525,76 @@ Return your analysis in JSON format with both the extracted data and the compreh
       tags: extractedData.keyTopics || [],
       aiTags: extractedData.interventions || [],
     });
+  }
+
+  /**
+   * Preprocess text to clean markdown and other formatting
+   */
+  private preprocessText(rawText: string): string {
+    let cleaned = rawText;
+    
+    // First clean for database safety
+    cleaned = this.cleanTextForDatabase(cleaned);
+    
+    // Remove markdown syntax
+    cleaned = this.removeMarkdownSyntax(cleaned);
+    
+    return cleaned.trim();
+  }
+
+  /**
+   * Remove markdown syntax from text
+   */
+  private removeMarkdownSyntax(text: string): string {
+    let cleaned = text;
+    
+    // Remove headers (# ## ### #### ##### ######)
+    cleaned = cleaned.replace(/^#{1,6}\s+(.*)$/gm, '$1');
+    
+    // Remove bold and italic formatting (**text**, *text*, __text__, _text_)
+    cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1');
+    cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1');
+    cleaned = cleaned.replace(/__([^_]+)__/g, '$1');
+    cleaned = cleaned.replace(/_([^_]+)_/g, '$1');
+    
+    // Remove strikethrough (~~text~~)
+    cleaned = cleaned.replace(/~~([^~]+)~~/g, '$1');
+    
+    // Remove code blocks (```code``` and `code`)
+    cleaned = cleaned.replace(/```[\s\S]*?```/g, '');
+    cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
+    
+    // Remove links ([text](url) and [text]: url)
+    cleaned = cleaned.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    cleaned = cleaned.replace(/\[([^\]]+)\]:\s*[^\s]+/g, '$1');
+    
+    // Remove images (![alt](url))
+    cleaned = cleaned.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1');
+    
+    // Remove horizontal rules (--- or ***)
+    cleaned = cleaned.replace(/^[-*]{3,}\s*$/gm, '');
+    
+    // Remove list markers (- + * for unordered, 1. 2. for ordered)
+    cleaned = cleaned.replace(/^[\s]*[-+*]\s+/gm, '');
+    cleaned = cleaned.replace(/^[\s]*\d+\.\s+/gm, '');
+    
+    // Remove blockquotes (> text)
+    cleaned = cleaned.replace(/^[\s]*>\s*/gm, '');
+    
+    // Remove tables (| cell | cell |)
+    cleaned = cleaned.replace(/^\|.*\|$/gm, '');
+    cleaned = cleaned.replace(/^[\s]*\|?[\s]*:?-+:?[\s]*\|?.*$/gm, '');
+    
+    // Remove footnotes ([^1])
+    cleaned = cleaned.replace(/\[\^[^\]]+\]/g, '');
+    
+    // Remove HTML comments (<!-- comment -->)
+    cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
+    
+    // Clean up extra whitespace that may have been left
+    cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n');
+    
+    return cleaned;
   }
 
   /**
