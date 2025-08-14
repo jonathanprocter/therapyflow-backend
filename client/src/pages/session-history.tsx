@@ -162,47 +162,47 @@ export default function SessionHistory() {
 
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium" style={{ color: '#344C3D' }}>Total Sessions</CardTitle>
+            <CalendarDays className="h-4 w-4" style={{ color: '#88A5BC' }} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{historicalSessions.length}</div>
+            <div className="text-2xl font-bold" style={{ color: '#344C3D' }}>{historicalSessions.length}</div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium" style={{ color: '#344C3D' }}>Completed</CardTitle>
+            <CheckCircle className="h-4 w-4" style={{ color: '#8EA58C' }} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold" style={{ color: '#344C3D' }}>
               {historicalSessions.filter(s => s.status === "completed").length}
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium" style={{ color: '#344C3D' }}>Active Clients</CardTitle>
+            <Users className="h-4 w-4" style={{ color: '#88A5BC' }} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold" style={{ color: '#344C3D' }}>
               {new Set(historicalSessions.map(s => s.clientId)).size}
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium" style={{ color: '#344C3D' }}>Total Hours</CardTitle>
+            <Clock className="h-4 w-4" style={{ color: '#88A5BC' }} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold" style={{ color: '#344C3D' }}>
               {Math.round(historicalSessions.reduce((total, s) => total + s.duration, 0) / 60)}
             </div>
           </CardContent>
@@ -210,10 +210,10 @@ export default function SessionHistory() {
       </div>
 
       {/* Management Actions */}
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
-          <CardTitle>Session Management</CardTitle>
-          <CardDescription>
+          <CardTitle style={{ color: '#344C3D' }}>Session Management</CardTitle>
+          <CardDescription style={{ color: '#738A6E' }}>
             Actions to organize and manage your historical session records
           </CardDescription>
         </CardHeader>
@@ -222,6 +222,8 @@ export default function SessionHistory() {
             <Button
               onClick={() => markPastCompletedMutation.mutate()}
               disabled={markPastCompletedMutation.isPending}
+              style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C', color: '#FFFFFF' }}
+              className="hover:bg-opacity-90"
               data-testid="button-mark-past-completed"
             >
               {markPastCompletedMutation.isPending ? "Updating..." : "Mark Past Sessions as Completed"}
@@ -231,29 +233,34 @@ export default function SessionHistory() {
               onClick={() => createPlaceholdersMutation.mutate()}
               disabled={createPlaceholdersMutation.isPending}
               variant="outline"
+              style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
               data-testid="button-create-placeholders"
             >
               {createPlaceholdersMutation.isPending ? "Creating..." : "Create Progress Note Placeholders"}
             </Button>
           </div>
           
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm" style={{ color: '#738A6E' }}>
             These actions help organize your session history and prepare progress note slots for document uploads.
           </p>
         </CardContent>
       </Card>
 
       {/* Filters */}
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
-          <CardTitle>Filter Sessions</CardTitle>
+          <CardTitle style={{ color: '#344C3D' }}>Filter Sessions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
+              <label className="text-sm font-medium" style={{ color: '#344C3D' }}>Status</label>
               <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
-                <SelectTrigger data-testid="select-status-filter">
+                <SelectTrigger 
+                  className="bg-white border focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                  style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)', color: '#344C3D' }}
+                  data-testid="select-status-filter"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -265,9 +272,13 @@ export default function SessionHistory() {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Client</label>
+              <label className="text-sm font-medium" style={{ color: '#344C3D' }}>Client</label>
               <Select value={selectedClient} onValueChange={setSelectedClient}>
-                <SelectTrigger data-testid="select-client-filter">
+                <SelectTrigger 
+                  className="bg-white border focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                  style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)', color: '#344C3D' }}
+                  data-testid="select-client-filter"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -282,11 +293,13 @@ export default function SessionHistory() {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
+              <label className="text-sm font-medium" style={{ color: '#344C3D' }}>Search</label>
               <Input
                 placeholder="Search by client name or session type..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-white border focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)', color: '#344C3D' }}
                 data-testid="input-search-sessions"
               />
             </div>
@@ -299,12 +312,12 @@ export default function SessionHistory() {
         {Object.entries(groupedSessions)
           .sort(([a], [b]) => b.localeCompare(a)) // Sort by date descending
           .map(([yearMonth, sessions]) => (
-            <Card key={yearMonth}>
+            <Card key={yearMonth} className="bg-white">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+                  <CalendarDays className="h-5 w-5" style={{ color: '#88A5BC' }} />
                   {formatMonthYear(yearMonth)}
-                  <Badge variant="secondary">{sessions.length} sessions</Badge>
+                  <Badge variant="secondary" style={{ backgroundColor: '#8EA58C', color: '#FFFFFF' }}>{sessions.length} sessions</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -312,7 +325,13 @@ export default function SessionHistory() {
                   {sessions.map(session => (
                     <div
                       key={session.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg border transition-colors"
+                      style={{ 
+                        backgroundColor: '#FFFFFF',
+                        borderColor: 'rgba(115, 138, 110, 0.2)'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(242, 243, 241, 0.5)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFFFF'}
                       data-testid={`session-card-${session.id}`}
                     >
                       <div className="flex items-center gap-3">
@@ -337,7 +356,7 @@ export default function SessionHistory() {
                           <FileText className="h-4 w-4" style={{ color: '#8EA58C' }} title="Has progress note placeholder" />
                         )}
                         {session.isSimplePracticeEvent && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs" style={{ borderColor: '#88A5BC', color: '#88A5BC' }}>
                             SimplePractice
                           </Badge>
                         )}
@@ -346,6 +365,7 @@ export default function SessionHistory() {
                             size="sm"
                             variant="outline"
                             onClick={() => setSelectedSessionForSummary(session)}
+                            style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
                             data-testid={`generate-summary-${session.id}`}
                           >
                             <i className="fas fa-magic mr-2 text-xs"></i>
@@ -362,7 +382,7 @@ export default function SessionHistory() {
       </div>
 
       {filteredSessions.length === 0 && (
-        <Card>
+        <Card className="bg-white">
           <CardContent className="text-center py-8">
             <AlertCircle className="h-12 w-12 mx-auto mb-4" style={{ color: 'rgba(115, 138, 110, 0.3)' }} />
             <h3 className="text-lg font-medium mb-2" style={{ color: '#344C3D' }}>No sessions found</h3>
