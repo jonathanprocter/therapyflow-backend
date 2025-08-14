@@ -97,7 +97,7 @@ export default function InteractiveNoteCreator() {
 
       {/* Feature Highlights */}
       <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <Card>
+        <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 mb-3">
               <Brain className="h-8 w-8" style={{ color: '#88A5BC' }} />
@@ -109,7 +109,7 @@ export default function InteractiveNoteCreator() {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 mb-3">
               <FileText className="h-8 w-8" style={{ color: '#8EA58C' }} />
@@ -121,13 +121,13 @@ export default function InteractiveNoteCreator() {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 mb-3">
-              <Plus className="h-8 w-8 text-purple-500" />
-              <h3 className="font-semibold">Smart Interventions</h3>
+              <Plus className="h-8 w-8" style={{ color: '#344C3D' }} />
+              <h3 className="font-semibold" style={{ color: '#344C3D' }}>Smart Interventions</h3>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm" style={{ color: '#738A6E' }}>
               AI suggests evidence-based interventions and next steps
             </p>
           </CardContent>
@@ -135,14 +135,14 @@ export default function InteractiveNoteCreator() {
       </div>
 
       {/* Setup Form */}
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
-          <CardTitle>Create New Progress Note</CardTitle>
+          <CardTitle style={{ color: '#344C3D' }}>Create New Progress Note</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Client Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Client *</label>
+            <label className="text-sm font-medium" style={{ color: '#344C3D' }}>Select Client *</label>
             <Select value={selectedClientId} onValueChange={setSelectedClientId}>
               <SelectTrigger data-testid="select-client">
                 <SelectValue placeholder="Choose a client..." />
@@ -171,7 +171,7 @@ export default function InteractiveNoteCreator() {
           {/* Session Selection (Optional) */}
           {selectedClientId && sessions && sessions.length > 0 && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Link to Session (Optional)</label>
+              <label className="text-sm font-medium" style={{ color: '#344C3D' }}>Link to Session (Optional)</label>
               <Select value={selectedSessionId} onValueChange={setSelectedSessionId}>
                 <SelectTrigger data-testid="select-session">
                   <SelectValue placeholder="Choose a session..." />
@@ -193,17 +193,17 @@ export default function InteractiveNoteCreator() {
 
           {/* Selected Client Info */}
           {selectedClient && (
-            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-              <h4 className="font-medium mb-2">Selected Client</h4>
+            <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(242, 243, 241, 0.5)', borderColor: 'rgba(115, 138, 110, 0.2)' }}>
+              <h4 className="font-medium mb-2" style={{ color: '#344C3D' }}>Selected Client</h4>
               <div className="space-y-1 text-sm">
-                <p><strong>Name:</strong> {selectedClient.name}</p>
-                {selectedClient.email && <p><strong>Email:</strong> {selectedClient.email}</p>}
+                <p style={{ color: '#738A6E' }}><strong>Name:</strong> {selectedClient.name}</p>
+                {selectedClient.email && <p style={{ color: '#738A6E' }}><strong>Email:</strong> {selectedClient.email}</p>}
                 {selectedClient.tags?.length > 0 && (
                   <div>
-                    <strong>Tags:</strong>
+                    <strong style={{ color: '#738A6E' }}>Tags:</strong>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {selectedClient.tags.map((tag: string) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
+                        <Badge key={tag} variant="secondary" className="text-xs" style={{ backgroundColor: '#8EA58C', color: '#FFFFFF' }}>
                           {tag}
                         </Badge>
                       ))}
@@ -220,6 +220,8 @@ export default function InteractiveNoteCreator() {
               onClick={handleStartEditor}
               disabled={!selectedClientId}
               size="lg"
+              style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C', color: '#FFFFFF' }}
+              className="hover:bg-opacity-90"
               data-testid="button-start-editor"
             >
               <Brain className="h-4 w-4 mr-2" />
@@ -231,7 +233,7 @@ export default function InteractiveNoteCreator() {
 
       {/* Quick Links */}
       <div className="mt-8 text-center">
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm mb-4" style={{ color: '#738A6E' }}>
           Or continue with traditional note creation
         </p>
         <div className="flex justify-center gap-4">

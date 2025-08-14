@@ -210,25 +210,25 @@ export function InteractiveProgressNoteEditor({
     <div className="flex gap-6 h-[800px]" data-testid="interactive-progress-note-editor">
       {/* Main Editor */}
       <div className="flex-1 space-y-4">
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+              <FileText className="h-5 w-5" style={{ color: '#88A5BC' }} />
               Interactive Progress Note
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Section Tabs */}
-            <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <div className="flex space-x-1 rounded-lg p-1" style={{ backgroundColor: 'rgba(242, 243, 241, 0.8)' }}>
               {(['subjective', 'objective', 'assessment', 'plan'] as const).map((section) => (
                 <button
                   key={section}
                   onClick={() => setActiveSection(section)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
-                    activeSection === section
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                  }`}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors capitalize"
+                  style={activeSection === section 
+                    ? { backgroundColor: '#FFFFFF', color: '#344C3D', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
+                    : { color: '#738A6E' }
+                  }
                   data-testid={`section-tab-${section}`}
                 >
                   {getSectionIcon(section)}
@@ -239,14 +239,15 @@ export function InteractiveProgressNoteEditor({
 
             {/* Active Section Editor */}
             <div className="space-y-2">
-              <label className="text-sm font-medium capitalize">
+              <label className="text-sm font-medium capitalize" style={{ color: '#344C3D' }}>
                 {activeSection} Section
               </label>
               <Textarea
                 value={noteContent[activeSection]}
                 onChange={(e) => handleSectionChange(activeSection, e.target.value)}
                 placeholder={`Enter ${activeSection} information...`}
-                className="min-h-[200px] resize-none"
+                className="min-h-[200px] resize-none bg-white border focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)', color: '#344C3D' }}
                 data-testid={`textarea-${activeSection}`}
               />
             </div>
@@ -254,23 +255,25 @@ export function InteractiveProgressNoteEditor({
             {/* Progress Rating & Risk Level */}
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="text-sm font-medium">Progress Rating (1-10)</label>
+                <label className="text-sm font-medium" style={{ color: '#344C3D' }}>Progress Rating (1-10)</label>
                 <Input
                   type="number"
                   min="1"
                   max="10"
                   value={progressRating}
                   onChange={(e) => setProgressRating(parseInt(e.target.value))}
-                  className="mt-1"
+                  className="mt-1 bg-white border focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                  style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)', color: '#344C3D' }}
                   data-testid="input-progress-rating"
                 />
               </div>
               <div className="flex-1">
-                <label className="text-sm font-medium">Risk Level</label>
+                <label className="text-sm font-medium" style={{ color: '#344C3D' }}>Risk Level</label>
                 <select
                   value={riskLevel}
                   onChange={(e) => setRiskLevel(e.target.value as any)}
                   className="mt-1 w-full px-3 py-2 border rounded-md"
+                  style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)', color: '#344C3D' }}
                   data-testid="select-risk-level"
                 >
                   <option value="low">Low</option>
@@ -289,6 +292,8 @@ export function InteractiveProgressNoteEditor({
               <Button 
                 onClick={handleSave}
                 disabled={saveNoteMutation.isPending}
+                style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C', color: '#FFFFFF' }}
+                className="hover:bg-opacity-90"
                 data-testid="button-save"
               >
                 <Save className="h-4 w-4 mr-2" />
@@ -301,39 +306,41 @@ export function InteractiveProgressNoteEditor({
 
       {/* AI Suggestions Sidebar */}
       <div className="w-80">
-        <Card className="h-full">
+        <Card className="h-full bg-white">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+              <Brain className="h-5 w-5" style={{ color: '#88A5BC' }} />
               AI Suggestions
               {isGeneratingSuggestions && (
-                <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />
+                <div className="animate-spin h-4 w-4 border-2 border-t-transparent rounded-full" style={{ borderColor: '#88A5BC' }} />
               )}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[700px] px-4">
               {aiSuggestions.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
-                  <Lightbulb className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">
+                <div className="text-center py-8">
+                  <Lightbulb className="h-8 w-8 mx-auto mb-2 opacity-50" style={{ color: '#738A6E' }} />
+                  <p className="text-sm" style={{ color: '#738A6E' }}>
                     Start typing in any section to receive AI-powered suggestions
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3 pb-4">
                   {aiSuggestions.map((suggestion) => (
-                    <Card key={suggestion.id} className="p-3" data-testid={`suggestion-${suggestion.id}`}>
+                    <Card key={suggestion.id} className="p-3 bg-white border-l-4" style={{ borderLeftColor: '#88A5BC' }} data-testid={`suggestion-${suggestion.id}`}>
                       <div className="flex items-start gap-2 mb-2">
-                        {getSuggestionIcon(suggestion.type)}
+                        <div style={{ color: '#88A5BC' }}>
+                          {getSuggestionIcon(suggestion.type)}
+                        </div>
                         <div className="flex-1">
-                          <h4 className="text-sm font-medium">{suggestion.title}</h4>
-                          <Badge variant="secondary" className="text-xs mt-1">
+                          <h4 className="text-sm font-medium" style={{ color: '#344C3D' }}>{suggestion.title}</h4>
+                          <Badge variant="secondary" className="text-xs mt-1" style={{ backgroundColor: '#8EA58C', color: '#FFFFFF' }}>
                             {Math.round(suggestion.confidence)}% confident
                           </Badge>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                      <p className="text-sm mb-3" style={{ color: '#738A6E' }}>
                         {suggestion.content}
                       </p>
                       <Button 
@@ -341,6 +348,7 @@ export function InteractiveProgressNoteEditor({
                         variant="outline"
                         onClick={() => applySuggestion(suggestion)}
                         className="w-full"
+                        style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
                         data-testid={`button-apply-${suggestion.id}`}
                       >
                         Apply Suggestion
