@@ -16,6 +16,7 @@ import InteractiveNoteCreator from "@/pages/InteractiveNoteCreator";
 import SessionPrep from "@/pages/session-prep";
 import NotFound from "@/pages/not-found";
 import { EnhancedClientDetailPage } from "@/components/therapeutic";
+import { useState, useEffect, lazy } from 'react';
 
 function Router() {
   return (
