@@ -63,7 +63,7 @@ export default function TopBar() {
           {pageTitle}
         </h1>
         <div className="flex items-center text-sm text-muted-foreground" data-testid="current-date">
-          <Calendar className="w-4 h-4 mr-2" />
+          <Calendar className="w-4 h-4 mr-2" style={{color: '#88A5BC'}} />
           {currentDate}
         </div>
       </div>
@@ -74,7 +74,6 @@ export default function TopBar() {
             healthy === true ? 'bg-green-500' : 
             healthy === false ? 'bg-red-500' : 'bg-gray-400'
           }`} />
-          <span>v{version}</span>
         </div>
         <button 
           className="relative p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted"

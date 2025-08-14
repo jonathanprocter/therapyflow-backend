@@ -1,0 +1,157 @@
+## Replit Agent Prompt for Final Fixes
+
+Copy and paste this exact prompt to your Replit agent:
+
+---
+
+**Please make these specific CSS and color adjustments to complete the brand implementation:**
+
+## 1. Add Vertical Spacing Between Card Rows
+```css
+/* Add to your card grid styles */
+.card-grid, .feature-grid, .dashboard-grid {
+  gap: 20px 12px; /* 20px vertical gap, 12px horizontal gap */
+  /* OR if using grid-gap separately: */
+  grid-row-gap: 20px;
+  grid-column-gap: 12px;
+}
+
+/* If cards are in flex containers */
+.card-row {
+  margin-bottom: 20px;
+}
+
+/* Ensure consistent spacing between ALL card sections */
+.card-section + .card-section {
+  margin-top: 20px;
+}
+```
+
+## 2. Add French Blue (#88A5BC) Accents - CRITICAL
+**You MUST add French Blue to these specific elements:**
+
+```css
+/* AI badges/indicators */
+.ai-badge, .ai-indicator, [class*="ai-"] {
+  background-color: #88A5BC !important;
+  color: white;
+}
+
+/* Smart Upload sparkle icon */
+.smart-upload-icon, .sparkle-icon, .fa-sparkles {
+  color: #88A5BC !important;
+}
+
+/* Sidebar hover states */
+.sidebar-item:hover,
+.nav-item:hover,
+.menu-item:hover {
+  background-color: rgba(136, 165, 188, 0.1);
+  color: #88A5BC;
+  border-left: 3px solid #88A5BC;
+}
+
+/* Active sidebar item */
+.sidebar-item.active {
+  border-left: 3px solid #88A5BC;
+}
+
+/* "Upload Documents" secondary button */
+.btn-secondary,
+.upload-documents-btn {
+  background-color: white;
+  border: 2px solid #88A5BC;
+  color: #88A5BC;
+}
+
+.btn-secondary:hover,
+.upload-documents-btn:hover {
+  background-color: #88A5BC;
+  color: white;
+}
+
+/* Calendar icon should have blue accent */
+.calendar-icon {
+  color: #88A5BC !important;
+}
+
+/* Links throughout the app */
+a {
+  color: #88A5BC;
+}
+
+a:hover {
+  color: #6B8BA6; /* Darker blue on hover */
+}
+```
+
+## 3. Fix Icon Colors for Consistency
+```css
+/* Default icon colors should be Sage or Moss */
+.icon, .fa, .fas, .far, [class^="icon-"] {
+  color: #8EA58C; /* Sage */
+}
+
+/* Secondary icons */
+.secondary-icon {
+  color: #738A6E; /* Moss */
+}
+
+/* Special/AI icons */
+.special-icon, .ai-icon {
+  color: #88A5BC; /* French Blue */
+}
+```
+
+## 4. Ensure Proper Text Colors
+```css
+/* Card description text MUST be Moss not gray */
+.card-description,
+.card-text,
+.description-text,
+p {
+  color: #738A6E !important; /* Moss - not #888 or #999 */
+}
+
+/* Headers */
+h1, h2, .section-title {
+  color: #344C3D; /* Evergreen */
+}
+
+h3, h4, h5, h6 {
+  color: #738A6E; /* Moss */
+}
+```
+
+## 5. Final Polish
+```css
+/* Sidebar border should be subtle */
+.sidebar {
+  border-right: 1px solid rgba(115, 138, 110, 0.2); /* Moss at 20% */
+}
+
+/* Ensure ALL backgrounds use Ivory */
+body,
+.main-content {
+  background-color: #F2F3F1 !important;
+}
+
+/* Cards should have white background */
+.card {
+  background-color: #FFFFFF;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08); /* Evergreen-based shadow */
+}
+```
+
+## CRITICAL CHECKLIST:
+✓ Add 20px vertical spacing between card rows
+✓ Add French Blue to at least 5 different elements (AI badges, sparkle icon, hover states, calendar, links)
+✓ Change ALL gray text (#888, #999, #666) to Moss (#738A6E)
+✓ Ensure sidebar hover states use French Blue
+✓ Make "Upload Documents" button use French Blue border
+
+**Remember: The interface should be 80% green/neutral (Ivory, Sage, Moss, Evergreen) and 20% French Blue accent. Currently it's 100% green - French Blue is ESSENTIAL for the design to work.**
+
+---
+
+This prompt explicitly addresses every remaining issue with specific CSS selectors and exact color values.

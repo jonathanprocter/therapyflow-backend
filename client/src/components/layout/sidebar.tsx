@@ -18,7 +18,7 @@ import {
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Calendar", href: "/calendar", icon: Calendar, hasNotification: true },
+  { name: "Calendar", href: "/calendar", icon: Calendar, hasNotification: true, isSpecialIcon: true },
   { name: "Clients", href: "/clients", icon: Users },
   { name: "Progress Notes", href: "/progress-notes", icon: FileText },
   { name: "Session History", href: "/session-history", icon: History },
@@ -82,7 +82,7 @@ export default function Sidebar() {
                     }
                   }}
                 >
-                  <IconComponent className="w-4 h-4 mr-3" />
+                  <IconComponent className="w-4 h-4 mr-3" style={{color: (item.name === 'Calendar') ? '#88A5BC' : 'inherit'}} />
                   {item.name}
                   {item.badge && (
                     <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}}>
@@ -127,7 +127,7 @@ export default function Sidebar() {
                     }
                   }}
                 >
-                  <IconComponent className="w-4 h-4 mr-3" style={{color: (item.name.includes('AI') || item.name.includes('Smart')) ? '#88A5BC' : 'inherit'}} />
+                  <IconComponent className="w-4 h-4 mr-3" style={{color: (item.name.includes('AI') || item.name.includes('Smart') || item.name.includes('Sparkles')) ? '#88A5BC' : 'inherit'}} />
                   {item.name}
                   {item.badge && (
                     <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}}>

@@ -35,13 +35,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-5 gap-x-3 mb-12">
           {/* Clinical Management Section */}
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-foreground mb-4">
               Clinical Management
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Link href="/dashboard">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-dashboard">
                   <div className="text-3xl mb-3">🏠</div>
@@ -97,7 +97,7 @@ export default function HomePage() {
             <h2 className="text-2xl font-semibold text-foreground mb-4">
               AI Document Processing
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Link href="/smart">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-smart">
                   <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>✨</div>
@@ -153,7 +153,7 @@ export default function HomePage() {
             <h2 className="text-2xl font-semibold text-foreground mb-4">
               Analysis & Reports
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Link href="/client">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-client">
                   <div className="text-3xl mb-3">🔗</div>
