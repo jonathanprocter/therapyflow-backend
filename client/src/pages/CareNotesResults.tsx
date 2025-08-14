@@ -70,7 +70,7 @@ export default function CareNotesResults() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 max-w-6xl mx-auto space-y-6" style={{ backgroundColor: '#F2F3F1', minHeight: '100vh' }}>
       <div>
         <h1 className="text-3xl font-bold" style={{ color: '#344C3D' }}>AI Analysis Results</h1>
         <p className="mt-2" style={{ color: '#738A6E' }}>
@@ -78,25 +78,26 @@ export default function CareNotesResults() {
         </p>
       </div>
 
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+            <Search className="h-5 w-5" style={{ color: '#88A5BC' }} />
             Search Results
           </CardTitle>
-          <CardDescription>
+          <CardDescription style={{ color: '#738A6E' }}>
             Enter a client ID to view their AI analysis results
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
             <div className="flex-1">
-              <Label htmlFor="searchClientId">Client ID</Label>
+              <Label htmlFor="searchClientId" style={{ color: '#344C3D' }}>Client ID</Label>
               <Input
                 id="searchClientId"
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
                 placeholder="Enter client ID to search"
+                className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
                 data-testid="input-search-client-id"
               />
             </div>
@@ -104,6 +105,8 @@ export default function CareNotesResults() {
               <Button 
                 onClick={handleFetchResults} 
                 disabled={loading || !clientId}
+                className="hover:bg-opacity-90"
+                style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
                 data-testid="button-fetch-results"
               >
                 {loading ? (
@@ -126,22 +129,22 @@ export default function CareNotesResults() {
       {results.length > 0 && (
         <div className="grid gap-6">
           {results.map((result) => (
-            <Card key={result.id} data-testid={`card-result-${result.id}`}>
+            <Card key={result.id} className="bg-white" data-testid={`card-result-${result.id}`}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Brain className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+                      <Brain className="h-5 w-5" style={{ color: '#88A5BC' }} />
                       AI Analysis Result
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription style={{ color: '#738A6E' }}>
                       Document ID: {result.documentId} • 
                       Model: {result.model} • 
                       Processed: {new Date(result.createdAt).toLocaleDateString()}
                     </CardDescription>
                   </div>
                   <Badge 
-                    className={getRiskColor(result.confidence)}
+                    style={getRiskColor(result.confidence)}
                     data-testid={`badge-confidence-${result.id}`}
                   >
                     {result.confidence}% confidence
@@ -152,8 +155,8 @@ export default function CareNotesResults() {
                 {/* Summary */}
                 {result.summary && (
                   <div>
-                    <h4 className="font-semibold mb-2">Summary</h4>
-                    <p className="text-muted-foreground" data-testid={`text-summary-${result.id}`}>
+                    <h4 className="font-semibold mb-2" style={{ color: '#344C3D' }}>Summary</h4>
+                    <p style={{ color: '#738A6E' }} data-testid={`text-summary-${result.id}`}>
                       {result.summary}
                     </p>
                   </div>
@@ -162,18 +165,18 @@ export default function CareNotesResults() {
                 {/* Entities */}
                 {result.entities && (
                   <div>
-                    <h4 className="font-semibold mb-2">Identified Entities</h4>
+                    <h4 className="font-semibold mb-2" style={{ color: '#344C3D' }}>Identified Entities</h4>
                     <div className="grid grid-cols-2 gap-4">
                       {result.entities.client && (
                         <div>
-                          <Label>Client</Label>
-                          <p className="text-sm">{result.entities.client.name || 'Not specified'}</p>
+                          <Label style={{ color: '#344C3D' }}>Client</Label>
+                          <p className="text-sm" style={{ color: '#738A6E' }}>{result.entities.client.name || 'Not specified'}</p>
                         </div>
                       )}
                       {result.entities.appointment && (
                         <div>
-                          <Label>Appointment</Label>
-                          <p className="text-sm">
+                          <Label style={{ color: '#344C3D' }}>Appointment</Label>
+                          <p className="text-sm" style={{ color: '#738A6E' }}>
                             {result.entities.appointment.date || 'Date not specified'}
                             {result.entities.appointment.time && ` at ${result.entities.appointment.time}`}
                           </p>
@@ -188,13 +191,18 @@ export default function CareNotesResults() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {result.extractions.diagnoses && result.extractions.diagnoses.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4" />
+                        <h4 className="font-semibold mb-2 flex items-center gap-2" style={{ color: '#344C3D' }}>
+                          <AlertTriangle className="h-4 w-4" style={{ color: '#88A5BC' }} />
                           Diagnoses
                         </h4>
                         <div className="space-y-1">
                           {result.extractions.diagnoses.map((diagnosis: any, idx: number) => (
-                            <Badge key={idx} variant="outline" className="mr-1 mb-1">
+                            <Badge 
+                              key={idx} 
+                              variant="outline" 
+                              className="mr-1 mb-1"
+                              style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
+                            >
                               {diagnosis.code ? `${diagnosis.code}: ` : ''}{diagnosis.label}
                             </Badge>
                           ))}
@@ -204,10 +212,15 @@ export default function CareNotesResults() {
 
                     {result.extractions.medications && result.extractions.medications.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-2">Medications</h4>
+                        <h4 className="font-semibold mb-2" style={{ color: '#344C3D' }}>Medications</h4>
                         <div className="space-y-1">
                           {result.extractions.medications.map((med: any, idx: number) => (
-                            <Badge key={idx} variant="outline" className="mr-1 mb-1">
+                            <Badge 
+                              key={idx} 
+                              variant="outline" 
+                              className="mr-1 mb-1"
+                              style={{ borderColor: '#88A5BC', color: '#88A5BC' }}
+                            >
                               {med.name} {med.dose ? `${med.dose}` : ''} {med.freq ? `${med.freq}` : ''}
                             </Badge>
                           ))}
@@ -217,10 +230,15 @@ export default function CareNotesResults() {
 
                     {result.extractions.symptoms && result.extractions.symptoms.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-2">Symptoms</h4>
+                        <h4 className="font-semibold mb-2" style={{ color: '#344C3D' }}>Symptoms</h4>
                         <div className="space-y-1">
                           {result.extractions.symptoms.map((symptom: string, idx: number) => (
-                            <Badge key={idx} variant="outline" className="mr-1 mb-1">
+                            <Badge 
+                              key={idx} 
+                              variant="outline" 
+                              className="mr-1 mb-1"
+                              style={{ borderColor: '#738A6E', color: '#738A6E' }}
+                            >
                               {symptom}
                             </Badge>
                           ))}
@@ -230,10 +248,15 @@ export default function CareNotesResults() {
 
                     {result.extractions.goals && result.extractions.goals.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-2">Treatment Goals</h4>
+                        <h4 className="font-semibold mb-2" style={{ color: '#344C3D' }}>Treatment Goals</h4>
                         <div className="space-y-1">
                           {result.extractions.goals.map((goal: string, idx: number) => (
-                            <Badge key={idx} variant="outline" className="mr-1 mb-1 bg-blue-50 text-blue-700">
+                            <Badge 
+                              key={idx} 
+                              variant="outline" 
+                              className="mr-1 mb-1"
+                              style={{ borderColor: '#8EA58C', color: '#8EA58C', backgroundColor: 'rgba(142, 165, 140, 0.05)' }}
+                            >
                               {goal}
                             </Badge>
                           ))}
@@ -246,13 +269,13 @@ export default function CareNotesResults() {
                 {/* Recommendations */}
                 {result.recommendations && result.recommendations.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-2 flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4" />
+                    <h4 className="font-semibold mb-2 flex items-center gap-2" style={{ color: '#344C3D' }}>
+                      <CheckCircle className="h-4 w-4" style={{ color: '#8EA58C' }} />
                       Recommendations
                     </h4>
                     <ul className="list-disc list-inside space-y-1" data-testid={`list-recommendations-${result.id}`}>
                       {result.recommendations.map((rec, idx) => (
-                        <li key={idx} className="text-muted-foreground">
+                        <li key={idx} style={{ color: '#738A6E' }}>
                           {rec}
                         </li>
                       ))}
@@ -266,11 +289,11 @@ export default function CareNotesResults() {
       )}
 
       {clientId && !loading && results.length === 0 && (
-        <Card>
+        <Card className="bg-white">
           <CardContent className="text-center py-8">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Results Found</h3>
-            <p className="text-muted-foreground">
+            <FileText className="h-12 w-12 mx-auto mb-4" style={{ color: '#88A5BC' }} />
+            <h3 className="text-lg font-semibold mb-2" style={{ color: '#344C3D' }}>No Results Found</h3>
+            <p style={{ color: '#738A6E' }}>
               No AI analysis results found for client "{clientId}". 
               Make sure documents have been uploaded and processed.
             </p>
