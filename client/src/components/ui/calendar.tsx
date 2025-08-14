@@ -17,6 +17,7 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       weekStartsOn={1}
+      showWeekNumber
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
@@ -34,6 +35,7 @@ function Calendar({
         head_row: "flex",
         head_cell:
           "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+        weeknumber: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] flex items-center justify-center",
         row: "flex w-full mt-2",
         cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent [&:has([aria-selected].day-outside)]:bg-opacity-50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
