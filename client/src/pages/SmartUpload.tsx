@@ -113,7 +113,7 @@ export default function SmartUpload() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 max-w-4xl mx-auto space-y-6" style={{ backgroundColor: '#F2F3F1', minHeight: '100vh' }}>
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2" style={{ color: '#344C3D' }}>
           <Sparkles className="h-8 w-8" style={{ color: '#88A5BC' }} />
@@ -124,19 +124,19 @@ export default function SmartUpload() {
         </p>
       </div>
 
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+            <Brain className="h-5 w-5" style={{ color: '#88A5BC' }} />
             AI-Powered Document Processing
           </CardTitle>
-          <CardDescription>
+          <CardDescription style={{ color: '#738A6E' }}>
             Just upload your documents - the AI will automatically identify clients, dates, and extract clinical data
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="files">Documents</Label>
+            <Label htmlFor="files" style={{ color: '#344C3D' }}>Documents</Label>
             <Input
               id="files"
               type="file"
@@ -144,8 +144,9 @@ export default function SmartUpload() {
               accept=".pdf,.docx,.doc,.txt"
               onChange={(e) => setFiles(e.target.files)}
               data-testid="input-smart-files"
+              className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm" style={{ color: '#738A6E' }}>
               Supported formats: PDF, DOCX, DOC, TXT
             </p>
           </div>
@@ -153,7 +154,8 @@ export default function SmartUpload() {
           <Button 
             onClick={handleSmartUpload} 
             disabled={uploading || processing || !files?.length}
-            className="w-full"
+            className="w-full hover:bg-opacity-90"
+            style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
             data-testid="button-smart-upload"
           >
             {uploading ? (
@@ -179,47 +181,47 @@ export default function SmartUpload() {
       {processResults.length > 0 && (
         <div className="space-y-4">
           {processResults.map((result) => (
-            <Card key={result.documentId} data-testid={`card-smart-result-${result.documentId}`}>
+            <Card key={result.documentId} className="bg-white" data-testid={`card-smart-result-${result.documentId}`}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+                      <FileText className="h-5 w-5" style={{ color: '#88A5BC' }} />
                       Document Analysis
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription style={{ color: '#738A6E' }}>
                       ID: {result.documentId.substring(0, 8)}... • Status: {result.status}
                     </CardDescription>
                   </div>
                   {result.error ? (
-                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <AlertCircle className="h-5 w-5" style={{ color: '#738A6E' }} />
                   ) : (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <CheckCircle className="h-5 w-5" style={{ color: '#8EA58C' }} />
                   )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {result.error && (
-                  <div className="bg-red-50 border border-red-200 rounded p-3">
-                    <p className="text-red-800 text-sm">{result.error}</p>
+                  <div className="rounded p-3" style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)', border: '1px solid rgba(115, 138, 110, 0.3)' }}>
+                    <p className="text-sm" style={{ color: '#738A6E' }}>{result.error}</p>
                   </div>
                 )}
                 
                 {result.smartParsing && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-blue-50">
+                    <Card className="bg-white" style={{ border: '1px solid rgba(136, 165, 188, 0.2)' }}>
                       <CardContent className="p-4">
-                        <h4 className="font-semibold mb-2">Client Information</h4>
+                        <h4 className="font-semibold mb-2" style={{ color: '#344C3D' }}>Client Information</h4>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm">Suggested ID:</span>
-                            <Badge variant="outline" className="font-mono">
+                            <span className="text-sm" style={{ color: '#738A6E' }}>Suggested ID:</span>
+                            <Badge variant="outline" className="font-mono" style={{ borderColor: '#88A5BC', color: '#88A5BC' }}>
                               {result.smartParsing.suggestedClientId}
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm">Confidence:</span>
-                            <Badge className={getConfidenceColor(result.smartParsing.clientNameConfidence)}>
+                            <span className="text-sm" style={{ color: '#738A6E' }}>Confidence:</span>
+                            <Badge style={getConfidenceColor(result.smartParsing.clientNameConfidence)}>
                               {result.smartParsing.clientNameConfidence}%
                             </Badge>
                           </div>
@@ -227,25 +229,25 @@ export default function SmartUpload() {
                       </CardContent>
                     </Card>
 
-                    <Card className="bg-green-50">
+                    <Card className="bg-white" style={{ border: '1px solid rgba(142, 165, 140, 0.2)' }}>
                       <CardContent className="p-4">
-                        <h4 className="font-semibold mb-2">Appointment Details</h4>
+                        <h4 className="font-semibold mb-2" style={{ color: '#344C3D' }}>Appointment Details</h4>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm">Date:</span>
-                            <Badge variant="outline">
+                            <span className="text-sm" style={{ color: '#738A6E' }}>Date:</span>
+                            <Badge variant="outline" style={{ borderColor: '#8EA58C', color: '#8EA58C' }}>
                               {result.smartParsing.suggestedAppointmentDate}
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm">Session Type:</span>
-                            <Badge variant="outline">
+                            <span className="text-sm" style={{ color: '#738A6E' }}>Session Type:</span>
+                            <Badge variant="outline" style={{ borderColor: '#8EA58C', color: '#8EA58C' }}>
                               {result.smartParsing.sessionType}
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm">Confidence:</span>
-                            <Badge className={getConfidenceColor(result.smartParsing.dateConfidence)}>
+                            <span className="text-sm" style={{ color: '#738A6E' }}>Confidence:</span>
+                            <Badge style={getConfidenceColor(result.smartParsing.dateConfidence)}>
                               {result.smartParsing.dateConfidence}%
                             </Badge>
                           </div>
@@ -256,7 +258,7 @@ export default function SmartUpload() {
                 )}
 
                 {result.charCount && (
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm" style={{ color: '#738A6E' }}>
                     Processed: {result.charCount} characters
                     {result.qualityScore && ` • Quality: ${result.qualityScore}%`}
                     {result.edgesCount && ` • Semantic connections: ${result.edgesCount}`}
@@ -269,11 +271,11 @@ export default function SmartUpload() {
       )}
 
       {files && files.length > 0 && processResults.length === 0 && !uploading && !processing && (
-        <Card>
+        <Card className="bg-white">
           <CardContent className="text-center py-8">
-            <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Ready for Smart Processing</h3>
-            <p className="text-muted-foreground">
+            <Brain className="h-12 w-12 mx-auto mb-4" style={{ color: '#88A5BC' }} />
+            <h3 className="text-lg font-semibold mb-2" style={{ color: '#344C3D' }}>Ready for Smart Processing</h3>
+            <p style={{ color: '#738A6E' }}>
               {files.length} file{files.length > 1 ? 's' : ''} selected. Click "Smart Upload & Process" to begin AI analysis.
             </p>
           </CardContent>
