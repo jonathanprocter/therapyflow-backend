@@ -5,11 +5,22 @@ import { createDocument, getDocument, getAIResult } from "../storage-extensions"
 import { parsePDF } from "../services/pdf";
 import { processDocumentWithAI } from "../services/ai";
 
-const upload = multer({ dest: "uploads/" });
+const upload = multer({ 
+  storage: multer.memoryStorage()
+});
 export const documentsRouter = express.Router();
 
-documentsRouter.post("/upload", upload.array("files"), async (req, res) => {
+// Test route without multer
+documentsRouter.post("/test", (req, res) => {
+  res.json({ message: "Test route working", body: req.body });
+});
+
+documentsRouter.post("/upload", upload.any(), async (req, res) => {
   try {
+    console.log("Upload request received:");
+    console.log("Body:", req.body);
+    console.log("Files:", req.files);
+    
     const { clientId, appointmentDate } = req.body;
     if (!clientId || !appointmentDate) {
       return res.status(400).json({ error: "clientId and appointmentDate required" });
@@ -19,8 +30,9 @@ documentsRouter.post("/upload", upload.array("files"), async (req, res) => {
     const uploaded = [];
     
     for (const f of files) {
+      // For memory storage, the buffer contains the file data
       const meta = { 
-        filePath: path.resolve(f.path), 
+        buffer: f.buffer, // Store the file buffer
         originalName: f.originalname, 
         size: f.size 
       };
