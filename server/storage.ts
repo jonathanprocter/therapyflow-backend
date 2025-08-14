@@ -72,7 +72,9 @@ export interface IStorage {
 
   // Documents
   getDocuments(clientId: string): Promise<Document[]>;
+  getDocument(id: string): Promise<Document | undefined>;
   createDocument(document: InsertDocument): Promise<Document>;
+  updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document>;
   getDocumentsByTherapist(therapistId: string): Promise<Document[]>;
 
   // AI Insights
@@ -510,12 +512,30 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(documents.uploadedAt));
   }
 
+  async getDocument(id: string): Promise<Document | undefined> {
+    const result = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.id, id))
+      .limit(1);
+    return result[0];
+  }
+
   async createDocument(document: InsertDocument): Promise<Document> {
     const [newDocument] = await db
       .insert(documents)
       .values(document)
       .returning();
     return newDocument;
+  }
+
+  async updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document> {
+    const [updatedDocument] = await db
+      .update(documents)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(documents.id, id))
+      .returning();
+    return updatedDocument;
   }
 
   async getDocumentsByTherapist(therapistId: string): Promise<Document[]> {

@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
-import { createDocument, getDocument, getAIResult } from "../storage-extensions";
+import { createDocument, getDocument, getAIResult } from "../storage-extensions-new";
 import { parsePDF } from "../services/pdf";
 import { processDocumentWithAI, smartParseDocument } from "../services/ai";
 

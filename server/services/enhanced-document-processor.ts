@@ -1388,6 +1388,12 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
    * Create new client with extracted name
    */
   async createNewClient(name: string, therapistId: string): Promise<string> {
+    console.log(`🔧 Creating new client: ${name}, therapistId: ${therapistId}`);
+    
+    if (!therapistId) {
+      throw new Error(`Cannot create client ${name} - therapistId is required but was null/undefined`);
+    }
+    
     const nameParts = name.trim().split(/\s+/);
     const firstName = nameParts[0] || 'Unknown';
     const lastName = nameParts.slice(1).join(' ') || '';

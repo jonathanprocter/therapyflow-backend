@@ -21,18 +21,20 @@ export async function parsePDF(documentId: string) {
   const doc = await getDocument(documentId);
   if (!doc) throw new Error(`Document not found: ${documentId}`);
   
-  const filePath = doc.meta?.filePath as string | undefined;
-  if (!filePath) throw new Error(`Missing file path for document ${documentId}`);
+  // Get buffer data from metadata instead of file path
+  const bufferArray = doc.metadata?.buffer as number[] | undefined;
+  if (!bufferArray) throw new Error(`Missing buffer data for document ${documentId}`);
 
   let text = "";
   let meta: any = { method: "enhanced-processor" };
   let qualityScore = 0;
   
   try {
-    const data = await fs.readFile(filePath);
+    // Convert array back to Buffer
+    const data = Buffer.from(bufferArray);
     
-    // Use our enhanced document processor
-    const result = await processor.processDocument(data, doc.filename || "document.pdf");
+    // Use our enhanced document processor with therapist ID
+    const result = await processor.processDocument(data, doc.fileName || "document.pdf", doc.therapistId);
     
     text = result.extractedText || "";
     qualityScore = result.overallQuality || 0;
@@ -55,9 +57,9 @@ export async function parsePDF(documentId: string) {
   } catch (error) {
     console.warn('⚠️ Enhanced processing failed, trying basic extraction:', error);
     
-    // Fallback to basic extraction
+    // Fallback to basic extraction using the buffer data
     try {
-      const data = await fs.readFile(filePath);
+      const data = Buffer.from(bufferArray);
       text = cleanFallback(data);
       qualityScore = text.length > 100 ? 40 : 10;
       meta = { method: "fallback", error: String(error) };
