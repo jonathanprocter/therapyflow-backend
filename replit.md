@@ -6,6 +6,21 @@ TherapyFlow is a comprehensive clinical management platform designed for mental 
 
 Preferred communication style: Simple, everyday language.
 
+## Brand Color Implementation (August 2025)
+**Exact Brand Colors - Implemented system-wide**:
+- **Ivory (#F2F3F1)**: Primary background color for warmth and sophistication
+- **Sage (#8EA58C)**: Primary buttons and interactive elements 
+- **Moss (#738A6E)**: Body text and secondary content
+- **Evergreen (#344C3D)**: Headers, titles, and emphasis text
+- **French Blue (#88A5BC)**: Links, accents, and secondary buttons
+
+**Implementation Details**:
+- CSS variables updated in `client/src/styles/globals.css` with exact hex values
+- Aggressive CSS overrides to eliminate any competing color schemes
+- Inline styling applied to critical elements for color consistency
+- All Tailwind color classes mapped to brand palette
+- Button components use brand colors with proper contrast ratios
+
 ## Session Type Configuration
 - Session types are LIMITED to only 3 options:
   1. "individual" (DEFAULT - used for all sessions unless specifically identified otherwise)

@@ -22,10 +22,10 @@
     /* Standard Theme Variables mapped to brand colors */
     --background: 242 243 241;        /* Ivory */
     --foreground: 52 76 61;           /* Evergreen for main text */
-    --card: 255 255 255;              /* White for cards */
-    --card-foreground: 52 76 61;      /* Evergreen for card text */
-    --popover: 255 255 255;           /* White for popovers */
-    --popover-foreground: 52 76 61;   /* Evergreen for popover text */
+    --card: 242 243 241;              /* EXACT Ivory #F2F3F1 for cards */
+    --card-foreground: 52 76 61;      /* EXACT Evergreen #344C3D for card text */
+    --popover: 242 243 241;           /* EXACT Ivory #F2F3F1 for popovers */
+    --popover-foreground: 52 76 61;   /* EXACT Evergreen #344C3D for popover text */
     --primary: 142 165 140;           /* Sage as primary */
     --primary-foreground: 255 255 255; /* White text on sage */
     --secondary: 242 243 241;         /* Ivory for secondary */
@@ -48,8 +48,8 @@
     --chart-5: 107 139 166;           /* Blue dark for additional data */
 
     /* Sidebar Colors */
-    --sidebar: 255 255 255;           /* White for sidebar background */
-    --sidebar-foreground: 52 76 61;   /* Evergreen for sidebar text */
+    --sidebar: 242 243 241;           /* EXACT Ivory #F2F3F1 for sidebar background */
+    --sidebar-foreground: 52 76 61;   /* EXACT Evergreen #344C3D for sidebar text */
     --sidebar-primary: 142 165 140;   /* Sage for sidebar primary */
     --sidebar-primary-foreground: 255 255 255; /* White text on sage */
     --sidebar-accent: 136 165 188;    /* French blue for sidebar accents */
@@ -129,27 +129,54 @@
     color: #738A6E !important;
   }
 
-  /* Aggressive overrides to eliminate yellow background */
-  * {
-    background-color: inherit !important;
+  /* FORCE EXACT BRAND COLORS - AGGRESSIVE OVERRIDES */
+  *, *::before, *::after {
+    box-sizing: border-box;
   }
 
-  body *, html *, #root *, .min-h-screen *, 
-  [class*="bg-yellow"], [class*="bg-amber"], 
-  [style*="yellow"], [style*="amber"] {
+  /* Force Ivory background everywhere */
+  *, div, section, main, article, aside, header, footer, nav {
     background-color: #F2F3F1 !important;
   }
 
-  /* Force specific elements to use brand colors */
-  div, section, main, article, aside {
-    background-color: inherit;
-    color: inherit;
+  /* Specific overrides for common problematic elements */
+  .bg-card, .bg-background, .bg-muted, .bg-popover,
+  [class*="bg-"], [class*="background"] {
+    background-color: #F2F3F1 !important;
   }
 
-  /* Remove any potential yellow/amber background classes */
+  /* Force brand text colors */
+  h1, h2, h3, h4, h5, h6 {
+    color: #344C3D !important; /* Evergreen for headers */
+  }
+
+  p, span, div:not([class*="button"]) {
+    color: #738A6E !important; /* Moss for body text */
+  }
+
+  /* Force brand link colors */
+  a, [role="link"] {
+    color: #88A5BC !important; /* French Blue for links */
+  }
+
+  /* Remove yellow/amber backgrounds completely */
   .bg-yellow-50, .bg-yellow-100, .bg-yellow-200, .bg-yellow-300, .bg-yellow-400, .bg-yellow-500,
-  .bg-amber-50, .bg-amber-100, .bg-amber-200, .bg-amber-300, .bg-amber-400, .bg-amber-500 {
+  .bg-amber-50, .bg-amber-100, .bg-amber-200, .bg-amber-300, .bg-amber-400, .bg-amber-500,
+  [class*="bg-yellow"], [class*="bg-amber"], 
+  [style*="yellow"], [style*="amber"],
+  [class*="primary"], [class*="secondary"] {
     background-color: #F2F3F1 !important;
+    color: #738A6E !important;
+  }
+
+  /* Final override for all button colors to use brand colors only */
+  button, [role="button"], .button {
+    background-color: #8EA58C !important; /* Sage for buttons */
+    color: #F2F3F1 !important; /* Ivory text */
+  }
+
+  button:hover, [role="button"]:hover, .button:hover {
+    background-color: #738A6E !important; /* Moss for hover */
   }
 
   h1, h2 { 

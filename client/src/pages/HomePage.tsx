@@ -194,12 +194,12 @@ export default function HomePage() {
             </p>
             <div className="flex justify-center gap-4">
               <Link href="/dashboard">
-                <button className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium" data-testid="button-get-started-dashboard">
+                <button className="px-6 py-3 rounded-md font-medium transition-colors" style={{backgroundColor: '#8EA58C', color: '#F2F3F1'}} data-testid="button-get-started-dashboard">
                   View Dashboard
                 </button>
               </Link>
               <Link href="/smart">
-                <button className="px-6 py-3 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors font-medium" data-testid="button-get-started-upload">
+                <button className="px-6 py-3 rounded-md font-medium transition-colors" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}} data-testid="button-get-started-upload">
                   Upload Documents
                 </button>
               </Link>
