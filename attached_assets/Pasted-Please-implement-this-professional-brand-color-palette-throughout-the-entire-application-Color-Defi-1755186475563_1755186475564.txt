@@ -1,0 +1,118 @@
+Please implement this professional brand color palette throughout the entire application:
+Color Definitions
+css/* Core Brand Colors */
+--color-ivory: #F2F3F1;      /* Warm white for backgrounds */
+--color-sage: #8EA58C;       /* Primary brand color */
+--color-moss: #738A6E;       /* Secondary/body text */
+--color-evergreen: #344C3D;  /* Headers and emphasis */
+--color-french-blue: #88A5BC; /* Accent for links and CTAs */
+
+/* Utility variations */
+--color-moss-light: rgba(115, 138, 110, 0.7);  /* For subtle text */
+--color-sage-dark: #7A8F78;                    /* Hover state for sage */
+--color-blue-dark: #6B8BA6;                    /* Hover state for blue */
+--color-white: #FFFFFF;                        /* Pure white when needed */
+--color-shadow: rgba(52, 76, 61, 0.08);       /* Evergreen-based shadows */
+Implementation Requirements
+1. Global Backgrounds
+
+Main app background: --color-ivory
+Card/panel backgrounds: --color-white
+Subtle section dividers: --color-sage at 10% opacity
+Modal overlays: --color-evergreen at 60% opacity
+
+2. Typography Hierarchy
+
+H1-H2 headings: --color-evergreen
+H3-H6 headings: --color-moss
+Body text: --color-moss
+Muted/secondary text: --color-moss-light
+Links: --color-french-blue (darken on hover to --color-blue-dark)
+
+3. Buttons & Interactive Elements
+css/* Primary Button */
+- Background: --color-sage
+- Text: white
+- Hover: --color-sage-dark
+- Active: --color-moss
+
+/* Secondary Button */
+- Background: transparent
+- Border: 2px solid --color-evergreen
+- Text: --color-evergreen
+- Hover: --color-evergreen background, white text
+
+/* Accent/Special CTA Button */
+- Background: --color-french-blue
+- Text: white
+- Hover: --color-blue-dark
+
+/* Ghost/Tertiary Button */
+- Background: transparent
+- Text: --color-moss
+- Hover: --color-ivory background
+4. Form Elements
+
+Input borders: --color-moss-light
+Input focus: --color-sage border
+Input background: --color-white
+Placeholder text: --color-moss-light
+Error states: Use --color-evergreen with error icon
+Success states: Use --color-sage
+
+5. Navigation
+
+Nav background: --color-white or --color-ivory
+Nav links: --color-moss
+Active nav item: --color-sage with underline or background
+Nav hover: --color-french-blue
+
+6. Feedback & States
+
+Success messages: --color-sage background at 15% opacity, --color-evergreen text
+Info messages: --color-french-blue background at 15% opacity, --color-evergreen text
+Warning/Error: --color-evergreen for text and icons
+Disabled states: 40% opacity of original color
+Loading spinners: --color-sage
+
+7. Special Components
+
+Progress bars: --color-sage for fill, --color-ivory for track
+Badges/tags: --color-sage background at 20% opacity, --color-evergreen text
+Tooltips: --color-evergreen background, white text
+Dividers/borders: --color-moss at 20% opacity
+Box shadows: Use --color-shadow
+
+8. Charts & Data Visualization
+
+Primary data: --color-sage
+Secondary data: --color-moss
+Tertiary data: --color-french-blue
+Background grids: --color-moss at 10% opacity
+
+Implementation Philosophy
+
+80/20 Rule: 80% of the UI should use the neutral green palette (Ivory, Sage, Moss, Evergreen), with only 20% using the French Blue accent
+Never use: Pure black (#000000) - always use Evergreen instead
+Accessibility: Ensure all text combinations meet WCAG AA standards
+Consistency: The same type of element should always use the same color across the app
+
+CSS Reset/Global Styles to Apply
+css* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-moss);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  line-height: 1.6;
+}
+
+h1, h2 { color: var(--color-evergreen); }
+h3, h4, h5, h6 { color: var(--color-moss); }
+a { color: var(--color-french-blue); text-decoration: none; }
+a:hover { color: var(--color-blue-dark); }
+Please update all existing colors in the application to follow this system, ensuring consistency across every component, page, and feature. Remove any colors that don't align with this palette.
