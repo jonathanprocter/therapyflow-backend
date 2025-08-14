@@ -1,13 +1,21 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 import { Link } from "wouter";
+import { formatInTimeZone } from "date-fns-tz";
+import { cn } from "@/lib/utils";
 import type { SessionWithClient } from "@/types/clinical";
 
 export default function AppointmentsPanel() {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  
   const { data: sessions, isLoading } = useQuery<SessionWithClient[]>({
-    queryKey: ["/api/sessions?today=true"],
+    queryKey: ["/api/sessions", { date: selectedDate.toISOString().split('T')[0] }],
   });
 
   if (isLoading) {
@@ -46,17 +54,46 @@ export default function AppointmentsPanel() {
     <Card className="xl:col-span-2" data-testid="appointments-panel">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900" data-testid="appointments-title">
-            Today's Schedule
-          </h3>
+          <div className="flex items-center space-x-3">
+            <h3 className="text-lg font-semibold text-gray-900" data-testid="appointments-title">
+              {selectedDate.toDateString() === new Date().toDateString() 
+                ? "Today's Schedule" 
+                : `Schedule for ${formatInTimeZone(selectedDate, 'America/New_York', 'MMM dd, yyyy')}`
+              }
+            </h3>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn("justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}
+                  data-testid="date-picker-trigger"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? formatInTimeZone(selectedDate, 'America/New_York', 'MMM dd') : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                  data-testid="appointments-calendar"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
           <div className="flex items-center space-x-2">
             <span className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
               <i className="fas fa-sync mr-1"></i>
               Google Calendar Synced
             </span>
-            <Button variant="ghost" size="sm" data-testid="view-all-appointments">
-              View All
-            </Button>
+            <Link href="/calendar">
+              <Button variant="ghost" size="sm" data-testid="view-all-appointments">
+                View All
+              </Button>
+            </Link>
           </div>
         </div>
       </CardHeader>
@@ -65,7 +102,12 @@ export default function AppointmentsPanel() {
         {!sessions || sessions.length === 0 ? (
           <div className="text-center py-8 text-gray-500" data-testid="no-appointments">
             <i className="fas fa-calendar-day text-4xl mb-4 opacity-50"></i>
-            <p>No appointments scheduled for today</p>
+            <p>
+              {selectedDate.toDateString() === new Date().toDateString() 
+                ? "No appointments scheduled for today"
+                : `No appointments scheduled for ${formatInTimeZone(selectedDate, 'America/New_York', 'MMMM dd, yyyy')}`
+              }
+            </p>
           </div>
         ) : (
           sessions.map((session, index) => {

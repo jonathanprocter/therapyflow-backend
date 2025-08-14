@@ -120,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sessions endpoints
   app.get("/api/sessions", async (req: any, res) => {
     try {
-      const { clientId, upcoming, today } = req.query;
+      const { clientId, upcoming, today, date } = req.query;
       
       if (today === "true") {
         const sessions = await storage.getTodaysSessions(req.therapistId);
@@ -134,6 +134,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json(sessionsWithClients);
       } else if (upcoming === "true") {
         const sessions = await storage.getUpcomingSessions(req.therapistId);
+        // Fetch client data for each session
+        const sessionsWithClients = await Promise.all(
+          sessions.map(async (session) => {
+            const client = await storage.getClient(session.clientId);
+            return { ...session, client };
+          })
+        );
+        res.json(sessionsWithClients);
+      } else if (date) {
+        // Filter sessions for a specific date
+        const targetDate = new Date(date);
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        const sessions = await storage.getSessionsInDateRange(req.therapistId, startOfDay, endOfDay);
         // Fetch client data for each session
         const sessionsWithClients = await Promise.all(
           sessions.map(async (session) => {
