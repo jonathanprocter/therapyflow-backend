@@ -32,24 +32,28 @@ export default function ProgressNotes() {
 
   const getRiskLevelColor = (riskLevel?: string) => {
     switch (riskLevel) {
-      case "critical": return "bg-red-100 text-red-800";
-      case "high": return "bg-orange-100 text-orange-800";
-      case "moderate": return "bg-yellow-100 text-yellow-800";
-      case "low": return "bg-green-100 text-green-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "critical": return { backgroundColor: 'rgba(52, 76, 61, 0.1)', color: '#344C3D' };
+      case "high": return { backgroundColor: 'rgba(115, 138, 110, 0.15)', color: '#738A6E' };
+      case "moderate": return { backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' };
+      case "low": return { backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' };
+      default: return { backgroundColor: 'rgba(115, 138, 110, 0.05)', color: '#738A6E' };
     }
   };
 
   const getProgressRatingColor = (rating?: number) => {
-    if (!rating) return "text-gray-400";
-    if (rating >= 8) return "text-green-600";
-    if (rating >= 6) return "text-yellow-600";
-    if (rating >= 4) return "text-orange-600";
-    return "text-red-600";
+    if (!rating) return { color: 'rgba(115, 138, 110, 0.4)' };
+    if (rating >= 8) return { color: '#8EA58C' };
+    if (rating >= 6) return { color: '#88A5BC' };
+    if (rating >= 4) return { color: '#738A6E' };
+    return { color: '#344C3D' };
   };
 
   return (
-    <div className="flex h-screen bg-gray-50" data-testid="progress-notes-page">
+    <div 
+      className="flex h-screen" 
+      style={{ backgroundColor: '#F2F3F1' }} 
+      data-testid="progress-notes-page"
+    >
       <Sidebar />
 
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -58,10 +62,17 @@ export default function ProgressNotes() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900" data-testid="notes-title">
+              <h1 
+                className="text-2xl font-bold" 
+                style={{ color: '#344C3D' }}
+                data-testid="notes-title"
+              >
                 Progress Notes
               </h1>
-              <p className="text-gray-600" data-testid="notes-subtitle">
+              <p 
+                style={{ color: '#738A6E' }}
+                data-testid="notes-subtitle"
+              >
                 Document therapeutic sessions and track client progress
               </p>
             </div>

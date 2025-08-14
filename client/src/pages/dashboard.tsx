@@ -10,7 +10,11 @@ import { TherapeuticDashboardWidget } from "@/components/therapeutic";
 
 export default function Dashboard() {
   return (
-    <div className="flex h-screen bg-gray-50" data-testid="dashboard-page">
+    <div 
+      className="flex h-screen" 
+      style={{ backgroundColor: '#F2F3F1' }}
+      data-testid="dashboard-page"
+    >
       <Sidebar />
       
       <main className="flex-1 flex flex-col overflow-hidden">
