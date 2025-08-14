@@ -135,59 +135,62 @@ export default function DocumentsUpload() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 max-w-4xl mx-auto space-y-6" style={{ backgroundColor: '#F2F3F1', minHeight: '100vh' }}>
       <div>
-        <h1 className="text-3xl font-bold">Document Upload & Processing</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-3xl font-bold" style={{ color: '#344C3D' }}>Document Upload & Processing</h1>
+        <p className="mt-2" style={{ color: '#738A6E' }}>
           Upload clinical documents for AI-powered analysis and semantic processing
         </p>
       </div>
 
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+            <Upload className="h-5 w-5" style={{ color: '#88A5BC' }} />
             Upload Documents
           </CardTitle>
-          <CardDescription>
+          <CardDescription style={{ color: '#738A6E' }}>
             Upload PDFs, DOCX, or text files for processing through the CareNotesAI pipeline
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="clientId">Client ID</Label>
+              <Label htmlFor="clientId" style={{ color: '#344C3D' }}>Client ID</Label>
               <Input
                 id="clientId"
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
                 placeholder="e.g., client-123"
+                className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
                 data-testid="input-client-id"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="appointmentDate">Appointment Date</Label>
+              <Label htmlFor="appointmentDate" style={{ color: '#344C3D' }}>Appointment Date</Label>
               <Input
                 id="appointmentDate"
                 type="date"
                 value={appointmentDate}
                 onChange={(e) => setAppointmentDate(e.target.value)}
+                className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
                 data-testid="input-appointment-date"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="files">Documents</Label>
+            <Label htmlFor="files" style={{ color: '#344C3D' }}>Documents</Label>
             <Input
               id="files"
               type="file"
               multiple
               accept=".pdf,.docx,.doc,.txt"
               onChange={(e) => setFiles(e.target.files)}
+              className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
               data-testid="input-files"
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm" style={{ color: '#738A6E' }}>
               Supported formats: PDF, DOCX, DOC, TXT
             </p>
           </div>
@@ -195,7 +198,8 @@ export default function DocumentsUpload() {
           <Button 
             onClick={handleUpload} 
             disabled={uploading || !clientId || !appointmentDate || !files?.length}
-            className="w-full"
+            className="w-full hover:bg-opacity-90"
+            style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
             data-testid="button-upload"
           >
             {uploading ? (
@@ -214,22 +218,26 @@ export default function DocumentsUpload() {
       </Card>
 
       {uploadResults.length > 0 && (
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+              <FileText className="h-5 w-5" style={{ color: '#88A5BC' }} />
               Upload Results
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {uploadResults.map((result) => (
-                <div key={result.documentId} className="flex items-center justify-between p-3 border rounded">
+                <div 
+                  key={result.documentId} 
+                  className="flex items-center justify-between p-3 border rounded"
+                  style={{ borderColor: 'rgba(115, 138, 110, 0.2)' }}
+                >
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="font-medium">{result.filename}</span>
+                    <CheckCircle className="h-4 w-4" style={{ color: '#8EA58C' }} />
+                    <span className="font-medium" style={{ color: '#344C3D' }}>{result.filename}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm" style={{ color: '#738A6E' }}>
                     ID: {result.documentId.substring(0, 8)}...
                   </span>
                 </div>
@@ -239,7 +247,8 @@ export default function DocumentsUpload() {
             <Button 
               onClick={handleProcessBatch} 
               disabled={processing}
-              className="w-full mt-4"
+              className="w-full mt-4 hover:bg-opacity-90"
+              style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
               data-testid="button-process-batch"
             >
               {processing ? (
@@ -256,36 +265,40 @@ export default function DocumentsUpload() {
       )}
 
       {processResults.length > 0 && (
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
-            <CardTitle>Processing Results</CardTitle>
+            <CardTitle style={{ color: '#344C3D' }}>Processing Results</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {processResults.map((result) => (
-                <div key={result.documentId} className="p-3 border rounded">
+                <div 
+                  key={result.documentId} 
+                  className="p-3 border rounded"
+                  style={{ borderColor: 'rgba(115, 138, 110, 0.2)' }}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {result.error ? (
-                        <AlertCircle className="h-4 w-4 text-red-600" />
+                        <AlertCircle className="h-4 w-4" style={{ color: '#738A6E' }} />
                       ) : (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4" style={{ color: '#8EA58C' }} />
                       )}
-                      <span className="font-medium">
+                      <span className="font-medium" style={{ color: '#344C3D' }}>
                         Doc: {result.documentId.substring(0, 8)}...
                       </span>
                     </div>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm" style={{ color: '#738A6E' }}>
                       {result.status}
                     </span>
                   </div>
                   
                   {result.error && (
-                    <p className="text-sm text-red-600 mt-1">{result.error}</p>
+                    <p className="text-sm mt-1" style={{ color: '#738A6E' }}>{result.error}</p>
                   )}
                   
                   {result.charCount && (
-                    <div className="text-sm text-muted-foreground mt-1">
+                    <div className="text-sm mt-1" style={{ color: '#738A6E' }}>
                       Extracted: {result.charCount} characters
                       {result.qualityScore && ` (Quality: ${result.qualityScore}%)`}
                       {result.edgesCount && ` • ${result.edgesCount} semantic edges`}
