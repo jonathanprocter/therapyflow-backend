@@ -11,6 +11,8 @@ import ProgressNotes from './pages/progress-notes';
 import SessionHistory from './pages/session-history';
 import InteractiveNoteCreator from './pages/InteractiveNoteCreator';
 import CalendarSync from './pages/calendar-sync';
+import SemanticSearch from './pages/semantic-search';
+import TreatmentPlans from './pages/treatment-plans';
 
 function useApiHealth(pollMs = 10000) {
   const [healthy, setHealthy] = React.useState<boolean | null>(null);
@@ -220,6 +222,20 @@ function Sidebar() {
             }`} data-testid="link-calendar-sync">
               🔗 Calendar Sync
             </Link>
+            <Link href="/search" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+              isActive("/search") 
+                ? "bg-primary text-primary-foreground" 
+                : "hover:bg-muted"
+            }`} data-testid="link-search">
+              🔍 Semantic Search
+            </Link>
+            <Link href="/treatment-plans" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+              isActive("/treatment-plans") 
+                ? "bg-primary text-primary-foreground" 
+                : "hover:bg-muted"
+            }`} data-testid="link-treatment-plans">
+              📋 Treatment Plans
+            </Link>
           </nav>
         </div>
 
@@ -279,6 +295,8 @@ export default function App() {
             <Route path="/session-history" component={SessionHistory} />
             <Route path="/interactive-notes" component={InteractiveNoteCreator} />
             <Route path="/calendar-sync" component={CalendarSync} />
+            <Route path="/search" component={SemanticSearch} />
+            <Route path="/treatment-plans" component={TreatmentPlans} />
             <Route path="/smart" component={SmartUpload} />
             <Route path="/documents" component={DocumentsUpload} />
             <Route path="/results" component={CareNotesResults} />

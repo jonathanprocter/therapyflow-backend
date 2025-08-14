@@ -943,6 +943,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Treatment Plans endpoints
+  app.get("/api/treatment-plans", async (req: any, res) => {
+    try {
+      const { clientId } = req.query;
+      const plans = await storage.getTreatmentPlans(req.therapistId, clientId);
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching treatment plans:", error);
+      res.status(500).json({ error: "Failed to fetch treatment plans" });
+    }
+  });
+
+  app.get("/api/treatment-plans/:id", async (req, res) => {
+    try {
+      const plan = await storage.getTreatmentPlan(req.params.id);
+      if (!plan) {
+        return res.status(404).json({ error: "Treatment plan not found" });
+      }
+      res.json(plan);
+    } catch (error) {
+      console.error("Error fetching treatment plan:", error);
+      res.status(500).json({ error: "Failed to fetch treatment plan" });
+    }
+  });
+
+  app.post("/api/treatment-plans", async (req: any, res) => {
+    try {
+      const planData = insertTreatmentPlanSchema.parse({
+        ...req.body,
+        therapistId: req.therapistId
+      });
+      const plan = await storage.createTreatmentPlan(planData);
+      res.json(plan);
+    } catch (error) {
+      console.error("Error creating treatment plan:", error);
+      res.status(400).json({ error: "Failed to create treatment plan" });
+    }
+  });
+
+  app.put("/api/treatment-plans/:id", async (req, res) => {
+    try {
+      const planData = insertTreatmentPlanSchema.partial().parse(req.body);
+      const plan = await storage.updateTreatmentPlan(req.params.id, planData);
+      res.json(plan);
+    } catch (error) {
+      console.error("Error updating treatment plan:", error);
+      res.status(400).json({ error: "Failed to update treatment plan" });
+    }
+  });
+
+  app.delete("/api/treatment-plans/:id", async (req, res) => {
+    try {
+      await storage.deleteTreatmentPlan(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting treatment plan:", error);
+      res.status(500).json({ error: "Failed to delete treatment plan" });
+    }
+  });
+
   // Google Calendar Integration Routes (OAuth2 with 2015-2030 sync)
   app.get("/api/calendar/auth-url", async (req, res) => {
     try {
