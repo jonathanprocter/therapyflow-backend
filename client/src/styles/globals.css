@@ -1,7 +1,7 @@
 
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -102,12 +102,12 @@
 
   /* Focus Styles */
   *:focus-visible {
-    @apply outline-none ring-2 ring-sage-400 ring-offset-2 ring-offset-background;
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
   }
 
   /* Selection */
   ::selection {
-    @apply bg-sage-200 text-sage-900;
+    @apply bg-primary bg-opacity-20 text-foreground;
   }
 
   /* Scrollbar */
@@ -116,15 +116,15 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-sage-50 rounded-full;
+    @apply bg-muted rounded-full;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gradient-to-b from-sage-400 to-sage-600 rounded-full;
+    @apply bg-gradient-to-b from-primary to-primary rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply from-sage-500 to-sage-700;
+    @apply from-primary to-primary;
   }
 
   /* Line Clamp Utilities */
@@ -150,27 +150,27 @@
   }
 
   .glass-medium {
-    @apply bg-white/85 backdrop-blur-md;
+    @apply bg-white bg-opacity-85 backdrop-blur-md;
   }
 
   .glass-dark {
-    @apply bg-sage-800/70 backdrop-blur-lg;
+    @apply bg-card bg-opacity-70 backdrop-blur-lg;
   }
 
   /* Gradient Text */
   .gradient-text {
-    @apply bg-gradient-to-r from-sage-600 to-sage-800 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent;
   }
 
   /* Card Hover Effects */
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-sage-lg hover:-translate-y-1;
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
 
   /* Button Base */
   .btn-base {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
-    @apply focus-visible:ring-2 focus-visible:ring-sage-400 focus-visible:ring-offset-2;
+    @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
   }
 
   /* Loading Animation */
@@ -268,7 +268,7 @@
 
   /* Sage Gradient */
   .sage-gradient {
-    background: linear-gradient(135deg, rgb(var(--color-sage-500)) 0%, rgb(var(--color-sage-700)) 100%);
+    background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--foreground)) 100%);
   }
 
   /* Glass Effect */
