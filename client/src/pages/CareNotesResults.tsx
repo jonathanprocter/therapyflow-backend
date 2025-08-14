@@ -64,16 +64,16 @@ export default function CareNotesResults() {
   };
 
   const getRiskColor = (confidence: number) => {
-    if (confidence >= 80) return "text-green-600 bg-green-50";
-    if (confidence >= 60) return "text-yellow-600 bg-yellow-50";
-    return "text-red-600 bg-red-50";
+    if (confidence >= 80) return { backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' };
+    if (confidence >= 60) return { backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' };
+    return { backgroundColor: 'rgba(115, 138, 110, 0.15)', color: '#738A6E' };
   };
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">AI Analysis Results</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-3xl font-bold" style={{ color: '#344C3D' }}>AI Analysis Results</h1>
+        <p className="mt-2" style={{ color: '#738A6E' }}>
           View AI-processed clinical document analysis and insights
         </p>
       </div>

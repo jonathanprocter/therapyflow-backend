@@ -117,7 +117,7 @@ export default function ProgressNotes() {
                       <TabsTrigger value="manual">Manual Entry</TabsTrigger>
                     </TabsList>
                     <TabsContent value="upload" className="space-y-4">
-                      <div className="text-sm text-gray-600 mb-4">
+                      <div className="text-sm mb-4" style={{ color: '#738A6E' }}>
                         Upload your progress notes in TXT, PDF, DOCX, DOC, or RTF format. 
                         Our enhanced AI will extract client information, session dates, themes, and create comprehensive clinical documentation.
                       </div>
@@ -137,24 +137,24 @@ export default function ProgressNotes() {
               {[...Array(6)].map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <CardContent className="p-6">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                    <div className="h-20 bg-gray-200 rounded mb-4"></div>
+                    <div className="h-4 rounded w-3/4 mb-4" style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}></div>
+                    <div className="h-20 rounded mb-4" style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}></div>
                     <div className="flex space-x-2 mb-4">
-                      <div className="h-6 bg-gray-200 rounded w-16"></div>
-                      <div className="h-6 bg-gray-200 rounded w-20"></div>
+                      <div className="h-6 rounded w-16" style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)' }}></div>
+                      <div className="h-6 rounded w-20" style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)' }}></div>
                     </div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 rounded w-1/2" style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)' }}></div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : filteredNotes.length === 0 ? (
             <div className="text-center py-12" data-testid="no-notes">
-              <FileText className="w-24 h-24 text-gray-300 mb-4 mx-auto" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <FileText className="w-24 h-24 mb-4 mx-auto" style={{ color: 'rgba(115, 138, 110, 0.3)' }} />
+              <h3 className="text-lg font-medium mb-2" style={{ color: '#344C3D' }}>
                 {selectedClient === "all" ? "No progress notes yet" : "No notes for selected client"}
               </h3>
-              <p className="text-gray-500 mb-4">
+              <p className="mb-4" style={{ color: '#738A6E' }}>
                 Start documenting therapeutic sessions and track client progress
               </p>
               <Button 
@@ -175,17 +175,18 @@ export default function ProgressNotes() {
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900" data-testid={`note-client-${note.id}`}>
+                      <h3 className="font-semibold" style={{ color: '#344C3D' }} data-testid={`note-client-${note.id}`}>
                         {note.client?.name || "Unknown Client"}
                       </h3>
                       <Badge 
-                        className={getRiskLevelColor(note.riskLevel)}
+                        className="rounded"
+                        style={getRiskLevelColor(note.riskLevel)}
                         data-testid={`note-risk-${note.id}`}
                       >
                         {note.riskLevel || "Low"} Risk
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center justify-between text-sm" style={{ color: '#738A6E' }}>
                       <span data-testid={`note-date-${note.id}`}>
                         {formatEDTDateShort(note.sessionDate)}
                       </span>
@@ -193,7 +194,8 @@ export default function ProgressNotes() {
                         <div className="flex items-center space-x-1">
                           <span className="text-xs">Progress:</span>
                           <span 
-                            className={`font-medium ${getProgressRatingColor(note.progressRating)}`}
+                            className="font-medium"
+                            style={getProgressRatingColor(note.progressRating)}
                             data-testid={`note-progress-${note.id}`}
                           >
                             {note.progressRating}/10
@@ -204,7 +206,7 @@ export default function ProgressNotes() {
                   </CardHeader>
 
                   <CardContent className="pt-0">
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-4" data-testid={`note-content-${note.id}`}>
+                    <p className="text-sm mb-4 line-clamp-4" style={{ color: '#738A6E' }} data-testid={`note-content-${note.id}`}>
                       {note.content}
                     </p>
 
@@ -212,16 +214,17 @@ export default function ProgressNotes() {
                     {note.aiTags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3" data-testid={`note-ai-tags-${note.id}`}>
                         {note.aiTags.slice(0, 4).map((tag, index) => {
-                          const tagColors = [
-                            "bg-blue-100 text-blue-800",
-                            "bg-green-100 text-green-800", 
-                            "bg-purple-100 text-purple-800",
-                            "bg-indigo-100 text-indigo-800"
+                          const tagStyles = [
+                            { backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' },
+                            { backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' },
+                            { backgroundColor: 'rgba(115, 138, 110, 0.1)', color: '#738A6E' },
+                            { backgroundColor: 'rgba(52, 76, 61, 0.1)', color: '#344C3D' }
                           ];
                           return (
                             <span 
                               key={tag}
-                              className={`inline-flex items-center px-2 py-1 text-xs rounded ${tagColors[index % tagColors.length]}`}
+                              className="inline-flex items-center px-2 py-1 text-xs rounded"
+                              style={tagStyles[index % tagStyles.length]}
                             >
                               <Bot className="w-3 h-3 mr-1" />
                               {tag}
@@ -237,7 +240,8 @@ export default function ProgressNotes() {
                         {note.tags.slice(0, 3).map((tag) => (
                           <span 
                             key={tag}
-                            className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
+                            className="inline-flex items-center px-2 py-1 text-xs rounded"
+                            style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)', color: '#738A6E' }}
                           >
                             {tag}
                           </span>
@@ -245,8 +249,8 @@ export default function ProgressNotes() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                      <span className="text-xs text-gray-400" data-testid={`note-created-${note.id}`}>
+                    <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid rgba(115, 138, 110, 0.2)' }}>
+                      <span className="text-xs" style={{ color: 'rgba(115, 138, 110, 0.6)' }} data-testid={`note-created-${note.id}`}>
                         Created {new Date(note.createdAt).toLocaleDateString()}
                       </span>
                       <div className="flex space-x-2">

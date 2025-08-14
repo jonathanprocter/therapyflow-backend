@@ -75,7 +75,7 @@ export default function CalendarSync() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50" data-testid="calendar-sync-page">
+    <div className="flex h-screen" style={{ backgroundColor: '#F2F3F1' }} data-testid="calendar-sync-page">
       <Sidebar />
       
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -83,10 +83,10 @@ export default function CalendarSync() {
         
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900" data-testid="page-title">
+            <h1 className="text-2xl font-bold" style={{ color: '#344C3D' }} data-testid="page-title">
               Calendar Integration
             </h1>
-            <p className="text-gray-600" data-testid="page-subtitle">
+            <p style={{ color: '#738A6E' }} data-testid="page-subtitle">
               Connect your Google Calendar to automatically import appointments and sessions
             </p>
           </div>
@@ -110,15 +110,15 @@ export default function CalendarSync() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {syncStatus?.isConnected ? (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <CheckCircle className="h-5 w-5" style={{ color: '#8EA58C' }} />
                       ) : (
-                        <AlertCircle className="h-5 w-5 text-orange-500" />
+                        <AlertCircle className="h-5 w-5" style={{ color: '#88A5BC' }} />
                       )}
                       <div>
                         <p className="font-medium" data-testid="connection-status">
                           {syncStatus?.isConnected ? "Connected" : "Not Connected"}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm" style={{ color: '#738A6E' }}>
                           {syncStatus?.isConnected 
                             ? `Last sync: ${formatLastSync(syncStatus.lastSync)}`
                             : "Connect to start importing appointments"

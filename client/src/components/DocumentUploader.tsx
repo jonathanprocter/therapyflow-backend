@@ -186,9 +186,9 @@ export function DocumentUploader({
   });
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'bg-green-500';
-    if (confidence >= 0.6) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (confidence >= 0.8) return { backgroundColor: '#8EA58C' };
+    if (confidence >= 0.6) return { backgroundColor: '#88A5BC' };
+    return { backgroundColor: '#738A6E' };
   };
 
   const getRiskLevelColor = (riskLevel?: string) => {
@@ -229,17 +229,17 @@ export function DocumentUploader({
             data-testid="upload-dropzone"
           >
             <input {...getInputProps()} />
-            <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <FileText className="mx-auto h-12 w-12 mb-4" style={{ color: 'rgba(115, 138, 110, 0.4)' }} />
             {isDragActive ? (
-              <p className="text-blue-600 dark:text-blue-400 font-medium">
+              <p className="font-medium" style={{ color: '#88A5BC' }}>
                 Drop files here...
               </p>
             ) : (
               <div>
-                <p className="text-lg font-medium mb-2">
+                <p className="text-lg font-medium mb-2" style={{ color: '#344C3D' }}>
                   Drag & drop progress notes here
                 </p>
-                <p className="text-gray-500 mb-4">
+                <p className="mb-4" style={{ color: '#738A6E' }}>
                   TXT (recommended), PDF, DOCX, DOC, RTF supported
                 </p>
                 <Button variant="outline" disabled={uploading} data-testid="button-browse">
@@ -249,7 +249,7 @@ export function DocumentUploader({
             )}
             
             {allowMultiple && (
-              <p className="text-sm text-gray-500 mt-4">
+              <p className="text-sm mt-4" style={{ color: '#738A6E' }}>
                 Maximum {maxFiles} files • TXT, PDF, DOCX, DOC, RTF formats
               </p>
             )}
@@ -259,7 +259,7 @@ export function DocumentUploader({
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Processing documents...</span>
-                <span className="text-sm text-gray-500">{uploadProgress}%</span>
+                <span className="text-sm" style={{ color: '#738A6E' }}>{uploadProgress}%</span>
               </div>
               <Progress value={uploadProgress} className="w-full" />
             </div>
@@ -285,9 +285,9 @@ export function DocumentUploader({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {result.success ? (
-                      <Check className="h-5 w-5 text-green-500" />
+                      <Check className="h-5 w-5" style={{ color: '#8EA58C' }} />
                     ) : (
-                      <X className="h-5 w-5 text-red-500" />
+                      <X className="h-5 w-5" style={{ color: '#738A6E' }} />
                     )}
                     <span className="font-medium">
                       {result.fileName || `Document ${index + 1}`}
@@ -298,9 +298,10 @@ export function DocumentUploader({
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
                         <div 
-                          className={`h-2 w-2 rounded-full ${getConfidenceColor(result.confidence)}`}
+                          className="h-2 w-2 rounded-full"
+                          style={getConfidenceColor(result.confidence)}
                         />
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm" style={{ color: '#738A6E' }}>
                           {Math.round(result.confidence * 100)}% confidence
                         </span>
                       </div>

@@ -61,10 +61,10 @@ export default function InteractiveNoteCreator() {
             Back to Setup
           </Button>
           <div className="flex items-center gap-3 mb-2">
-            <Brain className="h-6 w-6 text-blue-600" />
-            <h1 className="text-2xl font-bold">AI-Assisted Progress Note</h1>
+            <Brain className="h-6 w-6" style={{ color: '#88A5BC' }} />
+            <h1 className="text-2xl font-bold" style={{ color: '#344C3D' }}>AI-Assisted Progress Note</h1>
           </div>
-          <p className="text-gray-600">
+          <p style={{ color: '#738A6E' }}>
             Creating note for <strong>{selectedClient?.name}</strong>
             {selectedSession && (
               <span> - Session on {new Date(selectedSession.scheduledAt).toLocaleDateString()}</span>
@@ -87,10 +87,10 @@ export default function InteractiveNoteCreator() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <Brain className="h-6 w-6 text-blue-600" />
-          <h1 className="text-3xl font-bold">Interactive Progress Note Creator</h1>
+          <Brain className="h-6 w-6" style={{ color: '#88A5BC' }} />
+          <h1 className="text-3xl font-bold" style={{ color: '#344C3D' }}>Interactive Progress Note Creator</h1>
         </div>
-        <p className="text-gray-600">
+        <p style={{ color: '#738A6E' }}>
           Create comprehensive progress notes with real-time AI suggestions and clinical insights
         </p>
       </div>
@@ -100,10 +100,10 @@ export default function InteractiveNoteCreator() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 mb-3">
-              <Brain className="h-8 w-8 text-blue-500" />
-              <h3 className="font-semibold">Real-Time AI</h3>
+              <Brain className="h-8 w-8" style={{ color: '#88A5BC' }} />
+              <h3 className="font-semibold" style={{ color: '#344C3D' }}>Real-Time AI</h3>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm" style={{ color: '#738A6E' }}>
               Get intelligent suggestions as you type, with clinical insights based on your content
             </p>
           </CardContent>
@@ -112,10 +112,10 @@ export default function InteractiveNoteCreator() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 mb-3">
-              <FileText className="h-8 w-8 text-green-500" />
-              <h3 className="font-semibold">Structured Format</h3>
+              <FileText className="h-8 w-8" style={{ color: '#8EA58C' }} />
+              <h3 className="font-semibold" style={{ color: '#344C3D' }}>Structured Format</h3>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm" style={{ color: '#738A6E' }}>
               Follows professional SOAP note structure with guided sections
             </p>
           </CardContent>

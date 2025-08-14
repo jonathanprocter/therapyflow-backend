@@ -107,19 +107,19 @@ export default function SmartUpload() {
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 90) return "bg-green-100 text-green-800";
-    if (confidence >= 70) return "bg-yellow-100 text-yellow-800";
-    return "bg-red-100 text-red-800";
+    if (confidence >= 90) return { backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' };
+    if (confidence >= 70) return { backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' };
+    return { backgroundColor: 'rgba(115, 138, 110, 0.15)', color: '#738A6E' };
   };
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Sparkles className="h-8 w-8 text-blue-600" />
+        <h1 className="text-3xl font-bold flex items-center gap-2" style={{ color: '#344C3D' }}>
+          <Sparkles className="h-8 w-8" style={{ color: '#88A5BC' }} />
           Smart Document Upload
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2" style={{ color: '#738A6E' }}>
           Upload clinical documents and let AI automatically extract client names, appointment dates, and clinical information
         </p>
       </div>

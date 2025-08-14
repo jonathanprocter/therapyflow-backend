@@ -121,11 +121,11 @@ export default function SessionHistory() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "scheduled": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "cancelled": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-      case "no-show": return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+      case "completed": return { backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' };
+      case "scheduled": return { backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' };
+      case "cancelled": return { backgroundColor: 'rgba(115, 138, 110, 0.15)', color: '#738A6E' };
+      case "no-show": return { backgroundColor: 'rgba(52, 76, 61, 0.1)', color: '#344C3D' };
+      default: return { backgroundColor: 'rgba(115, 138, 110, 0.05)', color: '#738A6E' };
     }
   };
 
@@ -139,12 +139,12 @@ export default function SessionHistory() {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-96" />
+          <div className="h-8 w-64 rounded" style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}></div>
+          <div className="h-4 w-96 rounded" style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}></div>
         </div>
         <div className="grid gap-4">
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+            <div key={i} className="h-24 w-full rounded" style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)' }}></div>
           ))}
         </div>
       </div>
@@ -154,8 +154,8 @@ export default function SessionHistory() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Session History</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#344C3D' }}>Session History</h1>
+        <p style={{ color: '#738A6E' }}>
           View and manage all historical therapy sessions and progress notes
         </p>
       </div>
@@ -318,12 +318,15 @@ export default function SessionHistory() {
                       <div className="flex items-center gap-3">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{session.client?.name || "Unknown Client"}</h4>
-                            <Badge className={getStatusColor(session.status)}>
+                            <h4 className="font-medium" style={{ color: '#344C3D' }}>{session.client?.name || "Unknown Client"}</h4>
+                            <Badge 
+                              className="rounded"
+                              style={getStatusColor(session.status)}
+                            >
                               {session.status}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm" style={{ color: '#738A6E' }}>
                             {formatInTimeZone(new Date(session.scheduledAt), 'America/New_York', 'MMM dd, yyyy • h:mm a')} • {session.duration} min • {session.sessionType}
                           </p>
                         </div>
@@ -331,7 +334,7 @@ export default function SessionHistory() {
                       
                       <div className="flex items-center gap-2">
                         {session.hasProgressNotePlaceholder && (
-                          <FileText className="h-4 w-4 text-green-600" title="Has progress note placeholder" />
+                          <FileText className="h-4 w-4" style={{ color: '#8EA58C' }} title="Has progress note placeholder" />
                         )}
                         {session.isSimplePracticeEvent && (
                           <Badge variant="outline" className="text-xs">
@@ -361,9 +364,9 @@ export default function SessionHistory() {
       {filteredSessions.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No sessions found</h3>
-            <p className="text-muted-foreground">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4" style={{ color: 'rgba(115, 138, 110, 0.3)' }} />
+            <h3 className="text-lg font-medium mb-2" style={{ color: '#344C3D' }}>No sessions found</h3>
+            <p style={{ color: '#738A6E' }}>
               Try adjusting your filters or check if sessions have been imported from your calendar.
             </p>
           </CardContent>
