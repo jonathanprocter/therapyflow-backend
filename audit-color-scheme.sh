@@ -93,7 +93,7 @@ if [ ! -f "$TAILWIND_CONFIG" ]; then
     TAILWIND_NEEDS_FIX=true
 else
     # Check if sage colors are defined
-    if ! grep -q "sage:" "$TAILWIND_CONFIG"; then
+    if ! grep -q "[[:space:]]sage:" "$TAILWIND_CONFIG"; then
         log_error "Sage colors not defined in tailwind.config.ts"
         TAILWIND_NEEDS_FIX=true
     else
