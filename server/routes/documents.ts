@@ -23,48 +23,61 @@ documentsRouter.post("/simple-upload", (req, res) => {
   res.json({ message: "Simple upload reached", contentType: req.get('Content-Type') });
 });
 
-documentsRouter.post("/upload", upload.array('files'), async (req, res) => {
-  try {
-    console.log("Upload request received:");
-    console.log("Body:", req.body);
-    console.log("Files:", req.files);
-    
-    const { clientId, appointmentDate } = req.body;
-    if (!clientId || !appointmentDate) {
-      return res.status(400).json({ error: "clientId and appointmentDate required" });
+documentsRouter.post("/upload", (req, res) => {
+  // Create a new upload instance for this route
+  const dynamicUpload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+  }).array('files');
+
+  dynamicUpload(req, res, async (err) => {
+    if (err) {
+      console.error("Multer error:", err);
+      return res.status(500).json({ error: `Upload failed: ${err.message}` });
     }
 
-    const files = (req.files as Express.Multer.File[]) || [];
-    const uploaded = [];
-    
-    for (const f of files) {
-      // For memory storage, the buffer contains the file data
-      const meta = { 
-        buffer: f.buffer, // Store the file buffer
-        originalName: f.originalname, 
-        size: f.size 
-      };
+    try {
+      console.log("Upload request received:");
+      console.log("Body:", req.body);
+      console.log("Files:", req.files);
       
-      const doc = await createDocument({
-        clientId, 
-        appointmentDate, 
-        filename: f.originalname, 
-        mimeType: f.mimetype, 
-        meta
-      });
+      const { clientId, appointmentDate } = req.body;
+      if (!clientId || !appointmentDate) {
+        return res.status(400).json({ error: "clientId and appointmentDate required" });
+      }
+
+      const files = (req.files as Express.Multer.File[]) || [];
+      const uploaded = [];
       
-      uploaded.push({ 
-        documentId: doc.id, 
-        filename: f.originalname, 
-        status: "stored" 
-      });
+      for (const f of files) {
+        // For memory storage, the buffer contains the file data
+        const meta = { 
+          buffer: f.buffer, // Store the file buffer
+          originalName: f.originalname, 
+          size: f.size 
+        };
+        
+        const doc = await createDocument({
+          clientId, 
+          appointmentDate, 
+          filename: f.originalname, 
+          mimeType: f.mimetype, 
+          meta
+        });
+        
+        uploaded.push({ 
+          documentId: doc.id, 
+          filename: f.originalname, 
+          status: "stored" 
+        });
+      }
+      
+      res.json({ uploaded });
+    } catch (e: any) {
+      console.error("Upload error:", e);
+      res.status(500).json({ error: String(e) });
     }
-    
-    res.json({ uploaded });
-  } catch (e: any) {
-    console.error("Upload error:", e);
-    res.status(500).json({ error: String(e) });
-  }
+  });
 });
 
 documentsRouter.post("/parse", async (req, res) => {

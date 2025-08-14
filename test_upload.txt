@@ -1,0 +1,5 @@
+Test clinical note for John Doe
+Date: January 15, 2025
+Session Type: Individual Therapy
+
+Patient presented with mild anxiety symptoms. Discussed coping strategies and scheduled follow-up for next week.
