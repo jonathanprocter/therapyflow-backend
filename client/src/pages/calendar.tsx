@@ -34,11 +34,11 @@ export default function Calendar() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed": return "bg-green-100 text-green-800";
-      case "scheduled": return "bg-blue-100 text-blue-800";
-      case "cancelled": return "bg-red-100 text-red-800";
-      case "no-show": return "bg-gray-100 text-gray-800";
-      default: return "bg-blue-100 text-blue-800";
+      case "completed": return "text-white";
+      case "scheduled": return "text-white"; 
+      case "cancelled": return "text-white";
+      case "no-show": return "text-white";
+      default: return "text-white";
     }
   };
 
@@ -62,7 +62,7 @@ export default function Calendar() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50" data-testid="calendar-page">
+    <div className="flex h-screen" style={{ backgroundColor: '#F2F3F1' }} data-testid="calendar-page">
       <Sidebar />
       
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -71,15 +71,15 @@ export default function Calendar() {
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900" data-testid="calendar-title">
+              <h1 className="text-2xl font-bold" style={{ color: '#344C3D' }} data-testid="calendar-title">
                 Calendar & Scheduling
               </h1>
-              <p className="text-gray-600" data-testid="calendar-subtitle">
+              <p style={{ color: '#738A6E' }} data-testid="calendar-subtitle">
                 Manage appointments with Google Calendar integration
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-green-600">
+              <div className="flex items-center space-x-2 text-sm" style={{ color: '#8EA58C' }}>
                 <i className="fas fa-sync"></i>
                 <span>Google Calendar Synced</span>
               </div>
@@ -104,9 +104,9 @@ export default function Calendar() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Calendar Component */}
-            <Card className="lg:col-span-1" data-testid="calendar-widget">
+            <Card className="lg:col-span-1" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="calendar-widget">
               <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900">Calendar</h3>
+                <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>Calendar</h3>
               </CardHeader>
               <CardContent>
                 <CalendarComponent
@@ -117,24 +117,24 @@ export default function Calendar() {
                   data-testid="date-picker"
                 />
                 
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">
+                <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(115, 138, 110, 0.15)' }}>
+                  <h4 className="text-sm font-medium mb-2" style={{ color: '#344C3D' }}>
                     Quick Stats
                   </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Today's Sessions</span>
-                      <span className="font-medium" data-testid="today-sessions-count">
+                      <span style={{ color: '#738A6E' }}>Today's Sessions</span>
+                      <span className="font-medium" style={{ color: '#344C3D' }} data-testid="today-sessions-count">
                         {todaySessions?.length || 0}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">This Week</span>
-                      <span className="font-medium">18</span>
+                      <span style={{ color: '#738A6E' }}>This Week</span>
+                      <span className="font-medium" style={{ color: '#344C3D' }}>18</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">This Month</span>
-                      <span className="font-medium">72</span>
+                      <span style={{ color: '#738A6E' }}>This Month</span>
+                      <span className="font-medium" style={{ color: '#344C3D' }}>72</span>
                     </div>
                   </div>
                 </div>
@@ -142,10 +142,10 @@ export default function Calendar() {
             </Card>
 
             {/* Sessions List */}
-            <Card className="lg:col-span-2" data-testid="sessions-list">
+            <Card className="lg:col-span-2" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="sessions-list">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>
                     {selectedDate.toDateString() === new Date().toDateString() 
                       ? "Today's Sessions" 
                       : `Sessions for ${selectedDate.toLocaleDateString('en-US', {
@@ -168,16 +168,37 @@ export default function Calendar() {
                   <div className="space-y-4">
                     {[...Array(4)].map((_, i) => (
                       <div key={i} className="animate-pulse">
-                        <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                          <div className="h-12 w-12 bg-gray-200 rounded-lg"></div>
+                        <div 
+                          className="flex items-center space-x-4 p-4 rounded-lg"
+                          style={{ backgroundColor: 'rgba(242, 243, 241, 0.5)' }}
+                        >
+                          <div 
+                            className="h-12 w-12 rounded-lg"
+                            style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                          ></div>
                           <div className="flex-1 space-y-2">
-                            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                            <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                            <div 
+                              className="h-4 rounded w-1/3"
+                              style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                            ></div>
+                            <div 
+                              className="h-3 rounded w-1/2"
+                              style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}
+                            ></div>
+                            <div 
+                              className="h-3 rounded w-1/4"
+                              style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)' }}
+                            ></div>
                           </div>
                           <div className="space-y-2">
-                            <div className="h-6 bg-gray-200 rounded w-20"></div>
-                            <div className="h-5 bg-gray-200 rounded w-16"></div>
+                            <div 
+                              className="h-6 rounded w-20"
+                              style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                            ></div>
+                            <div 
+                              className="h-5 rounded w-16"
+                              style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}
+                            ></div>
                           </div>
                         </div>
                       </div>
@@ -185,11 +206,11 @@ export default function Calendar() {
                   </div>
                 ) : !allSessions || allSessions.length === 0 ? (
                   <div className="text-center py-12" data-testid="no-sessions">
-                    <i className="fas fa-calendar-day text-6xl text-gray-300 mb-4"></i>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <i className="fas fa-calendar-day text-6xl mb-4" style={{ color: 'rgba(115, 138, 110, 0.3)' }}></i>
+                    <h3 className="text-lg font-medium mb-2" style={{ color: '#344C3D' }}>
                       No sessions scheduled
                     </h3>
-                    <p className="text-gray-500 mb-4">
+                    <p className="mb-4" style={{ color: '#738A6E' }}>
                       Schedule your first therapy session to get started
                     </p>
                     <Button 
@@ -209,11 +230,25 @@ export default function Calendar() {
                       return (
                         <div
                           key={session.id}
-                          className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="flex items-center space-x-4 p-4 rounded-lg transition-colors"
+                          style={{ 
+                            backgroundColor: 'rgba(242, 243, 241, 0.5)', 
+                            border: '1px solid rgba(115, 138, 110, 0.1)' 
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(115, 138, 110, 0.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(242, 243, 241, 0.5)';
+                          }}
                           data-testid={`session-${session.id}`}
                         >
-                          <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center" data-testid={`client-initials-${session.id}`}>
-                            <span className="text-blue-600 font-bold text-sm">
+                          <div 
+                            className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center" 
+                            style={{ backgroundColor: '#88A5BC' }}
+                            data-testid={`client-initials-${session.id}`}
+                          >
+                            <span className="font-bold text-sm" style={{ color: '#FFFFFF' }}>
                               {session.client?.name 
                                 ? session.client.name
                                     .split(' ')
@@ -226,13 +261,13 @@ export default function Calendar() {
                           </div>
                           
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-900" data-testid={`session-client-${session.id}`}>
+                            <h4 className="font-medium" style={{ color: '#344C3D' }} data-testid={`session-client-${session.id}`}>
                               {session.client?.name || "Unknown Client"}
                             </h4>
-                            <p className="text-sm text-gray-500" data-testid={`session-type-${session.id}`}>
+                            <p className="text-sm" style={{ color: '#738A6E' }} data-testid={`session-type-${session.id}`}>
                               {session.sessionType} Session
                             </p>
-                            <div className="flex items-center mt-1 text-xs text-gray-400">
+                            <div className="flex items-center mt-1 text-xs" style={{ color: 'rgba(115, 138, 110, 0.7)' }}>
                               <i className="fas fa-clock mr-1"></i>
                               <span data-testid={`session-time-${session.id}`}>
                                 {times.timeRange}
@@ -245,6 +280,7 @@ export default function Calendar() {
                           <div className="flex flex-col space-y-2">
                             <Badge 
                               className={getStatusColor(session.status)}
+                              style={{ backgroundColor: '#8EA58C' }}
                               data-testid={`session-status-${session.id}`}
                             >
                               {session.status}
@@ -295,22 +331,25 @@ export default function Calendar() {
           </div>
 
           {/* Calendar Integration Status */}
-          <Card className="mt-6" data-testid="calendar-integration">
+          <Card className="mt-6" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="calendar-integration">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i className="fas fa-google text-green-600"></i>
+                  <div 
+                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: 'rgba(142, 165, 140, 0.1)' }}
+                  >
+                    <i className="fas fa-google" style={{ color: '#8EA58C' }}></i>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900">Google Calendar Integration</h4>
-                    <p className="text-sm text-gray-500">
+                    <h4 className="font-medium" style={{ color: '#344C3D' }}>Google Calendar Integration</h4>
+                    <p className="text-sm" style={{ color: '#738A6E' }}>
                       All sessions are automatically synced with your Google Calendar
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 text-green-600">
+                  <div className="flex items-center space-x-2" style={{ color: '#8EA58C' }}>
                     <i className="fas fa-check-circle"></i>
                     <span className="text-sm">Connected</span>
                   </div>
