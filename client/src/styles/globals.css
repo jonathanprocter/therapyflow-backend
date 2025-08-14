@@ -5,46 +5,57 @@
 
 @layer base {
   :root {
-    /* Optimized Sage Colors */
-    --color-background: 250 250 249;
-    --color-surface: 255 255 255;
-    --color-sage-50: 245 247 245;
-    --color-sage-100: 232 236 231;
-    --color-sage-200: 191 207 187;
-    --color-sage-300: 181 196 177;
-    --color-sage-400: 139 159 135;
-    --color-sage-500: 115 138 110;
-    --color-sage-600: 95 111 92;
-    --color-sage-700: 74 89 72;
-    --color-sage-800: 44 62 44;
-    --color-sage-900: 30 43 33;
+    /* Core Brand Colors */
+    --color-ivory: 242 243 241;      /* Warm white for backgrounds */
+    --color-sage: 142 165 140;       /* Primary brand color */
+    --color-moss: 115 138 110;       /* Secondary/body text */
+    --color-evergreen: 52 76 61;     /* Headers and emphasis */
+    --color-french-blue: 136 165 188; /* Accent for links and CTAs */
+    --color-white: 255 255 255;       /* Pure white when needed */
 
-    /* Accent Colors */
-    --color-accent-blue: 122 149 176;
-    --color-accent-green: 127 160 116;
-    --color-accent-amber: 196 164 100;
-    --color-accent-rose: 176 133 133;
+    /* Utility variations */
+    --color-moss-light: 115 138 110;  /* For subtle text - using moss at 70% opacity */
+    --color-sage-dark: 122 143 120;   /* Hover state for sage */
+    --color-blue-dark: 107 139 166;   /* Hover state for blue */
+    --color-shadow: 52 76 61;         /* Evergreen-based shadows */
 
-    /* Standard Theme Variables */
-    --background: 250 250 249;
-    --foreground: 44 62 44;
-    --card: 255 255 255;
-    --card-foreground: 44 62 44;
-    --popover: 255 255 255;
-    --popover-foreground: 44 62 44;
-    --primary: 115 138 110;
-    --primary-foreground: 255 255 255;
-    --secondary: 232 236 231;
-    --secondary-foreground: 44 62 44;
-    --muted: 245 247 245;
-    --muted-foreground: 95 111 92;
-    --accent: 191 207 187;
-    --accent-foreground: 44 62 44;
-    --destructive: 220 38 38;
+    /* Standard Theme Variables mapped to brand colors */
+    --background: 242 243 241;        /* Ivory */
+    --foreground: 52 76 61;           /* Evergreen for main text */
+    --card: 255 255 255;              /* White for cards */
+    --card-foreground: 52 76 61;      /* Evergreen for card text */
+    --popover: 255 255 255;           /* White for popovers */
+    --popover-foreground: 52 76 61;   /* Evergreen for popover text */
+    --primary: 142 165 140;           /* Sage as primary */
+    --primary-foreground: 255 255 255; /* White text on sage */
+    --secondary: 242 243 241;         /* Ivory for secondary */
+    --secondary-foreground: 52 76 61; /* Evergreen text on ivory */
+    --muted: 242 243 241;             /* Ivory for muted backgrounds */
+    --muted-foreground: 115 138 110;  /* Moss for muted text */
+    --accent: 136 165 188;            /* French blue for accents */
+    --accent-foreground: 255 255 255; /* White text on blue */
+    --destructive: 52 76 61;          /* Use evergreen instead of red */
     --destructive-foreground: 255 255 255;
-    --border: 191 207 187;
-    --input: 232 236 231;
-    --ring: 115 138 110;
+    --border: 115 138 110;            /* Moss for borders at 20% opacity */
+    --input: 242 243 241;             /* Ivory for input backgrounds */
+    --ring: 142 165 140;              /* Sage for focus rings */
+
+    /* Chart Colors using brand palette */
+    --chart-1: 142 165 140;           /* Sage for primary data */
+    --chart-2: 115 138 110;           /* Moss for secondary data */
+    --chart-3: 136 165 188;           /* French blue for tertiary data */
+    --chart-4: 122 143 120;           /* Sage dark for additional data */
+    --chart-5: 107 139 166;           /* Blue dark for additional data */
+
+    /* Sidebar Colors */
+    --sidebar: 255 255 255;           /* White for sidebar background */
+    --sidebar-foreground: 52 76 61;   /* Evergreen for sidebar text */
+    --sidebar-primary: 142 165 140;   /* Sage for sidebar primary */
+    --sidebar-primary-foreground: 255 255 255; /* White text on sage */
+    --sidebar-accent: 136 165 188;    /* French blue for sidebar accents */
+    --sidebar-accent-foreground: 255 255 255; /* White text on blue */
+    --sidebar-border: 115 138 110;    /* Moss for sidebar borders */
+    --sidebar-ring: 142 165 140;      /* Sage for sidebar focus rings */
 
     /* Animation Timing */
     --animation-fast: 150ms;
@@ -63,35 +74,59 @@
   }
 
   .dark {
-    --background: 30 43 33;
-    --foreground: 245 247 245;
-    --card: 44 62 44;
-    --card-foreground: 245 247 245;
-    --popover: 44 62 44;
-    --popover-foreground: 245 247 245;
-    --primary: 139 159 135;
-    --primary-foreground: 30 43 33;
-    --secondary: 74 89 72;
-    --secondary-foreground: 245 247 245;
-    --muted: 95 111 92;
-    --muted-foreground: 181 196 177;
-    --accent: 115 138 110;
-    --accent-foreground: 245 247 245;
-    --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
-    --border: 95 111 92;
-    --input: 74 89 72;
-    --ring: 139 159 135;
+    /* Dark mode using inverted brand colors */
+    --background: 52 76 61;           /* Evergreen for dark background */
+    --foreground: 242 243 241;        /* Ivory for dark text */
+    --card: 115 138 110;              /* Moss for dark cards */
+    --card-foreground: 242 243 241;   /* Ivory for dark card text */
+    --popover: 115 138 110;           /* Moss for dark popovers */
+    --popover-foreground: 242 243 241; /* Ivory for dark popover text */
+    --primary: 142 165 140;           /* Keep sage as primary */
+    --primary-foreground: 52 76 61;   /* Evergreen text on sage */
+    --secondary: 115 138 110;         /* Moss for dark secondary */
+    --secondary-foreground: 242 243 241; /* Ivory text on moss */
+    --muted: 115 138 110;             /* Moss for dark muted backgrounds */
+    --muted-foreground: 142 165 140;  /* Sage for dark muted text */
+    --accent: 136 165 188;            /* Keep french blue for accents */
+    --accent-foreground: 52 76 61;    /* Evergreen text on blue */
+    --destructive: 242 243 241;       /* Ivory for dark destructive (inverted) */
+    --destructive-foreground: 52 76 61;
+    --border: 142 165 140;            /* Sage for dark borders */
+    --input: 115 138 110;             /* Moss for dark input backgrounds */
+    --ring: 142 165 140;              /* Sage for dark focus rings */
   }
 
   * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    background-color: rgb(var(--color-ivory));
+    color: rgb(var(--color-moss));
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    line-height: 1.6;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2 { 
+    color: rgb(var(--color-evergreen)); 
+  }
+  
+  h3, h4, h5, h6 { 
+    color: rgb(var(--color-moss)); 
+  }
+  
+  a { 
+    color: rgb(var(--color-french-blue)); 
+    text-decoration: none; 
+  }
+  
+  a:hover { 
+    color: rgb(var(--color-blue-dark)); 
   }
 
   /* Smooth Scrolling */
@@ -107,24 +142,28 @@
 
   /* Selection */
   ::selection {
-    @apply bg-primary bg-opacity-20 text-foreground;
+    background-color: rgba(142, 165, 140, 0.2);  /* Sage at 20% opacity */
+    color: rgb(var(--color-evergreen));
   }
 
   /* Scrollbar */
   ::-webkit-scrollbar {
-    @apply w-2 h-2;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-muted rounded-full;
+    background: rgb(var(--color-ivory));
+    border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gradient-to-b from-primary to-primary rounded-full;
+    background: linear-gradient(to bottom, rgb(var(--color-sage)), rgb(var(--color-sage)));
+    border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply from-primary to-primary;
+    background: linear-gradient(to bottom, rgb(var(--color-sage-dark)), rgb(var(--color-sage-dark)));
   }
 
   /* Line Clamp Utilities */
@@ -189,8 +228,8 @@
   }
 
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(139, 159, 135, 0.2); }
-    50% { box-shadow: 0 0 40px rgba(139, 159, 135, 0.4); }
+    0%, 100% { box-shadow: 0 0 20px rgba(142, 165, 140, 0.2); } /* Sage glow */
+    50% { box-shadow: 0 0 40px rgba(142, 165, 140, 0.4); }
   }
 
   /* Color Utility Classes */

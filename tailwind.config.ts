@@ -17,42 +17,43 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        // Brand colors
+        ivory: "hsl(var(--color-ivory))",
+        sage: {
+          DEFAULT: "hsl(var(--color-sage))",
+          dark: "hsl(var(--color-sage-dark))",
+        },
+        moss: {
+          DEFAULT: "hsl(var(--color-moss))",
+          light: "hsl(var(--color-moss-light) / 0.7)", // 70% opacity
+        },
+        evergreen: "hsl(var(--color-evergreen))",
+        "french-blue": {
+          DEFAULT: "hsl(var(--color-french-blue))",
+          dark: "hsl(var(--color-blue-dark))",
+        },
+        // Theme variables mapped to brand colors
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         card: {
-          DEFAULT: "var(--card)",
-          foreground: "var(--card-foreground)",
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
         popover: {
-          DEFAULT: "var(--popover)",
-          foreground: "var(--popover-foreground)",
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
-          50: "hsl(207, 77%, 95%)",
-          100: "hsl(207, 77%, 88%)",
-          500: "hsl(207, 77%, 44%)",
-          600: "hsl(207, 77%, 38%)",
-          700: "hsl(207, 77%, 32%)",
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "var(--secondary)",
-          foreground: "var(--secondary-foreground)",
-          50: "hsl(139, 46%, 95%)",
-          100: "hsl(139, 46%, 88%)",
-          500: "hsl(139, 46%, 25%)",
-          600: "hsl(139, 46%, 20%)",
-          700: "hsl(139, 46%, 15%)",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         accent: {
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
-          50: "hsl(28, 100%, 95%)",
-          100: "hsl(28, 100%, 85%)",
-          500: "hsl(28, 100%, 50%)",
-          600: "hsl(28, 100%, 45%)",
-          700: "hsl(28, 100%, 40%)",
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         muted: {
           DEFAULT: "var(--muted)",
