@@ -1,0 +1,36 @@
+Clinical Progress Note
+
+Client: Sarah Johnson
+Date: January 15, 2025
+Session Type: Individual Therapy
+Therapist: Dr. Jonathan Procter
+
+SUBJECTIVE:
+Sarah reported feeling more anxious this week, particularly around work deadlines. She stated "I feel like I'm drowning in responsibilities and can't keep up." She mentioned having difficulty sleeping, with average 4-5 hours per night. Sarah expressed frustration with her inability to manage stress effectively.
+
+OBJECTIVE:
+Client appeared visibly tired with dark circles under eyes. Speech was rapid and pressured. Demonstrated fidgeting behavior throughout session. Maintained good eye contact. Dressed appropriately for session.
+
+ASSESSMENT:
+Sarah continues to struggle with anxiety symptoms and stress management. Her sleep disturbance appears to be exacerbating her anxiety levels. She shows good insight into her challenges but needs additional coping strategies.
+
+Risk Level: Low
+
+PLAN:
+1. Continue weekly individual therapy sessions
+2. Introduce progressive muscle relaxation techniques
+3. Assign sleep hygiene homework
+4. Explore cognitive restructuring for work-related anxiety
+5. Schedule follow-up in one week
+
+Interventions Used:
+- Cognitive Behavioral Therapy (CBT)
+- Mindfulness techniques
+- Psychoeducation about anxiety
+
+Goals for Next Session:
+- Practice relaxation techniques
+- Implement sleep schedule
+- Identify negative thought patterns
+
+Session Duration: 50 minutes

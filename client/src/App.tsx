@@ -3,6 +3,7 @@ import { Route, Switch, Link, useLocation } from 'wouter';
 import DocumentsUpload from './pages/DocumentsUpload';
 import CareNotesResults from './pages/CareNotesResults';
 import ClientDetail from './pages/ClientDetail';
+import SmartUpload from './pages/SmartUpload';
 
 function useApiHealth(pollMs = 10000) {
   const [healthy, setHealthy] = React.useState<boolean | null>(null);
@@ -163,6 +164,13 @@ function Sidebar() {
           </h2>
         </div>
         <nav className="space-y-1">
+          <Link href="/smart" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+            isActive("/smart") 
+              ? "bg-primary text-primary-foreground" 
+              : "hover:bg-muted"
+          }`} data-testid="link-smart">
+            ✨ Smart Upload
+          </Link>
           <Link href="/documents" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
             isActive("/documents") 
               ? "bg-primary text-primary-foreground" 
@@ -198,6 +206,7 @@ export default function App() {
         <Sidebar />
         <main className="flex-1">
           <Switch>
+            <Route path="/smart" component={SmartUpload} />
             <Route path="/documents" component={DocumentsUpload} />
             <Route path="/results" component={CareNotesResults} />
             <Route path="/client" component={ClientDetail} />
@@ -207,7 +216,12 @@ export default function App() {
                 <p className="text-muted-foreground mb-6">
                   Clinical document processing with AI-powered analysis and semantic search
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                  <Link href="/smart" className="block p-4 border rounded-lg hover:bg-muted transition-colors" data-testid="card-smart">
+                    <div className="text-2xl mb-2">✨</div>
+                    <h3 className="font-semibold">Smart Upload</h3>
+                    <p className="text-sm text-muted-foreground">AI extracts client data automatically</p>
+                  </Link>
                   <Link href="/documents" className="block p-4 border rounded-lg hover:bg-muted transition-colors" data-testid="card-documents">
                     <div className="text-2xl mb-2">📄</div>
                     <h3 className="font-semibold">Upload Documents</h3>

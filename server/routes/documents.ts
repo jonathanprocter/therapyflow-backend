@@ -3,11 +3,12 @@ import multer from "multer";
 import path from "path";
 import { createDocument, getDocument, getAIResult } from "../storage-extensions";
 import { parsePDF } from "../services/pdf";
-import { processDocumentWithAI } from "../services/ai";
+import { processDocumentWithAI, smartParseDocument } from "../services/ai";
 
 const upload = multer({ 
   storage: multer.memoryStorage()
 });
+
 export const documentsRouter = express.Router();
 
 // Test route without multer
@@ -15,7 +16,14 @@ documentsRouter.post("/test", (req, res) => {
   res.json({ message: "Test route working", body: req.body });
 });
 
-documentsRouter.post("/upload", upload.any(), async (req, res) => {
+// Simple upload test without multer first
+documentsRouter.post("/simple-upload", (req, res) => {
+  console.log("Simple upload - Content Type:", req.get('Content-Type'));
+  console.log("Simple upload - Body:", req.body);
+  res.json({ message: "Simple upload reached", contentType: req.get('Content-Type') });
+});
+
+documentsRouter.post("/upload", upload.array('files'), async (req, res) => {
   try {
     console.log("Upload request received:");
     console.log("Body:", req.body);
@@ -191,6 +199,77 @@ documentsRouter.post("/ai-process", async (req, res) => {
     });
   } catch (e: any) {
     console.error("AI processing error:", e);
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// Smart processing endpoint that handles files without requiring client ID or date
+documentsRouter.post("/smart-process", async (req, res) => {
+  try {
+    const { documentIds } = req.body;
+    
+    if (!Array.isArray(documentIds)) {
+      return res.status(400).json({ 
+        error: "documentIds array required" 
+      });
+    }
+
+    const results: any[] = [];
+    
+    for (const id of documentIds) {
+      try {
+        const doc = await getDocument(id);
+        if (!doc) { 
+          results.push({ documentId: id, error: "not found" }); 
+          continue; 
+        }
+
+        // Parse if needed
+        if (doc.status !== "parsed" || (doc.text?.length || 0) < 100) {
+          try {
+            const { text, qualityScore } = await parsePDF(id);
+            console.log(`📄 Parsed document ${id}: ${text.length} chars`);
+          } catch (parseError) {
+            results.push({ 
+              documentId: id, 
+              error: `Parse failed: ${parseError}` 
+            });
+            continue;
+          }
+        }
+
+        // Smart parse with AI
+        try {
+          const smartResult = await smartParseDocument(id);
+          const parsed = await getDocument(id); // Get updated document after parsing
+          
+          results.push({ 
+            documentId: id, 
+            status: "processed", 
+            charCount: parsed?.text?.length || 0,
+            qualityScore: 100, // Placeholder quality score
+            smartParsing: smartResult.smartParsing,
+            summary: smartResult.summary,
+            confidence: smartResult.confidence
+          });
+          console.log(`🧠 Smart parsed document ${id}`);
+        } catch (aiError) {
+          results.push({ 
+            documentId: id, 
+            error: `Smart parsing failed: ${aiError}` 
+          });
+        }
+      } catch (e: any) {
+        results.push({ 
+          documentId: id, 
+          error: String(e) 
+        });
+      }
+    }
+
+    res.json({ results });
+  } catch (e: any) {
+    console.error("Smart processing error:", e);
     res.status(500).json({ error: String(e) });
   }
 });

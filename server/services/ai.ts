@@ -67,6 +67,43 @@ Content:
 ${text}`;
 }
 
+function buildSmartParsingPrompt(text: string): string {
+  return `You are a smart clinical document parser. Extract key information from clinical documents and suggest client IDs and appointment details. Return ONLY valid JSON.
+
+Schema:
+{
+  "entities": {
+    "client": { "id": "suggested-client-id", "name": "extracted client name" },
+    "appointment": { "date": "YYYY-MM-DD", "time": "HH:MM", "type": "session type" }
+  },
+  "smartParsing": {
+    "suggestedClientId": "client-firstname-lastname",
+    "suggestedAppointmentDate": "YYYY-MM-DD",
+    "clientNameConfidence": 95,
+    "dateConfidence": 80,
+    "sessionType": "individual"
+  },
+  "extractions": {
+    "symptoms": ["symptom1", "symptom2"],
+    "goals": ["goal1", "goal2"]
+  },
+  "summary": "Brief clinical summary",
+  "recommendations": ["rec1", "rec2"],
+  "confidence": 0.85
+}
+
+Instructions:
+- Extract client names from patterns like "Client:", "Patient:", names in headers
+- Extract dates from patterns like "Date:", "Session Date:", timestamps
+- Generate client IDs in format "client-firstname-lastname" (lowercase, hyphenated)
+- Session types: "individual", "couples", "session without patient present"
+- Confidence scores: 0-100 (how certain you are about extraction)
+- Default session type to "individual" if unclear
+
+Document:
+${text}`;
+}
+
 async function callLLM(prompt: string): Promise<{ raw: string; model: string }> {
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -185,4 +222,48 @@ export async function processDocumentWithAI(documentId: string) {
   console.log(`✅ AI processing complete: ${edges.length} semantic edges created`);
   
   return { saved, edgesCount: edges.length };
+}
+
+export async function smartParseDocument(documentId: string) {
+  const doc = await getDocument(documentId);
+  if (!doc?.text) throw new Error(`Document ${documentId} not parsed or empty`);
+
+  console.log(`🧠 Smart parsing document ${documentId}...`);
+  
+  const prompt = buildSmartParsingPrompt(doc.text);
+  let parsed: any;
+  let model = "";
+  
+  try {
+    const { raw, model: usedModel } = await callLLM(prompt);
+    model = usedModel;
+    parsed = tryParseJSON(raw);
+    console.log(`✅ Smart parsing successful with ${model}`);
+  } catch (e) {
+    console.warn('Smart parsing failed, retrying with explicit JSON reminder:', e);
+    const retry = buildSmartParsingPrompt(doc.text + "\n\nRespond with JSON only.");
+    const { raw, model: usedModel } = await callLLM(retry);
+    model = usedModel;
+    parsed = tryParseJSON(raw);
+  }
+
+  // Extract smart parsing results
+  const smartParsing = parsed.smartParsing || {};
+  const entities = parsed.entities || {};
+  const extractions = parsed.extractions || {};
+  const summary = parsed.summary || "";
+  const recommendations = parsed.recommendations || [];
+  const confidence = parsed.confidence || 0;
+
+  console.log(`🔍 Smart parsing results: Client ID: ${smartParsing.suggestedClientId}, Date: ${smartParsing.suggestedAppointmentDate}`);
+  
+  return {
+    smartParsing,
+    entities,
+    extractions,
+    summary,
+    recommendations,
+    confidence,
+    model
+  };
 }
