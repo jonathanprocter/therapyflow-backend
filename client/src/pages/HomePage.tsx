@@ -4,22 +4,44 @@ export default function HomePage() {
   return (
     <div>
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-4">
             Welcome to TherapyFlow
           </h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-muted-foreground mb-6">
             Comprehensive clinical management platform with AI-powered document processing
           </p>
+          
+          {/* Quick Actions Banner */}
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 mb-6">
+            <h3 className="text-lg font-semibold text-foreground mb-3">
+              Get Started
+            </h3>
+            <p className="mb-4 text-sm" style={{color: '#738A6E'}}>
+              Begin managing your clinical practice with AI-powered tools
+            </p>
+            <div className="flex justify-center gap-3">
+              <Link href="/dashboard">
+                <button className="px-5 py-2.5 rounded-md font-medium transition-colors text-sm" style={{backgroundColor: '#8EA58C', color: '#F2F3F1'}} data-testid="button-get-started-dashboard">
+                  View Dashboard
+                </button>
+              </Link>
+              <Link href="/smart">
+                <button className="px-5 py-2.5 rounded-md font-medium transition-colors text-sm" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}} data-testid="button-get-started-upload">
+                  Upload Documents
+                </button>
+              </Link>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {/* Clinical Management Section */}
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-foreground mb-4">
               Clinical Management
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <Link href="/dashboard">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-dashboard">
                   <div className="text-3xl mb-3">🏠</div>
@@ -75,7 +97,7 @@ export default function HomePage() {
             <h2 className="text-2xl font-semibold text-foreground mb-4">
               AI Document Processing
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <Link href="/smart">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-smart">
                   <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>✨</div>
@@ -131,7 +153,7 @@ export default function HomePage() {
             <h2 className="text-2xl font-semibold text-foreground mb-4">
               Analysis & Reports
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <Link href="/client">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-client">
                   <div className="text-3xl mb-3">🔗</div>
@@ -183,29 +205,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="text-center">
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-8">
-            <h3 className="text-xl font-semibold text-foreground mb-4">
-              Get Started
-            </h3>
-            <p className="mb-6" style={{color: '#738A6E'}}>
-              Begin managing your clinical practice with AI-powered tools
-            </p>
-            <div className="flex justify-center gap-4">
-              <Link href="/dashboard">
-                <button className="px-6 py-3 rounded-md font-medium transition-colors" style={{backgroundColor: '#8EA58C', color: '#F2F3F1'}} data-testid="button-get-started-dashboard">
-                  View Dashboard
-                </button>
-              </Link>
-              <Link href="/smart">
-                <button className="px-6 py-3 rounded-md font-medium transition-colors" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}} data-testid="button-get-started-upload">
-                  Upload Documents
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );

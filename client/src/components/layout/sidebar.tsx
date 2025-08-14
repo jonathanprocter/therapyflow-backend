@@ -53,7 +53,7 @@ export default function Sidebar() {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+      <nav className="flex-1 px-4 pt-8 pb-6 space-y-2 overflow-y-auto">
         <div className="mb-6">
           <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-3" style={{color: '#738A6E'}}>
             Clinical Management
@@ -85,7 +85,7 @@ export default function Sidebar() {
                   <IconComponent className="w-4 h-4 mr-3" />
                   {item.name}
                   {item.badge && (
-                    <span className="ml-auto bg-muted text-muted-foreground text-xs px-2 py-1 rounded-full">
+                    <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}}>
                       {item.badge}
                     </span>
                   )}
@@ -151,9 +151,7 @@ export default function Sidebar() {
                 <p className="text-sm font-medium" style={{color: '#344C3D'}}>Dr. Jonathan Procter</p>
                 <p className="text-xs" style={{color: '#738A6E'}}>Licensed Therapist</p>
               </div>
-              <span className="text-xs px-2 py-1 rounded-full cursor-pointer" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}} data-testid="user-profile-view">
-                view
-              </span>
+
             </div>
           </div>
         </div>

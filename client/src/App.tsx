@@ -27,7 +27,7 @@ export default function App() {
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <TopBar />
-          <main className="flex-1 overflow-auto p-6" style={{backgroundColor: '#F2F3F1', color: '#738A6E'}}>
+          <main className="flex-1 overflow-auto px-6 pt-8 pb-6" style={{backgroundColor: '#F2F3F1', color: '#738A6E'}}>
             <Switch>
               <Route path="/dashboard" component={Dashboard} />
               <Route path="/calendar" component={Calendar} />
