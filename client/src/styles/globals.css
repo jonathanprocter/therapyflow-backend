@@ -22,8 +22,8 @@
     /* Standard Theme Variables mapped to brand colors */
     --background: 242 243 241;        /* Ivory */
     --foreground: 52 76 61;           /* Evergreen for main text */
-    --card: 242 243 241;              /* EXACT Ivory #F2F3F1 for cards */
-    --card-foreground: 52 76 61;      /* EXACT Evergreen #344C3D for card text */
+    --card: 255 255 255;              /* Pure white #FFFFFF for cards */
+    --card-foreground: 52 76 61;      /* Evergreen #344C3D for card text */
     --popover: 242 243 241;           /* EXACT Ivory #F2F3F1 for popovers */
     --popover-foreground: 52 76 61;   /* EXACT Evergreen #344C3D for popover text */
     --primary: 142 165 140;           /* Sage as primary */
@@ -36,7 +36,7 @@
     --accent-foreground: 255 255 255; /* White text on blue */
     --destructive: 52 76 61;          /* Use evergreen instead of red */
     --destructive-foreground: 255 255 255;
-    --border: 115 138 110;            /* Moss for borders at 20% opacity */
+    --border: 115 138 110;            /* Moss for borders */
     --input: 242 243 241;             /* Ivory for input backgrounds */
     --ring: 142 165 140;              /* Sage for focus rings */
 

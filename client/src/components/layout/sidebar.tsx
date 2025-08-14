@@ -39,9 +39,9 @@ export default function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <aside className="w-64 flex flex-col" style={{backgroundColor: '#F2F3F1', borderRight: '1px solid #8EA58C'}} data-testid="sidebar">
+    <aside className="w-64 flex flex-col" style={{backgroundColor: '#FFFFFF', borderRight: '1px solid rgba(115, 138, 110, 0.15)'}} data-testid="sidebar">
       {/* Logo and Header */}
-      <div className="h-16 px-6 flex items-center" style={{borderBottom: '1px solid #8EA58C'}}>
+      <div className="h-16 px-6 flex items-center" style={{borderBottom: '1px solid rgba(115, 138, 110, 0.15)'}}>
         <Link href="/">
           <div className="flex items-center space-x-3 cursor-pointer">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{backgroundColor: '#88A5BC'}}>
