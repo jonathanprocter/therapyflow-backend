@@ -38,7 +38,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-y-5 gap-x-3 mb-12">
           {/* Clinical Management Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-foreground mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4 text-center">
               Clinical Management
             </h2>
             <div className="space-y-4">
@@ -94,7 +94,7 @@ export default function HomePage() {
 
           {/* AI Document Processing Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-foreground mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4 text-center">
               AI Document Processing
             </h2>
             <div className="space-y-4">
@@ -150,7 +150,7 @@ export default function HomePage() {
 
           {/* Analysis & Reports Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-foreground mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4 text-center">
               Analysis & Reports
             </h2>
             <div className="space-y-4">
