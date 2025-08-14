@@ -134,6 +134,34 @@
     color: #344C3D !important;
   }
 
+  /* FILE INPUT SPECIFIC OVERRIDES */
+  input[type="file"] {
+    background-color: #FFFFFF !important;
+    border: 1px solid rgba(115, 138, 110, 0.3) !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+  }
+
+  input[type="file"]::-webkit-file-upload-button {
+    background-color: #8EA58C !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    margin-right: 8px !important;
+    cursor: pointer !important;
+  }
+
+  input[type="file"]::file-selector-button {
+    background-color: #8EA58C !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    margin-right: 8px !important;
+    cursor: pointer !important;
+  }
+
   /* Override any yellow/warning colors globally */
   button:focus,
   button:focus-visible,
@@ -160,6 +188,8 @@
   /* Override any potential warning/yellow classes */
   .text-yellow-500,
   .text-yellow-600,
+  .text-yellow-300,
+  .text-yellow-400,
   .bg-yellow-100,
   .bg-yellow-200,
   .bg-yellow-300,
@@ -169,11 +199,26 @@
   .border-yellow-400,
   .ring-yellow-500,
   input.bg-yellow-100,
-  input.bg-yellow-200 {
+  input.bg-yellow-200,
+  *[class*="yellow"] {
     color: #344C3D !important;
     background-color: #FFFFFF !important;
     border-color: rgba(115, 138, 110, 0.3) !important;
     box-shadow: none !important;
+  }
+
+  /* Force override any element with yellow styling */
+  * {
+    --tw-bg-opacity: 1 !important;
+  }
+  
+  .bg-yellow-50,
+  .bg-yellow-100,
+  .bg-yellow-200,
+  .bg-yellow-300,
+  .bg-yellow-400,
+  .bg-yellow-500 {
+    background-color: rgb(255 255 255 / var(--tw-bg-opacity)) !important;
   }
 
   /* AI badges */
