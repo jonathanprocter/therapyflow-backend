@@ -215,6 +215,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Session management endpoints
+  app.get("/api/sessions/:id", async (req: any, res) => {
+    try {
+      const session = await storage.getSession(req.params.id);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      // Fetch client data for the session
+      const client = await storage.getClient(session.clientId);
+      res.json({ ...session, client });
+    } catch (error) {
+      console.error("Error fetching session:", error);
+      res.status(500).json({ error: "Failed to fetch session" });
+    }
+  });
+
+  app.put("/api/sessions/:id", async (req: any, res) => {
+    try {
+      const sessionData = insertSessionSchema.partial().parse(req.body);
+      const session = await storage.updateSession(req.params.id, sessionData);
+      res.json(session);
+    } catch (error) {
+      console.error("Error updating session:", error);
+      res.status(400).json({ error: "Failed to update session" });
+    }
+  });
+
+  app.get("/api/sessions/:id/prep", async (req: any, res) => {
+    try {
+      const { clientId } = req.query;
+      const sessionId = req.params.id;
+      
+      // Get session details
+      const session = await storage.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      // Get client information
+      const client = await storage.getClient(clientId || session.clientId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      // Get recent progress notes for context
+      const recentNotes = await storage.getProgressNotes(client.id);
+      const lastThreeNotes = recentNotes.slice(0, 3);
+
+      // Get case conceptualization
+      const caseConceptualization = await storage.getCaseConceptualization(client.id);
+
+      // Get treatment plan
+      const treatmentPlan = await storage.getTreatmentPlan(client.id);
+
+      // Get recent completed sessions
+      const completedSessions = await storage.getCompletedSessions(req.therapistId, client.id);
+      const lastThreeSessions = completedSessions.slice(0, 3);
+
+      res.json({
+        session: { ...session, client },
+        client,
+        recentNotes: lastThreeNotes,
+        caseConceptualization,
+        treatmentPlan,
+        recentSessions: lastThreeSessions,
+        prepSuggestions: {
+          focusAreas: [],
+          interventions: treatmentPlan?.interventions || [],
+          riskFactors: []
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching session prep data:", error);
+      res.status(500).json({ error: "Failed to fetch session preparation data" });
+    }
+  });
+
   // Historical session management endpoints
   app.get("/api/sessions/historical", async (req: any, res) => {
     try {

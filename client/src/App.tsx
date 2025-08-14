@@ -13,6 +13,7 @@ import CalendarSync from "@/pages/calendar-sync";
 import Documents from "@/pages/documents";
 import SessionHistory from "@/pages/session-history";
 import InteractiveNoteCreator from "@/pages/InteractiveNoteCreator";
+import SessionPrep from "@/pages/session-prep";
 import NotFound from "@/pages/not-found";
 import { EnhancedClientDetailPage } from "@/components/therapeutic";
 
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/calendar-sync" component={CalendarSync} />
       <Route path="/documents" component={Documents} />
       <Route path="/session-history" component={SessionHistory} />
+      <Route path="/sessions/:sessionId/prep" component={SessionPrep} />
       <Route component={NotFound} />
     </Switch>
   );

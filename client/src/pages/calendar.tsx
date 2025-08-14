@@ -245,14 +245,19 @@ export default function Calendar() {
                                 size="sm" 
                                 variant="outline"
                                 className="text-xs px-2"
-                                data-testid={`join-session-${session.id}`}
+                                onClick={() => window.open(`/clients/${session.client?.id}`, '_blank')}
+                                data-testid={`case-review-${session.id}`}
                               >
-                                Join
+                                Case Review
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="outline"
                                 className="text-xs px-2"
+                                onClick={() => {
+                                  // Navigate to session edit/details page
+                                  window.location.href = `/sessions/${session.id}/edit`;
+                                }}
                                 data-testid={`edit-session-${session.id}`}
                               >
                                 Edit
@@ -261,6 +266,10 @@ export default function Calendar() {
                                 size="sm" 
                                 variant="outline"
                                 className="text-xs px-2"
+                                onClick={() => {
+                                  // Navigate to session prep page with client context
+                                  window.location.href = `/sessions/${session.id}/prep?clientId=${session.client?.id}`;
+                                }}
                                 data-testid={`prep-session-${session.id}`}
                               >
                                 Prep
