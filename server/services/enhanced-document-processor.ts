@@ -25,6 +25,9 @@ import OpenAI from 'openai';
 import { format, isValid, parse } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
+// Import the default model string
+const DEFAULT_MODEL_STR = "claude-sonnet-4-20250514";
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
@@ -97,7 +100,7 @@ export class EnhancedDocumentProcessor {
     
     try {
       // Stage 1: Advanced Text Extraction
-      const extractionResult = await this.extractTextRobustly(file, fileName);
+      let extractionResult = await this.extractTextRobustly(file, fileName);
       console.log(`📄 Text extraction score: ${extractionResult.quality}/100`);
       
       // Stage 2: Text Preprocessing and Cleaning
@@ -105,11 +108,11 @@ export class EnhancedDocumentProcessor {
       console.log(`🧹 Text preprocessed, length: ${cleanedText.length} chars`);
       
       // Stage 3: Multi-Pass AI Analysis
-      const aiAnalysis = await this.performMultiPassAIAnalysis(cleanedText, fileName);
+      let aiAnalysis = await this.performMultiPassAIAnalysis(cleanedText, fileName);
       console.log(`🤖 AI analysis score: ${aiAnalysis.confidence}/100`);
       
       // Stage 4: Advanced Date Parsing
-      const parsedDate = this.parseSessionDateRobustly(aiAnalysis.sessionDate, cleanedText);
+      let parsedDate = this.parseSessionDateRobustly(aiAnalysis.sessionDate, cleanedText);
       console.log(`📅 Date parsing result: ${parsedDate?.confidence || 0}/100`);
       
       // Stage 5: Intelligent Client Matching
@@ -1442,8 +1445,8 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
       
       // Advanced text extraction patterns for PDF
       const patterns = [
-        /stream\s*(.*?)\s*endstream/gs,
-        /BT\s*(.*?)\s*ET/gs,
+        /stream\s*([\s\S]*?)\s*endstream/g,
+        /BT\s*([\s\S]*?)\s*ET/g,
         /\((.*?)\)/g
       ];
       
