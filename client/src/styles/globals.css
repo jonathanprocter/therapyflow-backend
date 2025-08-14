@@ -1,9 +1,6 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* CRITICAL: This must come AFTER Tailwind to override it */
 
 @layer base {
   :root {
@@ -14,12 +11,6 @@
     --color-evergreen: 52 76 61;     /* #344C3D - Headers and emphasis */
     --color-french-blue: 136 165 188; /* #88A5BC - Accent for links and CTAs */
     --color-white: 255 255 255;       /* #FFFFFF - Pure white when needed */
-
-    /* Utility variations - EXACT hex calculations */
-    --color-moss-light: 115 138 110;  /* #738A6E at 70% opacity for subtle text */
-    --color-sage-dark: 122 143 120;   /* #7A8F78 - Hover state for sage */
-    --color-blue-dark: 107 139 166;   /* #6B8BA6 - Hover state for blue */
-    --color-shadow: 52 76 61;         /* #344C3D - Evergreen-based shadows */
 
     /* Standard Theme Variables mapped to brand colors */
     --background: 242 243 241;        /* Ivory */
@@ -48,28 +39,6 @@
     --chart-3: 136 165 188;           /* French blue for tertiary data */
     --chart-4: 122 143 120;           /* Sage dark for additional data */
     --chart-5: 107 139 166;           /* Blue dark for additional data */
-
-    /* Sidebar Colors */
-    --sidebar: 242 243 241;           /* EXACT Ivory #F2F3F1 for sidebar background */
-    --sidebar-foreground: 52 76 61;   /* EXACT Evergreen #344C3D for sidebar text */
-    --sidebar-primary: 142 165 140;   /* Sage for sidebar primary */
-    --sidebar-primary-foreground: 255 255 255; /* White text on sage */
-    --sidebar-accent: 136 165 188;    /* French blue for sidebar accents */
-    --sidebar-accent-foreground: 255 255 255; /* White text on blue */
-    --sidebar-border: 115 138 110;    /* Moss for sidebar borders */
-    --sidebar-ring: 142 165 140;      /* Sage for sidebar focus rings */
-
-    /* Animation Timing */
-    --animation-fast: 150ms;
-    --animation-base: 300ms;
-    --animation-slow: 500ms;
-
-    /* Spacing Scale */
-    --spacing-xs: 0.5rem;
-    --spacing-sm: 1rem;
-    --spacing-md: 1.5rem;
-    --spacing-lg: 2rem;
-    --spacing-xl: 3rem;
 
     /* Radius */
     --radius: 0.75rem;
@@ -104,866 +73,82 @@
     box-sizing: border-box;
   }
 
-  html {
-    background-color: #F2F3F1 !important;  /* Exact ivory color */
-  }
-
-  body {
-    background-color: #F2F3F1 !important;  /* Exact ivory color */
-    color: #738A6E !important;              /* Exact moss color */
+  html, body, #root {
+    background-color: #F2F3F1;
+    color: #738A6E;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     line-height: 1.6;
-    font-feature-settings: "rlig" 1, "calt" 1;
     margin: 0;
     padding: 0;
     min-height: 100vh;
   }
 
-  #root {
-    background-color: #F2F3F1 !important;  /* Exact ivory color */
-    min-height: 100vh;
-    color: #738A6E !important;              /* Exact moss color */
-  }
-
-  /* Override any potential conflicting styles */
-  .app, .App, [data-app], [data-testid*="app"] {
-    background-color: #F2F3F1 !important;
-    color: #738A6E !important;
-  }
-
-  /* FORCE EXACT BRAND COLORS - AGGRESSIVE OVERRIDES */
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
-
-  /* Force Ivory background everywhere */
-  *, div, section, main, article, aside, header, footer, nav {
-    background-color: #F2F3F1 !important;
-  }
-
-  /* Specific overrides for common problematic elements */
-  .bg-card, .bg-background, .bg-muted, .bg-popover,
-  [class*="bg-"], [class*="background"] {
-    background-color: #F2F3F1 !important;
-  }
-
-  /* Force brand text colors */
   h1, h2, h3, h4, h5, h6 {
-    color: #344C3D !important; /* Evergreen for headers */
+    color: #344C3D;
   }
 
-  p, span, div:not([class*="button"]), .text-muted-foreground, .text-sm {
-    color: #738A6E !important; /* Moss for ALL body text */
+  p, span, .text-sm {
+    color: #738A6E;
   }
 
-  /* Force brand link colors */
-  a, [role="link"] {
-    color: #88A5BC !important; /* French Blue for links */
-  }
-
-  /* Remove yellow/amber backgrounds completely */
-  .bg-yellow-50, .bg-yellow-100, .bg-yellow-200, .bg-yellow-300, .bg-yellow-400, .bg-yellow-500,
-  .bg-amber-50, .bg-amber-100, .bg-amber-200, .bg-amber-300, .bg-amber-400, .bg-amber-500,
-  [class*="bg-yellow"], [class*="bg-amber"], 
-  [style*="yellow"], [style*="amber"],
-  [class*="primary"], [class*="secondary"] {
-    background-color: #F2F3F1 !important;
-    color: #738A6E !important;
-  }
-
-  /* Final override for all button colors to use brand colors only */
-  button, [role="button"], .button {
-    background-color: #8EA58C !important; /* Sage for buttons */
-    color: #F2F3F1 !important; /* Ivory text */
-  }
-
-  button:hover, [role="button"]:hover, .button:hover {
-    background-color: #738A6E !important; /* Moss for hover */
-  }
-
-  h1, h2 { 
-    color: #344C3D !important;  /* Exact evergreen color */
-    font-weight: 600;
-  }
-  
-  h3, h4, h5, h6 { 
-    color: #738A6E !important;  /* Exact moss color */
-    font-weight: 500;
-  }
-  
-  a { 
-    color: #88A5BC !important;          /* Exact french blue color */
-    text-decoration: none; 
+  a {
+    color: #88A5BC;
+    text-decoration: none;
     transition: color 0.2s ease;
   }
-  
-  a:hover { 
-    color: #6B8BA6 !important;          /* Exact blue dark hover */
-  }
 
-  /* Ensure muted text uses moss with opacity */
-  .text-muted, .text-muted-foreground {
-    color: rgba(115, 138, 110, 0.7) !important;  /* Moss at 70% opacity */
-  }
-
-  /* Input and form element styling */
-  input, textarea, select {
-    background-color: #F2F3F1 !important;      /* Ivory background */
-    border-color: rgba(115, 138, 110, 0.3) !important;  /* Moss border at 30% opacity */
-    color: #738A6E !important;                  /* Moss text */
-  }
-
-  input:focus, textarea:focus, select:focus {
-    border-color: #8EA58C !important;           /* Sage border on focus */
-    box-shadow: 0 0 0 2px rgba(142, 165, 140, 0.2) !important;  /* Sage focus shadow */
-  }
-
-  input::placeholder, textarea::placeholder {
-    color: rgba(115, 138, 110, 0.5) !important;  /* Moss placeholder at 50% opacity */
-  }
-
-  /* French Blue accent touches */
-  .accent-french-blue {
-    color: #88A5BC !important;
-  }
-
-  .bg-accent-french-blue {
-    background-color: #88A5BC !important;
-  }
-
-  .border-accent-french-blue {
-    border-color: #88A5BC !important;
-  }
-
-  /* Calendar icons, links, and special accent elements */
-  [data-calendar-icon], .calendar-icon, 
-  .accent-link, .special-cta {
-    color: #88A5BC !important;
-  }
-
-  .accent-link:hover, .special-cta:hover,
-  [data-calendar-icon]:hover, .calendar-icon:hover {
-    color: #6B8BA6 !important;
-  }
-
-  /* Smooth Scrolling */
-  html {
-    scroll-behavior: smooth;
-    scroll-padding-top: 80px;
-  }
-
-  /* Focus Styles */
-  *:focus-visible {
-    outline: none !important;
-    ring: 2px solid #8EA58C !important;  /* Sage focus ring */
-    ring-offset: 2px;
-    ring-offset-color: #F2F3F1 !important;  /* Ivory offset */
-  }
-
-  /* Selection */
-  ::selection {
-    background-color: rgba(142, 165, 140, 0.2);  /* Sage at 20% opacity */
-    color: rgb(var(--color-evergreen));
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: rgb(var(--color-ivory));
-    border-radius: 9999px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, rgb(var(--color-sage)), rgb(var(--color-sage)));
-    border-radius: 9999px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, rgb(var(--color-sage-dark)), rgb(var(--color-sage-dark)));
-  }
-
-  /* Line Clamp Utilities */
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-4 {
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  a:hover {
+    color: #6B8BA6;
   }
 }
 
 @layer components {
-  /* Glass Effect Classes */
-  .glass-light {
-    @apply bg-white border border-border;
+  /* CRITICAL CARD FIXES - Maximum Specificity */
+  .p-6.rounded-lg.transition-all.cursor-pointer {
+    background-color: #FFFFFF !important;
+    border: 1px solid rgba(115, 138, 110, 0.15) !important;
+    box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
   }
 
-  .glass-medium {
-    @apply bg-card border border-border;
+  /* Sidebar Styling */
+  aside {
+    background-color: #FFFFFF !important;
+    border-right: 1px solid rgba(115, 138, 110, 0.15) !important;
   }
 
-  .glass-dark {
-    @apply bg-card border border-border;
+  /* Top bar */
+  [data-testid="topbar"] {
+    background-color: #FFFFFF !important;
+    border-bottom: 1px solid rgba(115, 138, 110, 0.15) !important;
   }
 
-  /* Gradient Text */
-  .gradient-text {
-    @apply bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent;
-  }
-
-  /* Card Hover Effects */
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
-  }
-
-  /* Button Base */
-  .btn-base {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
-    @apply focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
-  }
-
-  /* Loading Animation */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-  }
-
-  /* Pulse Glow */
-  .pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(142, 165, 140, 0.2); } /* Sage glow */
-    50% { box-shadow: 0 0 40px rgba(142, 165, 140, 0.4); }
-  }
-
-  /* Success/Error states using brand colors */
-  .success-message {
-    background-color: rgba(142, 165, 140, 0.15) !important;  /* Sage background at 15% opacity */
-    color: #344C3D !important;                               /* Evergreen text */
-    border-color: rgba(142, 165, 140, 0.3) !important;      /* Sage border */
-  }
-
-  .info-message {
-    background-color: rgba(136, 165, 188, 0.15) !important;  /* French blue background at 15% opacity */
-    color: #344C3D !important;                               /* Evergreen text */
-    border-color: rgba(136, 165, 188, 0.3) !important;      /* French blue border */
-  }
-
-  .warning-message, .error-message {
-    background-color: rgba(52, 76, 61, 0.1) !important;     /* Evergreen background at 10% opacity */
-    color: #344C3D !important;                              /* Evergreen text and icons */
-    border-color: rgba(52, 76, 61, 0.2) !important;        /* Evergreen border */
-  }
-
-  /* Progress bars and loading states */
-  .progress-fill {
-    background-color: #8EA58C !important;                   /* Sage for fill */
-  }
-
-  .progress-track {
-    background-color: #F2F3F1 !important;                   /* Ivory for track */
-  }
-
-  .loading-spinner {
-    border-color: #8EA58C !important;                       /* Sage spinner */
-  }
-
-  /* CRITICAL FRENCH BLUE ACCENTS - Priority Implementation */
-  
-  /* AI badges and indicators */
-  .ai-badge, .ai-indicator, [class*="ai-"], [data-badge*="AI"] {
+  /* AI badges */
+  .px-2.py-1.text-xs.font-medium.rounded {
     background-color: #88A5BC !important;
-    color: white !important;
+    color: #FFFFFF !important;
   }
 
-  /* Smart Upload sparkle icon */
-  .smart-upload-icon, .sparkle-icon, [class*="sparkle"] {
-    color: #88A5BC !important;
+  /* Button styles */
+  button {
+    background-color: #8EA58C !important;
+    color: #FFFFFF !important;
   }
 
-  /* Sidebar hover states with French Blue */
-  .sidebar-item:hover, .nav-item:hover, .menu-item:hover,
-  [data-testid*="nav-"]:hover, [data-testid*="ai-"]:hover {
-    background-color: rgba(136, 165, 188, 0.1) !important;
-    color: #88A5BC !important;
-    border-left: 3px solid #88A5BC !important;
-  }
-
-  /* Active sidebar item with French Blue accent */
-  .sidebar-item.active, .nav-item.active {
-    border-left: 3px solid #88A5BC !important;
-  }
-
-  /* Calendar icons should have French Blue */
-  .calendar-icon, [data-calendar-icon], [class*="calendar"] svg,
-  [data-testid*="calendar"] svg {
-    color: #88A5BC !important;
-  }
-
-  /* Links and secondary buttons */
-  .btn-secondary, .upload-documents-btn, button[data-testid*="upload"] {
-    background-color: white !important;
+  button[style*="border"] {
+    background-color: transparent !important;
     border: 2px solid #88A5BC !important;
     color: #88A5BC !important;
   }
 
-  .btn-secondary:hover, .upload-documents-btn:hover, 
-  button[data-testid*="upload"]:hover {
-    background-color: #88A5BC !important;
-    color: white !important;
+  /* French Blue icons */
+  span[style*="88A5BC"] {
+    color: #88A5BC !important;
   }
 
-  /* Better card spacing */
-  .card-grid, .feature-grid, .dashboard-grid,
-  [class*="grid"]:has([class*="card"]) {
-    gap: 20px 12px !important;
-    grid-row-gap: 20px !important;
-    grid-column-gap: 12px !important;
-  }
-
-  /* Vertical spacing between card rows */
-  .card-section + .card-section,
-  .space-y-4 > * + *,
-  .space-y-3 > * + * {
-    margin-top: 20px !important;
-  }
-
-  /* Ensure ALL text uses proper Moss color */
-  .card-description, .card-text, .description-text,
-  p:not([class*="button"]):not([class*="badge"]) {
-    color: #738A6E !important; /* Moss - not gray */
-  }
-
-  /* Color Utility Classes */
-  .text-primary {
-    color: rgb(var(--primary));
-  }
-  
-  .text-secondary {
-    color: rgb(var(--secondary));
-  }
-  
-  .text-accent {
-    color: rgb(var(--accent));
-  }
-  
-  .bg-primary {
-    background-color: rgb(var(--primary));
-  }
-  
-  .bg-primary\/10 {
-    background-color: rgb(var(--primary) / 0.1);
-  }
-  
-  .bg-secondary {
-    background-color: rgb(var(--secondary));
-  }
-  
-  .bg-secondary\/10 {
-    background-color: rgb(var(--secondary) / 0.1);
-  }
-  
-  .bg-accent {
-    background-color: rgb(var(--accent));
-  }
-  
-  .bg-accent\/10 {
-    background-color: rgb(var(--accent) / 0.1);
-  }
-  
-  .border-primary {
-    border-color: rgb(var(--primary));
-  }
-  
-  .border-secondary {
-    border-color: rgb(var(--secondary));
-  }
-  
-  .border-accent {
-    border-color: rgb(var(--accent));
-  }
-}
-
-/* FORCE BRAND COLORS - Override Everything */
-
-/* Main Layout */
-body, #root, .main-layout {
-  background-color: #F2F3F1 !important;
-}
-
-/* Sidebar MUST be white */
-aside, .sidebar, [data-testid="sidebar"] {
-  background-color: #FFFFFF !important;
-  border-right: 1px solid rgba(115, 138, 110, 0.15) !important;
-}
-
-/* ALL Cards MUST be white */
-.card, 
-[class*="card"],
-.bg-card,
-.rounded-lg.border,
-.p-6.border {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* Remove ALL gray backgrounds */
-.bg-gray-50, .bg-gray-100, .bg-gray-200,
-.bg-slate-50, .bg-slate-100,
-.bg-neutral-50, .bg-neutral-100,
-.bg-stone-50, .bg-stone-100 {
-  background-color: #FFFFFF !important;
-}
-
-/* Fix text colors */
-.text-gray-500, .text-gray-600, .text-gray-700,
-.text-slate-500, .text-slate-600,
-.text-muted-foreground {
-  color: #738A6E !important;
-}
-
-/* Headers */
-h1, h2, h3, .text-foreground {
-  color: #344C3D !important;
-}
-
-/* AI Badges MUST be French Blue */
-.text-xs.px-2.py-1.rounded,
-[class*="badge"],
-.rounded-full.text-xs {
-  background-color: #88A5BC !important;
-  color: #FFFFFF !important;
-}
-
-/* Force icon colors */
-.lucide-sparkles,
-.lucide-calendar,
-.lucide-search,
-svg[class*="sparkle"],
-svg[class*="calendar"] {
-  color: #88A5BC !important;
-  fill: #88A5BC !important;
-}
-
-/* Buttons */
-.bg-primary, button:first-child {
-  background-color: #8EA58C !important;
-  color: #FFFFFF !important;
-}
-
-/* Secondary button */
-button[class*="border"] {
-  background-color: transparent !important;
-  border: 2px solid #88A5BC !important;
-  color: #88A5BC !important;
-}
-
-/* Sidebar hover states */
-.hover-nav-item:hover,
-aside a:hover > div {
-  background-color: rgba(136, 165, 188, 0.1) !important;
-  color: #88A5BC !important;
-  border-left: 3px solid #88A5BC !important;
-}
-
-/* Active sidebar item */
-aside a > div[style*="8EA58C"] {
-  background-color: #8EA58C !important;
-  color: #FFFFFF !important;
-}
-
-/* Top bar */
-.h-16.bg-background,
-[data-testid="topbar"] {
-  background-color: #FFFFFF !important;
-  border-bottom: 1px solid rgba(115, 138, 110, 0.15) !important;
-}
-
-/* Remove Tailwind defaults */
-* {
-  --background: #F2F3F1 !important;
-  --foreground: #344C3D !important;
-  --card: #FFFFFF !important;
-  --card-foreground: #344C3D !important;
-  --muted: #F2F3F1 !important;
-  --muted-foreground: #738A6E !important;
-  --primary: #8EA58C !important;
-  --primary-foreground: #FFFFFF !important;
-  --accent: #88A5BC !important;
-  --accent-foreground: #FFFFFF !important;
-  --border: rgba(115, 138, 110, 0.15) !important;
-}
-
-/* Additional aggressive overrides for specific problem elements */
-.bg-muted, .bg-muted-foreground,
-.text-muted, [class*="muted"] {
-  background-color: #F2F3F1 !important;
-  color: #738A6E !important;
-}
-
-/* Force all divs and containers to use correct colors */
-div:not([class*="button"]):not([class*="badge"]) {
-  background-color: inherit !important;
-}
-
-/* Specific HomePage card styling overrides */
-.rounded-lg.transition-all.cursor-pointer,
-[class*="rounded-lg"][class*="transition"] {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* French Blue emoji and icon overrides */
-span[style*="88A5BC"], 
-.emoji-french-blue,
-[data-icon="sparkle"], [data-icon="calendar"], [data-icon="search"] {
-  color: #88A5BC !important;
-}
-
-/* Ensure grid layouts have proper spacing */
-.grid.grid-cols-1.md\\:grid-cols-3,
-[class*="grid"][class*="cols"] {
-  gap: 16px !important;
-}
-
-/* Remove any remaining yellow/amber styling */
-[style*="yellow"], [style*="amber"], [style*="gold"],
-[class*="yellow"], [class*="amber"], [class*="gold"] {
-  background-color: #F2F3F1 !important;
-  color: #738A6E !important;
-}
-
-/* Final French Blue enforcement */
-svg.lucide-sparkles, svg.lucide-calendar, svg.lucide-search,
-.sparkle-icon, .calendar-icon, .search-icon {
-  color: #88A5BC !important;
-  stroke: #88A5BC !important;
-}
-
-/* Card content text enforcement */
-.text-sm[style*="738A6E"] {
-  color: #738A6E !important;
-}
-
-/* NUCLEAR OPTION - Force all backgrounds and colors */
-/* Override EVERYTHING to ensure brand colors */
-div, section, main, article, aside, header, footer, nav,
-.card, .bg-card, .rounded-lg, .p-6, 
-[class*="card"], [class*="rounded"] {
-  background-color: #FFFFFF !important;
-}
-
-/* Force body and root backgrounds */
-body, #root, html {
-  background-color: #F2F3F1 !important;
-}
-
-/* Sidebar must be white */
-aside, .sidebar {
-  background-color: #FFFFFF !important;
-  border-right: 1px solid rgba(115, 138, 110, 0.15) !important;
-}
-
-/* ALL card-like elements MUST be white */
-.rounded-lg.border, 
-.rounded-lg.transition-all,
-.p-6.border,
-.cursor-pointer,
-[style*="backgroundColor"],
-div[style*="background"] {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* Override inline styles that might be causing gray */
-div[style*="background-color"] {
-  background-color: #FFFFFF !important;
-}
-
-/* Force grid container background */
-.grid, .max-w-6xl, .mx-auto {
-  background-color: #F2F3F1 !important;
-}
-
-/* Text color overrides */
-h1, h2, h3, h4, h5, h6,
-.text-xl, .text-lg, .text-2xl, .text-4xl {
-  color: #344C3D !important;
-}
-
-p, span, .text-sm {
-  color: #738A6E !important;
-}
-
-/* Button overrides */
-button {
-  background-color: #8EA58C !important;
-  color: #FFFFFF !important;
-  border: none !important;
-}
-
-button[style*="border"] {
-  background-color: transparent !important;
-  border: 2px solid #88A5BC !important;
-  color: #88A5BC !important;
-}
-
-/* AI badges */
-.px-2.py-1.text-xs,
-span[style*="88A5BC"] {
-  background-color: #88A5BC !important;
-  color: #FFFFFF !important;
-}
-
-/* Icons with French Blue */
-.text-3xl span[style*="88A5BC"],
-div[style*="color: '#88A5BC'"] {
-  color: #88A5BC !important;
-}
-
-/* ULTIMATE OVERRIDE - Target specific page elements */
-/* HomePage specific fixes */
-.max-w-6xl > * {
-  background-color: #F2F3F1 !important;
-}
-
-.grid.grid-cols-1.md\\:grid-cols-3 > div > div {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* Target every card-like div with specific attributes */
-div.p-6.rounded-lg.transition-all.cursor-pointer,
-div[class*="p-6"][class*="rounded-lg"],
-a > div.p-6,
-a > div[class*="rounded"] {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* Reset any gray/muted backgrounds */
-.bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300,
-.bg-slate-50, .bg-slate-100, .bg-slate-200,
-.bg-neutral-50, .bg-neutral-100, .bg-neutral-200,
-.bg-stone-50, .bg-stone-100, .bg-stone-200,
-.bg-zinc-50, .bg-zinc-100, .bg-zinc-200 {
-  background-color: #FFFFFF !important;
-}
-
-/* Force white background on any element with background styling */
-*[style*="background"]:not([style*="#F2F3F1"]):not([style*="#8EA58C"]):not([style*="#88A5BC"]) {
-  background-color: #FFFFFF !important;
-}
-
-/* Ensure main content area is ivory */
-.max-w-6xl.mx-auto.px-4,
-div[style*="backgroundColor: '#F2F3F1'"] {
-  background-color: #F2F3F1 !important;
-}
-
-/* Banner styling fix */
-div[style*="rgba(142, 165, 140, 0.08)"] {
-  background-color: rgba(142, 165, 140, 0.08) !important;
-  border: 1px solid rgba(142, 165, 140, 0.2) !important;
-}
-
-/* FINAL NUCLEAR OVERRIDE - FORCE EVERYTHING */
-/* This should override any Tailwind or other CSS */
-* {
-  box-sizing: border-box !important;
-}
-
-/* Main page container */
-div[style*="minHeight: '100vh'"],
-div[style*="paddingTop: '30px'"] {
-  background-color: #F2F3F1 !important;
-}
-
-/* All Link containers with cards */
-a[href^="/"] > div {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* Force all card-style divs to white - catch-all */
-div[class*="p-6"]:not([style*="#F2F3F1"]):not([style*="#8EA58C"]):not([style*="#88A5BC"]) {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* Ensure no Tailwind gray backgrounds can override */
-[class*="bg-"]:not([class*="bg-transparent"]) {
-  background-color: #FFFFFF !important;
-}
-
-/* Target HomePage grid items specifically */
-.grid > div > a > div,
-.grid-cols-1 > div > a > div,
-.md\\:grid-cols-3 > div > a > div {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* Override any computed styles */
-div[style] {
-  background-color: var(--computed-bg, #FFFFFF) !important;
-}
-
-div[style*="backgroundColor: '#FFFFFF'"] {
-  background-color: #FFFFFF !important;
-}
-
-/* ABSOLUTE FINAL OVERRIDE - LAST RESORT */
-/* This MUST be at the very end to ensure maximum specificity */
-
-/* Remove any Tailwind card backgrounds that might be gray */
-.bg-card, 
-[class~="bg-card"] {
-  background-color: #FFFFFF !important;
-}
-
-/* FORCE cards to be white with maximum specificity */
-html body div.p-6.rounded-lg.transition-all.cursor-pointer {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-html body a > div.p-6.rounded-lg {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* Override any CSS variables that might be causing gray */
-:root {
-  --tw-bg-opacity: 1 !important;
-}
-
-/* Target the specific CSS classes that Tailwind might be applying */
-.rounded-lg {
-  background-color: #FFFFFF !important;
-}
-
-.p-6 {
-  background-color: #FFFFFF !important;
-}
-
-.transition-all {
-  background-color: inherit !important;
-}
-
-/* Final catch-all for any remaining elements */
-div:not([style*="#F2F3F1"]):not([style*="#8EA58C"]):not([style*="#88A5BC"]):not([class*="emoji"]) {
-  background-color: #FFFFFF !important;
-}
-
-/* Override any muted backgrounds from Tailwind */
-.text-muted-foreground {
-  color: #738A6E !important;
-}
-
-.bg-muted {
-  background-color: #F2F3F1 !important;
-}
-
-/* ULTIMATE EMERGENCY FIX - Override everything with extreme specificity */
-
-/* Target every possible card element with maximum CSS specificity */
-html body div div div.p-6.rounded-lg.transition-all.cursor-pointer[class*="p-6"][class*="rounded-lg"] {
-  background-color: #FFFFFF !important;
-  border: 1px solid rgba(115, 138, 110, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-}
-
-/* Override any potential Tailwind utility classes */
-html body .rounded-lg.p-6 {
-  background-color: #FFFFFF !important;
-}
-
-/* Target by attribute selectors for inline styles */
-html body div[style] {
-  background-color: #FFFFFF !important;
-}
-
-/* Reset all potentially conflicting CSS custom properties */
-html body {
-  --card: 255 255 255 !important;
-  --card-foreground: 52 76 61 !important;
-  --background: 242 243 241 !important;
-  --foreground: 52 76 61 !important;
-}
-
-/* Override computed styles at the root level */
-html {
-  --tw-bg-opacity: 1 !important;
-}
-
-/* Emergency catch-all with highest possible specificity */
-html body main div div div[class] {
-  background-color: #FFFFFF !important;
-}
-
-/* Force white background on ALL divs except specific ones */
-html body div:not([style*="F2F3F1"]):not([style*="8EA58C"]):not([style*="88A5BC"]):not([class*="bg-"]) {
-  background-color: #FFFFFF !important;
-}
-
-@layer utilities {
-  /* Custom Gradients */
-  .bg-gradient-radial {
-    background: radial-gradient(circle, var(--tw-gradient-stops));
-  }
-
-  /* Text Balance */
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  /* Animate on Hover Group */
-  .group-hover-lift {
-    @apply group-hover:-translate-y-1 transition-transform duration-300;
-  }
-
-  /* Stagger Animation Delays */
-  .stagger-1 { animation-delay: 100ms; }
-  .stagger-2 { animation-delay: 200ms; }
-  .stagger-3 { animation-delay: 300ms; }
-  .stagger-4 { animation-delay: 400ms; }
-  .stagger-5 { animation-delay: 500ms; }
-
-  /* Sage Gradient */
-  .sage-gradient {
-    background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--foreground)) 100%);
-  }
-
-  /* Glass Effect */
-  .glass-effect {
-    background: rgb(var(--card));
-    border: 1px solid rgb(var(--border));
+  /* Lucide icons */
+  .lucide-sparkles,
+  .lucide-calendar,
+  .lucide-search {
+    color: #88A5BC !important;
   }
 }
