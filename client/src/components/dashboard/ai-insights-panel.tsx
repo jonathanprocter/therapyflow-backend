@@ -54,7 +54,10 @@ export default function AIInsightsPanel() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">AI Clinical Insights</h3>
+            <h3 className="text-lg font-semibold flex items-center gap-2" style={{color: '#344C3D'}}>
+            <span className="w-2 h-2 rounded-full" style={{backgroundColor: '#88A5BC'}}></span>
+            AI Clinical Insights
+          </h3>
             <Skeleton className="h-5 w-5" />
           </div>
         </CardHeader>
@@ -80,10 +83,11 @@ export default function AIInsightsPanel() {
     <Card data-testid="ai-insights-panel">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900" data-testid="insights-title">
+          <h3 className="text-lg font-semibold flex items-center gap-2" style={{color: '#344C3D'}} data-testid="insights-title">
+            <span className="w-2 h-2 rounded-full" style={{backgroundColor: '#88A5BC'}}></span>
             AI Clinical Insights
           </h3>
-          <i className="fas fa-robot text-primary"></i>
+          <i className="fas fa-robot" style={{color: '#88A5BC'}}></i>
         </div>
       </CardHeader>
 

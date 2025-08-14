@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { getDocument, updateDocumentParsed } from "../storage-extensions";
+import { storage } from "../storage";
 
 // Use the enhanced document processor we already have
 import { EnhancedDocumentProcessor } from "./enhanced-document-processor";
@@ -18,7 +18,7 @@ function cleanFallback(raw: Buffer | string) {
 }
 
 export async function parsePDF(documentId: string) {
-  const doc = await getDocument(documentId);
+  const doc = await storage.getDocument(documentId);
   if (!doc) throw new Error(`Document not found: ${documentId}`);
   
   // Get buffer data from metadata instead of file path
@@ -73,7 +73,7 @@ export async function parsePDF(documentId: string) {
   }
 
   // Update document with parsed text
-  await updateDocumentParsed(documentId, text, meta);
+  await storage.updateDocument(documentId, { parsedText: text, metadata: { ...doc.metadata, ...meta } });
   
   return { text, meta, qualityScore };
 }

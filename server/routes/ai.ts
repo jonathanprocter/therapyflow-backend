@@ -1,6 +1,6 @@
 import express from "express";
 import { processDocumentWithAI } from "../services/ai";
-import { listAIResultsForClient } from "../storage-extensions";
+import { storage } from "../storage";
 
 export const aiRouter = express.Router();
 
@@ -34,11 +34,7 @@ aiRouter.get("/results/:clientId", async (req, res) => {
     const { clientId } = req.params;
     const { from, to } = req.query;
     
-    const results = await listAIResultsForClient(
-      clientId, 
-      from as string, 
-      to as string
-    );
+    const results = await storage.getAIResults(clientId);
     
     res.json({ results });
   } catch (e: any) {

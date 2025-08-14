@@ -69,7 +69,7 @@ export default function TherapeuticJourneyDashboard({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="h-6 w-6 text-purple-500" />
+            <Brain className="h-6 w-6" style={{color: '#88A5BC'}} />
             Therapeutic Journey Analysis
           </CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -79,7 +79,10 @@ export default function TherapeuticJourneyDashboard({
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="overview" className="flex items-center gap-1">
+                <Sparkles className="h-3 w-3" style={{color: '#88A5BC'}} />
+                Overview
+              </TabsTrigger>
               <TabsTrigger value="insights">Insights</TabsTrigger>
               <TabsTrigger value="emotions">Emotions</TabsTrigger>
               <TabsTrigger value="themes">Themes</TabsTrigger>

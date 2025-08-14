@@ -64,11 +64,23 @@ export default function Sidebar() {
             return (
               <Link key={item.name} href={item.href}>
                 <div
-                  className="flex items-center px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer"
+                  className="flex items-center px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer hover-nav-item"
                   style={isActive 
                     ? {color: '#F2F3F1', backgroundColor: '#8EA58C'} 
                     : {color: '#738A6E', backgroundColor: 'transparent'}}
                   data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = '#88A5BC';
+                      e.currentTarget.style.color = '#F2F3F1';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = '#738A6E';
+                    }
+                  }}
                 >
                   <IconComponent className="w-4 h-4 mr-3" />
                   {item.name}
@@ -102,8 +114,20 @@ export default function Sidebar() {
                     ? {color: '#F2F3F1', backgroundColor: '#8EA58C'} 
                     : {color: '#738A6E', backgroundColor: 'transparent'}}
                   data-testid={`ai-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = '#88A5BC';
+                      e.currentTarget.style.color = '#F2F3F1';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = '#738A6E';
+                    }
+                  }}
                 >
-                  <IconComponent className="w-4 h-4 mr-3" style={{color: item.name.includes('AI') ? '#88A5BC' : 'inherit'}} />
+                  <IconComponent className="w-4 h-4 mr-3" style={{color: (item.name.includes('AI') || item.name.includes('Smart')) ? '#88A5BC' : 'inherit'}} />
                   {item.name}
                   {item.badge && (
                     <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}}>
@@ -120,13 +144,16 @@ export default function Sidebar() {
         <div className="pt-4 mt-6" style={{borderTop: '1px solid #8EA58C'}}>
           <div className="px-4 py-3">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: '#8EA58C'}}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: '#88A5BC'}}>
                 <Users className="w-4 h-4" style={{color: '#F2F3F1'}} />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium" style={{color: '#344C3D'}}>Dr. Jonathan Procter</p>
                 <p className="text-xs" style={{color: '#738A6E'}}>Licensed Therapist</p>
               </div>
+              <span className="text-xs px-2 py-1 rounded-full cursor-pointer" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}} data-testid="user-profile-view">
+                view
+              </span>
             </div>
           </div>
         </div>

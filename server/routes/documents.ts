@@ -1,10 +1,10 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
-import { createDocument, getDocument, getAIResult } from "../storage-extensions-new";
+import { storage } from "../storage";
 import { parsePDF } from "../services/pdf";
 import { processDocumentWithAI, smartParseDocument } from "../services/ai";
-import * as storage from "../storage"; // Assuming storage is exported from here
+
 
 const upload = multer({ 
   storage: multer.memoryStorage()

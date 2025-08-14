@@ -74,7 +74,7 @@ export default function JourneySynthesis({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Target className="h-4 w-4 text-purple-500" />
+              <Target className="h-4 w-4" style={{color: '#88A5BC'}} />
               Themes
             </CardTitle>
           </CardHeader>
@@ -90,7 +90,10 @@ export default function JourneySynthesis({
       {synthesisData.recommendations && synthesisData.recommendations.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">AI Recommendations</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{backgroundColor: '#88A5BC'}}></span>
+              AI Recommendations
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-1">

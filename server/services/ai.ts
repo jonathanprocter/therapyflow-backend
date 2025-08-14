@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getDocument, saveAIResult, upsertAppointment, upsertEdges } from "../storage-extensions";
+import { storage } from "../storage";
 
 const PROMPT_ID = "care_notes_v1";
 

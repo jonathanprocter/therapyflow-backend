@@ -1,5 +1,5 @@
 // Enhanced storage functions will be available through the new CareNotesAI pipeline
-// import { enhancedStorage } from './storage-extensions';
+// import { enhancedStorage } from "../storage"';
 import therapeuticRoutes from './routes/therapeutic';
 
 export function integrateTherapeuticFeatures(app: any) {

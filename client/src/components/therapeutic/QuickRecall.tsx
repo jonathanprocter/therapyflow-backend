@@ -41,7 +41,7 @@ export default function QuickRecall({ clientId }: { clientId: string }) {
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           className="flex-1"
         />
-        <Button onClick={handleSearch} disabled={loading}>
+        <Button onClick={handleSearch} disabled={loading} style={{backgroundColor: '#88A5BC', borderColor: '#88A5BC'}} className="hover:opacity-90">
           <Search className="h-4 w-4" />
         </Button>
       </div>
