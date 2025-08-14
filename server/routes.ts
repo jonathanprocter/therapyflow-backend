@@ -143,14 +143,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         res.json(sessionsWithClients);
       } else if (date) {
-        // Filter sessions for a specific date
-        const targetDate = new Date(date);
-        const startOfDay = new Date(targetDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(targetDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        
-        const sessions = await storage.getSessionsInDateRange(req.therapistId, startOfDay, endOfDay);
+        // Filter sessions for a specific date with proper timezone handling
+        const sessions = await storage.getSessionsByDate(req.therapistId, new Date(date));
         // Fetch client data for each session
         const sessionsWithClients = await Promise.all(
           sessions.map(async (session) => {

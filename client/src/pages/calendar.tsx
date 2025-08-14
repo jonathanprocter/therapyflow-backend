@@ -213,7 +213,16 @@ export default function Calendar() {
                           data-testid={`session-${session.id}`}
                         >
                           <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i className="fas fa-user-circle text-blue-600"></i>
+                            <span className="text-blue-600 font-bold text-sm">
+                              {session.client?.name 
+                                ? session.client.name
+                                    .split(' ')
+                                    .map(name => name.charAt(0))
+                                    .join('')
+                                    .toUpperCase()
+                                : 'UK'
+                              }
+                            </span>
                           </div>
                           
                           <div className="flex-1">

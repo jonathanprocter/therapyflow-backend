@@ -187,6 +187,20 @@ export class DatabaseStorage implements IStorage {
       .orderBy(sessions.scheduledAt);
   }
 
+  async getSessionsByDate(therapistId: string, targetDate: Date): Promise<Session[]> {
+    return await db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.therapistId, therapistId),
+          // Filter sessions for the specific date (in America/New_York timezone)
+          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = DATE(${targetDate} AT TIME ZONE 'America/New_York')`
+        )
+      )
+      .orderBy(sessions.scheduledAt);
+  }
+
   async getCompletedSessions(therapistId: string, clientId?: string): Promise<Session[]> {
     const conditions = [
       eq(sessions.therapistId, therapistId),
