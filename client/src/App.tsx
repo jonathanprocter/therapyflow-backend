@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Route, Switch, Link, useLocation } from 'wouter';
+import { Route, Switch } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
@@ -17,6 +17,9 @@ import InteractiveNoteCreator from './pages/InteractiveNoteCreator';
 import CalendarSync from './pages/calendar-sync';
 import SemanticSearch from './pages/semantic-search';
 import TreatmentPlans from './pages/treatment-plans';
+import Sidebar from './components/layout/sidebar';
+import TopBar from './components/layout/topbar';
+import HomePage from './pages/HomePage';
 
 function useApiHealth(pollMs = 10000) {
   const [healthy, setHealthy] = React.useState<boolean | null>(null);
@@ -163,126 +166,7 @@ function Header() {
   );
 }
 
-function Sidebar() {
-  const [location] = useLocation();
 
-  const isActive = (path: string) => location === path;
-
-  return (
-    <aside className="w-64 border-r bg-muted/30 p-4">
-      <div className="space-y-6">
-        {/* Clinical Management */}
-        <div>
-          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">
-            Clinical Management
-          </h2>
-          <nav className="space-y-1">
-            <Link href="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/dashboard") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-dashboard">
-              🏠 Dashboard
-            </Link>
-            <Link href="/calendar" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/calendar") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-calendar">
-              📅 Calendar
-            </Link>
-            <Link href="/clients" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/clients") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-clients">
-              👥 Clients
-            </Link>
-            <Link href="/progress-notes" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/progress-notes") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-progress-notes">
-              📝 Progress Notes
-            </Link>
-            <Link href="/session-history" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/session-history") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-session-history">
-              📋 Session History
-            </Link>
-            <Link href="/interactive-notes" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/interactive-notes") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-interactive-notes">
-              🤖 AI Note Assistant
-            </Link>
-            <Link href="/calendar-sync" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/calendar-sync") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-calendar-sync">
-              🔗 Calendar Sync
-            </Link>
-            <Link href="/search" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/search") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-search">
-              🔍 Semantic Search
-            </Link>
-            <Link href="/treatment-plans" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/treatment-plans") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-treatment-plans">
-              📋 Treatment Plans
-            </Link>
-          </nav>
-        </div>
-
-        {/* AI Document Processing */}
-        <div>
-          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">
-            AI Document Processing
-          </h2>
-          <nav className="space-y-1">
-            <Link href="/smart" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/smart") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-smart">
-              ✨ Smart Upload
-            </Link>
-            <Link href="/documents" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/documents") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-documents">
-              📄 Documents Upload
-            </Link>
-            <Link href="/results" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/results") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-results">
-              🧠 AI Results
-            </Link>
-            <Link href="/client" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-              isActive("/client") 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted"
-            }`} data-testid="link-client">
-              🔗 Client Detail
-            </Link>
-          </nav>
-        </div>
-      </div>
-    </aside>
-  );
-}
 
 export default function App() {
   return (
@@ -292,92 +176,31 @@ export default function App() {
         <div className="flex">
           <Sidebar />
           <main className="flex-1">
-            <Switch>
-              <Route path="/dashboard" component={Dashboard} />
-              <Route path="/calendar" component={Calendar} />
-              <Route path="/clients" component={Clients} />
-              <Route path="/progress-notes" component={ProgressNotes} />
-              <Route path="/session-history" component={SessionHistory} />
-              <Route path="/interactive-notes" component={InteractiveNoteCreator} />
-              <Route path="/calendar-sync" component={CalendarSync} />
-              <Route path="/search" component={SemanticSearch} />
-              <Route path="/treatment-plans" component={TreatmentPlans} />
-              <Route path="/smart" component={SmartUpload} />
-              <Route path="/documents" component={DocumentsUpload} />
-              <Route path="/results" component={CareNotesResults} />
-              <Route path="/client" component={ClientDetail} />
-              <Route path="/">
-                <div className="p-8 text-center">
-                  <h2 className="text-2xl font-bold mb-4">Welcome to TherapyFlow</h2>
-                  <p className="text-muted-foreground mb-6">
-                    Comprehensive clinical management platform with AI-powered document processing
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
-                    {/* Clinical Management Cards */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-left">Clinical Management</h3>
-                      <Link href="/dashboard" className="block p-4 border rounded-lg hover:bg-muted transition-colors" data-testid="card-dashboard">
-                        <div className="text-2xl mb-2">🏠</div>
-                        <h4 className="font-semibold">Dashboard</h4>
-                        <p className="text-sm text-muted-foreground">Overview of appointments and insights</p>
-                      </Link>
-                      <Link href="/calendar" className="block p-4 border rounded-lg hover:bg-muted transition-colors" data-testid="card-calendar">
-                        <div className="text-2xl mb-2">📅</div>
-                        <h4 className="font-semibold">Calendar</h4>
-                        <p className="text-sm text-muted-foreground">Schedule and manage appointments</p>
-                      </Link>
-                      <Link href="/clients" className="block p-4 border rounded-lg hover:bg-muted transition-colors" data-testid="card-clients">
-                        <div className="text-2xl mb-2">👥</div>
-                        <h4 className="font-semibold">Clients</h4>
-                        <p className="text-sm text-muted-foreground">Manage client roster and treatment plans</p>
-                      </Link>
-                    </div>
-
-                    {/* AI Document Processing Cards */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-left">AI Document Processing</h3>
-                      <Link href="/smart" className="block p-4 border rounded-lg hover:bg-muted transition-colors" data-testid="card-smart">
-                        <div className="text-2xl mb-2">✨</div>
-                        <h4 className="font-semibold">Smart Upload</h4>
-                        <p className="text-sm text-muted-foreground">AI extracts client data automatically</p>
-                      </Link>
-                      <Link href="/documents" className="block p-4 border rounded-lg hover:bg-muted transition-colors" data-testid="card-documents">
-                        <div className="text-2xl mb-2">📄</div>
-                        <h4 className="font-semibold">Documents Upload</h4>
-                        <p className="text-sm text-muted-foreground">Upload and process clinical PDFs</p>
-                      </Link>
-                      <Link href="/results" className="block p-4 border rounded-lg hover:bg-muted transition-colors" data-testid="card-results">
-                        <div className="text-2xl mb-2">🧠</div>
-                        <h4 className="font-semibold">AI Results</h4>
-                        <p className="text-sm text-muted-foreground">Explore AI analysis insights</p>
-                      </Link>
-                    </div>
-
-                    {/* Analysis & Reports Cards */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-left">Analysis & Reports</h3>
-                      <Link href="/client" className="block p-4 border rounded-lg hover:bg-muted transition-colors" data-testid="card-client">
-                        <div className="text-2xl mb-2">🔗</div>
-                        <h4 className="font-semibold">Client Analysis</h4>
-                        <p className="text-sm text-muted-foreground">Semantic connections & recall</p>
-                      </Link>
-                    </div>
+            <TopBar />
+            <div className="p-4">
+              <Switch>
+                <Route path="/dashboard" component={Dashboard} />
+                <Route path="/calendar" component={Calendar} />
+                <Route path="/clients" component={Clients} />
+                <Route path="/progress-notes" component={ProgressNotes} />
+                <Route path="/session-history" component={SessionHistory} />
+                <Route path="/interactive-notes" component={InteractiveNoteCreator} />
+                <Route path="/calendar-sync" component={CalendarSync} />
+                <Route path="/search" component={SemanticSearch} />
+                <Route path="/treatment-plans" component={TreatmentPlans} />
+                <Route path="/smart" component={SmartUpload} />
+                <Route path="/documents" component={DocumentsUpload} />
+                <Route path="/results" component={CareNotesResults} />
+                <Route path="/client" component={ClientDetail} />
+                <Route path="/" component={HomePage} />
+                <Route>
+                  <div className="p-8 text-center">
+                    <h2 className="text-2xl font-bold mb-2">Page Not Found</h2>
+                    <p className="text-muted-foreground">The page you requested does not exist.</p>
                   </div>
-
-                  <div className="text-center">
-                    <Link href="/dashboard" className="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors" data-testid="get-started">
-                      Get Started with Dashboard →
-                    </Link>
-                  </div>
-                </div>
-              </Route>
-              <Route>
-                <div className="p-8 text-center">
-                  <h2 className="text-2xl font-bold mb-2">Page Not Found</h2>
-                  <p className="text-muted-foreground">The page you requested does not exist.</p>
-                </div>
-              </Route>
-            </Switch>
+                </Route>
+              </Switch>
+            </div>
           </main>
         </div>
       </div>
