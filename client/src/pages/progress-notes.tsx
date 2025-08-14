@@ -96,13 +96,17 @@ export default function ProgressNotes() {
                 variant="outline"
                 data-testid="ai-note-button"
               >
-                <Brain className="w-4 h-4 mr-2" />
+                <Brain className="w-4 h-4 mr-2" style={{ color: '#88A5BC' }} />
                 AI-Assisted Note
               </Button>
               
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button data-testid="create-note-button">
+                  <Button 
+                    data-testid="create-note-button"
+                    style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+                    className="hover:bg-opacity-90"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     New Progress Note
                   </Button>
@@ -135,7 +139,7 @@ export default function ProgressNotes() {
           {isLoading ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
+                <Card key={i} className="animate-pulse bg-white">
                   <CardContent className="p-6">
                     <div className="h-4 rounded w-3/4 mb-4" style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}></div>
                     <div className="h-20 rounded mb-4" style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}></div>
@@ -160,6 +164,8 @@ export default function ProgressNotes() {
               <Button 
                 onClick={() => setIsCreateDialogOpen(true)}
                 data-testid="create-first-note"
+                style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+                className="hover:bg-opacity-90"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Your First Note
@@ -170,7 +176,7 @@ export default function ProgressNotes() {
               {filteredNotes.map((note) => (
                 <Card 
                   key={note.id} 
-                  className="hover:shadow-md transition-shadow cursor-pointer" 
+                  className="hover:shadow-md transition-shadow cursor-pointer bg-white" 
                   data-testid={`note-card-${note.id}`}
                 >
                   <CardHeader className="pb-3">
