@@ -87,10 +87,10 @@ export default function StatsOverview() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 font-medium" data-testid={`stat-label-${config.key}`}>
+                <p className="text-base text-gray-800 font-semibold" data-testid={`stat-label-${config.key}`}>
                   {config.title}
                 </p>
-                <p className={`text-sm mt-2 ${config.suffixColor}`} data-testid={`stat-suffix-${config.key}`}>
+                <p className={`text-xs mt-2 ${config.suffixColor}`} data-testid={`stat-suffix-${config.key}`}>
                   <i className={`${config.suffixIcon} mr-1`}></i>
                   {config.suffix}
                 </p>
