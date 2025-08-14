@@ -47,6 +47,7 @@ function useApiHealth(pollMs = 10000) {
 export default function TopBar() {
   const [location] = useLocation();
   const { healthy, version } = useApiHealth();
+
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -57,31 +58,75 @@ export default function TopBar() {
   const pageTitle = pageNames[location] || 'TherapyFlow';
 
   return (
-    <div className="h-16 bg-background border-b border-border px-6 flex items-center justify-between" data-testid="topbar">
+    <div 
+      className="h-16 px-6 flex items-center justify-between"
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderBottom: '1px solid rgba(115, 138, 110, 0.15)'
+      }}
+      data-testid="topbar"
+    >
       <div className="flex items-center space-x-4">
-        <h1 className="text-xl font-semibold text-foreground" data-testid="page-title">
+        <h1 
+          className="text-xl font-semibold"
+          style={{ color: '#344C3D' }}
+          data-testid="page-title"
+        >
           {pageTitle}
         </h1>
-        <div className="flex items-center text-sm text-muted-foreground" data-testid="current-date">
-          <Calendar className="w-4 h-4 mr-2" style={{color: '#88A5BC'}} />
+        <div 
+          className="flex items-center text-sm"
+          style={{ color: '#738A6E' }}
+          data-testid="current-date"
+        >
+          <Calendar 
+            className="w-4 h-4 mr-2" 
+            style={{ color: '#88A5BC' }} 
+          />
           {currentDate}
         </div>
       </div>
 
       <div className="flex items-center space-x-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className={`w-2 h-2 rounded-full ${
-            healthy === true ? 'bg-green-500' : 
-            healthy === false ? 'bg-red-500' : 'bg-gray-400'
-          }`} />
+        {/* API Health Indicator */}
+        <div className="flex items-center gap-2 text-xs">
+          <div 
+            className="w-2 h-2 rounded-full"
+            style={{
+              backgroundColor: 
+                healthy === true ? '#8EA58C' : 
+                healthy === false ? '#344C3D' : 
+                'rgba(115, 138, 110, 0.5)'
+            }}
+          />
+          <span style={{ color: '#738A6E', fontSize: '11px' }}>
+            {version}
+          </span>
         </div>
+
+        {/* Notifications Button */}
         <button 
-          className="relative p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted"
+          className="relative p-2 rounded-md transition-all"
+          style={{
+            color: '#738A6E',
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(136, 165, 188, 0.1)';
+            e.currentTarget.style.color = '#88A5BC';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#738A6E';
+          }}
           data-testid="notifications-button"
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full"></span>
+          <span 
+            className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+            style={{ backgroundColor: '#88A5BC' }}
+          ></span>
         </button>
       </div>
     </div>

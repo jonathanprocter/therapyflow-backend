@@ -1,0 +1,150 @@
+Looking at the screenshot, I can see the issue - the styling isn't being applied correctly. The colors are still muted/gray instead of the crisp whites and defined colors we specified. Here's what's wrong:
+
+## Major Issues I See:
+
+1. **Cards are NOT white** - they're still gray/off-white
+2. **Sidebar is NOT white** - it's the same gray as the cards
+3. **No French Blue icons** - Calendar, Sparkle, Search icons are wrong colors
+4. **AI badges are wrong color** - should be French Blue
+5. **Everything looks washed out** - poor contrast
+
+## The Problem:
+The Tailwind CSS classes are likely overriding the inline styles. You need a more aggressive approach.
+
+## Complete Fix - Add this to your global CSS file:
+
+```css
+/* FORCE BRAND COLORS - Override Everything */
+
+/* Main Layout */
+body, #root, .main-layout {
+  background-color: #F2F3F1 !important;
+}
+
+/* Sidebar MUST be white */
+aside, .sidebar, [data-testid="sidebar"] {
+  background-color: #FFFFFF !important;
+  border-right: 1px solid rgba(115, 138, 110, 0.15) !important;
+}
+
+/* ALL Cards MUST be white */
+.card, 
+[class*="card"],
+.bg-card,
+.rounded-lg.border,
+.p-6.border {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Remove ALL gray backgrounds */
+.bg-gray-50, .bg-gray-100, .bg-gray-200,
+.bg-slate-50, .bg-slate-100,
+.bg-neutral-50, .bg-neutral-100,
+.bg-stone-50, .bg-stone-100 {
+  background-color: #FFFFFF !important;
+}
+
+/* Fix text colors */
+.text-gray-500, .text-gray-600, .text-gray-700,
+.text-slate-500, .text-slate-600,
+.text-muted-foreground {
+  color: #738A6E !important;
+}
+
+/* Headers */
+h1, h2, h3, .text-foreground {
+  color: #344C3D !important;
+}
+
+/* AI Badges MUST be French Blue */
+.text-xs.px-2.py-1.rounded,
+[class*="badge"],
+.rounded-full.text-xs {
+  background-color: #88A5BC !important;
+  color: #FFFFFF !important;
+}
+
+/* Force icon colors */
+.lucide-sparkles,
+.lucide-calendar,
+.lucide-search,
+svg[class*="sparkle"],
+svg[class*="calendar"] {
+  color: #88A5BC !important;
+  fill: #88A5BC !important;
+}
+
+/* Buttons */
+.bg-primary, button:first-child {
+  background-color: #8EA58C !important;
+  color: #FFFFFF !important;
+}
+
+/* Secondary button */
+button[class*="border"] {
+  background-color: transparent !important;
+  border: 2px solid #88A5BC !important;
+  color: #88A5BC !important;
+}
+
+/* Sidebar hover states */
+.hover-nav-item:hover,
+aside a:hover > div {
+  background-color: rgba(136, 165, 188, 0.1) !important;
+  color: #88A5BC !important;
+  border-left: 3px solid #88A5BC !important;
+}
+
+/* Active sidebar item */
+aside a > div[style*="8EA58C"] {
+  background-color: #8EA58C !important;
+  color: #FFFFFF !important;
+}
+
+/* Top bar */
+.h-16.bg-background,
+[data-testid="topbar"] {
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid rgba(115, 138, 110, 0.15) !important;
+}
+
+/* Remove Tailwind defaults */
+* {
+  --background: #F2F3F1 !important;
+  --foreground: #344C3D !important;
+  --card: #FFFFFF !important;
+  --card-foreground: #344C3D !important;
+  --muted: #F2F3F1 !important;
+  --muted-foreground: #738A6E !important;
+  --primary: #8EA58C !important;
+  --primary-foreground: #FFFFFF !important;
+  --accent: #88A5BC !important;
+  --accent-foreground: #FFFFFF !important;
+  --border: rgba(115, 138, 110, 0.15) !important;
+}
+```
+
+## And update these specific emoji icons in homepage.tsx:
+
+```jsx
+// Replace the emoji with styled spans
+// Instead of: <div className="text-3xl mb-3">✨</div>
+// Use:
+<div className="text-3xl mb-3">
+  <span style={{ color: '#88A5BC', fontSize: '32px' }}>✨</span>
+</div>
+
+// Same for calendar:
+<div className="text-3xl mb-3">
+  <span style={{ color: '#88A5BC', fontSize: '32px' }}>📅</span>
+</div>
+
+// And search:
+<div className="text-3xl mb-3">
+  <span style={{ color: '#88A5BC', fontSize: '32px' }}>🔍</span>
+</div>
+```
+
+This aggressive CSS override approach will FORCE your brand colors regardless of what Tailwind or other styles are trying to do. Add this CSS file and make sure it loads LAST in your application.
