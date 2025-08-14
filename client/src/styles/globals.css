@@ -1,0 +1,156 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  :root {
+    /* Optimized Sage Colors */
+    --color-background: 250 250 249;
+    --color-surface: 255 255 255;
+    --color-sage-50: 245 247 245;
+    --color-sage-100: 232 236 231;
+    --color-sage-200: 191 207 187;
+    --color-sage-300: 181 196 177;
+    --color-sage-400: 139 159 135;
+    --color-sage-500: 115 138 110;
+    --color-sage-600: 95 111 92;
+    --color-sage-700: 74 89 72;
+    --color-sage-800: 44 62 44;
+    --color-sage-900: 30 43 33;
+
+    /* Accent Colors */
+    --color-accent-blue: 122 149 176;
+    --color-accent-green: 127 160 116;
+    --color-accent-amber: 196 164 100;
+    --color-accent-rose: 176 133 133;
+
+    /* Animation Timing */
+    --animation-fast: 150ms;
+    --animation-base: 300ms;
+    --animation-slow: 500ms;
+
+    /* Spacing Scale */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-sage-800 antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Smooth Scrolling */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+  }
+
+  /* Focus Styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-sage-400 ring-offset-2 ring-offset-background;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-sage-200 text-sage-900;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-sage-50 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gradient-to-b from-sage-400 to-sage-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply from-sage-500 to-sage-700;
+  }
+}
+
+@layer components {
+  /* Glass Effect Classes */
+  .glass-light {
+    @apply bg-white/70 backdrop-blur-lg;
+  }
+
+  .glass-medium {
+    @apply bg-white/85 backdrop-blur-md;
+  }
+
+  .glass-dark {
+    @apply bg-sage-800/70 backdrop-blur-lg;
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-sage-600 to-sage-800 bg-clip-text text-transparent;
+  }
+
+  /* Card Hover Effects */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-sage-lg hover:-translate-y-1;
+  }
+
+  /* Button Base */
+  .btn-base {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+    @apply focus-visible:ring-2 focus-visible:ring-sage-400 focus-visible:ring-offset-2;
+  }
+
+  /* Loading Animation */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  /* Pulse Glow */
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(139, 159, 135, 0.2); }
+    50% { box-shadow: 0 0 40px rgba(139, 159, 135, 0.4); }
+  }
+}
+
+@layer utilities {
+  /* Custom Gradients */
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+
+  /* Text Balance */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Animate on Hover Group */
+  .group-hover-lift {
+    @apply group-hover:-translate-y-1 transition-transform duration-300;
+  }
+
+  /* Stagger Animation Delays */
+  .stagger-1 { animation-delay: 100ms; }
+  .stagger-2 { animation-delay: 200ms; }
+  .stagger-3 { animation-delay: 300ms; }
+  .stagger-4 { animation-delay: 400ms; }
+  .stagger-5 { animation-delay: 500ms; }
+}
