@@ -213,18 +213,15 @@ export default function Calendar() {
                           data-testid={`session-${session.id}`}
                         >
                           <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center" data-testid={`client-initials-${session.id}`}>
-                            <span className="text-blue-600 font-bold text-lg">
-                              {(() => {
-                                console.log('Client name:', session.client?.name);
-                                if (!session.client?.name) return 'UK';
-                                const initials = session.client.name
-                                  .split(' ')
-                                  .map(name => name.trim().charAt(0))
-                                  .join('')
-                                  .toUpperCase();
-                                console.log('Generated initials:', initials);
-                                return initials;
-                              })()}
+                            <span className="text-blue-600 font-bold text-sm">
+                              {session.client?.name 
+                                ? session.client.name
+                                    .split(' ')
+                                    .map(name => name.trim().charAt(0))
+                                    .join('')
+                                    .toUpperCase()
+                                : 'UK'
+                              }
                             </span>
                           </div>
                           

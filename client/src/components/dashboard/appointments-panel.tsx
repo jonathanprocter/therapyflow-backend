@@ -138,7 +138,16 @@ export default function AppointmentsPanel() {
                 data-testid={`appointment-${session.id}`}
               >
                 <div className={`flex-shrink-0 w-12 h-12 bg-${color}/10 rounded-lg flex items-center justify-center`}>
-                  <i className={`fas fa-user-circle text-${color}`}></i>
+                  <span className={`text-${color} font-bold text-sm`}>
+                    {session.client?.name 
+                      ? session.client.name
+                          .split(' ')
+                          .map(name => name.trim().charAt(0))
+                          .join('')
+                          .toUpperCase()
+                      : 'UK'
+                    }
+                  </span>
                 </div>
                 
                 <div className="flex-1">
