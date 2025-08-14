@@ -162,11 +162,11 @@ function tryParseJSON(raw: string) {
 
 export async function processDocumentWithAI(documentId: string) {
   const doc = await getDocument(documentId);
-  if (!doc?.text) throw new Error(`Document ${documentId} not parsed or empty`);
+  if (!doc?.extractedText) throw new Error(`Document ${documentId} not parsed or empty`);
 
   console.log(`🤖 Processing document ${documentId} with AI...`);
   
-  const prompt = buildPrompt(doc.text);
+  const prompt = buildPrompt(doc.extractedText);
   let parsed: any;
   let model = "";
   
@@ -178,7 +178,7 @@ export async function processDocumentWithAI(documentId: string) {
   } catch (e) {
     console.warn('First AI attempt failed, retrying with explicit JSON reminder:', e);
     // retry once with explicit JSON-only reminder
-    const retry = buildPrompt(doc.text + "\n\nRespond with JSON only.");
+    const retry = buildPrompt(doc.extractedText + "\n\nRespond with JSON only.");
     const { raw, model: usedModel } = await callLLM(retry);
     model = usedModel;
     parsed = tryParseJSON(raw);
@@ -216,7 +216,7 @@ export async function processDocumentWithAI(documentId: string) {
 
   // upsert edges
   if (edges?.length) {
-    await upsertEdges(documentId, edges);
+    await upsertEdges(edges);
   }
 
   console.log(`✅ AI processing complete: ${edges.length} semantic edges created`);
@@ -226,11 +226,11 @@ export async function processDocumentWithAI(documentId: string) {
 
 export async function smartParseDocument(documentId: string) {
   const doc = await getDocument(documentId);
-  if (!doc?.text) throw new Error(`Document ${documentId} not parsed or empty`);
+  if (!doc?.extractedText) throw new Error(`Document ${documentId} not parsed or empty`);
 
   console.log(`🧠 Smart parsing document ${documentId}...`);
   
-  const prompt = buildSmartParsingPrompt(doc.text);
+  const prompt = buildSmartParsingPrompt(doc.extractedText);
   let parsed: any;
   let model = "";
   
@@ -241,7 +241,7 @@ export async function smartParseDocument(documentId: string) {
     console.log(`✅ Smart parsing successful with ${model}`);
   } catch (e) {
     console.warn('Smart parsing failed, retrying with explicit JSON reminder:', e);
-    const retry = buildSmartParsingPrompt(doc.text + "\n\nRespond with JSON only.");
+    const retry = buildSmartParsingPrompt(doc.extractedText + "\n\nRespond with JSON only.");
     const { raw, model: usedModel } = await callLLM(retry);
     model = usedModel;
     parsed = tryParseJSON(raw);

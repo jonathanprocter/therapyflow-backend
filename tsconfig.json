@@ -13,6 +13,7 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,  // Add this line
     "baseUrl": ".",
     "types": ["node", "vite/client"],
     "paths": {

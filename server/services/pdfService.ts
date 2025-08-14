@@ -1,11 +1,24 @@
 // Lazy load pdf-parse to avoid startup issues
 let pdfParse: any = null;
 
-try {
-  pdfParse = require('pdf-parse');
-} catch (error) {
-  console.warn('pdf-parse not available, using fallback extraction');
-}
+// Dynamic import for ESM compatibility
+const loadPdfParse = async () => {
+  if (pdfParse) return pdfParse;
+
+  try {
+    // Try dynamic import first (ESM)
+    const module = await import('pdf-parse');
+    pdfParse = module.default || module;
+    console.log('✅ pdf-parse loaded successfully via ESM');
+    return pdfParse;
+  } catch (esmError) {
+    console.warn('⚠️ pdf-parse not available, will use fallback extraction:', esmError.message);
+    return null;
+  }
+};
+
+// Initialize on first use
+loadPdfParse().catch(console.warn);
 
 export interface ExtractedPDFData {
   text: string;
@@ -25,14 +38,17 @@ export class PDFService {
   async extractText(buffer: Buffer): Promise<ExtractedPDFData> {
     try {
       console.log('🔍 Starting PDF text extraction...');
-      
-      if (pdfParse) {
+
+      // Ensure pdf-parse is loaded
+      const parser = await loadPdfParse();
+
+      if (parser) {
         console.log('📄 Using pdf-parse library for extraction');
-        const data = await pdfParse(buffer, {
+        const data = await parser(buffer, {
           normalizeWhitespace: true,
           disableCombineTextItems: false
         });
-        
+
         if (data.text && data.text.length > 20) {
           console.log(`✅ PDF extraction successful: ${data.text.length} characters extracted`);
           return {
@@ -50,11 +66,11 @@ export class PDFService {
           };
         }
       }
-      
+
       // Fallback extraction method
       console.log('⚠️ Primary PDF extraction failed, trying alternative method...');
       const fallbackText = this.extractPDFTextFallback(buffer);
-      
+
       if (fallbackText && fallbackText.length > 50) {
         console.log(`✅ Fallback extraction successful: ${fallbackText.length} characters`);
         return {
@@ -65,7 +81,7 @@ export class PDFService {
           }
         };
       }
-      
+
       // Final fallback with user guidance
       console.log('❌ PDF extraction failed - returning guidance message');
       return {
@@ -75,13 +91,13 @@ export class PDFService {
           title: 'PDF Processing Guidance'
         }
       };
-      
+
     } catch (error) {
       console.error('❌ Error extracting PDF text:', error);
-      
+
       // Try one more fallback
       const emergencyText = this.extractPDFTextFallback(buffer);
-      
+
       return {
         text: emergencyText || 'PDF processing encountered an error. For reliable processing with comprehensive AI analysis, please save your document as TXT format.',
         pages: 1,
@@ -99,11 +115,11 @@ export class PDFService {
     try {
       // Convert buffer to string and look for text patterns
       const pdfString = buffer.toString('latin1');
-      
+
       // Extract text between parentheses (common PDF text encoding)
       const textMatches = pdfString.match(/\(([^)]+)\)/g);
       let extractedText = '';
-      
+
       if (textMatches) {
         extractedText = textMatches
           .map(match => match.slice(1, -1)) // Remove parentheses
@@ -112,7 +128,7 @@ export class PDFService {
           .replace(/\s+/g, ' ')
           .trim();
       }
-      
+
       // If no text found, try alternative patterns
       if (!extractedText || extractedText.length < 20) {
         const streamMatches = pdfString.match(/stream\s*(.*?)\s*endstream/gs);
@@ -123,15 +139,15 @@ export class PDFService {
             .replace(/[^\x20-\x7E\s]/g, ' ') // Keep only printable chars
             .replace(/\s+/g, ' ')
             .trim();
-          
+
           if (streamText.length > extractedText.length) {
             extractedText = streamText;
           }
         }
       }
-      
+
       return extractedText.length > 20 ? extractedText : '';
-      
+
     } catch (error) {
       console.error('Fallback PDF extraction failed:', error);
       return '';
@@ -146,7 +162,7 @@ export class PDFService {
     recommendations?: string;
   } {
     const sections: { [key: string]: string } = {};
-    
+
     // Common clinical document section headers
     const sectionPatterns = {
       assessment: new RegExp("(?:clinical\\s+assessment|initial\\s+assessment|assessment\\s+summary|psychological\\s+assessment):(.*?)(?=\\n[A-Z][A-Z\\s]*:|$)", "gis"),
@@ -177,7 +193,7 @@ export class PDFService {
     ];
 
     const lowerText = text.toLowerCase();
-    
+
     for (const docType of documentTypes) {
       if (docType.patterns.some(pattern => lowerText.includes(pattern))) {
         return docType.type;
