@@ -244,23 +244,26 @@ export default function Calendar() {
                               <Button 
                                 size="sm" 
                                 variant="outline"
+                                className="text-xs px-2"
                                 data-testid={`join-session-${session.id}`}
                               >
-                                <i className="fas fa-video text-xs"></i>
+                                Join
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="outline"
+                                className="text-xs px-2"
                                 data-testid={`edit-session-${session.id}`}
                               >
-                                <i className="fas fa-edit text-xs"></i>
+                                Edit
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="outline"
+                                className="text-xs px-2"
                                 data-testid={`prep-session-${session.id}`}
                               >
-                                <i className="fas fa-clipboard-list text-xs"></i>
+                                Prep
                               </Button>
                             </div>
                           </div>
