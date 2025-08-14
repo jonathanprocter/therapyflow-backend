@@ -47,7 +47,7 @@ function useDeepHealth() {
   const [loading, setLoading] = React.useState(false);
   const [data, setData] = React.useState<any>(null);
   const [error, setError] = React.useState<string | null>(null);
-  
+
   const fetchDeep = React.useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -63,7 +63,7 @@ function useDeepHealth() {
       setOpen(true);
     }
   }, []);
-  
+
   return { open, setOpen, loading, data, error, fetchDeep };
 }
 
@@ -115,7 +115,7 @@ function Header() {
           </div>
         </div>
       </header>
-      
+
       {/* Deep health popover */}
       {deep.open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -161,9 +161,9 @@ function Header() {
 
 function Sidebar() {
   const [location] = useLocation();
-  
+
   const isActive = (path: string) => location === path;
-  
+
   return (
     <aside className="w-64 border-r bg-muted/30 p-4">
       <div className="space-y-6">
@@ -280,9 +280,13 @@ function Sidebar() {
   );
 }
 
+// This is the main App component that sets up the routing and provides the QueryClientProvider
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-background">
+    <QueryClientProvider client={queryClient}>
       <Header />
       <div className="flex">
         <Sidebar />
@@ -358,7 +362,7 @@ export default function App() {
                     </Link>
                   </div>
                 </div>
-                
+
                 <div className="text-center">
                   <Link href="/dashboard" className="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors" data-testid="get-started">
                     Get Started with Dashboard →
@@ -375,6 +379,7 @@ export default function App() {
           </Switch>
         </main>
       </div>
-    </div>
+      <Toaster />
+    </QueryClientProvider>
   );
 }
