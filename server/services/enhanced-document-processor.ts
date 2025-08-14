@@ -10,12 +10,20 @@
  * - Multi-stage validation and confidence scoring
  */
 
-// Conditional import for pdf-parse to handle module loading issues
-let pdf: any = null;
+// Defensive pdf-parse loading with global availability check
 try {
-  pdf = require('pdf-parse');
-} catch (error) {
-  console.warn('pdf-parse not available, using fallback PDF extraction');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const pdfParse = require('pdf-parse') as ((data: Buffer) => Promise<any>);
+  (globalThis as any).__PDF_PARSE__ = pdfParse;
+  console.log('✅ pdf-parse loaded successfully');
+} catch (e) {
+  (globalThis as any).__PDF_PARSE__ = null;
+  console.warn('⚠️ pdf-parse not available, will use fallback extraction:', (e as Error)?.message || e);
+}
+
+// Helper to check pdf-parse availability
+function hasPdfParse(): boolean {
+  return typeof (globalThis as any).__PDF_PARSE__ === 'function';
 }
 import mammoth from 'mammoth';
 import { stripHtml } from 'string-strip-html';
@@ -111,16 +119,14 @@ export class EnhancedDocumentProcessor {
       const textQuality = this.assessTextQuality(cleanedText);
       console.log(`📊 Text quality assessment: ${textQuality.score}/100 (${textQuality.issues.join(', ') || 'no issues'})`);
       
-      if (textQuality.score < 30) {
-        console.log('⚠️ Text quality too low for processing, attempting recovery...');
-        // Try alternative extraction method
-        const alternativeExtraction = await this.extractTextRobustly(file, fileName);
-        if (alternativeExtraction.quality > extractionResult.quality) {
-          extractionResult = alternativeExtraction;
-          const newCleanedText = this.preprocessText(extractionResult.text);
-          const newTextQuality = this.assessTextQuality(newCleanedText);
-          console.log(`🔄 Alternative extraction quality: ${newTextQuality.score}/100`);
-        }
+      if (textQuality.score < 15) {
+        console.log('❌ Text extraction completely failed - document appears corrupted');
+        throw new Error(`Document processing failed: Unable to extract readable text from this document. This typically happens with:\n• Password-protected or encrypted PDFs\n• Scanned images without OCR text\n• Corrupted or malformed files\n• Documents with non-standard encoding\n\nPlease try:\n• Saving as a text file (.txt) instead\n• Using a different document format\n• Ensuring the document contains selectable text`);
+      }
+      
+      if (textQuality.score < 50) {
+        console.log('⚠️ Low text quality detected, will require manual review');
+        // Continue processing but flag for manual review
       }
       
       // Stage 3: Multi-Pass AI Analysis
@@ -323,93 +329,214 @@ export class EnhancedDocumentProcessor {
   }> {
     console.log('🔍 Attempting robust PDF extraction...');
     
-    try {
-      // Primary method: pdf-parse (if available)
-      if (pdf) {
-        const data = await pdf(file, {
-          // Optimize for clinical documents
-          normalizeWhitespace: true,
-          disableCombineTextItems: false,
-        });
-      
-      if (data.text && data.text.length > 50) {
-        console.log('✅ PDF extraction successful via pdf-parse');
-        return {
-          text: data.text,
-          quality: 85,
-          method: 'pdf-parse',
-          metadata: {
-            pages: data.numpages,
-            info: data.info
-          }
-        };
-      }
-      } else {
-        console.log('📄 pdf-parse not available, using alternative extraction');
-      }
-    } catch (error) {
-      console.warn('⚠️ pdf-parse failed, trying alternatives:', error);
-    }
-
-    // Fallback: Try to extract as raw text with better encoding handling
-    try {
-      // Try different encodings
-      const encodings = ['latin1', 'utf8', 'ascii'];
-      
-      for (const encoding of encodings) {
-        try {
-          const rawText = file.toString(encoding as BufferEncoding);
-          const extractedText = this.extractTextFromPDFBytes(rawText);
-          
-          if (extractedText && extractedText.length > 20) {
-            console.log(`✅ PDF extraction via raw byte parsing (${encoding})`);
-            return {
-              text: this.cleanTextForDatabase(extractedText),
-              quality: 60,
-              method: `raw_bytes_${encoding}`
-            };
-          }
-        } catch (encodingError) {
-          console.warn(`⚠️ Encoding ${encoding} failed:`, encodingError);
+    // Primary method: pdf-parse (if available)
+    if (hasPdfParse()) {
+      try {
+        const data = await (globalThis as any).__PDF_PARSE__(file);
+        const cleaned = this.postProcessText(data.text || '');
+        if (this.isLikelyRealText(cleaned)) {
+          console.log('✅ PDF extraction successful via pdf-parse');
+          return {
+            text: cleaned,
+            quality: 90,
+            method: 'pdf-parse',
+            metadata: {
+              pages: data.numpages,
+              info: data.info
+            }
+          };
         }
+        console.log('⚠️ pdf-parse returned low-quality text, falling back');
+      } catch (error) {
+        console.warn('⚠️ pdf-parse failed, trying fallback:', error);
       }
-    } catch (error) {
-      console.warn('⚠️ Raw byte extraction failed:', error);
+    } else {
+      console.log('📄 pdf-parse not available, using fallback extraction');
     }
 
-    // Final fallback: OCR-like text detection
-    const ocrText = this.performBasicOCRFallback(file);
+    // Robust fallback extraction
+    console.log('🔍 Using robust fallback extraction...');
+    const fallbackText = this.fallbackExtract(file);
+    
+    if (fallbackText && this.isLikelyRealText(fallbackText)) {
+      console.log('✅ Fallback extraction successful');
+      return {
+        text: fallbackText,
+        quality: 65,
+        method: 'fallback_robust'
+      };
+    }
+
+    console.log('❌ All extraction methods failed');
     return {
-      text: ocrText || 'PDF text extraction failed. Please save as TXT for optimal processing.',
-      quality: ocrText ? 40 : 10,
-      method: 'ocr_fallback'
+      text: '',
+      quality: 0,
+      method: 'failed'
     };
   }
 
   /**
-   * Extract text from PDF bytes using patterns
+   * Robust fallback PDF text extraction
    */
-  extractTextFromPDFBytes(rawText: string): string {
-    const textPatterns = [
-      /BT\s*.*?ET/g,  // Text objects
-      /\(([^)]+)\)/g, // Parenthetical text
-      /\[([^\]]+)\]/g, // Bracketed text
-    ];
-    
-    let extractedText = '';
-    
-    for (const pattern of textPatterns) {
-      const matches = rawText.match(pattern);
-      if (matches) {
-        extractedText += matches.join(' ') + ' ';
-      }
+  fallbackExtract(buf: Buffer): string {
+    // 1) Quick try: sniff plain text blocks
+    let text = this.tryCommonDecodes(buf);
+    if (text && this.isLikelyRealText(text)) {
+      return this.postProcessText(text);
     }
-    
-    // Clean and decode
-    return extractedText
-      .replace(/[^\x20-\x7E\n\r\t]/g, ' ') // Remove non-printable chars
-      .replace(/\s+/g, ' ')
-      .trim();
+
+    // 2) Heuristic strip: remove typical PDF control regions
+    const raw = buf.toString('binary'); // keep bytes as-is for regex
+    let stripped = raw
+      // Remove xref/trailer sections
+      .replace(/xref[\s\S]*?trailer[\s\S]*?startxref[\s\S]*?%%EOF/gm, ' ')
+      // Remove object headers/footers
+      .replace(/\d+\s+\d+\s+obj[\s\S]*?endobj/gm, ' ')
+      // Remove stream blocks that look non-text (no obvious printable density)
+      .replace(/stream[\r\n]+([\s\S]*?)endstream/gm, (m, p1) => {
+        const preview = this.bufferPrintableRatio(Buffer.from(p1, 'binary'));
+        return preview > 0.6 ? p1 : ' ';
+      });
+
+    // 3) Now convert binary-ish to UTF-8 best effort
+    text = this.toUtf8BestEffort(Buffer.from(stripped, 'binary'));
+
+    // 4) Drop PDF operators and metadata tokens
+    text = this.removePdfOperators(text);
+
+    // 5) Normalize whitespace and remove low-value lines
+    text = this.postProcessText(text);
+
+    // 6) Bailout rule: if it still looks like junk, return empty string
+    if (!this.isLikelyRealText(text)) return '';
+    return text;
+  }
+
+  /**
+   * Try common text decodings
+   */
+  private tryCommonDecodes(buf: Buffer): string | null {
+    // Try UTF-8 directly
+    const utf8 = this.toUtf8BestEffort(buf);
+    if (this.isLikelyRealText(utf8)) return utf8;
+
+    // Some PDFs embed text in ASCII or Latin-1
+    const latin1 = buf.toString('latin1');
+    if (this.isLikelyRealText(latin1)) return latin1;
+
+    // Heuristic: extract between parentheses for simple text objects (Tj/TJ)
+    const binary = buf.toString('binary');
+    const tjText = (binary.match(/\(([^)]*(?:\\.[^)]*)*)\)\s*(Tj|TJ)/gm) || [])
+      .map(m => {
+        const inner = m.replace(/\)\s*(Tj|TJ)$/, '').replace(/^\(/, '');
+        return this.decodePdfEscapes(inner);
+      })
+      .join('\n');
+    if (this.isLikelyRealText(tjText)) return tjText;
+
+    return null;
+  }
+
+  /**
+   * Decode PDF string escapes
+   */
+  private decodePdfEscapes(s: string): string {
+    // Handle escaped parens, backslashes, octal escapes
+    return s
+      .replace(/\\\)/g, ')')
+      .replace(/\\\(/g, '(')
+      .replace(/\\\\/g, '\\')
+      .replace(/\\([0-7]{1,3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)));
+  }
+
+  /**
+   * Calculate ratio of printable characters in buffer
+   */
+  private bufferPrintableRatio(b: Buffer): number {
+    const str = b.toString('latin1');
+    let printable = 0;
+    for (let i = 0; i < str.length; i++) {
+      const c = str.charCodeAt(i);
+      if (c >= 32 && c <= 126) printable++; // Basic ASCII printable range
+    }
+    return printable / Math.max(1, str.length);
+  }
+
+  /**
+   * Convert buffer to UTF-8 with best effort
+   */
+  private toUtf8BestEffort(buf: Buffer): string {
+    try {
+      return buf.toString('utf8');
+    } catch {
+      // If UTF-8 fails, try latin1 and filter
+      return buf.toString('latin1').replace(/[\x00-\x1F\x7F-\x9F]/g, ' ');
+    }
+  }
+
+  /**
+   * Remove PDF operators and metadata tokens
+   */
+  private removePdfOperators(text: string): string {
+    return text
+      // Remove PDF operators
+      .replace(/\b(BT|ET|Tj|TJ|Td|TD|Tm|T\*|Tc|Tw|Tz|TL|Tf|Tr|Ts)\b/g, ' ')
+      // Remove numbers that are likely coordinates/measurements
+      .replace(/\b\d+\.?\d*\s+\d+\.?\d*\s+(m|l|c|v|y|h|re|f|F|f\*|B|B\*|b|b\*|S|s|W|W\*)\b/g, ' ')
+      // Remove font and resource references
+      .replace(/\/F\d+/g, ' ')
+      .replace(/\/[A-Z][A-Za-z0-9]*/g, ' ')
+      // Remove dictionary-like tokens < >
+      .replace(/<[^>]*>/g, ' ')
+      // Remove array-like tokens [ ]
+      .replace(/\[[^\]]*\]/g, ' ');
+  }
+
+  /**
+   * Enhanced text post-processing
+   */
+  private postProcessText(t: string): string {
+    // Collapse repeated whitespace
+    t = t.replace(/[ \t]+/g, ' ');
+    // Normalize line breaks
+    t = t.replace(/\r\n|\r/g, '\n');
+    // Remove lines that are mostly non-word characters or too short
+    const lines = t.split('\n').map(s => s.trim());
+    const filtered = lines.filter(line => {
+      if (!line) return false;
+      const wordish = (line.match(/[A-Za-z0-9]/g) || []).length;
+      const ratio = wordish / Math.max(1, line.length);
+      // keep lines that have at least some word chars and aren't mostly symbols
+      return wordish >= 3 && ratio >= 0.3;
+    });
+    // Deduplicate adjacent identical lines (common in PDFs)
+    const dedup: string[] = [];
+    for (const line of filtered) {
+      if (dedup.length === 0 || dedup[dedup.length - 1] !== line) dedup.push(line);
+    }
+    return dedup.join('\n').trim();
+  }
+
+  /**
+   * Check if text appears to be real content vs metadata
+   */
+  private isLikelyRealText(t: string): boolean {
+    if (!t) return false;
+    // Too many control chars?
+    const ctrl = (t.match(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g) || []).length;
+    if (ctrl > t.length * 0.02) return false;
+
+    // Reasonable word density
+    const words = t.split(/\s+/).filter(w => w.length > 2);
+    if (words.length < 5) return false;
+
+    // Check for excessive PDF metadata terms
+    const lowercaseText = t.toLowerCase();
+    const pdfTerms = ['obj', 'endobj', 'stream', 'endstream', 'xref', 'trailer', 'font', 'colorspace'];
+    const metadataTerms = pdfTerms.filter(term => lowercaseText.includes(term)).length;
+    if (metadataTerms > 5) return false;
+
+    return true;
   }
 
   /**
@@ -1671,15 +1798,7 @@ Return the same JSON structure but with enhanced clinical content and higher con
     }
   }
 
-  /**
-   * Clean extracted text for better processing
-   */
-  cleanExtractedText(text: string): string {
-    return text
-      .replace(/[^\w\s.,!?;:()\-'"]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
+
 
   /**
    * Determine if manual review is needed
