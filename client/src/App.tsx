@@ -41,7 +41,7 @@ export default function App() {
               <Route path="/smart" component={SmartUpload} />
               <Route path="/documents" component={DocumentsUpload} />
               <Route path="/results" component={CareNotesResults} />
-              <Route path="/client" component={ClientDetail} />
+              <Route path="/clients/:clientId" component={ClientDetail} />
               <Route path="/" component={HomePage} />
               <Route>
                 <div className="p-8 text-center">
