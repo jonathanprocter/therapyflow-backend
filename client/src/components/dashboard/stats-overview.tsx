@@ -10,8 +10,8 @@ const statsConfig = [
     icon: "fas fa-users",
     iconBg: "bg-primary/10",
     iconColor: "text-primary",
-    suffix: "",
-    suffixColor: "text-secondary",
+    suffix: "Currently enrolled in therapy",
+    suffixColor: "text-gray-500",
     suffixIcon: ""
   },
   {
@@ -20,8 +20,8 @@ const statsConfig = [
     icon: "fas fa-calendar-alt",
     iconBg: "bg-secondary/10",
     iconColor: "text-secondary",
-    suffix: "",
-    suffixColor: "text-secondary",
+    suffix: "Scheduled appointments",
+    suffixColor: "text-gray-500",
     suffixIcon: ""
   },
   {
@@ -30,8 +30,8 @@ const statsConfig = [
     icon: "fas fa-notes-medical",
     iconBg: "bg-accent/10",
     iconColor: "text-accent",
-    suffix: "",
-    suffixColor: "text-accent",
+    suffix: "Documented sessions",
+    suffixColor: "text-gray-500",
     suffixIcon: ""
   },
   {
@@ -40,8 +40,8 @@ const statsConfig = [
     icon: "fas fa-robot",
     iconBg: "bg-primary/10",
     iconColor: "text-primary",
-    suffix: "",
-    suffixColor: "text-primary",
+    suffix: "New AI-generated insights",
+    suffixColor: "text-gray-500",
     suffixIcon: ""
   }
 ];
@@ -87,19 +87,18 @@ export default function StatsOverview() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600" data-testid={`stat-label-${config.key}`}>
+                <p className="text-sm text-gray-600 font-medium" data-testid={`stat-label-${config.key}`}>
                   {config.title}
                 </p>
-                <p className="text-3xl font-bold text-gray-900" data-testid={`stat-value-${config.key}`}>
-                  {stats[config.key]}
-                </p>
-                <p className={`text-sm mt-1 ${config.suffixColor}`} data-testid={`stat-suffix-${config.key}`}>
+                <p className={`text-sm mt-2 ${config.suffixColor}`} data-testid={`stat-suffix-${config.key}`}>
                   <i className={`${config.suffixIcon} mr-1`}></i>
                   {config.suffix}
                 </p>
               </div>
-              <div className={`w-12 h-12 ${config.iconBg} rounded-lg flex items-center justify-center`}>
-                <i className={`${config.icon} ${config.iconColor}`}></i>
+              <div className={`w-16 h-16 ${config.iconBg} rounded-lg flex items-center justify-center`}>
+                <span className={`text-2xl font-bold ${config.iconColor}`} data-testid={`stat-box-value-${config.key}`}>
+                  {stats[config.key]}
+                </span>
               </div>
             </div>
           </CardContent>
