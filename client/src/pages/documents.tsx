@@ -2,7 +2,7 @@ import { DocumentUploader } from '@/components/DocumentUploader';
 
 export default function Documents() {
   return (
-    <div className="space-y-6" data-testid="documents-page">
+    <div className="space-y-6 p-6" style={{ backgroundColor: '#F2F3F1', minHeight: '100vh' }} data-testid="documents-page">
       <div 
         className="pb-4"
         style={{ borderBottom: '1px solid rgba(115, 138, 110, 0.2)' }}

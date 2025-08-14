@@ -205,13 +205,13 @@ export function DocumentUploader({
 
   return (
     <div className="space-y-6" data-testid="document-uploader">
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+            <Upload className="h-5 w-5" style={{ color: '#88A5BC' }} />
             Progress Note Upload & Processing
           </CardTitle>
-          <CardDescription>
+          <CardDescription style={{ color: '#738A6E' }}>
             Upload progress notes (TXT recommended, PDF, DOCX, DOC, RTF supported) for automatic client matching and session assignment
           </CardDescription>
         </CardHeader>
@@ -220,12 +220,12 @@ export function DocumentUploader({
             {...getRootProps()}
             className={`
               border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-              ${isDragActive 
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/50' 
-                : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
-              }
               ${uploading ? 'pointer-events-none opacity-50' : ''}
             `}
+            style={{
+              borderColor: isDragActive ? '#88A5BC' : 'rgba(115, 138, 110, 0.3)',
+              backgroundColor: isDragActive ? 'rgba(136, 165, 188, 0.05)' : 'transparent'
+            }}
             data-testid="upload-dropzone"
           >
             <input {...getInputProps()} />
@@ -242,7 +242,13 @@ export function DocumentUploader({
                 <p className="mb-4" style={{ color: '#738A6E' }}>
                   TXT (recommended), PDF, DOCX, DOC, RTF supported
                 </p>
-                <Button variant="outline" disabled={uploading} data-testid="button-browse">
+                <Button 
+                  variant="outline" 
+                  disabled={uploading} 
+                  data-testid="button-browse"
+                  style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
+                  className="hover:bg-opacity-10"
+                >
                   Browse Files
                 </Button>
               </div>
@@ -258,7 +264,7 @@ export function DocumentUploader({
           {uploading && (
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Processing documents...</span>
+                <span className="text-sm font-medium" style={{ color: '#344C3D' }}>Processing documents...</span>
                 <span className="text-sm" style={{ color: '#738A6E' }}>{uploadProgress}%</span>
               </div>
               <Progress value={uploadProgress} className="w-full" />
@@ -268,10 +274,10 @@ export function DocumentUploader({
       </Card>
 
       {results.length > 0 && (
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
-            <CardTitle>Processing Results</CardTitle>
-            <CardDescription>
+            <CardTitle style={{ color: '#344C3D' }}>Processing Results</CardTitle>
+            <CardDescription style={{ color: '#738A6E' }}>
               {results.filter(r => r.success).length} of {results.length} documents processed successfully
             </CardDescription>
           </CardHeader>
@@ -280,6 +286,7 @@ export function DocumentUploader({
               <div 
                 key={index} 
                 className="border rounded-lg p-4 space-y-3"
+                style={{ borderColor: 'rgba(115, 138, 110, 0.2)' }}
                 data-testid={`result-${index}`}
               >
                 <div className="flex items-center justify-between">
@@ -289,7 +296,7 @@ export function DocumentUploader({
                     ) : (
                       <X className="h-5 w-5" style={{ color: '#738A6E' }} />
                     )}
-                    <span className="font-medium">
+                    <span className="font-medium" style={{ color: '#344C3D' }}>
                       {result.fileName || `Document ${index + 1}`}
                     </span>
                   </div>
@@ -307,7 +314,11 @@ export function DocumentUploader({
                       </div>
                       
                       {result.needsManualReview && (
-                        <Badge variant="secondary" className="gap-1">
+                        <Badge 
+                          variant="secondary" 
+                          className="gap-1"
+                          style={{ backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' }}
+                        >
                           <AlertCircle className="h-3 w-3" />
                           Manual Review
                         </Badge>
@@ -317,42 +328,45 @@ export function DocumentUploader({
                 </div>
 
                 {result.success ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm" style={{ color: '#738A6E' }}>
                     <div>
-                      <strong>Client:</strong> {result.extractedData.clientName || 'Unknown'}
+                      <strong style={{ color: '#344C3D' }}>Client:</strong> {result.extractedData.clientName || 'Unknown'}
                     </div>
                     <div>
-                      <strong>Session Date:</strong> {
+                      <strong style={{ color: '#344C3D' }}>Session Date:</strong> {
                         result.extractedData.sessionDate 
                           ? new Date(result.extractedData.sessionDate).toLocaleDateString()
                           : 'Not found'
                       }
                     </div>
                     <div>
-                      <strong>Session Type:</strong> {result.extractedData.sessionType || 'Individual'}
+                      <strong style={{ color: '#344C3D' }}>Session Type:</strong> {result.extractedData.sessionType || 'Individual'}
                     </div>
                     <div>
-                      <strong>Risk Level:</strong> 
+                      <strong style={{ color: '#344C3D' }}>Risk Level:</strong> 
                       <Badge 
-                        variant={getRiskLevelColor(result.extractedData.riskLevel)} 
                         className="ml-2"
+                        style={{ 
+                          backgroundColor: '#8EA58C', 
+                          color: 'white'
+                        }}
                       >
                         {result.extractedData.riskLevel || 'Low'}
                       </Badge>
                     </div>
                   </div>
                 ) : (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
+                  <Alert className="border" style={{ borderColor: 'rgba(115, 138, 110, 0.3)', backgroundColor: 'rgba(115, 138, 110, 0.05)' }}>
+                    <AlertCircle className="h-4 w-4" style={{ color: '#738A6E' }} />
+                    <AlertDescription style={{ color: '#738A6E' }}>
                       {result.error || 'Processing failed'}
                     </AlertDescription>
                   </Alert>
                 )}
 
                 {result.processingNotes && (
-                  <div className="text-sm text-gray-600 bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                    <strong>Processing Notes:</strong> {result.processingNotes}
+                  <div className="text-sm p-3 rounded" style={{ color: '#738A6E', backgroundColor: 'rgba(115, 138, 110, 0.05)' }}>
+                    <strong style={{ color: '#344C3D' }}>Processing Notes:</strong> {result.processingNotes}
                   </div>
                 )}
               </div>
