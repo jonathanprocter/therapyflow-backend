@@ -59,7 +59,7 @@ export default function SmartUpload() {
         formData.append('files', files[i]);
       }
 
-      const uploadResponse = await fetch('/api/documents/upload', {
+      const uploadResponse = await fetch('/api/documents/smart-upload', {
         method: 'POST',
         body: formData
       });

@@ -23,16 +23,17 @@ documentsRouter.post("/simple-upload", (req, res) => {
   res.json({ message: "Simple upload reached", contentType: req.get('Content-Type') });
 });
 
-documentsRouter.post("/upload", (req, res) => {
-  // Create a new upload instance for this route
-  const dynamicUpload = multer({ 
+// Smart upload endpoint - separate from the legacy upload
+documentsRouter.post("/smart-upload", (req, res) => {
+  const uploadHandler = multer({ 
     storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
-  }).array('files');
+    limits: { fileSize: 50 * 1024 * 1024 }
+  });
 
-  dynamicUpload(req, res, async (err) => {
+  // Use any() to accept any field names
+  uploadHandler.any()(req, res, async (err) => {
     if (err) {
-      console.error("Multer error:", err);
+      console.error("Multer error details:", err);
       return res.status(500).json({ error: `Upload failed: ${err.message}` });
     }
 
@@ -46,13 +47,14 @@ documentsRouter.post("/upload", (req, res) => {
         return res.status(400).json({ error: "clientId and appointmentDate required" });
       }
 
+      // Handle files from any field
       const files = (req.files as Express.Multer.File[]) || [];
       const uploaded = [];
       
       for (const f of files) {
         // For memory storage, the buffer contains the file data
         const meta = { 
-          buffer: f.buffer, // Store the file buffer
+          buffer: Array.from(f.buffer), // Convert buffer to array for JSON storage
           originalName: f.originalname, 
           size: f.size 
         };
