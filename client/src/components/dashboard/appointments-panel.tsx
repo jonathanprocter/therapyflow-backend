@@ -52,11 +52,11 @@ export default function AppointmentsPanel() {
   }
 
   return (
-    <Card className="xl:col-span-2" data-testid="appointments-panel">
+    <Card className="xl:col-span-2 bg-white" data-testid="appointments-panel">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <h3 className="text-lg font-semibold text-gray-900" data-testid="appointments-title">
+            <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }} data-testid="appointments-title">
               {selectedDate.toDateString() === new Date().toDateString() 
                 ? "Today's Schedule" 
                 : `Schedule for ${formatInTimeZone(selectedDate, 'America/New_York', 'MMM dd, yyyy')}`
@@ -86,7 +86,10 @@ export default function AppointmentsPanel() {
             </Popover>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+            <span 
+              className="inline-flex items-center px-2 py-1 text-xs rounded-full"
+              style={{ backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' }}
+            >
               <i className="fas fa-sync mr-1"></i>
               Google Calendar Synced
             </span>
@@ -101,8 +104,8 @@ export default function AppointmentsPanel() {
 
       <CardContent className="space-y-4">
         {!sessions || sessions.length === 0 ? (
-          <div className="text-center py-8 text-gray-500" data-testid="no-appointments">
-            <i className="fas fa-calendar-day text-4xl mb-4 opacity-50"></i>
+          <div className="text-center py-8" style={{ color: '#738A6E' }} data-testid="no-appointments">
+            <i className="fas fa-calendar-day text-4xl mb-4 opacity-50" style={{ color: '#88A5BC' }}></i>
             <p>
               {selectedDate.toDateString() === new Date().toDateString() 
                 ? "No appointments scheduled for today"

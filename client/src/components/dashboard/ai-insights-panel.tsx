@@ -80,7 +80,7 @@ export default function AIInsightsPanel() {
   }
 
   return (
-    <Card data-testid="ai-insights-panel">
+    <Card className="bg-white" data-testid="ai-insights-panel">
       <CardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold flex items-center gap-2" style={{color: '#344C3D'}} data-testid="insights-title">
@@ -93,8 +93,8 @@ export default function AIInsightsPanel() {
 
       <CardContent className="space-y-4">
         {!insights || insights.length === 0 ? (
-          <div className="text-center py-8 text-gray-500" data-testid="no-insights">
-            <i className="fas fa-robot text-4xl mb-4 opacity-50"></i>
+          <div className="text-center py-8" style={{ color: '#738A6E' }} data-testid="no-insights">
+            <i className="fas fa-robot text-4xl mb-4 opacity-50" style={{ color: '#88A5BC' }}></i>
             <p>No new insights available</p>
           </div>
         ) : (

@@ -18,10 +18,10 @@ const journeyMilestones: Array<{
 
 export default function TherapeuticJourney() {
   return (
-    <Card data-testid="therapeutic-journey">
+    <Card className="bg-white" data-testid="therapeutic-journey">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900" data-testid="journey-title">
+          <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }} data-testid="journey-title">
             Therapeutic Journey Overview
           </h3>
           <div className="flex items-center space-x-2">
@@ -44,11 +44,14 @@ export default function TherapeuticJourney() {
       <CardContent>
         <div className="relative" data-testid="timeline-container">
           {/* Timeline line */}
-          <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+          <div 
+            className="absolute left-8 top-0 bottom-0 w-0.5"
+            style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+          ></div>
 
           {journeyMilestones.length === 0 ? (
-            <div className="text-center py-12 text-gray-500" data-testid="no-journey-data">
-              <i className="fas fa-route text-4xl mb-4 opacity-50"></i>
+            <div className="text-center py-12" style={{ color: '#738A6E' }} data-testid="no-journey-data">
+              <i className="fas fa-route text-4xl mb-4 opacity-50" style={{ color: '#88A5BC' }}></i>
               <p>No therapeutic journey data available</p>
               <p className="text-sm mt-2">Journey milestones will appear here as treatment progresses</p>
             </div>

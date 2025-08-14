@@ -6,10 +6,10 @@ const workflowTasks: any[] = [];
 
 export default function ClinicalWorkflows() {
   return (
-    <Card data-testid="clinical-workflows">
+    <Card className="bg-white" data-testid="clinical-workflows">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900" data-testid="workflows-title">
+          <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }} data-testid="workflows-title">
             Clinical Workflows
           </h3>
           <Button variant="outline" size="sm" data-testid="configure-workflows">
@@ -21,39 +21,58 @@ export default function ClinicalWorkflows() {
 
       <CardContent className="space-y-4">
         {/* File Upload Section */}
-        <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg transition-colors hover:border-primary/50">
+        <div 
+          className="p-4 border-2 border-dashed rounded-lg transition-colors"
+          style={{ 
+            borderColor: 'rgba(115, 138, 110, 0.3)',
+            '&:hover': { borderColor: '#88A5BC' }
+          }}
+        >
           <div className="text-center">
-            <i className="fas fa-file-pdf text-4xl text-gray-400 mb-3"></i>
-            <p className="text-sm text-gray-600 mb-2">Upload Clinical Documents</p>
+            <i className="fas fa-file-pdf text-4xl mb-3" style={{ color: '#88A5BC' }}></i>
+            <p className="text-sm mb-2" style={{ color: '#738A6E' }}>Upload Clinical Documents</p>
             <Button 
               size="sm"
+              className="hover:bg-opacity-90"
+              style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
               data-testid="upload-documents-button"
             >
               <i className="fas fa-upload mr-2"></i>
               Choose Files
             </Button>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs mt-2" style={{ color: '#738A6E' }}>
               PDF files will be processed with AI text extraction
             </p>
           </div>
         </div>
 
         {/* Quick AI Workflow */}
-        <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div 
+          className="p-4 rounded-lg border"
+          style={{ 
+            background: 'linear-gradient(to right, rgba(136, 165, 188, 0.05), rgba(142, 165, 140, 0.05))',
+            borderColor: 'rgba(136, 165, 188, 0.2)'
+          }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
-                <i className="fas fa-brain text-blue-600 dark:text-blue-400 text-sm"></i>
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(136, 165, 188, 0.1)' }}
+              >
+                <i className="fas fa-brain text-sm" style={{ color: '#88A5BC' }}></i>
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-gray-100">AI-Assisted Progress Notes</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <h4 className="font-medium" style={{ color: '#344C3D' }}>AI-Assisted Progress Notes</h4>
+                <p className="text-sm" style={{ color: '#738A6E' }}>
                   Create notes with real-time AI suggestions
                 </p>
               </div>
             </div>
             <Button 
               size="sm"
+              className="hover:bg-opacity-90"
+              style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
               onClick={() => window.location.href = '/interactive-notes'}
               data-testid="ai-workflow-button"
             >
@@ -65,8 +84,8 @@ export default function ClinicalWorkflows() {
 
         {/* Workflow Tasks */}
         {workflowTasks.length === 0 ? (
-          <div className="text-center py-6 text-gray-500" data-testid="no-workflows">
-            <i className="fas fa-tasks text-3xl mb-3 opacity-50"></i>
+          <div className="text-center py-6" style={{ color: '#738A6E' }} data-testid="no-workflows">
+            <i className="fas fa-tasks text-3xl mb-3 opacity-50" style={{ color: '#88A5BC' }}></i>
             <p className="text-sm">No additional workflows configured</p>
             <Button variant="outline" size="sm" className="mt-3" data-testid="setup-workflows">
               <i className="fas fa-plus mr-2"></i>

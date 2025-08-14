@@ -47,13 +47,17 @@ export default function RecentNotes() {
   }
 
   return (
-    <Card data-testid="recent-notes">
+    <Card className="bg-white" data-testid="recent-notes">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900" data-testid="notes-title">
+          <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }} data-testid="notes-title">
             Recent Progress Notes
           </h3>
-          <Button data-testid="new-note-button">
+          <Button 
+            className="hover:bg-opacity-90"
+            style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+            data-testid="new-note-button"
+          >
             <i className="fas fa-plus mr-2"></i>
             New Note
           </Button>
@@ -62,8 +66,8 @@ export default function RecentNotes() {
 
       <CardContent className="space-y-4">
         {!notes || notes.length === 0 ? (
-          <div className="text-center py-8 text-gray-500" data-testid="no-notes">
-            <i className="fas fa-notes-medical text-4xl mb-4 opacity-50"></i>
+          <div className="text-center py-8" style={{ color: '#738A6E' }} data-testid="no-notes">
+            <i className="fas fa-notes-medical text-4xl mb-4 opacity-50" style={{ color: '#88A5BC' }}></i>
             <p>No progress notes available</p>
           </div>
         ) : (
@@ -71,20 +75,24 @@ export default function RecentNotes() {
             {notes.map((note) => (
               <div
                 key={note.id}
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                className="p-4 border rounded-lg cursor-pointer transition-colors"
+                style={{ 
+                  borderColor: 'rgba(115, 138, 110, 0.2)',
+                  '&:hover': { backgroundColor: 'rgba(242, 243, 241, 0.5)' }
+                }}
                 data-testid={`note-${note.id}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <h4 className="font-medium text-gray-900" data-testid={`note-client-${note.id}`}>
+                      <h4 className="font-medium" style={{ color: '#344C3D' }} data-testid={`note-client-${note.id}`}>
                         {note.client?.name || "Unknown Client"}
                       </h4>
-                      <span className="text-xs text-gray-500" data-testid={`note-date-${note.id}`}>
+                      <span className="text-xs" style={{ color: '#738A6E' }} data-testid={`note-date-${note.id}`}>
                         {new Date(note.sessionDate).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2" data-testid={`note-content-${note.id}`}>
+                    <p className="text-sm mb-3 line-clamp-2" style={{ color: '#738A6E' }} data-testid={`note-content-${note.id}`}>
                       {note.content && note.content.length > 150 
                         ? `${note.content.substring(0, 150)}...`
                         : note.content || "No content available"
@@ -93,14 +101,15 @@ export default function RecentNotes() {
                       <div className="flex items-center space-x-2" data-testid={`note-tags-${note.id}`}>
                         {note.aiTags.slice(0, 3).map((tag, index) => {
                           const tagColors = [
-                            "bg-blue-100 text-blue-800",
-                            "bg-green-100 text-green-800", 
-                            "bg-purple-100 text-purple-800"
+                            { backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' },
+                            { backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' },
+                            { backgroundColor: 'rgba(115, 138, 110, 0.1)', color: '#738A6E' }
                           ];
                           return (
                             <span 
                               key={tag}
-                              className={`inline-flex items-center px-2 py-1 text-xs rounded ${tagColors[index % tagColors.length]}`}
+                              className="inline-flex items-center px-2 py-1 text-xs rounded"
+                              style={tagColors[index % tagColors.length]}
                             >
                               {tag}
                             </span>
