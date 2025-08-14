@@ -183,7 +183,7 @@ export default function Calendar() {
                       </div>
                     ))}
                   </div>
-                ) : !todaySessions || todaySessions.length === 0 ? (
+                ) : !allSessions || allSessions.length === 0 ? (
                   <div className="text-center py-12" data-testid="no-sessions">
                     <i className="fas fa-calendar-day text-6xl text-gray-300 mb-4"></i>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -202,7 +202,7 @@ export default function Calendar() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {todaySessions.map((session, index) => {
+                    {allSessions.map((session, index) => {
                       const times = formatSessionTime(session.scheduledAt, session.duration);
                       const color = getSessionTypeColor(session.sessionType, index);
                       
@@ -212,8 +212,8 @@ export default function Calendar() {
                           className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                           data-testid={`session-${session.id}`}
                         >
-                          <div className={`flex-shrink-0 w-12 h-12 bg-${color}/10 rounded-lg flex items-center justify-center`}>
-                            <i className={`fas fa-user-circle text-${color}`}></i>
+                          <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i className="fas fa-user-circle text-blue-600"></i>
                           </div>
                           
                           <div className="flex-1">

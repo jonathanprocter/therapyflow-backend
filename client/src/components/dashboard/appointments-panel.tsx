@@ -15,7 +15,8 @@ export default function AppointmentsPanel() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
   const { data: sessions, isLoading } = useQuery<SessionWithClient[]>({
-    queryKey: ["/api/sessions", { date: selectedDate.toISOString().split('T')[0] }],
+    queryKey: ["/api/sessions", selectedDate.toISOString().split('T')[0]],
+    queryFn: () => fetch(`/api/sessions?date=${selectedDate.toISOString().split('T')[0]}`).then(res => res.json()),
   });
 
   if (isLoading) {
