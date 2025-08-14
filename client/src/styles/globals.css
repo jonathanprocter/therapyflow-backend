@@ -146,15 +146,15 @@
 @layer components {
   /* Glass Effect Classes */
   .glass-light {
-    @apply bg-white/70 backdrop-blur-lg;
+    @apply bg-white border border-border;
   }
 
   .glass-medium {
-    @apply bg-white bg-opacity-85 backdrop-blur-md;
+    @apply bg-card border border-border;
   }
 
   .glass-dark {
-    @apply bg-card bg-opacity-70 backdrop-blur-lg;
+    @apply bg-card border border-border;
   }
 
   /* Gradient Text */
@@ -273,8 +273,7 @@
 
   /* Glass Effect */
   .glass-effect {
-    background: rgba(var(--color-surface), 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgb(var(--card));
+    border: 1px solid rgb(var(--border));
   }
 }
