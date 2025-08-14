@@ -99,9 +99,6 @@ export default function TopBar() {
                 'rgba(115, 138, 110, 0.5)'
             }}
           />
-          <span style={{ color: '#738A6E', fontSize: '11px' }}>
-            {version}
-          </span>
         </div>
 
         {/* Notifications Button */}
