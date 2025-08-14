@@ -184,7 +184,7 @@ export class DatabaseStorage implements IStorage {
           sql`${sessions.scheduledAt} <= ${endDate}`
         )
       )
-      .orderBy(desc(sessions.scheduledAt));
+      .orderBy(sessions.scheduledAt);
   }
 
   async getCompletedSessions(therapistId: string, clientId?: string): Promise<Session[]> {
