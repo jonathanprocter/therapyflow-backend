@@ -93,18 +93,18 @@ export default function CalendarSync() {
 
           <div className="space-y-6">
             {/* Connection Status Card */}
-            <Card data-testid="connection-status-card">
+            <Card data-testid="connection-status-card" className="bg-white">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+                  <Calendar className="h-5 w-5" style={{ color: '#88A5BC' }} />
                   Google Calendar Connection
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {isLoading ? (
                   <div className="flex items-center gap-2">
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>Checking connection status...</span>
+                    <RefreshCw className="h-4 w-4 animate-spin" style={{ color: '#88A5BC' }} />
+                    <span style={{ color: '#738A6E' }}>Checking connection status...</span>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
@@ -115,7 +115,7 @@ export default function CalendarSync() {
                         <AlertCircle className="h-5 w-5" style={{ color: '#88A5BC' }} />
                       )}
                       <div>
-                        <p className="font-medium" data-testid="connection-status">
+                        <p className="font-medium" style={{ color: '#344C3D' }} data-testid="connection-status">
                           {syncStatus?.isConnected ? "Connected" : "Not Connected"}
                         </p>
                         <p className="text-sm" style={{ color: '#738A6E' }}>
@@ -133,6 +133,8 @@ export default function CalendarSync() {
                           onClick={handleConnect}
                           disabled={!authData?.authUrl}
                           data-testid="connect-calendar-button"
+                          style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+                          className="hover:bg-opacity-90"
                         >
                           <ExternalLink className="h-4 w-4 mr-2" />
                           Connect Google Calendar
@@ -142,6 +144,8 @@ export default function CalendarSync() {
                           onClick={() => syncMutation.mutate()}
                           disabled={syncInProgress || syncMutation.isPending}
                           data-testid="sync-now-button"
+                          style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+                          className="hover:bg-opacity-90"
                         >
                           {syncInProgress || syncMutation.isPending ? (
                             <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -159,35 +163,35 @@ export default function CalendarSync() {
 
             {/* Sync Statistics */}
             {syncStatus?.isConnected && (
-              <Card data-testid="sync-statistics-card">
+              <Card data-testid="sync-statistics-card" className="bg-white">
                 <CardHeader>
-                  <CardTitle>Sync Statistics</CardTitle>
+                  <CardTitle style={{ color: '#344C3D' }}>Sync Statistics</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600" data-testid="total-appointments">
+                      <div className="text-2xl font-bold" style={{ color: '#88A5BC' }} data-testid="total-appointments">
                         {syncStatus.totalAppointments || 0}
                       </div>
-                      <div className="text-sm text-gray-500">Total Appointments</div>
+                      <div className="text-sm" style={{ color: '#738A6E' }}>Total Appointments</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600" data-testid="active-clients">
+                      <div className="text-2xl font-bold" style={{ color: '#8EA58C' }} data-testid="active-clients">
                         {syncStatus.activeClients || 0}
                       </div>
-                      <div className="text-sm text-gray-500">Active Clients</div>
+                      <div className="text-sm" style={{ color: '#738A6E' }}>Active Clients</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600" data-testid="this-month">
+                      <div className="text-2xl font-bold" style={{ color: '#344C3D' }} data-testid="this-month">
                         {syncStatus.thisMonth || 0}
                       </div>
-                      <div className="text-sm text-gray-500">This Month</div>
+                      <div className="text-sm" style={{ color: '#738A6E' }}>This Month</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-600" data-testid="upcoming-sessions">
+                      <div className="text-2xl font-bold" style={{ color: '#738A6E' }} data-testid="upcoming-sessions">
                         {syncStatus.upcomingSessions || 0}
                       </div>
-                      <div className="text-sm text-gray-500">Upcoming</div>
+                      <div className="text-sm" style={{ color: '#738A6E' }}>Upcoming</div>
                     </div>
                   </div>
                 </CardContent>
@@ -196,51 +200,51 @@ export default function CalendarSync() {
 
             {/* Setup Instructions */}
             {!syncStatus?.isConnected && (
-              <Card data-testid="setup-instructions">
+              <Card data-testid="setup-instructions" className="bg-white">
                 <CardHeader>
-                  <CardTitle>Setup Instructions</CardTitle>
+                  <CardTitle style={{ color: '#344C3D' }}>Setup Instructions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <Badge variant="outline" className="mt-1">1</Badge>
+                      <Badge variant="outline" className="mt-1" style={{ borderColor: '#8EA58C', color: '#8EA58C' }}>1</Badge>
                       <div>
-                        <p className="font-medium">Click Connect Google Calendar</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium" style={{ color: '#344C3D' }}>Click Connect Google Calendar</p>
+                        <p className="text-sm" style={{ color: '#738A6E' }}>
                           You'll be redirected to Google's secure login page
                         </p>
                       </div>
                     </div>
                     
-                    <Separator className="my-2" />
+                    <Separator className="my-2" style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }} />
                     
                     <div className="flex items-start gap-3">
-                      <Badge variant="outline" className="mt-1">2</Badge>
+                      <Badge variant="outline" className="mt-1" style={{ borderColor: '#8EA58C', color: '#8EA58C' }}>2</Badge>
                       <div>
-                        <p className="font-medium">Grant calendar permissions</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium" style={{ color: '#344C3D' }}>Grant calendar permissions</p>
+                        <p className="text-sm" style={{ color: '#738A6E' }}>
                           Allow TherapyFlow to read your calendar events
                         </p>
                       </div>
                     </div>
                     
-                    <Separator className="my-2" />
+                    <Separator className="my-2" style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }} />
                     
                     <div className="flex items-start gap-3">
-                      <Badge variant="outline" className="mt-1">3</Badge>
+                      <Badge variant="outline" className="mt-1" style={{ borderColor: '#8EA58C', color: '#8EA58C' }}>3</Badge>
                       <div>
-                        <p className="font-medium">Automatic sync begins</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium" style={{ color: '#344C3D' }}>Automatic sync begins</p>
+                        <p className="text-sm" style={{ color: '#738A6E' }}>
                           Your appointments will be imported and matched with client records
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>Privacy Notice:</strong> TherapyFlow only reads your calendar events and never modifies or deletes them. 
+                  <Alert className="bg-white border-l-4" style={{ borderLeftColor: '#88A5BC' }}>
+                    <AlertCircle className="h-4 w-4" style={{ color: '#88A5BC' }} />
+                    <AlertDescription style={{ color: '#738A6E' }}>
+                      <strong style={{ color: '#344C3D' }}>Privacy Notice:</strong> TherapyFlow only reads your calendar events and never modifies or deletes them. 
                       Your data remains secure and private.
                     </AlertDescription>
                   </Alert>
@@ -250,37 +254,37 @@ export default function CalendarSync() {
 
             {/* Sync Settings */}
             {syncStatus?.isConnected && (
-              <Card data-testid="sync-settings">
+              <Card data-testid="sync-settings" className="bg-white">
                 <CardHeader>
-                  <CardTitle>Sync Settings</CardTitle>
+                  <CardTitle style={{ color: '#344C3D' }}>Sync Settings</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Auto-sync frequency</p>
-                      <p className="text-sm text-gray-600">How often to check for calendar updates</p>
+                      <p className="font-medium" style={{ color: '#344C3D' }}>Auto-sync frequency</p>
+                      <p className="text-sm" style={{ color: '#738A6E' }}>How often to check for calendar updates</p>
                     </div>
-                    <Badge variant="secondary">Every 4 hours</Badge>
+                    <Badge variant="secondary" style={{ backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' }}>Every 4 hours</Badge>
                   </div>
                   
-                  <Separator />
+                  <Separator style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }} />
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Date range</p>
-                      <p className="text-sm text-gray-600">Historical and future appointment window</p>
+                      <p className="font-medium" style={{ color: '#344C3D' }}>Date range</p>
+                      <p className="text-sm" style={{ color: '#738A6E' }}>Historical and future appointment window</p>
                     </div>
-                    <Badge variant="secondary">2010 - 2030</Badge>
+                    <Badge variant="secondary" style={{ backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' }}>2010 - 2030</Badge>
                   </div>
                   
-                  <Separator />
+                  <Separator style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }} />
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Client matching</p>
-                      <p className="text-sm text-gray-600">Automatically match appointments to client records</p>
+                      <p className="font-medium" style={{ color: '#344C3D' }}>Client matching</p>
+                      <p className="text-sm" style={{ color: '#738A6E' }}>Automatically match appointments to client records</p>
                     </div>
-                    <Badge variant="default">Enabled</Badge>
+                    <Badge variant="default" style={{ backgroundColor: '#8EA58C' }}>Enabled</Badge>
                   </div>
                 </CardContent>
               </Card>
