@@ -9,13 +9,19 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-sage text-white hover:bg-sage-dark active:bg-moss",
-        destructive: "bg-evergreen text-white hover:opacity-90",
-        outline: "border-2 border-evergreen bg-transparent text-evergreen hover:bg-evergreen hover:text-white",
-        secondary: "bg-transparent border-2 border-evergreen text-evergreen hover:bg-evergreen hover:text-white",
-        accent: "bg-french-blue text-white hover:bg-french-blue-dark",
-        ghost: "bg-transparent text-moss hover:bg-ivory",
-        link: "text-french-blue underline-offset-4 hover:underline hover:text-french-blue-dark",
+        default: "text-white hover:opacity-90 active:opacity-80" + " " + 
+                 "bg-[#8EA58C] hover:bg-[#7A8F78] active:bg-[#738A6E]",
+        destructive: "text-white hover:opacity-90" + " " + 
+                    "bg-[#344C3D]",
+        outline: "border-2 bg-transparent hover:text-white transition-all duration-200" + " " +
+                "border-[#344C3D] text-[#344C3D] hover:bg-[#344C3D]",
+        secondary: "border-2 bg-transparent hover:text-white transition-all duration-200" + " " +
+                  "border-[#344C3D] text-[#344C3D] hover:bg-[#344C3D]",
+        accent: "text-white hover:opacity-90" + " " + 
+               "bg-[#88A5BC] hover:bg-[#6B8BA6]",
+        ghost: "bg-transparent hover:bg-[#F2F3F1] text-[#738A6E]",
+        link: "underline-offset-4 hover:underline" + " " +
+              "text-[#88A5BC] hover:text-[#6B8BA6]",
       },
       size: {
         default: "h-10 px-4 py-2",

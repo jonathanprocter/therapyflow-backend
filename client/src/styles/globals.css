@@ -5,19 +5,19 @@
 
 @layer base {
   :root {
-    /* Core Brand Colors */
-    --color-ivory: 242 243 241;      /* Warm white for backgrounds */
-    --color-sage: 142 165 140;       /* Primary brand color */
-    --color-moss: 115 138 110;       /* Secondary/body text */
-    --color-evergreen: 52 76 61;     /* Headers and emphasis */
-    --color-french-blue: 136 165 188; /* Accent for links and CTAs */
-    --color-white: 255 255 255;       /* Pure white when needed */
+    /* Core Brand Colors - EXACT hex values */
+    --color-ivory: 242 243 241;      /* #F2F3F1 - Warm white for backgrounds */
+    --color-sage: 142 165 140;       /* #8EA58C - Primary brand color */
+    --color-moss: 115 138 110;       /* #738A6E - Secondary/body text */
+    --color-evergreen: 52 76 61;     /* #344C3D - Headers and emphasis */
+    --color-french-blue: 136 165 188; /* #88A5BC - Accent for links and CTAs */
+    --color-white: 255 255 255;       /* #FFFFFF - Pure white when needed */
 
-    /* Utility variations */
-    --color-moss-light: 115 138 110;  /* For subtle text - using moss at 70% opacity */
-    --color-sage-dark: 122 143 120;   /* Hover state for sage */
-    --color-blue-dark: 107 139 166;   /* Hover state for blue */
-    --color-shadow: 52 76 61;         /* Evergreen-based shadows */
+    /* Utility variations - EXACT hex calculations */
+    --color-moss-light: 115 138 110;  /* #738A6E at 70% opacity for subtle text */
+    --color-sage-dark: 122 143 120;   /* #7A8F78 - Hover state for sage */
+    --color-blue-dark: 107 139 166;   /* #6B8BA6 - Hover state for blue */
+    --color-shadow: 52 76 61;         /* #344C3D - Evergreen-based shadows */
 
     /* Standard Theme Variables mapped to brand colors */
     --background: 242 243 241;        /* Ivory */
@@ -104,29 +104,78 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    background-color: rgb(var(--color-ivory));
-    color: rgb(var(--color-moss));
+    background-color: #F2F3F1 !important;  /* Exact ivory color */
+    color: #738A6E !important;              /* Exact moss color */
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     line-height: 1.6;
     font-feature-settings: "rlig" 1, "calt" 1;
+    margin: 0;
+    padding: 0;
   }
 
   h1, h2 { 
-    color: rgb(var(--color-evergreen)); 
+    color: #344C3D !important;  /* Exact evergreen color */
+    font-weight: 600;
   }
   
   h3, h4, h5, h6 { 
-    color: rgb(var(--color-moss)); 
+    color: #738A6E !important;  /* Exact moss color */
+    font-weight: 500;
   }
   
   a { 
-    color: rgb(var(--color-french-blue)); 
+    color: #88A5BC !important;          /* Exact french blue color */
     text-decoration: none; 
+    transition: color 0.2s ease;
   }
   
   a:hover { 
-    color: rgb(var(--color-blue-dark)); 
+    color: #6B8BA6 !important;          /* Exact blue dark hover */
+  }
+
+  /* Ensure muted text uses moss with opacity */
+  .text-muted, .text-muted-foreground {
+    color: rgba(115, 138, 110, 0.7) !important;  /* Moss at 70% opacity */
+  }
+
+  /* Input and form element styling */
+  input, textarea, select {
+    background-color: #F2F3F1 !important;      /* Ivory background */
+    border-color: rgba(115, 138, 110, 0.3) !important;  /* Moss border at 30% opacity */
+    color: #738A6E !important;                  /* Moss text */
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: #8EA58C !important;           /* Sage border on focus */
+    box-shadow: 0 0 0 2px rgba(142, 165, 140, 0.2) !important;  /* Sage focus shadow */
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: rgba(115, 138, 110, 0.5) !important;  /* Moss placeholder at 50% opacity */
+  }
+
+  /* French Blue accent touches */
+  .accent-french-blue {
+    color: #88A5BC !important;
+  }
+
+  .bg-accent-french-blue {
+    background-color: #88A5BC !important;
+  }
+
+  .border-accent-french-blue {
+    border-color: #88A5BC !important;
+  }
+
+  /* Calendar icons, links, and special accent elements */
+  [data-calendar-icon], .calendar-icon, 
+  .accent-link, .special-cta {
+    color: #88A5BC !important;
+  }
+
+  .accent-link:hover, .special-cta:hover,
+  [data-calendar-icon]:hover, .calendar-icon:hover {
+    color: #6B8BA6 !important;
   }
 
   /* Smooth Scrolling */
@@ -137,7 +186,10 @@
 
   /* Focus Styles */
   *:focus-visible {
-    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+    outline: none !important;
+    ring: 2px solid #8EA58C !important;  /* Sage focus ring */
+    ring-offset: 2px;
+    ring-offset-color: #F2F3F1 !important;  /* Ivory offset */
   }
 
   /* Selection */
@@ -230,6 +282,38 @@
   @keyframes pulse-glow {
     0%, 100% { box-shadow: 0 0 20px rgba(142, 165, 140, 0.2); } /* Sage glow */
     50% { box-shadow: 0 0 40px rgba(142, 165, 140, 0.4); }
+  }
+
+  /* Success/Error states using brand colors */
+  .success-message {
+    background-color: rgba(142, 165, 140, 0.15) !important;  /* Sage background at 15% opacity */
+    color: #344C3D !important;                               /* Evergreen text */
+    border-color: rgba(142, 165, 140, 0.3) !important;      /* Sage border */
+  }
+
+  .info-message {
+    background-color: rgba(136, 165, 188, 0.15) !important;  /* French blue background at 15% opacity */
+    color: #344C3D !important;                               /* Evergreen text */
+    border-color: rgba(136, 165, 188, 0.3) !important;      /* French blue border */
+  }
+
+  .warning-message, .error-message {
+    background-color: rgba(52, 76, 61, 0.1) !important;     /* Evergreen background at 10% opacity */
+    color: #344C3D !important;                              /* Evergreen text and icons */
+    border-color: rgba(52, 76, 61, 0.2) !important;        /* Evergreen border */
+  }
+
+  /* Progress bars and loading states */
+  .progress-fill {
+    background-color: #8EA58C !important;                   /* Sage for fill */
+  }
+
+  .progress-track {
+    background-color: #F2F3F1 !important;                   /* Ivory for track */
+  }
+
+  .loading-spinner {
+    border-color: #8EA58C !important;                       /* Sage spinner */
   }
 
   /* Color Utility Classes */
