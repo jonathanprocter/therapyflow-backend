@@ -134,6 +134,20 @@
     color: #344C3D !important;
   }
 
+  /* SELECT AND DROPDOWN OVERRIDES */
+  select,
+  [data-radix-select-trigger],
+  [data-radix-select-content] {
+    background-color: #FFFFFF !important;
+    border-color: rgba(115, 138, 110, 0.3) !important;
+    color: #344C3D !important;
+  }
+
+  [data-radix-select-trigger]:focus {
+    border-color: #88A5BC !important;
+    box-shadow: 0 0 0 1px #88A5BC !important;
+  }
+
   /* FILE INPUT SPECIFIC OVERRIDES */
   input[type="file"] {
     background-color: #FFFFFF !important;

@@ -144,7 +144,11 @@ export default function InteractiveNoteCreator() {
           <div className="space-y-2">
             <label className="text-sm font-medium" style={{ color: '#344C3D' }}>Select Client *</label>
             <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-              <SelectTrigger data-testid="select-client">
+              <SelectTrigger 
+                className="bg-white border focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)', color: '#344C3D' }}
+                data-testid="select-client"
+              >
                 <SelectValue placeholder="Choose a client..." />
               </SelectTrigger>
               <SelectContent>
@@ -173,7 +177,11 @@ export default function InteractiveNoteCreator() {
             <div className="space-y-2">
               <label className="text-sm font-medium" style={{ color: '#344C3D' }}>Link to Session (Optional)</label>
               <Select value={selectedSessionId} onValueChange={setSelectedSessionId}>
-                <SelectTrigger data-testid="select-session">
+                <SelectTrigger 
+                  className="bg-white border focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                  style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)', color: '#344C3D' }}
+                  data-testid="select-session"
+                >
                   <SelectValue placeholder="Choose a session..." />
                 </SelectTrigger>
                 <SelectContent>
