@@ -4,6 +4,7 @@ import path from "path";
 import { createDocument, getDocument, getAIResult } from "../storage-extensions-new";
 import { parsePDF } from "../services/pdf";
 import { processDocumentWithAI, smartParseDocument } from "../services/ai";
+import * as storage from "../storage"; // Assuming storage is exported from here
 
 const upload = multer({ 
   storage: multer.memoryStorage()
@@ -41,7 +42,7 @@ documentsRouter.post("/smart-upload", (req, res) => {
       console.log("Upload request received:");
       console.log("Body:", req.body);
       console.log("Files:", req.files);
-      
+
       const { clientId, appointmentDate } = req.body;
       if (!clientId || !appointmentDate) {
         return res.status(400).json({ error: "clientId and appointmentDate required" });
@@ -50,7 +51,7 @@ documentsRouter.post("/smart-upload", (req, res) => {
       // Handle files from any field
       const files = (req.files as Express.Multer.File[]) || [];
       const uploaded = [];
-      
+
       for (const f of files) {
         // For memory storage, the buffer contains the file data
         const meta = { 
@@ -58,7 +59,7 @@ documentsRouter.post("/smart-upload", (req, res) => {
           originalName: f.originalname, 
           size: f.size 
         };
-        
+
         const doc = await createDocument({
           clientId, 
           appointmentDate, 
@@ -66,14 +67,14 @@ documentsRouter.post("/smart-upload", (req, res) => {
           mimeType: f.mimetype, 
           meta
         });
-        
+
         uploaded.push({ 
           documentId: doc.id, 
           filename: f.originalname, 
           status: "stored" 
         });
       }
-      
+
       res.json({ uploaded });
     } catch (e: any) {
       console.error("Upload error:", e);
@@ -93,7 +94,7 @@ documentsRouter.post("/parse", async (req, res) => {
     if (!doc) {
       return res.status(404).json({ error: "Document not found" });
     }
-    
+
     if (doc.status === "parsed" && (doc.text?.length || 0) > 100) {
       return res.json({ 
         documentId, 
@@ -104,7 +105,7 @@ documentsRouter.post("/parse", async (req, res) => {
     }
 
     const { text, meta, qualityScore } = await parsePDF(documentId);
-    
+
     res.json({ 
       documentId, 
       status: "parsed", 
@@ -121,7 +122,7 @@ documentsRouter.post("/parse", async (req, res) => {
 documentsRouter.post("/process-batch", async (req, res) => {
   try {
     const { clientId, appointmentDate, documentIds, promptId = "care_notes_v1", force = false } = req.body;
-    
+
     if (!clientId || !appointmentDate || !Array.isArray(documentIds)) {
       return res.status(400).json({ 
         error: "clientId, appointmentDate, documentIds required" 
@@ -129,7 +130,7 @@ documentsRouter.post("/process-batch", async (req, res) => {
     }
 
     const results: any[] = [];
-    
+
     for (const id of documentIds) {
       try {
         const doc = await getDocument(id);
@@ -200,7 +201,7 @@ documentsRouter.post("/ai-process", async (req, res) => {
     }
 
     const result = await processDocumentWithAI(documentId);
-    
+
     res.json({
       documentId,
       aiVersion: "v1",
@@ -222,7 +223,7 @@ documentsRouter.post("/ai-process", async (req, res) => {
 documentsRouter.post("/smart-process", async (req, res) => {
   try {
     const { documentIds } = req.body;
-    
+
     if (!Array.isArray(documentIds)) {
       return res.status(400).json({ 
         error: "documentIds array required" 
@@ -230,7 +231,7 @@ documentsRouter.post("/smart-process", async (req, res) => {
     }
 
     const results: any[] = [];
-    
+
     for (const id of documentIds) {
       try {
         const doc = await getDocument(id);
@@ -257,7 +258,7 @@ documentsRouter.post("/smart-process", async (req, res) => {
         try {
           const smartResult = await smartParseDocument(id);
           const parsed = await getDocument(id); // Get updated document after parsing
-          
+
           results.push({ 
             documentId: id, 
             status: "processed", 

@@ -21,6 +21,7 @@ export interface IStorage {
   // Clients
   getClients(therapistId: string): Promise<Client[]>;
   getClient(id: string): Promise<Client | undefined>;
+  getClientByName(name: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: string, client: Partial<InsertClient>): Promise<Client>;
   deleteClient(id: string): Promise<void>;
@@ -123,6 +124,11 @@ export class DatabaseStorage implements IStorage {
     return client || undefined;
   }
 
+  async getClientByName(name: string): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.name, name));
+    return client || undefined;
+  }
+
   async createClient(client: InsertClient): Promise<Client> {
     const [newClient] = await db
       .insert(clients)
@@ -163,7 +169,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllHistoricalSessions(therapistId: string, includeCompleted: boolean = true): Promise<Session[]> {
     const conditions = [eq(sessions.therapistId, therapistId)];
-    
+
     if (!includeCompleted) {
       conditions.push(ne(sessions.status, "completed"));
     }
@@ -298,7 +304,7 @@ export class DatabaseStorage implements IStorage {
 
   async markPastSessionsAsCompleted(therapistId: string): Promise<number> {
     const now = new Date();
-    
+
     const result = await db
       .update(sessions)
       .set({ 
@@ -353,7 +359,7 @@ export class DatabaseStorage implements IStorage {
     }));
 
     await db.insert(progressNotes).values(placeholderNotes);
-    
+
     return placeholderNotes.length;
   }
 
