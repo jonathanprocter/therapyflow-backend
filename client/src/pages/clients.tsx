@@ -71,7 +71,11 @@ export default function Clients() {
                 Manage your client roster and treatment plans
               </p>
             </div>
-            <Button data-testid="add-client-button">
+            <Button 
+              data-testid="add-client-button"
+              style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+              className="hover:bg-opacity-90"
+            >
               <i className="fas fa-plus mr-2"></i>
               Add Client
             </Button>
@@ -120,7 +124,11 @@ export default function Clients() {
               >
                 Start by adding your first client to begin therapy management
               </p>
-              <Button data-testid="add-first-client">
+              <Button 
+                data-testid="add-first-client"
+                style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+                className="hover:bg-opacity-90"
+              >
                 <i className="fas fa-plus mr-2"></i>
                 Add Your First Client
               </Button>
@@ -172,7 +180,8 @@ export default function Clients() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => setClientToDelete(client)}
-                              className="text-red-600 focus:text-red-600"
+                              className="focus:text-current"
+                              style={{ color: '#738A6E' }}
                               data-testid={`delete-client-${client.id}`}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
@@ -220,7 +229,7 @@ export default function Clients() {
                       </div>
                     )}
                     
-                    <div className="mt-4 pt-4 border-t">
+                    <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(115, 138, 110, 0.2)' }}>
                       <Link href={`/clients/${client.id}`}>
                         <Button variant="outline" size="sm" className="w-full" data-testid={`view-client-${client.id}`}>
                           <Eye className="h-4 w-4 mr-2" />
@@ -239,8 +248,8 @@ export default function Clients() {
             <AlertDialog open={true} onOpenChange={() => setClientToDelete(null)}>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Client</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogTitle style={{ color: '#344C3D' }}>Delete Client</AlertDialogTitle>
+                  <AlertDialogDescription style={{ color: '#738A6E' }}>
                     Are you sure you want to delete <strong>{clientToDelete.name}</strong>? 
                     This will permanently remove the client and all associated sessions, progress notes, and documents. 
                     This action cannot be undone.
@@ -250,7 +259,8 @@ export default function Clients() {
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction 
                     onClick={() => deleteClientMutation.mutate(clientToDelete.id)}
-                    className="bg-red-600 hover:bg-red-700"
+                    style={{ backgroundColor: '#738A6E' }}
+                    className="hover:bg-opacity-90"
                     disabled={deleteClientMutation.isPending}
                   >
                     {deleteClientMutation.isPending ? "Deleting..." : "Delete Client"}
