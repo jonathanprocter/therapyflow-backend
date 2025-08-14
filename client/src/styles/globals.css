@@ -176,6 +176,78 @@
     cursor: pointer !important;
   }
 
+  /* CALENDAR COMPONENT OVERRIDES */
+  .react-calendar,
+  [data-testid="date-picker"],
+  .rdp,
+  .rdp-months,
+  .rdp-month,
+  .rdp-table,
+  .rdp-tbody,
+  .rdp-tfoot {
+    background-color: #FFFFFF !important;
+  }
+
+  /* Calendar day buttons */
+  .rdp-button,
+  .rdp-day,
+  button[name="day"] {
+    background-color: transparent !important;
+    color: #344C3D !important;
+    border: none !important;
+    border-radius: 6px !important;
+  }
+
+  .rdp-button:hover,
+  .rdp-day:hover,
+  button[name="day"]:hover {
+    background-color: rgba(136, 165, 188, 0.1) !important;
+    color: #88A5BC !important;
+  }
+
+  /* Selected date */
+  .rdp-button[aria-selected="true"],
+  .rdp-day[aria-selected="true"],
+  button[name="day"][aria-selected="true"],
+  .rdp-day_selected {
+    background-color: #8EA58C !important;
+    color: #FFFFFF !important;
+  }
+
+  /* Today's date */
+  .rdp-day_today,
+  .rdp-button[data-today="true"] {
+    background-color: rgba(88, 165, 188, 0.1) !important;
+    color: #88A5BC !important;
+    font-weight: bold !important;
+  }
+
+  /* Calendar navigation */
+  .rdp-nav_button,
+  .rdp-nav button {
+    background-color: transparent !important;
+    color: #8EA58C !important;
+    border: 1px solid rgba(115, 138, 110, 0.3) !important;
+  }
+
+  .rdp-nav_button:hover,
+  .rdp-nav button:hover {
+    background-color: rgba(142, 165, 140, 0.1) !important;
+    color: #8EA58C !important;
+  }
+
+  /* Calendar month/year headers */
+  .rdp-caption,
+  .rdp-caption_label {
+    color: #344C3D !important;
+  }
+
+  /* Weekday headers */
+  .rdp-head_cell,
+  .rdp-weekday {
+    color: #738A6E !important;
+  }
+
   /* Override any yellow/warning colors globally */
   button:focus,
   button:focus-visible,

@@ -85,7 +85,11 @@ export default function Calendar() {
               </div>
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button data-testid="create-session-button">
+                  <Button 
+                    style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C', color: '#FFFFFF' }}
+                    className="hover:bg-opacity-90"
+                    data-testid="create-session-button"
+                  >
                     <i className="fas fa-plus mr-2"></i>
                     Schedule Session
                   </Button>
@@ -156,7 +160,12 @@ export default function Calendar() {
                         })}`
                     }
                   </h3>
-                  <Button variant="outline" size="sm" data-testid="calendar-view-button">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
+                    data-testid="calendar-view-button"
+                  >
                     <i className="fas fa-calendar-week mr-2"></i>
                     Week View
                   </Button>
@@ -215,6 +224,8 @@ export default function Calendar() {
                     </p>
                     <Button 
                       onClick={() => setIsCreateDialogOpen(true)}
+                      style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C', color: '#FFFFFF' }}
+                      className="hover:bg-opacity-90"
                       data-testid="schedule-first-session"
                     >
                       <i className="fas fa-plus mr-2"></i>
@@ -290,6 +301,7 @@ export default function Calendar() {
                                 size="sm" 
                                 variant="outline"
                                 className="text-xs px-2"
+                                style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
                                 onClick={() => window.open(`/clients/${session.client?.id}`, '_blank')}
                                 data-testid={`case-review-${session.id}`}
                               >
@@ -299,6 +311,7 @@ export default function Calendar() {
                                 size="sm" 
                                 variant="outline"
                                 className="text-xs px-2"
+                                style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
                                 onClick={() => {
                                   // Navigate to session edit/details page
                                   window.location.href = `/sessions/${session.id}/edit`;
@@ -311,6 +324,7 @@ export default function Calendar() {
                                 size="sm" 
                                 variant="outline"
                                 className="text-xs px-2"
+                                style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
                                 onClick={() => {
                                   // Navigate to session prep page with client context
                                   window.location.href = `/sessions/${session.id}/prep?clientId=${session.client?.id}`;
@@ -353,7 +367,12 @@ export default function Calendar() {
                     <i className="fas fa-check-circle"></i>
                     <span className="text-sm">Connected</span>
                   </div>
-                  <Button variant="outline" size="sm" data-testid="calendar-settings">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
+                    data-testid="calendar-settings"
+                  >
                     <i className="fas fa-cog mr-2"></i>
                     Settings
                   </Button>
