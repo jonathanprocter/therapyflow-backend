@@ -1,0 +1,110 @@
+Great. Here’s a follow-up, agent-ready unified diff to add minimal navigation so you can access the new pages: DocumentsUpload, CareNotesResults, and ClientDetail. It assumes a client-side router (React Router or Wouter). I’ll provide Wouter-based wiring since it’s lightweight; if you’re already using another router, the agent can adapt the imports.
+
+What this patch adds
+- A top-level App shell with a simple sidebar linking to:
+  - /documents for Upload & Process
+  - /results for AI Results
+  - /client for Client Detail (graph + recall)
+- Route registrations for the three new pages
+
+Unified diff (all paths relative to repo root)
+
+--- a/client/src/main.tsx
++++ b/client/src/main.tsx
+@@ -1,6 +1,17 @@
+ import React from 'react'
+ import ReactDOM from 'react-dom/client'
+-import App from './App'
++import App from './App'
++// If you didn’t have an App, this will be added in the next patch block.
+ import './index.css'
+ 
+ ReactDOM.createRoot(document.getElementById('root')!).render(
+   
+     
+   ,
+ )
+ 
+--- /dev/null
++++ b/client/src/App.tsx
+@@ -0,0 +1,106 @@
++import React from 'react';
++import { Route, Switch, Link } from 'wouter';
++import DocumentsUpload from './pages/DocumentsUpload';
++import CareNotesResults from './pages/CareNotesResults';
++import ClientDetail from './pages/ClientDetail';
++
++function Sidebar() {
++  return (
++    
++      
++        CareNotesAI
++        Clinical AI Pipeline
++      
++      
++        
++          Documents Upload
++        
++        
++          AI Results
++        
++        
++          Client Detail
++        
++      
++    
++  );
++}
++
++export default function App() {
++  return (
++    
++      
++        
++        
++          
++            
++              
++              
++              
++              
++              
++                
++                  Not Found
++                  The page you requested does not exist.
++                
++              
++            
++          
++        
++      
++    
++  );
++}
+ 
+--- a/client/package.json
++++ b/client/package.json
+@@ -1,6 +1,9 @@
+ {
+   "name": "client",
+   "private": true,
+   "dependencies": {
++    "wouter": "^3.3.1"
+   }
+ }
+ 
+If your client/package.json already exists with dependencies, the agent should merge “wouter”: “^3.3.1” into the dependencies section. If you already use a different router, skip adding wouter and adapt App.tsx to your router.
+
+Optional: minimal CSS utilities
+If you’re using Tailwind (likely, based on your other repo), the classes above will render fine. If not, these are just simple class names; no additional setup is required for function.
+
+Verification steps
+- Start the dev server
+- Navigate to:
+  - /documents: upload PDFs, run the pipeline (upload → parse → AI)
+  - /results: type a client ID to fetch AI results
+  - /client: type a client ID to view semantic graph and test recall
+
+Would you like me to also add a top header with environment status and API health indicator, or keep it minimal as-is?
+
+[1] https://replit.com/@jonathanprocter/CareNotesAI

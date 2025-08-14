@@ -2,6 +2,12 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { integrateTherapeuticFeatures } from "./integrate-therapeutic";
+import { documentsRouter } from "./routes/documents.js";
+import { aiRouter } from "./routes/ai.js"; 
+import { semanticRouter } from "./routes/semantic.js";
+import { storage } from "./storage.js";
+const db = storage.db;
+import { sql } from "drizzle-orm";
 
 const app = express();
 app.use(express.json());
@@ -37,8 +43,55 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health endpoints for CareNotesAI pipeline monitoring
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    version: process.env.APP_VERSION || "dev",
+    time: new Date().toISOString(),
+  });
+});
+
+// Deep health: DB connectivity + key metrics
+app.get("/api/health/deep", async (req, res) => {
+  const start = Date.now();
+  try {
+    // Minimal DB check: run a simple NOW()
+    const [{ now }] = await db.execute(sql`SELECT now() as now`);
+    
+    // Count documents and AI results
+    const [{ count: docsCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
+    const [{ count: aiCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
+    const [{ count: edgesCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+    
+    res.json({
+      ok: true,
+      time: new Date().toISOString(),
+      dbTime: now,
+      metrics: {
+        documents: docsCount,
+        aiResults: aiCount,
+        edges: edgesCount,
+      },
+      took_ms: Date.now() - start,
+    });
+  } catch (e: any) {
+    res.status(500).json({
+      ok: false,
+      error: String(e),
+      took_ms: Date.now() - start,
+    });
+  }
+});
+
 (async () => {
   const server = await registerRoutes(app);
+
+  // Register CareNotesAI pipeline routes
+  app.use("/api/documents", documentsRouter);
+  app.use("/api/ai", aiRouter);
+  app.use("/api/semantic", semanticRouter);
+  log("✅ CareNotesAI document processing pipeline routes registered");
 
   // Integrate therapeutic journey features
   integrateTherapeuticFeatures(app);

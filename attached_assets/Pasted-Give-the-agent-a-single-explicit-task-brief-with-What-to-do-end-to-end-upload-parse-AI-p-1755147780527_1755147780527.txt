@@ -1,0 +1,232 @@
+Give the agent a single, explicit task brief with:
+
+- What to do end-to-end (upload → parse → AI → persist → link to client + appointment → build semantic graph)
+- Exact file locations, function names, and data contracts
+- Sample payloads and acceptance criteria
+- Idempotency and error-handling rules
+
+Use this template. Fill in the bracketed items to match your repo.
+
+1) Goal
+Implement an end-to-end pipeline:
+- Upload PDFs for a given client and appointment date
+- Parse text robustly (prefer pdf-parse; fallback hardened extractor)
+- Run AI with the provided prompt to produce structured outputs
+- Persist results and link to: clientId, appointmentDate
+- Generate/maintain semantic AI connections for longitudinal analysis and recall
+- Make pipeline repeatable, resumable, and queryable
+
+2) Paths and modules
+- Server routes: server/routes/documents.ts, server/routes/ai.ts
+- Parsing service: server/services/pdf.ts
+- AI service: server/services/ai.ts
+- Persistence: server/data/db.ts and shared/schema.ts
+- Client UIs: client/src/pages/Upload.tsx, client/src/pages/Client.tsx, client/src/pages/Results.tsx
+
+3) Data contracts
+
+3.1 Upload request
+POST /api/documents/upload
+{
+  "clientId": "uuid",
+  "appointmentDate": "2025-08-10",
+  "files": [/* multipart form-data */],
+  "source": "CareNotesAI"
+}
+
+Response
+{
+  "uploaded": [
+    { "documentId": "uuid", "filename": "name.pdf", "status": "stored" }
+  ]
+}
+
+3.2 Parse job request
+POST /api/documents/parse
+{
+  "documentId": "uuid"
+}
+
+Response
+{
+  "documentId": "uuid",
+  "status": "parsed",
+  "textBytes": 124532,  // bytes length stored
+  "charCount": 83942
+}
+
+3.3 AI processing request
+POST /api/ai/process-document
+{
+  "documentId": "uuid",
+  "promptId": "care_notes_v1"
+}
+
+Response (structured)
+{
+  "documentId": "uuid",
+  "aiVersion": "v1",
+  "entities": {
+    "client": { "id": "uuid", "name": "..." },
+    "appointment": { "date": "2025-08-10", "time": "14:30", "type": "therapy" }
+  },
+  "extractions": {
+    "diagnoses": [{ "code": "F32.1", "label": "Major depressive disorder, moderate" }],
+    "medications": [{ "name": "Sertraline", "dose": "50mg", "freq": "qd" }],
+    "symptoms": ["anhedonia", "insomnia"],
+    "risk_factors": ["recent job loss"],
+    "goals": ["improve sleep hygiene", "reduce anxiety symptoms"]
+  },
+  "summary": "…",
+  "recommendations": ["CBT-I", "follow-up in 2 weeks"],
+  "confidence": 0.92,
+  "semanticEdges": [
+    { "from": "symptom:insomnia", "to": "recommendation:CBT-I", "relation": "treats" }
+  ]
+}
+
+3.4 Persistence model
+- documents: id, clientId, appointmentDate, filename, mimeType, text, meta, status
+- ai_document_results: id, documentId, model, promptId, summary, extractions(jsonb), confidence, createdAt
+- semantic_edges: id, documentId, from(type:id), to(type:id), relation, weight, createdAt
+- appointments: id, clientId, date, time, externalRef(optional), notesId(optional)
+
+4) Prompt to use (care_notes_v1)
+System:
+You are a clinical documentation extraction assistant. Extract structured data from parsed clinical notes. Return strictly valid JSON following the schema provided by the user without additional text.
+
+User:
+Schema:
+- entities.client: { id?: string, name?: string }
+- entities.appointment: { date?: string(YYYY-MM-DD), time?: string(HH:MM), type?: string }
+- extractions.diagnoses: [{ code?: string, label: string }]
+- extractions.medications: [{ name: string, dose?: string, freq?: string }]
+- extractions.symptoms: string[]
+- extractions.risk_factors: string[]
+- goals: string[]
+- summary: string
+- recommendations: string[]
+- confidence: number(0-1)
+- semanticEdges: [{ from: string, to: string, relation: string, weight?: number }]
+
+Guidelines:
+- Prefer explicit values from text; otherwise infer conservatively.
+- Keep ICD codes when present; else label only.
+- Normalize dates to YYYY-MM-DD in user’s timezone (America/New_York).
+- Only return JSON.
+
+Content:
+
+
+5) Parsing implementation requirements
+
+5.1 Install and prefer pdf-parse
+- Ensure pdf-parse is in server/package.json dependencies
+- Use try/catch import and fallback if unavailable
+
+5.2 Hardened fallback extractor
+- Implement fallback using a heuristic text cleaner that strips metadata, xref, obj, streams unless printable, removes PDF operators, collapses whitespace
+- If both strategies fail, mark document status=unreadable and skip AI
+
+6) Server endpoints to implement
+
+6.1 POST /api/documents/upload
+- Accept multipart
+- Store raw file (e.g., in storage/ or DB)
+- Create documents row with clientId, appointmentDate, status='uploaded'
+- Return documentId
+
+6.2 POST /api/documents/parse
+- Load file by documentId
+- Parse with pdf-parse, else fallback
+- Persist text and status='parsed'
+- Return charCount
+
+6.3 POST /api/ai/process-document
+- Load document text
+- Build prompt per care_notes_v1
+- Call AI provider (existing infra if present)
+- Parse returned JSON; on failure, retry once with “respond JSON only”
+- Persist ai_document_results and semantic_edges
+- Link to appointment record; create if missing
+
+6.4 POST /api/documents/process-batch
+{
+  "clientId": "uuid",
+  "appointmentDate": "2025-08-10",
+  "documentIds": ["uuid1","uuid2"],
+  "promptId": "care_notes_v1"
+}
+- For each documentId: parse if needed, AI process, persist
+- Return per-document status
+
+7) Client UX integration
+
+7.1 Upload UI
+- Page: client/src/pages/Upload.tsx
+- Fields: client selector, appointment date, files
+- On submit: call /upload then enqueue /parse for each
+
+7.2 Results view (CareNotes)
+- Page: client/src/pages/Results.tsx or CareNotesResults.tsx
+- Fetch ai_document_results for the client/appointment
+- Render:
+  - Summary
+  - Diagnoses/meds/symptoms/risk/goals/recommendations
+  - Confidence
+  - Semantic graph preview (edge list)
+
+7.3 Longitudinal view
+- Page: client/src/pages/Client.tsx
+- Timeline by appointmentDate
+- Aggregate tags (symptoms, meds, diagnoses)
+- “Recall” search box queries semantic edges across time
+
+8) Semantic graph requirements
+
+8.1 Nodes and edges
+- Nodes implicit by typed IDs: symptom:insomnia, recommendation:CBT-I, diagnosis:F32.1, medication:sertraline
+- Edge schema: { documentId, from, to, relation, weight }
+
+8.2 Ingestion rules
+- Create edges only when AI provides explicit or strongly implied relations
+- De-duplicate edges by (documentId, from, to, relation)
+
+8.3 Query APIs
+- GET /api/semantic/graph?clientId=…&from=…&to=…
+- GET /api/semantic/recall?q=“insomnia”&clientId=…
+
+9) Idempotency and error handling
+- All endpoints must be idempotent by documentId and operation stage
+- If parse exists and text length > 100, skip re-parse unless force=true
+- If AI result exists for documentId+promptId+aiVersion, skip unless force=true
+- On AI JSON parse error, retry once; log raw output for audit
+- Return explicit status per document in batch ops
+
+10) Acceptance criteria
+- Upload multiple PDFs, link to clientId and appointmentDate; responses include documentIds
+- Parsing populates documents.text with >100 chars for typical PDFs
+- AI processing returns structured JSON as defined; persisted to ai_document_results
+- Semantic edges saved with at least 3 relations per typical clinical note
+- Longitudinal view shows aggregated insights across multiple appointments
+- All operations log one concise line with documentId, step, status, duration
+- No silent failures; every failure returns a machine-readable error with actionable message
+
+11) Provide these artifacts to the agent
+- The care_notes_v1 prompt (section 4)
+- Any existing AI API keys/config instructions (where to read env vars)
+- ClientId and an example appointmentDate for testing
+- 2–3 sample PDFs for validation
+- Your timezone (America/New_York) for date normalization
+- Desired AI provider preference and model versions
+
+If you want, I can also generate code stubs for:
+- server/routes/documents.ts
+- server/routes/ai.ts
+- server/services/pdf.ts (with pdf-parse + fallback)
+- server/services/ai.ts (prompt assembly + call)
+- DB migrations for ai_document_results and semantic_edges
+
+Say “generate stubs” and I’ll output drop-in files tailored to your stack.
+
+[1] https://replit.com/@jonathanprocter/CareNotesAI

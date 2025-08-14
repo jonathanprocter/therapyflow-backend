@@ -162,6 +162,30 @@ export const aiInsights = pgTable("ai_insights", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// CareNotesAI Document Processing Pipeline Tables
+export const aiDocumentResults = pgTable("ai_document_results", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: varchar("document_id").notNull(),
+  promptId: text("prompt_id").notNull(), // 'care_notes_v1'
+  model: text("model"),
+  entities: jsonb("entities"),
+  extractions: jsonb("extractions"),
+  summary: text("summary"),
+  recommendations: jsonb("recommendations"),
+  confidence: integer("confidence"), // 0-100 for convenience
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+export const semanticEdges = pgTable("semantic_edges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: varchar("document_id").notNull(),
+  from: text("from").notNull(), // e.g., symptom:insomnia
+  to: text("to").notNull(),     // e.g., recommendation:CBT-I
+  relation: text("relation").notNull(),
+  weight: integer("weight"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   clients: many(clients),

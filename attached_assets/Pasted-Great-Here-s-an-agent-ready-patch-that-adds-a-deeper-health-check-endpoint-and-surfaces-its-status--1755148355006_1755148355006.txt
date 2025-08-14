@@ -1,0 +1,218 @@
+Great. Here’s an agent-ready patch that adds a deeper health check endpoint and surfaces its status in the header. It verifies DB connectivity and returns simple operational metrics so you can spot issues at a glance.
+
+What this adds
+- Server: /api/health/deep
+  - Checks DB connection
+  - Returns counts: total documents, parsed documents, AI results, semantic edges
+  - Optionally reports pending documents (uploaded but not parsed)
+- Client: Header “Deep Check” button that calls /api/health/deep and displays a compact status popover
+
+Unified diff (all paths relative to repo root)
+
+--- a/server/index.ts
++++ b/server/index.ts
+@@ -1,10 +1,54 @@
+ import express from "express";
+ import { documentsRouter } from "./routes/documents";
+ import { aiRouter } from "./routes/ai";
+ import { semanticRouter } from "./routes/semantic";
++import { db } from "./data/db"; // adjust to your actual DB export
++import { documents, aiDocumentResults, semanticEdges } from "../shared/schema";
++import { sql } from "drizzle-orm";
+ 
+ const app = express();
+ app.use(express.json({ limit: "10mb" }));
+ // Simple health endpoint for UI heartbeat
+ app.get("/api/health", (req, res) => {
+   res.json({
+     ok: true,
+     version: process.env.APP_VERSION || "dev",
+     time: new Date().toISOString(),
+   });
+ });
++
++// Deep health: DB connectivity + key metrics
++app.get("/api/health/deep", async (req, res) => {
++  const start = Date.now();
++  try {
++    // Minimal DB check: run a simple NOW() or COUNT(*)
++    const [{ now }] = await db.execute(sql`SELECT now() as now`);
++    // Counts
++    const [{ count: docsCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
++    const [{ count: parsedCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM documents WHERE status = 'parsed'`);
++    const [{ count: aiCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
++    const [{ count: edgesCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
++    const pending = (docsCount as number) - (parsedCount as number);
++    res.json({
++      ok: true,
++      time: new Date().toISOString(),
++      dbTime: now,
++      metrics: {
++        documents: docsCount,
++        parsed: parsedCount,
++        pending,
++        aiResults: aiCount,
++        edges: edgesCount,
++      },
++      took_ms: Date.now() - start,
++    });
++  } catch (e: any) {
++    res.status(500).json({
++      ok: false,
++      error: String(e),
++      took_ms: Date.now() - start,
++    });
++  }
++});
+ 
+ // Register CareNotesAI pipeline routes
+ app.use("/api/documents", documentsRouter);
+ app.use("/api/ai", aiRouter);
+ app.use("/api/semantic", semanticRouter);
+ 
+ // existing bootstrap & listen remain
+
+--- a/client/src/App.tsx
++++ b/client/src/App.tsx
+@@ -1,14 +1,122 @@
+ import React from 'react';
+ import { Route, Switch, Link } from 'wouter';
+ import DocumentsUpload from './pages/DocumentsUpload';
+ import CareNotesResults from './pages/CareNotesResults';
+ import ClientDetail from './pages/ClientDetail';
+ 
+ function useApiHealth(pollMs = 10000) {
+   const [healthy, setHealthy] = React.useState(null);
+   const [version, setVersion] = React.useState("–");
+   const [lastChecked, setLastChecked] = React.useState("–");
+ 
+   const check = React.useCallback(async () => {
+     try {
+       const r = await fetch("/api/health", { method: "GET" });
+       if (!r.ok) throw new Error(`health ${r.status}`);
+       const j = await r.json();
+       setHealthy(!!j.ok);
+       setVersion(j.version || "dev");
+       setLastChecked(new Date().toLocaleTimeString());
+     } catch {
+       setHealthy(false);
+       setLastChecked(new Date().toLocaleTimeString());
+     }
+   }, []);
+ 
+   React.useEffect(() => {
+     check();
+     const t = setInterval(check, pollMs);
+     return () => clearInterval(t);
+   }, [check, pollMs]);
+ 
+   return { healthy, version, lastChecked, check };
+ }
+ 
++function useDeepHealth() {
++  const [open, setOpen] = React.useState(false);
++  const [loading, setLoading] = React.useState(false);
++  const [data, setData] = React.useState(null);
++  const [error, setError] = React.useState(null);
++  const fetchDeep = React.useCallback(async () => {
++    setLoading(true);
++    setError(null);
++    try {
++      const r = await fetch("/api/health/deep", { method: "GET" });
++      const j = await r.json();
++      if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
++      setData(j);
++    } catch (e: any) {
++      setError(e?.message || String(e));
++    } finally {
++      setLoading(false);
++      setOpen(true);
++    }
++  }, []);
++  return { open, setOpen, loading, data, error, fetchDeep };
++}
++
+ function Header() {
+   const ENV = (import.meta as any).env?.VITE_APP_ENV || "development";
+   const { healthy, version, lastChecked, check } = useApiHealth();
++  const deep = useDeepHealth();
+ 
+   return (
+     
+       
+         
+           CareNotesAI
+           {ENV}
+           v{version}
+         
+         
+           
+             
+             API
+             checked {lastChecked}
+           
+           
+             Refresh
+           
++          
++            {deep.loading ? "Deep…" : "Deep Check"}
++          
++        
++      
++      {/* Deep health popover */}
++      {deep.open && (
++        
++          
++            
++              System Status
++               deep.setOpen(false)}
++                className="rounded px-2 py-1 text-xs hover:bg-gray-100"
++              >
++                Close
++              
++            
++            {deep.error && (
++              Error: {deep.error}
++            )}
++            {!deep.error && (
++              
++                
++                  Time: {deep.data?.time || "—"}
++                  DB Time: {deep.data?.dbTime || "—"}
++                  Took: {deep.data?.took_ms ?? "—"} ms
++                
++                
++                  Documents: {deep.data?.metrics?.documents ?? 0}
++                  Parsed: {deep.data?.metrics?.parsed ?? 0}
++                  Pending: {deep.data?.metrics?.pending ?? 0}
++                  AI Results: {deep.data?.metrics?.aiResults ?? 0}
++                  Edges: {deep.data?.metrics?.edges ?? 0}
++                
++              
++            )}
++          
+         
+       )}
+     
+   );
+ }
+
+How to use
+- The header keeps the simple green/red API status dot from the basic /api/health endpoint.
+- Clicking “Deep Check” runs /api/health/deep, then shows a popover with:
+  - Server time, DB time, response time
+  - Counts for documents, parsed docs, pending parse jobs, AI results, and edges
+
+Notes for the agent
+- Ensure server/data/db is correctly imported and is a Drizzle client capable of db.execute(sql`...`).
+- If your Drizzle setup doesn’t expose db.execute, replace those calls with equivalent Drizzle count queries using db.select({ count: … }).from(...).
+- If you’re using a different schema path, update imports for documents, aiDocumentResults, semanticEdges accordingly.
+
+Verification
+- Visit the app; the header shows ENV badge, version, API dot
+- Click “Deep Check” and confirm the popover loads metrics
+- Upload and process a few PDFs; re-run deep check to see counts change
+
+If you want, I can also add a background worker-friendly “queue length” metric placeholder to the deep endpoint, in case you later add job queues for parsing/AI.
+
+[1] https://replit.com/@jonathanprocter/CareNotesAI
