@@ -23,11 +23,11 @@ import HomePage from './pages/HomePage';
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background flex">
+      <div className="min-h-screen flex" style={{backgroundColor: '#F2F3F1'}}>
         <Sidebar />
         <div className="flex-1 flex flex-col">
           <TopBar />
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-6" style={{backgroundColor: '#F2F3F1', color: '#738A6E'}}>
             <Switch>
               <Route path="/dashboard" component={Dashboard} />
               <Route path="/calendar" component={Calendar} />

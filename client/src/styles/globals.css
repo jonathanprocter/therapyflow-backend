@@ -96,11 +96,14 @@
     --ring: 142 165 140;              /* Sage for dark focus rings */
   }
 
-  * {
+  *, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    @apply border-border;
+  }
+
+  html {
+    background-color: #F2F3F1 !important;  /* Exact ivory color */
   }
 
   body {
@@ -111,6 +114,42 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
+  }
+
+  #root {
+    background-color: #F2F3F1 !important;  /* Exact ivory color */
+    min-height: 100vh;
+    color: #738A6E !important;              /* Exact moss color */
+  }
+
+  /* Override any potential conflicting styles */
+  .app, .App, [data-app], [data-testid*="app"] {
+    background-color: #F2F3F1 !important;
+    color: #738A6E !important;
+  }
+
+  /* Aggressive overrides to eliminate yellow background */
+  * {
+    background-color: inherit !important;
+  }
+
+  body *, html *, #root *, .min-h-screen *, 
+  [class*="bg-yellow"], [class*="bg-amber"], 
+  [style*="yellow"], [style*="amber"] {
+    background-color: #F2F3F1 !important;
+  }
+
+  /* Force specific elements to use brand colors */
+  div, section, main, article, aside {
+    background-color: inherit;
+    color: inherit;
+  }
+
+  /* Remove any potential yellow/amber background classes */
+  .bg-yellow-50, .bg-yellow-100, .bg-yellow-200, .bg-yellow-300, .bg-yellow-400, .bg-yellow-500,
+  .bg-amber-50, .bg-amber-100, .bg-amber-200, .bg-amber-300, .bg-amber-400, .bg-amber-500 {
+    background-color: #F2F3F1 !important;
   }
 
   h1, h2 { 
