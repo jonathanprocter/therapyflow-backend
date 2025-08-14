@@ -12,6 +12,7 @@ import ProgressNoteForm from "@/components/forms/progress-note-form";
 import EnhancedDocumentUpload from "@/components/enhanced-document-upload";
 import { formatEDTDateShort } from "@/utils/timezone";
 import type { ProgressNoteWithClient } from "@/types/clinical";
+import { Plus, Brain, FileText, Eye, Edit, Bot } from "lucide-react";
 
 export default function ProgressNotes() {
   const [selectedClient, setSelectedClient] = useState<string>("all");
@@ -84,14 +85,14 @@ export default function ProgressNotes() {
                 variant="outline"
                 data-testid="ai-note-button"
               >
-                <i className="fas fa-brain mr-2"></i>
+                <Brain className="w-4 h-4 mr-2" />
                 AI-Assisted Note
               </Button>
               
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                   <Button data-testid="create-note-button">
-                    <i className="fas fa-plus mr-2"></i>
+                    <Plus className="w-4 h-4 mr-2" />
                     New Progress Note
                   </Button>
                 </DialogTrigger>
@@ -138,7 +139,7 @@ export default function ProgressNotes() {
             </div>
           ) : filteredNotes.length === 0 ? (
             <div className="text-center py-12" data-testid="no-notes">
-              <i className="fas fa-notes-medical text-6xl text-gray-300 mb-4"></i>
+              <FileText className="w-24 h-24 text-gray-300 mb-4 mx-auto" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 {selectedClient === "all" ? "No progress notes yet" : "No notes for selected client"}
               </h3>
@@ -149,7 +150,7 @@ export default function ProgressNotes() {
                 onClick={() => setIsCreateDialogOpen(true)}
                 data-testid="create-first-note"
               >
-                <i className="fas fa-plus mr-2"></i>
+                <Plus className="w-4 h-4 mr-2" />
                 Create Your First Note
               </Button>
             </div>
@@ -211,7 +212,7 @@ export default function ProgressNotes() {
                               key={tag}
                               className={`inline-flex items-center px-2 py-1 text-xs rounded ${tagColors[index % tagColors.length]}`}
                             >
-                              <i className="fas fa-robot mr-1"></i>
+                              <Bot className="w-3 h-3 mr-1" />
                               {tag}
                             </span>
                           );
@@ -239,10 +240,10 @@ export default function ProgressNotes() {
                       </span>
                       <div className="flex space-x-2">
                         <Button size="sm" variant="outline" data-testid={`view-note-${note.id}`}>
-                          <i className="fas fa-eye"></i>
+                          <Eye className="w-4 h-4" />
                         </Button>
                         <Button size="sm" variant="outline" data-testid={`edit-note-${note.id}`}>
-                          <i className="fas fa-edit"></i>
+                          <Edit className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
