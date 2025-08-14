@@ -1,80 +1,137 @@
-import { storage } from "./storage";
+import { DatabaseStorage } from './storage';
+import { autoTagger } from './services/therapeutic/auto-tagger';
+import { journeySynthesizer } from './services/therapeutic/journey-synthesizer';
+import { quickRecall } from './services/therapeutic/quick-recall';
+import type { InsertProgressNote, ProgressNote } from '@shared/schema';
 
-export async function createDocument({ clientId, appointmentDate, filename, mimeType, meta }: {
-  clientId: string; 
-  appointmentDate: string; 
-  filename: string; 
-  mimeType: string; 
-  meta?: any;
-}) {
-  const insertDoc = {
-    clientId,
-    therapistId: "dr-jonathan-procter",
-    fileName: filename,
-    fileType: mimeType,
-    filePath: meta?.filePath || "",
-    metadata: {
-      ...meta,
-      appointmentDate,
-      status: "uploaded"
+export class EnhancedDatabaseStorage extends DatabaseStorage {
+  async createProgressNote(note: InsertProgressNote): Promise<ProgressNote> {
+    const createdNote = await super.createProgressNote(note);
+
+    if (note.content && !note.isPlaceholder) {
+      try {
+        await autoTagger.tagContent(
+          note.content,
+          note.sessionId,
+          note.clientId,
+          note.therapistId
+        );
+      } catch (error) {
+        console.error('Error auto-tagging progress note:', error);
+      }
     }
-  };
-  
-  const document = await storage.createDocument(insertDoc);
-  return {
-    ...document,
-    appointmentDate,
-    status: "uploaded"
-  };
-}
 
-export async function getDocument(documentId: string) {
-  return await storage.getDocument(documentId);
-}
+    return createdNote;
+  }
 
-export async function updateDocumentParsed(documentId: string, text: string, meta?: any) {
-  const document = await storage.getDocument(documentId);
-  if (!document) throw new Error("Document not found");
-  
-  const updated = await storage.updateDocument(documentId, {
-    extractedText: text,
-    metadata: {
-      ...document.metadata,
-      ...meta,
-      status: "parsed",
-      updatedAt: new Date().toISOString()
+  async updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote> {
+    const updatedNote = await super.updateProgressNote(id, note);
+
+    if (note.content && updatedNote.sessionId && !updatedNote.isPlaceholder) {
+      try {
+        await autoTagger.tagContent(
+          note.content,
+          updatedNote.sessionId,
+          updatedNote.clientId,
+          updatedNote.therapistId
+        );
+      } catch (error) {
+        console.error('Error re-tagging progress note:', error);
+      }
     }
-  });
-  
-  return {
-    ...updated,
-    text: updated.extractedText,
-    status: "parsed"
-  };
+
+    return updatedNote;
+  }
+
+  async synthesizeClientJourney(
+    clientId: string,
+    therapistId: string,
+    options?: {
+      startDate?: Date;
+      endDate?: Date;
+      focusTags?: string[];
+    }
+  ) {
+    try {
+      return await journeySynthesizer.synthesizeJourney({
+        clientId,
+        therapistId,
+        ...options,
+      });
+    } catch (error) {
+      console.error('Error synthesizing journey:', error);
+      throw error;
+    }
+  }
+
+  async quickRecall(
+    therapistId: string,
+    clientId: string,
+    query: string
+  ) {
+    try {
+      return await quickRecall.search(therapistId, clientId, query);
+    } catch (error) {
+      console.error('Error in quick recall:', error);
+      throw error;
+    }
+  }
+
+  async getTherapeuticInsights(
+    clientId: string,
+    limit: number = 10
+  ) {
+    const { sessionInsights } = await import('@shared/schema-extensions');
+    const { db } = await import('./db');
+    const { eq, desc } = await import('drizzle-orm');
+
+    try {
+      // Handle the case where clientId might be "recent" (invalid UUID)
+      if (!clientId || clientId === 'recent' || clientId.length < 36) {
+        console.warn('Invalid clientId provided:', clientId);
+        return [];
+      }
+
+      const insights = await db
+        .select()
+        .from(sessionInsights)
+        .where(eq(sessionInsights.clientId, clientId))
+        .orderBy(desc(sessionInsights.createdAt))
+        .limit(limit);
+
+      return insights;
+    } catch (error) {
+      console.error('Error getting therapeutic insights:', error);
+      return [];
+    }
+  }
+
+  async getSessionTags(
+    clientId: string,
+    category?: string
+  ) {
+    const { sessionTags, sessions } = await import('@shared/schema-extensions');
+    const { db } = await import('./db');
+    const { eq, and } = await import('drizzle-orm');
+
+    try {
+      const conditions = [eq(sessions.clientId, clientId)];
+      if (category) {
+        conditions.push(eq(sessionTags.category, category));
+      }
+
+      const tags = await db
+        .select()
+        .from(sessionTags)
+        .innerJoin(sessions, eq(sessionTags.sessionId, sessions.id))
+        .where(and(...conditions));
+
+      return tags;
+    } catch (error) {
+      console.error('Error getting session tags:', error);
+      return [];
+    }
+  }
 }
 
-export async function getAIResult(documentId: string) {
-  // For now, return a simple structure until we need full AI results
-  return null;
-}
-
-export async function saveAIResult(data: any) {
-  return await storage.createAIResult(data);
-}
-
-export async function upsertAppointment(data: any) {
-  // Placeholder - not implemented yet
-  return { id: "placeholder" };
-}
-
-export async function upsertEdges(data: any) {
-  // Placeholder - not implemented yet
-  return [];
-}
-
-export async function listAIResultsForClient(clientId: string) {
-  // Placeholder - not implemented yet
-  return [];
-}
-
-export const createAIResult = storage.createAIResult;
+export const enhancedStorage = new EnhancedDatabaseStorage();

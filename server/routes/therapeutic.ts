@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-// Enhanced storage functions will be available through the new CareNotesAI pipeline
+import { enhancedStorage } from '../storage-extensions';
 
 const router = Router();
 
@@ -13,14 +13,15 @@ router.post('/synthesize/:clientId', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    // TODO: Integrate with new CareNotesAI pipeline
-    const synthesis = {
-      journeyMap: [],
-      keyInsights: [],
-      therapeuticMilestones: [],
-      riskAssessment: "low",
-      message: "CareNotesAI pipeline integration pending"
-    };
+    const synthesis = await enhancedStorage.synthesizeClientJourney(
+      clientId,
+      therapistId,
+      {
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+        focusTags,
+      }
+    );
 
     res.json({ success: true, synthesis });
   } catch (error) {
@@ -39,13 +40,11 @@ router.post('/recall/:clientId', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    // TODO: Integrate with new CareNotesAI semantic recall
-    const results = {
-      memories: [],
-      semanticConnections: [],
-      contextualInsights: [],
-      message: "CareNotesAI semantic search integration pending"
-    };
+    const results = await enhancedStorage.quickRecall(
+      therapistId,
+      clientId,
+      query
+    );
 
     res.json({ success: true, results });
   } catch (error) {
@@ -84,13 +83,7 @@ router.get('/insights/:clientId', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    // TODO: Integrate with new CareNotesAI AI insights
-    const insights = {
-      patterns: [],
-      risks: [],
-      recommendations: [],
-      message: "CareNotesAI AI insights integration pending"
-    };
+    const insights = await enhancedStorage.getTherapeuticInsights(clientId);
 
     res.json({ success: true, insights });
   } catch (error) {
