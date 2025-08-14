@@ -122,6 +122,18 @@
     border-bottom: 1px solid rgba(115, 138, 110, 0.15) !important;
   }
 
+  /* CRITICAL INPUT FIELD OVERRIDES */
+  input,
+  input[type="text"],
+  input[type="date"],
+  input[type="file"],
+  textarea,
+  select {
+    background-color: #FFFFFF !important;
+    border-color: rgba(115, 138, 110, 0.3) !important;
+    color: #344C3D !important;
+  }
+
   /* Override any yellow/warning colors globally */
   button:focus,
   button:focus-visible,
@@ -131,15 +143,16 @@
   textarea:focus,
   select:focus {
     outline: none !important;
-    box-shadow: 0 0 0 2px #8EA58C !important;
+    box-shadow: 0 0 0 1px #88A5BC !important;
     border-color: #88A5BC !important;
+    background-color: #FFFFFF !important;
   }
 
   /* Remove yellow from disabled states */
   button:disabled,
   .btn:disabled,
   input:disabled {
-    background-color: rgba(115, 138, 110, 0.2) !important;
+    background-color: rgba(242, 243, 241, 0.5) !important;
     color: rgba(115, 138, 110, 0.6) !important;
     border-color: rgba(115, 138, 110, 0.3) !important;
   }
@@ -149,11 +162,17 @@
   .text-yellow-600,
   .bg-yellow-100,
   .bg-yellow-200,
+  .bg-yellow-300,
+  .bg-yellow-400,
+  .bg-yellow-500,
   .border-yellow-300,
-  .ring-yellow-500 {
-    color: #738A6E !important;
-    background-color: transparent !important;
-    border-color: #8EA58C !important;
+  .border-yellow-400,
+  .ring-yellow-500,
+  input.bg-yellow-100,
+  input.bg-yellow-200 {
+    color: #344C3D !important;
+    background-color: #FFFFFF !important;
+    border-color: rgba(115, 138, 110, 0.3) !important;
     box-shadow: none !important;
   }
 

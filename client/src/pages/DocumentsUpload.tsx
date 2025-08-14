@@ -162,7 +162,8 @@ export default function DocumentsUpload() {
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
                 placeholder="e.g., client-123"
-                className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
+                className="bg-white border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)' }}
                 data-testid="input-client-id"
               />
             </div>
@@ -173,7 +174,8 @@ export default function DocumentsUpload() {
                 type="date"
                 value={appointmentDate}
                 onChange={(e) => setAppointmentDate(e.target.value)}
-                className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
+                className="bg-white border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)' }}
                 data-testid="input-appointment-date"
               />
             </div>
@@ -187,7 +189,8 @@ export default function DocumentsUpload() {
               multiple
               accept=".pdf,.docx,.doc,.txt"
               onChange={(e) => setFiles(e.target.files)}
-              className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
+              className="bg-white border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+              style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)' }}
               data-testid="input-files"
             />
             <p className="text-sm" style={{ color: '#738A6E' }}>
