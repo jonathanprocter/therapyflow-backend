@@ -39,15 +39,15 @@ export default function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col" data-testid="sidebar">
+    <aside className="w-64 flex flex-col" style={{backgroundColor: '#F2F3F1', borderRight: '1px solid #8EA58C'}} data-testid="sidebar">
       {/* Logo and Header */}
-      <div className="p-6 border-b border-sidebar-border">
+      <div className="p-6" style={{borderBottom: '1px solid #8EA58C'}}>
         <Link href="/">
           <div className="flex items-center space-x-3 cursor-pointer">
-            <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
-              <Brain className="w-4 h-4 text-sidebar-primary-foreground" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{backgroundColor: '#88A5BC'}}>
+              <Brain className="w-4 h-4" style={{color: '#F2F3F1'}} />
             </div>
-            <h1 className="text-xl font-bold text-sidebar-foreground">TherapyFlow</h1>
+            <h1 className="text-xl font-bold" style={{color: '#344C3D'}}>TherapyFlow</h1>
           </div>
         </Link>
       </div>
@@ -55,7 +55,7 @@ export default function Sidebar() {
       {/* Main Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         <div className="mb-6">
-          <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-3" style={{color: '#738A6E'}}>
             Clinical Management
           </p>
           {navigation.map((item) => {
@@ -64,12 +64,10 @@ export default function Sidebar() {
             return (
               <Link key={item.name} href={item.href}>
                 <div
-                  className={cn(
-                    "flex items-center px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer",
-                    isActive
-                      ? "text-sidebar-primary bg-sidebar-accent"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                  )}
+                  className="flex items-center px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer"
+                  style={isActive 
+                    ? {color: '#F2F3F1', backgroundColor: '#8EA58C'} 
+                    : {color: '#738A6E', backgroundColor: 'transparent'}}
                   data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <IconComponent className="w-4 h-4 mr-3" />
@@ -89,8 +87,8 @@ export default function Sidebar() {
         </div>
 
         {/* AI Document Processing Section */}
-        <div className="pt-4 border-t border-sidebar-border">
-          <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <div className="pt-4" style={{borderTop: '1px solid #8EA58C'}}>
+          <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-3" style={{color: '#738A6E'}}>
             AI Document Processing
           </p>
           {aiProcessing.map((item) => {
@@ -99,18 +97,16 @@ export default function Sidebar() {
             return (
               <Link key={item.name} href={item.href}>
                 <div
-                  className={cn(
-                    "flex items-center px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer",
-                    isActive
-                      ? "text-sidebar-primary bg-sidebar-accent"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                  )}
+                  className="flex items-center px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer"
+                  style={isActive 
+                    ? {color: '#F2F3F1', backgroundColor: '#8EA58C'} 
+                    : {color: '#738A6E', backgroundColor: 'transparent'}}
                   data-testid={`ai-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                 >
-                  <IconComponent className="w-4 h-4 mr-3" />
+                  <IconComponent className="w-4 h-4 mr-3" style={{color: item.name.includes('AI') ? '#88A5BC' : 'inherit'}} />
                   {item.name}
                   {item.badge && (
-                    <span className="ml-auto bg-muted text-muted-foreground text-xs px-2 py-1 rounded-full">
+                    <span className="ml-auto text-xs px-2 py-1 rounded-full" style={{backgroundColor: '#88A5BC', color: '#F2F3F1'}}>
                       {item.badge}
                     </span>
                   )}
@@ -121,15 +117,15 @@ export default function Sidebar() {
         </div>
 
         {/* User Profile */}
-        <div className="pt-4 border-t border-sidebar-border mt-6">
+        <div className="pt-4 mt-6" style={{borderTop: '1px solid #8EA58C'}}>
           <div className="px-4 py-3">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                <Users className="w-4 h-4 text-primary" />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: '#8EA58C'}}>
+                <Users className="w-4 h-4" style={{color: '#F2F3F1'}} />
               </div>
               <div>
-                <p className="text-sm font-medium text-sidebar-foreground">Dr. Jonathan Procter</p>
-                <p className="text-xs text-muted-foreground">Licensed Therapist</p>
+                <p className="text-sm font-medium" style={{color: '#344C3D'}}>Dr. Jonathan Procter</p>
+                <p className="text-xs" style={{color: '#738A6E'}}>Licensed Therapist</p>
               </div>
             </div>
           </div>

@@ -150,8 +150,8 @@
     color: #344C3D !important; /* Evergreen for headers */
   }
 
-  p, span, div:not([class*="button"]) {
-    color: #738A6E !important; /* Moss for body text */
+  p, span, div:not([class*="button"]), .text-muted-foreground, .text-sm {
+    color: #738A6E !important; /* Moss for ALL body text */
   }
 
   /* Force brand link colors */

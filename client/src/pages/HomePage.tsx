@@ -26,7 +26,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Dashboard
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Overview of appointments, insights, and clinical metrics
                   </p>
                 </div>
@@ -34,11 +34,11 @@ export default function HomePage() {
               
               <Link href="/calendar">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-calendar">
-                  <div className="text-3xl mb-3">📅</div>
+                  <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>📅</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Calendar
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Schedule and manage appointments with calendar sync
                   </p>
                 </div>
@@ -50,7 +50,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Clients
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Manage client roster and comprehensive treatment plans
                   </p>
                 </div>
@@ -62,7 +62,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Progress Notes
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Clinical documentation and session tracking
                   </p>
                 </div>
@@ -78,11 +78,11 @@ export default function HomePage() {
             <div className="space-y-4">
               <Link href="/smart">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-smart">
-                  <div className="text-3xl mb-3">✨</div>
+                  <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>✨</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Smart Upload
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     AI-powered document analysis with automatic client data extraction
                   </p>
                 </div>
@@ -94,7 +94,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Documents Upload
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Upload and process clinical PDFs with advanced AI analysis
                   </p>
                 </div>
@@ -106,7 +106,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     AI Results
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Explore comprehensive AI analysis insights and patterns
                   </p>
                 </div>
@@ -114,11 +114,11 @@ export default function HomePage() {
 
               <Link href="/interactive-notes">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-interactive-notes">
-                  <div className="text-3xl mb-3">🤖</div>
+                  <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>🤖</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     AI Note Assistant
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Interactive AI-powered progress note creation and enhancement
                   </p>
                 </div>
@@ -138,7 +138,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Client Analysis
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Semantic connections, recall insights, and client trends
                   </p>
                 </div>
@@ -146,11 +146,11 @@ export default function HomePage() {
 
               <Link href="/search">
                 <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group" data-testid="card-search">
-                  <div className="text-3xl mb-3">🔍</div>
+                  <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>🔍</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Semantic Search
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Advanced search across clinical documents and notes
                   </p>
                 </div>
@@ -162,7 +162,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Session History
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Complete session tracking and historical clinical data
                   </p>
                 </div>
@@ -174,7 +174,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Treatment Plans
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{color: '#738A6E'}}>
                     Evidence-based treatment planning and progress tracking
                   </p>
                 </div>
@@ -189,7 +189,7 @@ export default function HomePage() {
             <h3 className="text-xl font-semibold text-foreground mb-4">
               Get Started
             </h3>
-            <p className="text-muted-foreground mb-6">
+            <p className="mb-6" style={{color: '#738A6E'}}>
               Begin managing your clinical practice with AI-powered tools
             </p>
             <div className="flex justify-center gap-4">
