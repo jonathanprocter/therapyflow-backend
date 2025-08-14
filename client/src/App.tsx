@@ -81,65 +81,63 @@ function Header() {
 
   return (
     <>
-      <header className="border-b bg-background">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold">CareNotesAI</h1>
-            <div className="flex items-center gap-2">
-              <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
-                {ENV}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                v{version}
-              </span>
-            </div>
+      <header className="h-16 border-b bg-background flex items-center justify-between px-6">
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold">TherapyFlow</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-xs px-2 py-1 rounded bg-primary/10 text-primary">
+              {ENV}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              v{version}
+            </span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-sm">
-              <div className={`w-2 h-2 rounded-full ${
-                healthy === true ? 'bg-green-500' : 
-                healthy === false ? 'bg-red-500' : 'bg-gray-400'
-              }`} />
-              <span className="text-xs text-muted-foreground">
-                API checked {lastChecked}
-              </span>
-            </div>
-            <button
-              onClick={check}
-              className="text-xs px-2 py-1 rounded border hover:bg-gray-50"
-              data-testid="button-refresh-health"
-            >
-              Refresh
-            </button>
-            <button
-              onClick={deep.fetchDeep}
-              className="text-xs px-2 py-1 rounded border hover:bg-gray-50"
-              disabled={deep.loading}
-              data-testid="button-deep-check"
-            >
-              {deep.loading ? "Deep…" : "Deep Check"}
-            </button>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm">
+            <div className={`w-2 h-2 rounded-full ${
+              healthy === true ? 'bg-green-500' : 
+              healthy === false ? 'bg-red-500' : 'bg-gray-400'
+            }`} />
+            <span className="text-xs text-muted-foreground">
+              API {lastChecked}
+            </span>
           </div>
+          <button
+            onClick={check}
+            className="text-xs px-2 py-1 rounded border hover:bg-muted"
+            data-testid="button-refresh-health"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={deep.fetchDeep}
+            className="text-xs px-2 py-1 rounded border hover:bg-muted"
+            disabled={deep.loading}
+            data-testid="button-deep-check"
+          >
+            {deep.loading ? "Deep…" : "Deep Check"}
+          </button>
         </div>
       </header>
 
       {/* Deep health popover */}
       {deep.open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">System Status</h3>
               <button
                 onClick={() => deep.setOpen(false)}
-                className="rounded px-2 py-1 text-xs hover:bg-gray-100"
+                className="rounded px-2 py-1 text-xs hover:bg-muted"
                 data-testid="button-close-deep-check"
               >
                 Close
               </button>
             </div>
             {deep.error && (
-              <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
-                <p className="text-red-800 text-sm">Error: {deep.error}</p>
+              <div className="bg-destructive/10 border border-destructive/20 rounded p-3 mb-4">
+                <p className="text-destructive text-sm">Error: {deep.error}</p>
               </div>
             )}
             {!deep.error && deep.data && (
@@ -173,11 +171,11 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex">
+        <div className="flex h-[calc(100vh-64px)]">
           <Sidebar />
-          <main className="flex-1">
+          <main className="flex-1 flex flex-col overflow-hidden">
             <TopBar />
-            <div className="p-4">
+            <div className="flex-1 overflow-auto p-0">
               <Switch>
                 <Route path="/dashboard" component={Dashboard} />
                 <Route path="/calendar" component={Calendar} />
