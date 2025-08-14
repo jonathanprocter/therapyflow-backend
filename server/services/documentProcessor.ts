@@ -525,6 +525,22 @@ Return your analysis in JSON format with both the extracted data and the compreh
   }
 
   /**
+   * Clean text for database storage - remove null bytes and invalid UTF-8
+   */
+  private cleanTextForDatabase(text: string): string {
+    if (!text) return '';
+    
+    return text
+      // Remove null bytes and other control characters except newlines and tabs
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      // Remove non-UTF8 characters
+      .replace(/[\uFFFD]/g, '')
+      // Normalize whitespace
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
    * Save the original document to database
    */
   private async saveDocument(
@@ -535,14 +551,16 @@ Return your analysis in JSON format with both the extracted data and the compreh
     extractedText: string,
     progressNoteId: string
   ) {
+    // Clean the extracted text before saving
+    const cleanedText = this.cleanTextForDatabase(extractedText);
+    
     return await storage.createDocument({
       clientId,
       therapistId,
       fileName,
       fileType: 'application/pdf',
       filePath: `/documents/${progressNoteId}/${fileName}`,
-      extractedText,
-
+      extractedText: cleanedText,
       fileSize: file.length,
       metadata: { progressNoteId },
     });

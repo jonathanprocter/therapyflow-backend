@@ -60,6 +60,9 @@ Preferred communication style: Simple, everyday language.
   * **Clinical Analysis**: Automatic extraction of themes, emotions, interventions, risk levels, progress ratings, and next steps
   * **Manual Review Workflow**: Intelligent flagging system for uncertain results with detailed processing notes and alternative interpretations
   * **Format Support**: TXT (optimal), PDF (robust), DOCX (advanced), DOC (basic), RTF (formatted) with quality scoring for each extraction method
+  * **UTF-8 Database Compatibility**: Fixed critical database encoding errors that caused document processing failures. Added comprehensive text cleaning for null bytes and invalid UTF-8 characters before database storage
+  * **Corrupted PDF Detection**: Enhanced PDF text extraction with multiple encoding strategies (latin1, utf8, ascii) and intelligent text quality assessment to detect and handle corrupted PDFs gracefully
+  * **Quality Validation Pipeline**: Added text quality assessment before AI processing to detect PDF corruption early and attempt recovery through alternative extraction methods
 
 # System Architecture
 

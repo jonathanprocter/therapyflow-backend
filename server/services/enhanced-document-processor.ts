@@ -107,9 +107,32 @@ export class EnhancedDocumentProcessor {
       const cleanedText = this.preprocessText(extractionResult.text);
       console.log(`🧹 Text preprocessed, length: ${cleanedText.length} chars`);
       
+      // Stage 2.5: Text Quality Validation
+      const textQuality = this.assessTextQuality(cleanedText);
+      console.log(`📊 Text quality assessment: ${textQuality.score}/100 (${textQuality.issues.join(', ') || 'no issues'})`);
+      
+      if (textQuality.score < 30) {
+        console.log('⚠️ Text quality too low for processing, attempting recovery...');
+        // Try alternative extraction method
+        const alternativeExtraction = await this.extractTextRobustly(file, fileName);
+        if (alternativeExtraction.quality > extractionResult.quality) {
+          extractionResult = alternativeExtraction;
+          const newCleanedText = this.preprocessText(extractionResult.text);
+          const newTextQuality = this.assessTextQuality(newCleanedText);
+          console.log(`🔄 Alternative extraction quality: ${newTextQuality.score}/100`);
+        }
+      }
+      
       // Stage 3: Multi-Pass AI Analysis
       let aiAnalysis = await this.performMultiPassAIAnalysis(cleanedText, fileName);
       console.log(`🤖 AI analysis score: ${aiAnalysis.confidence}/100`);
+      
+      // Check if AI detected corrupted text (content field contains error message)
+      if (aiAnalysis.content && typeof aiAnalysis.content === 'string' && 
+          aiAnalysis.content.toLowerCase().includes('corrupted')) {
+        console.log('⚠️ AI detected corrupted text, attempting recovery...');
+        throw new Error(`Document appears corrupted or unreadable. Please ensure the PDF is not damaged and contains readable text. AI detected: ${aiAnalysis.content}`);
+      }
       
       // Stage 4: Advanced Date Parsing
       let parsedDate = this.parseSessionDateRobustly(aiAnalysis.sessionDate, cleanedText);
@@ -328,18 +351,27 @@ export class EnhancedDocumentProcessor {
       console.warn('⚠️ pdf-parse failed, trying alternatives:', error);
     }
 
-    // Fallback: Try to extract as raw text
+    // Fallback: Try to extract as raw text with better encoding handling
     try {
-      const rawText = file.toString('latin1');
-      const extractedText = this.extractTextFromPDFBytes(rawText);
+      // Try different encodings
+      const encodings = ['latin1', 'utf8', 'ascii'];
       
-      if (extractedText && extractedText.length > 20) {
-        console.log('✅ PDF extraction via raw byte parsing');
-        return {
-          text: extractedText,
-          quality: 60,
-          method: 'raw_bytes'
-        };
+      for (const encoding of encodings) {
+        try {
+          const rawText = file.toString(encoding as BufferEncoding);
+          const extractedText = this.extractTextFromPDFBytes(rawText);
+          
+          if (extractedText && extractedText.length > 20) {
+            console.log(`✅ PDF extraction via raw byte parsing (${encoding})`);
+            return {
+              text: this.cleanTextForDatabase(extractedText),
+              quality: 60,
+              method: `raw_bytes_${encoding}`
+            };
+          }
+        } catch (encodingError) {
+          console.warn(`⚠️ Encoding ${encoding} failed:`, encodingError);
+        }
       }
     } catch (error) {
       console.warn('⚠️ Raw byte extraction failed:', error);
@@ -522,10 +554,21 @@ export class EnhancedDocumentProcessor {
   preprocessText(rawText: string): string {
     let cleaned = rawText;
     
+    // First clean for database safety
+    cleaned = this.cleanTextForDatabase(cleaned);
+    
     // Remove HTML if present
     if (cleaned.includes('<') && cleaned.includes('>')) {
       cleaned = stripHtml(cleaned).result;
     }
+    
+    // Remove PDF artifacts and metadata first
+    cleaned = cleaned
+      .replace(/\b(endstream|endobj|startxref|xref|trailer)\b/g, '')
+      .replace(/\/F\d+\s+\d+\s+Tf/g, '')
+      .replace(/\d+\s+\d+\s+Td/g, '')
+      .replace(/<<[^>]*>>/g, '')
+      .replace(/\[\s*\]/g, '');
     
     // Normalize whitespace
     cleaned = cleaned
@@ -1714,6 +1757,65 @@ Return the same JSON structure but with enhanced clinical content and higher con
   /**
    * Save processed document with metadata
    */
+  /**
+   * Clean text for database storage - remove null bytes and invalid UTF-8
+   */
+  private cleanTextForDatabase(text: string): string {
+    if (!text) return '';
+    
+    return text
+      // Remove null bytes and other control characters except newlines and tabs
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      // Remove non-UTF8 characters
+      .replace(/[\uFFFD]/g, '')
+      // Normalize whitespace
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
+   * Assess text quality to determine if it's suitable for AI processing
+   */
+  private assessTextQuality(text: string): { score: number; issues: string[] } {
+    if (!text || text.length === 0) {
+      return { score: 0, issues: ['empty text'] };
+    }
+
+    const issues: string[] = [];
+    let score = 100;
+
+    // Check for excessive non-alphabetic characters (PDF corruption indicator)
+    const alphaRatio = (text.match(/[a-zA-Z]/g) || []).length / text.length;
+    if (alphaRatio < 0.3) {
+      score -= 40;
+      issues.push('low alphabetic content');
+    }
+
+    // Check for excessive short fragments (PDF parsing artifacts)
+    const words = text.split(/\s+/);
+    const shortWords = words.filter(w => w.length <= 2).length;
+    if (shortWords / words.length > 0.5) {
+      score -= 30;
+      issues.push('excessive short fragments');
+    }
+
+    // Check for clinical content indicators
+    const clinicalTerms = ['session', 'client', 'therapy', 'progress', 'treatment', 'assessment', 'intervention'];
+    const hasClinicialTerms = clinicalTerms.some(term => text.toLowerCase().includes(term));
+    if (!hasClinicialTerms && text.length > 100) {
+      score -= 20;
+      issues.push('no clinical context');
+    }
+
+    // Check text length adequacy
+    if (text.length < 50) {
+      score -= 30;
+      issues.push('too short');
+    }
+
+    return { score: Math.max(0, score), issues };
+  }
+
   async saveProcessedDocument(
     file: Buffer,
     fileName: string,
@@ -1723,13 +1825,16 @@ Return the same JSON structure but with enhanced clinical content and higher con
     progressNoteId: string,
     aiAnalysis: ExtractedClinicalData
   ): Promise<void> {
+    // Clean the extracted text before saving
+    const cleanedText = this.cleanTextForDatabase(extractedText);
+    
     await storage.createDocument({
       clientId,
       therapistId,
       fileName: fileName,
       fileType: fileName.split('.').pop() || 'unknown',
       filePath: `/uploads/${fileName}`, // Add required filePath
-      extractedText,
+      extractedText: cleanedText,
       fileSize: file.length,
       metadata: {
         aiAnalysis: {
