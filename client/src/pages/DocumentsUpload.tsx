@@ -198,8 +198,12 @@ export default function DocumentsUpload() {
           <Button 
             onClick={handleUpload} 
             disabled={uploading || !clientId || !appointmentDate || !files?.length}
-            className="w-full hover:bg-opacity-90"
-            style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+            className="w-full hover:bg-opacity-90 focus:ring-2 focus:ring-[#8EA58C] focus:ring-offset-0"
+            style={{ 
+              backgroundColor: '#8EA58C', 
+              borderColor: '#8EA58C',
+              color: '#FFFFFF'
+            }}
             data-testid="button-upload"
           >
             {uploading ? (
@@ -247,8 +251,12 @@ export default function DocumentsUpload() {
             <Button 
               onClick={handleProcessBatch} 
               disabled={processing}
-              className="w-full mt-4 hover:bg-opacity-90"
-              style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+              className="w-full mt-4 hover:bg-opacity-90 focus:ring-2 focus:ring-[#8EA58C] focus:ring-offset-0"
+              style={{ 
+                backgroundColor: '#8EA58C', 
+                borderColor: '#8EA58C',
+                color: '#FFFFFF'
+              }}
               data-testid="button-process-batch"
             >
               {processing ? (

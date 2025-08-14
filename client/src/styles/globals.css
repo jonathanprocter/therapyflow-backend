@@ -122,6 +122,41 @@
     border-bottom: 1px solid rgba(115, 138, 110, 0.15) !important;
   }
 
+  /* Override any yellow/warning colors globally */
+  button:focus,
+  button:focus-visible,
+  .btn:focus,
+  .btn:focus-visible,
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 2px #8EA58C !important;
+    border-color: #88A5BC !important;
+  }
+
+  /* Remove yellow from disabled states */
+  button:disabled,
+  .btn:disabled,
+  input:disabled {
+    background-color: rgba(115, 138, 110, 0.2) !important;
+    color: rgba(115, 138, 110, 0.6) !important;
+    border-color: rgba(115, 138, 110, 0.3) !important;
+  }
+
+  /* Override any potential warning/yellow classes */
+  .text-yellow-500,
+  .text-yellow-600,
+  .bg-yellow-100,
+  .bg-yellow-200,
+  .border-yellow-300,
+  .ring-yellow-500 {
+    color: #738A6E !important;
+    background-color: transparent !important;
+    border-color: #8EA58C !important;
+    box-shadow: none !important;
+  }
+
   /* AI badges */
   .px-2.py-1.text-xs.font-medium.rounded {
     background-color: #88A5BC !important;
