@@ -7,6 +7,10 @@ import SmartUpload from './pages/SmartUpload';
 import Dashboard from './pages/dashboard';
 import Calendar from './pages/calendar';
 import Clients from './pages/clients';
+import ProgressNotes from './pages/progress-notes';
+import SessionHistory from './pages/session-history';
+import InteractiveNoteCreator from './pages/InteractiveNoteCreator';
+import CalendarSync from './pages/calendar-sync';
 
 function useApiHealth(pollMs = 10000) {
   const [healthy, setHealthy] = React.useState<boolean | null>(null);
@@ -188,6 +192,34 @@ function Sidebar() {
             }`} data-testid="link-clients">
               👥 Clients
             </Link>
+            <Link href="/progress-notes" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+              isActive("/progress-notes") 
+                ? "bg-primary text-primary-foreground" 
+                : "hover:bg-muted"
+            }`} data-testid="link-progress-notes">
+              📝 Progress Notes
+            </Link>
+            <Link href="/session-history" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+              isActive("/session-history") 
+                ? "bg-primary text-primary-foreground" 
+                : "hover:bg-muted"
+            }`} data-testid="link-session-history">
+              📋 Session History
+            </Link>
+            <Link href="/interactive-notes" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+              isActive("/interactive-notes") 
+                ? "bg-primary text-primary-foreground" 
+                : "hover:bg-muted"
+            }`} data-testid="link-interactive-notes">
+              🤖 AI Note Assistant
+            </Link>
+            <Link href="/calendar-sync" className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+              isActive("/calendar-sync") 
+                ? "bg-primary text-primary-foreground" 
+                : "hover:bg-muted"
+            }`} data-testid="link-calendar-sync">
+              🔗 Calendar Sync
+            </Link>
           </nav>
         </div>
 
@@ -243,6 +275,10 @@ export default function App() {
             <Route path="/dashboard" component={Dashboard} />
             <Route path="/calendar" component={Calendar} />
             <Route path="/clients" component={Clients} />
+            <Route path="/progress-notes" component={ProgressNotes} />
+            <Route path="/session-history" component={SessionHistory} />
+            <Route path="/interactive-notes" component={InteractiveNoteCreator} />
+            <Route path="/calendar-sync" component={CalendarSync} />
             <Route path="/smart" component={SmartUpload} />
             <Route path="/documents" component={DocumentsUpload} />
             <Route path="/results" component={CareNotesResults} />
