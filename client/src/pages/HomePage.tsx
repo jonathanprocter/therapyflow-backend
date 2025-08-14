@@ -120,7 +120,9 @@ export default function HomePage() {
                   e.currentTarget.style.boxShadow = '0 2px 4px rgba(52, 76, 61, 0.08)';
                 }}
               >
-                <div className="text-3xl mb-3" style={{ color: '#88A5BC' }}>📅</div>
+                <div className="text-3xl mb-3">
+                  <span style={{ color: '#88A5BC', fontSize: '32px' }}>📅</span>
+                </div>
                 <div>
                   <h3 className="text-lg font-semibold mb-2" style={{ color: '#344C3D' }}>
                     Calendar
@@ -217,7 +219,9 @@ export default function HomePage() {
                   e.currentTarget.style.boxShadow = '0 2px 4px rgba(52, 76, 61, 0.08)';
                 }}
               >
-                <div className="text-3xl mb-3" style={{ color: '#88A5BC' }}>✨</div>
+                <div className="text-3xl mb-3">
+                  <span style={{ color: '#88A5BC', fontSize: '32px' }}>✨</span>
+                </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>
@@ -319,7 +323,9 @@ export default function HomePage() {
                   e.currentTarget.style.boxShadow = '0 2px 4px rgba(52, 76, 61, 0.08)';
                 }}
               >
-                <div className="text-3xl mb-3" style={{ color: '#88A5BC' }}>🤖</div>
+                <div className="text-3xl mb-3">
+                  <span style={{ color: '#88A5BC', fontSize: '32px' }}>🤖</span>
+                </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>
@@ -392,7 +398,9 @@ export default function HomePage() {
                   e.currentTarget.style.boxShadow = '0 2px 4px rgba(52, 76, 61, 0.08)';
                 }}
               >
-                <div className="text-3xl mb-3" style={{ color: '#88A5BC' }}>🔍</div>
+                <div className="text-3xl mb-3">
+                  <span style={{ color: '#88A5BC', fontSize: '32px' }}>🔍</span>
+                </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>

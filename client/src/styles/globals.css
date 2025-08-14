@@ -498,6 +498,169 @@
   }
 }
 
+/* FORCE BRAND COLORS - Override Everything */
+
+/* Main Layout */
+body, #root, .main-layout {
+  background-color: #F2F3F1 !important;
+}
+
+/* Sidebar MUST be white */
+aside, .sidebar, [data-testid="sidebar"] {
+  background-color: #FFFFFF !important;
+  border-right: 1px solid rgba(115, 138, 110, 0.15) !important;
+}
+
+/* ALL Cards MUST be white */
+.card, 
+[class*="card"],
+.bg-card,
+.rounded-lg.border,
+.p-6.border {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Remove ALL gray backgrounds */
+.bg-gray-50, .bg-gray-100, .bg-gray-200,
+.bg-slate-50, .bg-slate-100,
+.bg-neutral-50, .bg-neutral-100,
+.bg-stone-50, .bg-stone-100 {
+  background-color: #FFFFFF !important;
+}
+
+/* Fix text colors */
+.text-gray-500, .text-gray-600, .text-gray-700,
+.text-slate-500, .text-slate-600,
+.text-muted-foreground {
+  color: #738A6E !important;
+}
+
+/* Headers */
+h1, h2, h3, .text-foreground {
+  color: #344C3D !important;
+}
+
+/* AI Badges MUST be French Blue */
+.text-xs.px-2.py-1.rounded,
+[class*="badge"],
+.rounded-full.text-xs {
+  background-color: #88A5BC !important;
+  color: #FFFFFF !important;
+}
+
+/* Force icon colors */
+.lucide-sparkles,
+.lucide-calendar,
+.lucide-search,
+svg[class*="sparkle"],
+svg[class*="calendar"] {
+  color: #88A5BC !important;
+  fill: #88A5BC !important;
+}
+
+/* Buttons */
+.bg-primary, button:first-child {
+  background-color: #8EA58C !important;
+  color: #FFFFFF !important;
+}
+
+/* Secondary button */
+button[class*="border"] {
+  background-color: transparent !important;
+  border: 2px solid #88A5BC !important;
+  color: #88A5BC !important;
+}
+
+/* Sidebar hover states */
+.hover-nav-item:hover,
+aside a:hover > div {
+  background-color: rgba(136, 165, 188, 0.1) !important;
+  color: #88A5BC !important;
+  border-left: 3px solid #88A5BC !important;
+}
+
+/* Active sidebar item */
+aside a > div[style*="8EA58C"] {
+  background-color: #8EA58C !important;
+  color: #FFFFFF !important;
+}
+
+/* Top bar */
+.h-16.bg-background,
+[data-testid="topbar"] {
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid rgba(115, 138, 110, 0.15) !important;
+}
+
+/* Remove Tailwind defaults */
+* {
+  --background: #F2F3F1 !important;
+  --foreground: #344C3D !important;
+  --card: #FFFFFF !important;
+  --card-foreground: #344C3D !important;
+  --muted: #F2F3F1 !important;
+  --muted-foreground: #738A6E !important;
+  --primary: #8EA58C !important;
+  --primary-foreground: #FFFFFF !important;
+  --accent: #88A5BC !important;
+  --accent-foreground: #FFFFFF !important;
+  --border: rgba(115, 138, 110, 0.15) !important;
+}
+
+/* Additional aggressive overrides for specific problem elements */
+.bg-muted, .bg-muted-foreground,
+.text-muted, [class*="muted"] {
+  background-color: #F2F3F1 !important;
+  color: #738A6E !important;
+}
+
+/* Force all divs and containers to use correct colors */
+div:not([class*="button"]):not([class*="badge"]) {
+  background-color: inherit !important;
+}
+
+/* Specific HomePage card styling overrides */
+.rounded-lg.transition-all.cursor-pointer,
+[class*="rounded-lg"][class*="transition"] {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* French Blue emoji and icon overrides */
+span[style*="88A5BC"], 
+.emoji-french-blue,
+[data-icon="sparkle"], [data-icon="calendar"], [data-icon="search"] {
+  color: #88A5BC !important;
+}
+
+/* Ensure grid layouts have proper spacing */
+.grid.grid-cols-1.md\\:grid-cols-3,
+[class*="grid"][class*="cols"] {
+  gap: 16px !important;
+}
+
+/* Remove any remaining yellow/amber styling */
+[style*="yellow"], [style*="amber"], [style*="gold"],
+[class*="yellow"], [class*="amber"], [class*="gold"] {
+  background-color: #F2F3F1 !important;
+  color: #738A6E !important;
+}
+
+/* Final French Blue enforcement */
+svg.lucide-sparkles, svg.lucide-calendar, svg.lucide-search,
+.sparkle-icon, .calendar-icon, .search-icon {
+  color: #88A5BC !important;
+  stroke: #88A5BC !important;
+}
+
+/* Card content text enforcement */
+.text-sm[style*="738A6E"] {
+  color: #738A6E !important;
+}
+
 @layer utilities {
   /* Custom Gradients */
   .bg-gradient-radial {
