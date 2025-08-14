@@ -43,7 +43,7 @@ export default function HomePage() {
             </h2>
             <div className="space-y-8">
               <Link href="/dashboard">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-dashboard">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-dashboard">
                   <div className="text-3xl mb-3">🏠</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Dashboard
@@ -55,7 +55,7 @@ export default function HomePage() {
               </Link>
               
               <Link href="/calendar">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-calendar">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-calendar">
                   <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>📅</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Calendar
@@ -67,7 +67,7 @@ export default function HomePage() {
               </Link>
 
               <Link href="/clients">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-clients">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-clients">
                   <div className="text-3xl mb-3">👥</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Clients
@@ -79,7 +79,7 @@ export default function HomePage() {
               </Link>
 
               <Link href="/progress-notes">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-progress-notes">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-progress-notes">
                   <div className="text-3xl mb-3">📝</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Progress Notes
@@ -99,7 +99,7 @@ export default function HomePage() {
             </h2>
             <div className="space-y-8">
               <Link href="/smart">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-smart">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-smart">
                   <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>✨</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Smart Upload
@@ -111,7 +111,7 @@ export default function HomePage() {
               </Link>
 
               <Link href="/documents">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-documents">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-documents">
                   <div className="text-3xl mb-3">📄</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Documents Upload
@@ -123,7 +123,7 @@ export default function HomePage() {
               </Link>
 
               <Link href="/results">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-results">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-results">
                   <div className="text-3xl mb-3">🧠</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     AI Results
@@ -135,7 +135,7 @@ export default function HomePage() {
               </Link>
 
               <Link href="/interactive-notes">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-interactive-notes">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-interactive-notes">
                   <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>🤖</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     AI Note Assistant
@@ -155,7 +155,7 @@ export default function HomePage() {
             </h2>
             <div className="space-y-8">
               <Link href="/client">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-client">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-client">
                   <div className="text-3xl mb-3">🔗</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Client Analysis
@@ -167,7 +167,7 @@ export default function HomePage() {
               </Link>
 
               <Link href="/search">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-search">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-search">
                   <div className="text-3xl mb-3" style={{color: '#88A5BC'}}>🔍</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Semantic Search
@@ -179,7 +179,7 @@ export default function HomePage() {
               </Link>
 
               <Link href="/session-history">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-session-history">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-session-history">
                   <div className="text-3xl mb-3">📋</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Session History
@@ -191,7 +191,7 @@ export default function HomePage() {
               </Link>
 
               <Link href="/treatment-plans">
-                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between" data-testid="card-treatment-plans">
+                <div className="p-6 bg-card border border-border rounded-lg hover:bg-muted/50 transition-all cursor-pointer group h-[180px] flex flex-col justify-between mb-6" data-testid="card-treatment-plans">
                   <div className="text-3xl mb-3">📊</div>
                   <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                     Treatment Plans
