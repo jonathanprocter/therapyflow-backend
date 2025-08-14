@@ -36,6 +36,19 @@ export default function AIInsightsPanel() {
     queryKey: ["/api/ai/insights"],
   });
 
+  // Added error handling and logging for therapeutic insights
+  const { data: therapeuticInsights, error: therapeuticError } = useQuery({
+    queryKey: ['/api/therapeutic/insights/recent'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    retryDelay: 1000,
+  });
+
+  // Log therapeutic insights errors for debugging
+  if (therapeuticError) {
+    console.warn('Therapeutic insights query failed:', therapeuticError);
+  }
+
   if (isLoading) {
     return (
       <Card>
@@ -83,7 +96,7 @@ export default function AIInsightsPanel() {
         ) : (
           insights.map((insight) => {
             const config = insightConfig[insight.type] || insightConfig.pattern_recognition;
-            
+
             return (
               <div
                 key={insight.id}

@@ -93,7 +93,13 @@ export const getQueryFn: <T>(options: {
         return null; // Return null for non-JSON responses
       }
     } catch (error) {
-      console.error('Query error:', error);
+      console.error('Query error for URL:', url, error);
+      
+      // Don't throw for certain expected errors to prevent UI crashes
+      if (error instanceof Error && error.message.includes('401')) {
+        return null;
+      }
+      
       throw error; // Re-throw to be handled by React Query
     }
   };

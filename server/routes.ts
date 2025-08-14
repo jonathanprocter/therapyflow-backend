@@ -94,16 +94,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/clients/:id", async (req, res) => {
     try {
       const clientId = req.params.id;
-      
+
       // Verify the client exists first
       const client = await storage.getClient(clientId);
       if (!client) {
         return res.status(404).json({ error: "Client not found" });
       }
-      
+
       // Delete the client and all related data
       await storage.deleteClient(clientId);
-      
+
       res.json({ 
         success: true, 
         message: `Client ${client.name} and all associated data have been deleted successfully` 
@@ -120,8 +120,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sessions endpoints
   app.get("/api/sessions", async (req: any, res) => {
     try {
-      const { clientId, upcoming, today, date } = req.query;
-      
+      const {clientId, upcoming, today, date } = req.query;
+
       if (today === "true") {
         const sessions = await storage.getTodaysSessions(req.therapistId);
         // Fetch client data for each session
@@ -180,15 +180,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         therapistId: req.therapistId
       });
-      
+
       const session = await storage.createSession(sessionData);
-      
+
       // Sync to Google Calendar if client email is available
       const client = await storage.getClient(session.clientId);
       if (client?.email) {
         const endTime = new Date(session.scheduledAt);
         endTime.setMinutes(endTime.getMinutes() + session.duration);
-        
+
         const googleEventId = await calendarService.syncSessionToCalendar(
           client.name,
           session.sessionType,
@@ -196,12 +196,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           endTime,
           client.email
         );
-        
+
         if (googleEventId) {
           await storage.updateSession(session.id, { googleEventId });
         }
       }
-      
+
       res.json(session);
     } catch (error) {
       console.error("Error creating session:", error);
@@ -216,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
-      
+
       // Fetch client data for the session
       const client = await storage.getClient(session.clientId);
       res.json({ ...session, client });
@@ -241,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { clientId } = req.query;
       const sessionId = req.params.id;
-      
+
       // Get session details
       const session = await storage.getSession(sessionId);
       if (!session) {
@@ -292,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { includeCompleted = "true" } = req.query;
       const sessions = await storage.getAllHistoricalSessions(req.therapistId, includeCompleted === "true");
-      
+
       // Fetch client data for each session
       const sessionsWithClients = await Promise.all(
         sessions.map(async (session) => {
@@ -300,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...session, client };
         })
       );
-      
+
       res.json(sessionsWithClients);
     } catch (error) {
       console.error("Error fetching historical sessions:", error);
@@ -312,7 +312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { clientId } = req.query;
       const sessions = await storage.getCompletedSessions(req.therapistId, clientId);
-      
+
       // Fetch client data for each session
       const sessionsWithClients = await Promise.all(
         sessions.map(async (session) => {
@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...session, client };
         })
       );
-      
+
       res.json(sessionsWithClients);
     } catch (error) {
       console.error("Error fetching completed sessions:", error);
@@ -360,7 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/progress-notes", async (req: any, res) => {
     try {
       const { clientId, search, recent } = req.query;
-      
+
       if (recent === "true") {
         const notes = await storage.getRecentProgressNotes(req.therapistId);
         // Fetch client data for each note
@@ -392,17 +392,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         therapistId: req.therapistId
       });
-      
+
       // Generate AI tags and embedding if content exists
       const aiTags = noteData.content ? await aiService.generateClinicalTags(noteData.content) : [];
       const embedding = noteData.content ? await aiService.generateEmbedding(noteData.content) : [];
-      
+
       const note = await storage.createProgressNote({
         ...noteData,
         aiTags: aiTags.map(tag => tag.name),
         embedding
       });
-      
+
       // Find cross-references with existing notes if content exists
       let crossRefs = [];
       if (noteData.content) {
@@ -412,9 +412,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           existingNotes.map(n => ({ id: n.id, content: n.content || '', embedding: n.embedding || undefined }))
         );
       }
-      
+
       // Store cross-references (implement in storage if needed)
-      
+
       res.json(note);
     } catch (error) {
       console.error("Error creating progress note:", error);
@@ -462,12 +462,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all SimplePractice sessions without progress notes
       const sessions = await storage.getSimplePracticeSessions(req.therapistId);
       const placeholdersCreated = [];
-      
+
       for (const session of sessions) {
         // Check if placeholder already exists
         const existingNotes = await storage.getProgressNotes(session.clientId);
         const hasPlaceholder = existingNotes.some(note => note.sessionId === session.id);
-        
+
         if (!hasPlaceholder) {
           const placeholder = await storage.createProgressNotePlaceholder(
             session.id,
@@ -476,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             session.scheduledAt
           );
           placeholdersCreated.push(placeholder);
-          
+
           // Update session to mark placeholder creation
           await storage.updateSession(session.id, {
             hasProgressNotePlaceholder: true,
@@ -484,7 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
-      
+
       res.json({
         success: true,
         placeholdersCreated: placeholdersCreated.length,
@@ -500,13 +500,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updates = req.body;
-      
+
       // If content is being added to a placeholder, update status
       if (updates.content && updates.isPlaceholder) {
         updates.isPlaceholder = false;
         updates.status = 'uploaded';
       }
-      
+
       const note = await storage.updateProgressNote(id, updates);
       res.json(note);
     } catch (error) {
@@ -518,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/progress-notes/:id", async (req: any, res) => {
     try {
       const { id } = req.params;
-      
+
       // Verify the note belongs to the authenticated therapist
       const note = await storage.getProgressNote(id);
       if (!note) {
@@ -527,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (note.therapistId !== req.therapistId) {
         return res.status(403).json({ error: "Access denied" });
       }
-      
+
       await storage.deleteProgressNote(id);
       res.json({ success: true, message: "Progress note deleted successfully" });
     } catch (error) {
@@ -552,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'text/rtf',                      // RTF
         'application/rtf'                // RTF alternative
       ];
-      
+
       if (!supportedMimeTypes.includes(req.file.mimetype)) {
         return res.status(400).json({ 
           error: 'Supported file types: TXT, PDF, DOCX, DOC, RTF. Enhanced AI analysis now supports all formats.' 
@@ -560,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`🚀 Processing ${req.file.originalname} with enhanced AI analysis...`);
-      
+
       const result = await enhancedDocumentProcessor.processDocument(
         req.file.buffer,
         req.file.originalname,
@@ -606,7 +606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const placeholders = await storage.getProgressNotePlaceholders(req.therapistId);
       const manualReview = await storage.getProgressNotesForManualReview(req.therapistId);
-      
+
       res.json({
         placeholders: placeholders.length,
         manualReview: manualReview.length,
@@ -680,7 +680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         therapistId: req.therapistId
       });
-      
+
       const conceptualization = await storage.createCaseConceptualization(data);
       res.json(conceptualization);
     } catch (error) {
@@ -706,21 +706,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
-      
+
       const client = await storage.getClient(session.clientId);
       const recentNotes = await storage.getProgressNotes(session.clientId);
       const treatmentPlan = await storage.getTreatmentPlan(session.clientId);
-      
+
       const clientHistory = recentNotes.slice(0, 10).map(note => note.content).join('\n');
       const lastSession = recentNotes[0]?.content || '';
       const goals = treatmentPlan?.goals ? Object.values(treatmentPlan.goals as any).map((goal: any) => goal.description) : [];
-      
+
       const preparation = await aiService.prepareSessionQuestions(
         clientHistory,
         lastSession,
         goals
       );
-      
+
       res.json(preparation);
     } catch (error) {
       console.error("Error generating session preparation:", error);
@@ -731,16 +731,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/case-analysis", async (req: any, res) => {
     try {
       const { clientId } = req.body;
-      
+
       const client = await storage.getClient(clientId);
       if (!client) {
         return res.status(404).json({ error: "Client not found" });
       }
-      
+
       const progressNotes = await storage.getProgressNotes(clientId);
       const clientInfo = JSON.stringify(client);
       const assessmentData = progressNotes.slice(0, 5).map(note => note.content).join('\n');
-      
+
       const analysis = await aiService.analyzeCaseConceptualization(clientInfo, assessmentData);
       res.json(analysis);
     } catch (error) {
@@ -753,9 +753,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/progress-note-suggestions', async (req: any, res) => {
     try {
       const { aiProgressNoteSuggestions } = await import('./services/aiProgressNoteSuggestions');
-      
+
       const suggestions = await aiProgressNoteSuggestions.generateSuggestions(req.body);
-      
+
       res.json({
         success: true,
         suggestions
@@ -773,9 +773,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/ai/quick-interventions', async (req: any, res) => {
     try {
       const { aiProgressNoteSuggestions } = await import('./services/aiProgressNoteSuggestions');
-      
+
       const suggestions = await aiProgressNoteSuggestions.generateQuickInterventions();
-      
+
       res.json({
         success: true,
         suggestions
@@ -794,11 +794,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId } = req.params;
       const { clientId, summaryType = 'comprehensive', includeProgressNotes = true, includePreviousSessions = true } = req.body;
-      
+
       if (!clientId) {
         return res.status(400).json({ error: 'clientId is required' });
       }
-      
+
       const summary = await sessionSummaryGenerator.generateSessionSummary({
         sessionId,
         clientId,
@@ -807,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         includeProgressNotes,
         includePreviousSessions
       });
-      
+
       res.json(summary);
     } catch (error: any) {
       console.error('Error generating session summary:', error);
@@ -823,13 +823,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId } = req.params;
       const { clientId } = req.query;
-      
+
       if (!clientId) {
         return res.status(400).json({ error: 'clientId is required' });
       }
-      
+
       const insights = await sessionSummaryGenerator.generateQuickInsights(sessionId, clientId as string);
-      
+
       res.json({
         success: true,
         insights
@@ -849,20 +849,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
-      
+
       const { clientId } = req.body;
       if (!clientId) {
         return res.status(400).json({ error: "Client ID is required" });
       }
-      
+
       // Extract text from PDF
       const extractedData = await pdfService.extractText(req.file.buffer);
       const embedding = await aiService.generateEmbedding(extractedData.text);
-      
+
       // Identify document sections and type
       const sections = pdfService.extractClinicalSections(extractedData.text);
       const documentType = pdfService.identifyDocumentType(extractedData.text);
-      
+
       const document = await storage.createDocument({
         clientId,
         therapistId: req.therapistId,
@@ -873,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         embedding,
         tags: [documentType]
       });
-      
+
       res.json({
         document,
         extractedData: {
@@ -907,7 +907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         therapistId: req.therapistId
       });
-      
+
       const plan = await storage.createTreatmentPlan(planData);
       res.json(plan);
     } catch (error) {
@@ -934,7 +934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         therapistId: req.therapistId,
         assessmentDate: new Date()
       });
-      
+
       const score = await storage.createAllianceScore(scoreData);
       res.json(score);
     } catch (error) {
@@ -957,7 +957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/calendar/callback", async (req, res) => {
     try {
       const { code, error } = req.query;
-      
+
       if (error) {
         return res.send(`
           <html>
@@ -972,7 +972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           </html>
         `);
       }
-      
+
       if (!code) {
         return res.status(400).send(`
           <html>
@@ -987,9 +987,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           </html>
         `);
       }
-      
+
       const tokens = await googleCalendarService.exchangeCodeForTokens(code as string);
-      
+
       res.send(`
         <html>
           <head>
@@ -1036,7 +1036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!code) {
         return res.status(400).json({ error: "Authorization code required" });
       }
-      
+
       const tokens = await googleCalendarService.exchangeCodeForTokens(code);
       res.json({ success: true, tokens });
     } catch (error) {
@@ -1050,7 +1050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const normalize = (name: string) => name.toLowerCase().trim();
     const n1 = normalize(name1);
     const n2 = normalize(name2);
-    
+
     // Common name variations
     const variations: { [key: string]: string[] } = {
       'christopher': ['chris', 'christopher'],
@@ -1066,25 +1066,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'elizabeth': ['liz', 'elizabeth', 'beth', 'betty'],
       'liz': ['liz', 'elizabeth', 'beth', 'betty']
     };
-    
+
     // Extract first names for comparison
     const firstName1 = n1.split(' ')[0];
     const firstName2 = n2.split(' ')[0];
-    
+
     // Check if names are variations of each other
     for (const [base, vars] of Object.entries(variations)) {
       if (vars.includes(firstName1) && vars.includes(firstName2)) {
         return true;
       }
     }
-    
+
     return false;
   };
 
   app.post("/api/calendar/sync", async (req: any, res) => {
     try {
       const { startDate = '2010-01-01', endDate = '2035-12-31' } = req.body;
-      
+
       // Sync calendar events from Google Calendar (2015-2030 range)
       const syncedSessions = await googleCalendarService.syncCalendarEvents(
         req.therapistId,
@@ -1098,12 +1098,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           // Check if session already exists (by googleEventId)
           const existingSession = await storage.getSessionByGoogleEventId(session.googleEventId!);
-          
+
           if (!existingSession) {
             // Extract client name from the session (stored as temporary field)
             const extractedClientName = (session as any).clientName;
             let clientId = session.clientId; // Default fallback client
-            
+
             // Try to match or create a real client if we have a valid client name
             if (extractedClientName && extractedClientName !== 'Unidentified Client' && !extractedClientName.includes('Birthday')) {
               try {
@@ -1114,7 +1114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   // Handle name variations (Chris vs Christopher, etc.)
                   isNameVariation(client.name, extractedClientName)
                 );
-                
+
                 if (matchingClient) {
                   clientId = matchingClient.id;
                   console.log(`Matched session to existing client: ${extractedClientName} -> ${matchingClient.name}`);
@@ -1139,7 +1139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Fall back to default client
               }
             }
-            
+
             // Use the correct InsertSession format (camelCase)
             const sessionData: any = {
               id: session.id,
@@ -1155,7 +1155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               createdAt: session.createdAt,
               updatedAt: session.updatedAt
             };
-            
+
             const savedSession = await storage.createSession(sessionData);
             savedSessions.push(savedSession);
           }

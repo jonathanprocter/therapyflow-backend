@@ -86,6 +86,12 @@ export class EnhancedDatabaseStorage extends DatabaseStorage {
     const { eq, desc } = await import('drizzle-orm');
 
     try {
+      // Handle the case where clientId might be "recent" (invalid UUID)
+      if (!clientId || clientId === 'recent' || clientId.length < 36) {
+        console.warn('Invalid clientId provided:', clientId);
+        return [];
+      }
+
       const insights = await db
         .select()
         .from(sessionInsights)
