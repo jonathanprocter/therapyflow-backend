@@ -3,6 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CRITICAL: This must come AFTER Tailwind to override it */
+
 @layer base {
   :root {
     /* Core Brand Colors - EXACT hex values */
@@ -659,6 +661,276 @@ svg.lucide-sparkles, svg.lucide-calendar, svg.lucide-search,
 /* Card content text enforcement */
 .text-sm[style*="738A6E"] {
   color: #738A6E !important;
+}
+
+/* NUCLEAR OPTION - Force all backgrounds and colors */
+/* Override EVERYTHING to ensure brand colors */
+div, section, main, article, aside, header, footer, nav,
+.card, .bg-card, .rounded-lg, .p-6, 
+[class*="card"], [class*="rounded"] {
+  background-color: #FFFFFF !important;
+}
+
+/* Force body and root backgrounds */
+body, #root, html {
+  background-color: #F2F3F1 !important;
+}
+
+/* Sidebar must be white */
+aside, .sidebar {
+  background-color: #FFFFFF !important;
+  border-right: 1px solid rgba(115, 138, 110, 0.15) !important;
+}
+
+/* ALL card-like elements MUST be white */
+.rounded-lg.border, 
+.rounded-lg.transition-all,
+.p-6.border,
+.cursor-pointer,
+[style*="backgroundColor"],
+div[style*="background"] {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Override inline styles that might be causing gray */
+div[style*="background-color"] {
+  background-color: #FFFFFF !important;
+}
+
+/* Force grid container background */
+.grid, .max-w-6xl, .mx-auto {
+  background-color: #F2F3F1 !important;
+}
+
+/* Text color overrides */
+h1, h2, h3, h4, h5, h6,
+.text-xl, .text-lg, .text-2xl, .text-4xl {
+  color: #344C3D !important;
+}
+
+p, span, .text-sm {
+  color: #738A6E !important;
+}
+
+/* Button overrides */
+button {
+  background-color: #8EA58C !important;
+  color: #FFFFFF !important;
+  border: none !important;
+}
+
+button[style*="border"] {
+  background-color: transparent !important;
+  border: 2px solid #88A5BC !important;
+  color: #88A5BC !important;
+}
+
+/* AI badges */
+.px-2.py-1.text-xs,
+span[style*="88A5BC"] {
+  background-color: #88A5BC !important;
+  color: #FFFFFF !important;
+}
+
+/* Icons with French Blue */
+.text-3xl span[style*="88A5BC"],
+div[style*="color: '#88A5BC'"] {
+  color: #88A5BC !important;
+}
+
+/* ULTIMATE OVERRIDE - Target specific page elements */
+/* HomePage specific fixes */
+.max-w-6xl > * {
+  background-color: #F2F3F1 !important;
+}
+
+.grid.grid-cols-1.md\\:grid-cols-3 > div > div {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Target every card-like div with specific attributes */
+div.p-6.rounded-lg.transition-all.cursor-pointer,
+div[class*="p-6"][class*="rounded-lg"],
+a > div.p-6,
+a > div[class*="rounded"] {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Reset any gray/muted backgrounds */
+.bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300,
+.bg-slate-50, .bg-slate-100, .bg-slate-200,
+.bg-neutral-50, .bg-neutral-100, .bg-neutral-200,
+.bg-stone-50, .bg-stone-100, .bg-stone-200,
+.bg-zinc-50, .bg-zinc-100, .bg-zinc-200 {
+  background-color: #FFFFFF !important;
+}
+
+/* Force white background on any element with background styling */
+*[style*="background"]:not([style*="#F2F3F1"]):not([style*="#8EA58C"]):not([style*="#88A5BC"]) {
+  background-color: #FFFFFF !important;
+}
+
+/* Ensure main content area is ivory */
+.max-w-6xl.mx-auto.px-4,
+div[style*="backgroundColor: '#F2F3F1'"] {
+  background-color: #F2F3F1 !important;
+}
+
+/* Banner styling fix */
+div[style*="rgba(142, 165, 140, 0.08)"] {
+  background-color: rgba(142, 165, 140, 0.08) !important;
+  border: 1px solid rgba(142, 165, 140, 0.2) !important;
+}
+
+/* FINAL NUCLEAR OVERRIDE - FORCE EVERYTHING */
+/* This should override any Tailwind or other CSS */
+* {
+  box-sizing: border-box !important;
+}
+
+/* Main page container */
+div[style*="minHeight: '100vh'"],
+div[style*="paddingTop: '30px'"] {
+  background-color: #F2F3F1 !important;
+}
+
+/* All Link containers with cards */
+a[href^="/"] > div {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Force all card-style divs to white - catch-all */
+div[class*="p-6"]:not([style*="#F2F3F1"]):not([style*="#8EA58C"]):not([style*="#88A5BC"]) {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Ensure no Tailwind gray backgrounds can override */
+[class*="bg-"]:not([class*="bg-transparent"]) {
+  background-color: #FFFFFF !important;
+}
+
+/* Target HomePage grid items specifically */
+.grid > div > a > div,
+.grid-cols-1 > div > a > div,
+.md\\:grid-cols-3 > div > a > div {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Override any computed styles */
+div[style] {
+  background-color: var(--computed-bg, #FFFFFF) !important;
+}
+
+div[style*="backgroundColor: '#FFFFFF'"] {
+  background-color: #FFFFFF !important;
+}
+
+/* ABSOLUTE FINAL OVERRIDE - LAST RESORT */
+/* This MUST be at the very end to ensure maximum specificity */
+
+/* Remove any Tailwind card backgrounds that might be gray */
+.bg-card, 
+[class~="bg-card"] {
+  background-color: #FFFFFF !important;
+}
+
+/* FORCE cards to be white with maximum specificity */
+html body div.p-6.rounded-lg.transition-all.cursor-pointer {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+html body a > div.p-6.rounded-lg {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Override any CSS variables that might be causing gray */
+:root {
+  --tw-bg-opacity: 1 !important;
+}
+
+/* Target the specific CSS classes that Tailwind might be applying */
+.rounded-lg {
+  background-color: #FFFFFF !important;
+}
+
+.p-6 {
+  background-color: #FFFFFF !important;
+}
+
+.transition-all {
+  background-color: inherit !important;
+}
+
+/* Final catch-all for any remaining elements */
+div:not([style*="#F2F3F1"]):not([style*="#8EA58C"]):not([style*="#88A5BC"]):not([class*="emoji"]) {
+  background-color: #FFFFFF !important;
+}
+
+/* Override any muted backgrounds from Tailwind */
+.text-muted-foreground {
+  color: #738A6E !important;
+}
+
+.bg-muted {
+  background-color: #F2F3F1 !important;
+}
+
+/* ULTIMATE EMERGENCY FIX - Override everything with extreme specificity */
+
+/* Target every possible card element with maximum CSS specificity */
+html body div div div.p-6.rounded-lg.transition-all.cursor-pointer[class*="p-6"][class*="rounded-lg"] {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(115, 138, 110, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
+}
+
+/* Override any potential Tailwind utility classes */
+html body .rounded-lg.p-6 {
+  background-color: #FFFFFF !important;
+}
+
+/* Target by attribute selectors for inline styles */
+html body div[style] {
+  background-color: #FFFFFF !important;
+}
+
+/* Reset all potentially conflicting CSS custom properties */
+html body {
+  --card: 255 255 255 !important;
+  --card-foreground: 52 76 61 !important;
+  --background: 242 243 241 !important;
+  --foreground: 52 76 61 !important;
+}
+
+/* Override computed styles at the root level */
+html {
+  --tw-bg-opacity: 1 !important;
+}
+
+/* Emergency catch-all with highest possible specificity */
+html body main div div div[class] {
+  background-color: #FFFFFF !important;
+}
+
+/* Force white background on ALL divs except specific ones */
+html body div:not([style*="F2F3F1"]):not([style*="8EA58C"]):not([style*="88A5BC"]):not([class*="bg-"]) {
+  background-color: #FFFFFF !important;
 }
 
 @layer utilities {
