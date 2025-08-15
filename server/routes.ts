@@ -1207,6 +1207,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register transcript processing routes
   registerTranscriptRoutes(app);
 
+  // Register session timeline routes
+  app.use('/api/sessions', (await import('./routes/session-timeline-routes')).default);
+
   const httpServer = createServer(app);
   return httpServer;
 }

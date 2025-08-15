@@ -12,6 +12,7 @@ import Calendar from './pages/calendar';
 import Clients from './pages/clients';
 import ProgressNotes from './pages/progress-notes';
 import SessionHistory from './pages/session-history';
+import SessionTimeline from './pages/session-timeline';
 import InteractiveNoteCreator from './pages/InteractiveNoteCreator';
 import CalendarSync from './pages/calendar-sync';
 import SemanticSearch from './pages/semantic-search';
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/clients" component={Clients} />
               <Route path="/progress-notes" component={ProgressNotes} />
               <Route path="/session-history" component={SessionHistory} />
+              <Route path="/session-timeline" component={SessionTimeline} />
               <Route path="/interactive-notes" component={InteractiveNoteCreator} />
               <Route path="/calendar-sync" component={CalendarSync} />
               <Route path="/search" component={SemanticSearch} />
