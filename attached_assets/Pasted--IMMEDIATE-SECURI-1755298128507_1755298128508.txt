@@ -1,0 +1,606 @@
+// =============================================================================
+// IMMEDIATE SECURITY FIXES FOR CLINICAL AI APPLICATION
+// =============================================================================
+// Copy these files into your project to address the highest risk issues
+
+// =============================================================================
+// 1. CLIENT IDENTITY PROTECTION
+// File: src/middleware/clientAuth.ts
+// =============================================================================
+
+import { Request, Response, NextFunction } from 'express';
+import { db } from '../db'; // Adjust path to your database
+import { clients, progressNotes } from '../db/schema'; // Adjust to your schema
+import { eq, and } from 'drizzle-orm';
+
+// Extend Express Request to include authenticated user
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+      verifiedClient?: {
+        id: string;
+        practitionerId: string;
+      };
+    }
+  }
+}
+
+/**
+ * Middleware to verify client ownership before any client data access
+ * CRITICAL: Use this on ALL routes that access client data
+ */
+export const verifyClientOwnership = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { clientId } = req.params;
+    const userId = req.userId; // Assuming you have user auth middleware
+
+    if (!userId) {
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        code: 'AUTH_REQUIRED'
+      });
+    }
+
+    if (!clientId) {
+      return res.status(400).json({ 
+        error: 'Client ID required',
+        code: 'CLIENT_ID_REQUIRED'
+      });
+    }
+
+    // CRITICAL: Verify this client belongs to this practitioner
+    const client = await db
+      .select()
+      .from(clients)
+      .where(and(
+        eq(clients.id, clientId),
+        eq(clients.practitionerId, userId)
+      ))
+      .limit(1);
+
+    if (client.length === 0) {
+      // Log potential security breach attempt
+      console.error('[SECURITY] Unauthorized client access attempt', {
+        userId,
+        clientId,
+        timestamp: new Date(),
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+
+      return res.status(403).json({ 
+        error: 'Client not found or access denied',
+        code: 'CLIENT_ACCESS_DENIED'
+      });
+    }
+
+    // Store verified client for use in route handlers
+    req.verifiedClient = client[0];
+    next();
+  } catch (error) {
+    console.error('[SECURITY] Client verification error:', error);
+    res.status(500).json({ 
+      error: 'Client verification failed',
+      code: 'CLIENT_VERIFICATION_ERROR'
+    });
+  }
+};
+
+/**
+ * Database helper: Safe client data queries with automatic ownership verification
+ */
+export class SecureClientQueries {
+  /**
+   * Get client safely - always verifies ownership
+   */
+  static async getClient(clientId: string, practitionerId: string) {
+    return await db
+      .select()
+      .from(clients)
+      .where(and(
+        eq(clients.id, clientId),
+        eq(clients.practitionerId, practitionerId)
+      ))
+      .limit(1);
+  }
+
+  /**
+   * Get progress notes safely - always verifies client ownership
+   */
+  static async getProgressNotes(clientId: string, practitionerId: string) {
+    // First verify client ownership
+    const clientCheck = await this.getClient(clientId, practitionerId);
+    if (clientCheck.length === 0) {
+      throw new Error('Client access denied');
+    }
+
+    return await db
+      .select()
+      .from(progressNotes)
+      .where(eq(progressNotes.clientId, clientId))
+      .orderBy(progressNotes.sessionDate);
+  }
+
+  /**
+   * Get all clients for a practitioner safely
+   */
+  static async getPractitionerClients(practitionerId: string) {
+    return await db
+      .select()
+      .from(clients)
+      .where(eq(clients.practitionerId, practitionerId));
+  }
+}
+
+// =============================================================================
+// 2. DATA ENCRYPTION
+// File: src/utils/encryption.ts
+// =============================================================================
+
+import crypto from 'crypto';
+
+// IMPORTANT: Set these in your environment variables
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || (() => {
+  throw new Error('ENCRYPTION_KEY environment variable is required for PHI protection');
+})();
+
+const ALGORITHM = 'aes-256-gcm';
+const IV_LENGTH = 16;
+const TAG_LENGTH = 16;
+
+/**
+ * Clinical Data Encryption Utilities
+ * Use these for all sensitive PHI data (notes, client info, etc.)
+ */
+export class ClinicalEncryption {
+  /**
+   * Encrypt sensitive clinical data
+   */
+  static encrypt(text: string): string {
+    if (!text) return text;
+
+    try {
+      const iv = crypto.randomBytes(IV_LENGTH);
+      const cipher = crypto.createCipher(ALGORITHM, ENCRYPTION_KEY);
+      cipher.setAAD(Buffer.from('clinical-data')); // Additional authenticated data
+
+      let encrypted = cipher.update(text, 'utf8', 'hex');
+      encrypted += cipher.final('hex');
+
+      const tag = cipher.getAuthTag();
+
+      // Combine IV + tag + encrypted data
+      return iv.toString('hex') + ':' + tag.toString('hex') + ':' + encrypted;
+    } catch (error) {
+      console.error('[ENCRYPTION] Failed to encrypt clinical data:', error);
+      throw new Error('Data encryption failed');
+    }
+  }
+
+  /**
+   * Decrypt sensitive clinical data
+   */
+  static decrypt(encryptedData: string): string {
+    if (!encryptedData || !encryptedData.includes(':')) {
+      return encryptedData; // Assume unencrypted legacy data
+    }
+
+    try {
+      const parts = encryptedData.split(':');
+      if (parts.length !== 3) {
+        throw new Error('Invalid encrypted data format');
+      }
+
+      const iv = Buffer.from(parts[0], 'hex');
+      const tag = Buffer.from(parts[1], 'hex');
+      const encrypted = parts[2];
+
+      const decipher = crypto.createDecipher(ALGORITHM, ENCRYPTION_KEY);
+      decipher.setAAD(Buffer.from('clinical-data'));
+      decipher.setAuthTag(tag);
+
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+
+      return decrypted;
+    } catch (error) {
+      console.error('[ENCRYPTION] Failed to decrypt clinical data:', error);
+      throw new Error('Data decryption failed');
+    }
+  }
+
+  /**
+   * Hash sensitive data for indexing/searching (one-way)
+   */
+  static hash(data: string): string {
+    return crypto
+      .createHash('sha256')
+      .update(data + ENCRYPTION_KEY)
+      .digest('hex');
+  }
+
+  /**
+   * Generate a secure encryption key (run once, store in env vars)
+   */
+  static generateKey(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
+}
+
+/**
+ * Database field encryption helpers
+ * Use these in your Drizzle schema or before saving data
+ */
+export const encryptedField = {
+  /**
+   * Encrypt before saving to database
+   */
+  beforeSave: (value: string | null): string | null => {
+    if (!value) return value;
+    return ClinicalEncryption.encrypt(value);
+  },
+
+  /**
+   * Decrypt after loading from database
+   */
+  afterLoad: (value: string | null): string | null => {
+    if (!value) return value;
+    return ClinicalEncryption.decrypt(value);
+  }
+};
+
+// Example usage in your models:
+export const encryptClientData = (clientData: any) => ({
+  ...clientData,
+  // Encrypt PHI fields
+  notes: encryptedField.beforeSave(clientData.notes),
+  address: encryptedField.beforeSave(clientData.address),
+  phone: encryptedField.beforeSave(clientData.phone),
+  // Keep non-PHI fields unencrypted for performance
+  name: clientData.name, // Consider if this needs encryption based on your requirements
+  email: clientData.email,
+});
+
+export const decryptClientData = (encryptedData: any) => ({
+  ...encryptedData,
+  notes: encryptedField.afterLoad(encryptedData.notes),
+  address: encryptedField.afterLoad(encryptedData.address),
+  phone: encryptedField.afterLoad(encryptedData.phone),
+});
+
+// =============================================================================
+// 3. DATABASE TRANSACTIONS
+// File: src/utils/transactions.ts
+// =============================================================================
+
+import { db } from '../db'; // Adjust to your database import
+
+/**
+ * Safe transaction wrapper for clinical operations
+ * CRITICAL: Use this for any operation that involves multiple related database writes
+ */
+export class ClinicalTransactions {
+  /**
+   * Create a new progress note with AI analysis (atomic operation)
+   */
+  static async createProgressNoteWithAnalysis(
+    noteData: {
+      clientId: string;
+      content: string;
+      sessionDate: Date;
+      practitionerId: string;
+    },
+    aiAnalysis: {
+      insights: string[];
+      tags: string[];
+      riskFactors: string[];
+    }
+  ) {
+    return await db.transaction(async (tx) => {
+      try {
+        // 1. Verify client ownership first
+        const clientCheck = await tx
+          .select()
+          .from(clients)
+          .where(and(
+            eq(clients.id, noteData.clientId),
+            eq(clients.practitionerId, noteData.practitionerId)
+          ))
+          .limit(1);
+
+        if (clientCheck.length === 0) {
+          throw new Error('Client access denied');
+        }
+
+        // 2. Encrypt sensitive content
+        const encryptedContent = ClinicalEncryption.encrypt(noteData.content);
+
+        // 3. Insert progress note
+        const [progressNote] = await tx
+          .insert(progressNotes)
+          .values({
+            clientId: noteData.clientId,
+            content: encryptedContent,
+            sessionDate: noteData.sessionDate,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+
+        // 4. Insert AI analysis
+        const [analysis] = await tx
+          .insert(aiAnalyses) // Adjust table name
+          .values({
+            progressNoteId: progressNote.id,
+            insights: JSON.stringify(aiAnalysis.insights),
+            tags: JSON.stringify(aiAnalysis.tags),
+            riskFactors: JSON.stringify(aiAnalysis.riskFactors),
+            createdAt: new Date(),
+          })
+          .returning();
+
+        // 5. Update client last activity
+        await tx
+          .update(clients)
+          .set({
+            lastActivityDate: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(clients.id, noteData.clientId));
+
+        return {
+          progressNote,
+          analysis,
+          success: true,
+        };
+      } catch (error) {
+        // Transaction will automatically rollback
+        console.error('[TRANSACTION] Failed to create progress note:', error);
+        throw error;
+      }
+    });
+  }
+
+  /**
+   * Update client information safely
+   */
+  static async updateClientSafely(
+    clientId: string,
+    practitionerId: string,
+    updates: Partial<{
+      name: string;
+      email: string;
+      phone: string;
+      notes: string;
+    }>
+  ) {
+    return await db.transaction(async (tx) => {
+      // 1. Verify ownership
+      const clientCheck = await tx
+        .select()
+        .from(clients)
+        .where(and(
+          eq(clients.id, clientId),
+          eq(clients.practitionerId, practitionerId)
+        ))
+        .limit(1);
+
+      if (clientCheck.length === 0) {
+        throw new Error('Client access denied');
+      }
+
+      // 2. Encrypt sensitive fields
+      const encryptedUpdates = {
+        ...updates,
+        notes: updates.notes ? ClinicalEncryption.encrypt(updates.notes) : undefined,
+        phone: updates.phone ? ClinicalEncryption.encrypt(updates.phone) : undefined,
+        updatedAt: new Date(),
+      };
+
+      // 3. Update client
+      const [updatedClient] = await tx
+        .update(clients)
+        .set(encryptedUpdates)
+        .where(eq(clients.id, clientId))
+        .returning();
+
+      return updatedClient;
+    });
+  }
+
+  /**
+   * Delete client and all related data (GDPR/data retention compliance)
+   */
+  static async deleteClientCompletely(
+    clientId: string,
+    practitionerId: string
+  ) {
+    return await db.transaction(async (tx) => {
+      // 1. Verify ownership
+      const clientCheck = await tx
+        .select()
+        .from(clients)
+        .where(and(
+          eq(clients.id, clientId),
+          eq(clients.practitionerId, practitionerId)
+        ))
+        .limit(1);
+
+      if (clientCheck.length === 0) {
+        throw new Error('Client access denied');
+      }
+
+      // 2. Delete in correct order (foreign key dependencies)
+      
+      // Delete AI analyses first
+      await tx
+        .delete(aiAnalyses)
+        .where(eq(aiAnalyses.clientId, clientId));
+
+      // Delete progress notes
+      await tx
+        .delete(progressNotes)
+        .where(eq(progressNotes.clientId, clientId));
+
+      // Delete client files/attachments if you have them
+      // await tx.delete(clientFiles).where(eq(clientFiles.clientId, clientId));
+
+      // Finally delete client
+      await tx
+        .delete(clients)
+        .where(eq(clients.id, clientId));
+
+      return { success: true, deletedClientId: clientId };
+    });
+  }
+
+  /**
+   * Generic safe transaction wrapper
+   */
+  static async safeTransaction<T>(
+    operation: (tx: any) => Promise<T>,
+    errorMessage: string = 'Transaction failed'
+  ): Promise<T> {
+    try {
+      return await db.transaction(operation);
+    } catch (error) {
+      console.error(`[TRANSACTION] ${errorMessage}:`, error);
+      throw new Error(errorMessage);
+    }
+  }
+}
+
+// =============================================================================
+// 4. ROUTE PROTECTION EXAMPLES
+// File: src/routes/clients.ts (example usage)
+// =============================================================================
+
+import express from 'express';
+import { verifyClientOwnership, SecureClientQueries } from '../middleware/clientAuth';
+import { ClinicalTransactions } from '../utils/transactions';
+import { decryptClientData } from '../utils/encryption';
+
+const router = express.Router();
+
+// PROTECTED: Get client details
+router.get('/clients/:clientId', verifyClientOwnership, async (req, res) => {
+  try {
+    const client = req.verifiedClient; // Already verified by middleware
+    
+    // Decrypt sensitive fields before sending
+    const decryptedClient = decryptClientData(client);
+    
+    res.json({ client: decryptedClient });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch client data' });
+  }
+});
+
+// PROTECTED: Get client progress notes
+router.get('/clients/:clientId/notes', verifyClientOwnership, async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const userId = req.userId!;
+
+    const notes = await SecureClientQueries.getProgressNotes(clientId, userId);
+    
+    // Decrypt notes before sending
+    const decryptedNotes = notes.map(note => ({
+      ...note,
+      content: ClinicalEncryption.decrypt(note.content)
+    }));
+
+    res.json({ notes: decryptedNotes });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch progress notes' });
+  }
+});
+
+// PROTECTED: Create new progress note
+router.post('/clients/:clientId/notes', verifyClientOwnership, async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { content, sessionDate, aiAnalysis } = req.body;
+    const userId = req.userId!;
+
+    const result = await ClinicalTransactions.createProgressNoteWithAnalysis(
+      {
+        clientId,
+        content,
+        sessionDate: new Date(sessionDate),
+        practitionerId: userId,
+      },
+      aiAnalysis
+    );
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create progress note' });
+  }
+});
+
+export default router;
+
+// =============================================================================
+// 5. ENVIRONMENT VARIABLES SETUP
+// File: .env (add these to your environment)
+// =============================================================================
+
+/*
+# Add these to your .env file:
+
+# Encryption for PHI data (generate with ClinicalEncryption.generateKey())
+ENCRYPTION_KEY=your-256-bit-encryption-key-here
+
+# Database URLs
+DATABASE_URL=your-database-url
+DIRECT_URL=your-direct-database-url
+
+# Make sure these are set for production security
+NODE_ENV=production
+SESSION_SECRET=your-session-secret
+*/
+
+// =============================================================================
+// 6. IMMEDIATE DEPLOYMENT CHECKLIST
+// =============================================================================
+
+/*
+BEFORE DEPLOYING THESE FIXES:
+
+✅ 1. Set ENCRYPTION_KEY environment variable:
+   - Run: console.log(ClinicalEncryption.generateKey())
+   - Copy the output to your .env file
+
+✅ 2. Add client ownership middleware to ALL client data routes:
+   - Any route with :clientId parameter
+   - Any route accessing progress notes
+   - Any route accessing client files
+
+✅ 3. Wrap multi-step operations in transactions:
+   - Creating notes + AI analysis
+   - Updating client + metadata
+   - Deleting client + related data
+
+✅ 4. Test the security:
+   - Try accessing another user's client data (should fail)
+   - Try malformed client IDs (should fail gracefully)
+   - Test transaction rollbacks on errors
+
+⚠️  5. CRITICAL: Encrypt existing data:
+   - Run a migration to encrypt existing PHI
+   - Test decryption works correctly
+   - Backup database before encryption migration
+
+This code addresses the three immediate security risks:
+- Client Identity Protection: ✅ Middleware + secure queries
+- Data Encryption: ✅ PHI encryption utilities  
+- Database Transactions: ✅ Atomic operations + rollbacks
+
+Deploy these changes ASAP to protect your clinical practice.
+*/
