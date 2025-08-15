@@ -48,6 +48,17 @@ documentsRouter.post("/smart-upload", (req, res) => {
         return res.status(400).json({ error: "clientId and appointmentDate required" });
       }
 
+      // For smart-parsing, use the first available client
+      let actualClientId = clientId;
+      if (clientId === 'smart-parsing') {
+        const clients = await storage.getClients('dr-jonathan-procter');
+        if (clients.length > 0) {
+          actualClientId = clients[0].id;
+        } else {
+          return res.status(400).json({ error: "No clients available for smart parsing" });
+        }
+      }
+
       // Handle files from any field
       const files = (req.files as Express.Multer.File[]) || [];
       const uploaded = [];
@@ -60,12 +71,14 @@ documentsRouter.post("/smart-upload", (req, res) => {
           size: f.size 
         };
 
-        const doc = await createDocument({
-          clientId, 
-          appointmentDate, 
-          filename: f.originalname, 
-          mimeType: f.mimetype, 
-          meta
+        const doc = await storage.createDocument({
+          clientId: actualClientId, 
+          therapistId: 'dr-jonathan-procter', // Mock therapist ID
+          fileName: f.originalname, 
+          fileType: f.mimetype, 
+          filePath: `/uploads/${Date.now()}-${f.originalname}`,
+          fileSize: f.size,
+          metadata: meta
         });
 
         uploaded.push({ 
@@ -90,7 +103,7 @@ documentsRouter.post("/parse", async (req, res) => {
       return res.status(400).json({ error: "documentId required" });
     }
 
-    const doc = await getDocument(documentId);
+    const doc = await storage.getDocument(documentId);
     if (!doc) {
       return res.status(404).json({ error: "Document not found" });
     }
@@ -133,7 +146,7 @@ documentsRouter.post("/process-batch", async (req, res) => {
 
     for (const id of documentIds) {
       try {
-        const doc = await getDocument(id);
+        const doc = await storage.getDocument(id);
         if (!doc) { 
           results.push({ documentId: id, error: "not found" }); 
           continue; 
@@ -154,7 +167,7 @@ documentsRouter.post("/process-batch", async (req, res) => {
         }
 
         // AI process if not already done
-        const existing = await getAIResult(id, promptId);
+        const existing = await storage.getAIResult(id, promptId);
         if (!existing || force) {
           try {
             const aiResult = await processDocumentWithAI(id);
@@ -234,7 +247,7 @@ documentsRouter.post("/smart-process", async (req, res) => {
 
     for (const id of documentIds) {
       try {
-        const doc = await getDocument(id);
+        const doc = await storage.getDocument(id);
         if (!doc) { 
           results.push({ documentId: id, error: "not found" }); 
           continue; 
@@ -257,7 +270,7 @@ documentsRouter.post("/smart-process", async (req, res) => {
         // Smart parse with AI
         try {
           const smartResult = await smartParseDocument(id);
-          const parsed = await getDocument(id); // Get updated document after parsing
+          const parsed = await storage.getDocument(id); // Get updated document after parsing
 
           results.push({ 
             documentId: id, 
