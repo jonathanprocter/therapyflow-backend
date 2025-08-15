@@ -133,12 +133,10 @@ export default function Clients() {
                     <div className="flex items-center justify-between mb-4">
                       <Link href={`/clients/${client.id}`}>
                         <h3 
-                          className="font-semibold cursor-pointer transition-colors" 
+                          className="font-semibold cursor-pointer transition-colors hover:text-[#88A5BC]" 
                           style={{ 
                             color: '#344C3D'
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = '#88A5BC'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = '#344C3D'; }}
                           data-testid={`client-name-${client.id}`}
                         >
                           {client.name}
