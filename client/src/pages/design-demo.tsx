@@ -7,7 +7,7 @@ const DesignDemo = () => {
     { title: 'Active Clients', value: '24', change: '+12%', icon: Users, color: 'sage' as const },
     { title: 'Sessions', value: '156', change: '+8%', icon: Calendar, color: 'blue' as const },
     { title: 'Notes', value: '89', change: '+23%', icon: FileText, color: 'amber' as const },
-    { title: 'Insights', value: '45', change: '+15%', icon: Brain, color: 'rose' as const },
+    { title: 'Insights', value: '45', change: '+15%', icon: Brain, color: 'green' as const },
   ];
 
   return (

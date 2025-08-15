@@ -404,7 +404,7 @@ export default function SessionSummaryGenerator({
                     <ul className="space-y-2">
                       {generateSummaryMutation.data.summary.treatmentPlanUpdates.map((update: string, idx: number) => (
                         <li key={idx} className="flex items-start">
-                          <i className="fas fa-edit text-xs mt-2 mr-3 text-purple-500"></i>
+                          <i className="fas fa-edit text-xs mt-2 mr-3" style={{ color: '#88A5BC' }}></i>
                           <span className="text-gray-700 dark:text-gray-300">{update}</span>
                         </li>
                       ))}

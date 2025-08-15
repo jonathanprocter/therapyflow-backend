@@ -1345,7 +1345,7 @@ export default function ClientDetail() {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
-                      <Clock className="h-5 w-5 text-purple-600" />
+                      <Clock className="h-5 w-5" style={{ color: '#88A5BC' }} />
                       <div>
                         <p className="text-sm font-medium text-gray-500">Total Hours</p>
                         <p className="text-2xl font-bold text-gray-900">{sessionStats.totalHours}</p>

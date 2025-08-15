@@ -338,7 +338,7 @@ export function TherapeuticDashboardWidget() {
     <Card data-testid="therapeutic-dashboard-widget">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-purple-500" />
+          <Brain className="h-5 w-5" style={{ color: '#88A5BC' }} />
           Therapeutic Insights
         </CardTitle>
         <Badge variant="outline">AI-Powered</Badge>
@@ -401,7 +401,7 @@ function InsightsPreview({ clientId, limit = 3 }: { clientId: string; limit?: nu
     <div className="space-y-2" data-testid="container-insights-preview">
       {insights.map((insight: any) => (
         <div key={insight.id} className="flex items-start gap-2" data-testid={`insight-item-${insight.id}`}>
-          <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5" />
+          <div className="w-2 h-2 rounded-full mt-1.5" style={{ backgroundColor: '#88A5BC' }} />
           <p className="text-sm" data-testid="text-insight-preview">{insight.insight}</p>
         </div>
       ))}

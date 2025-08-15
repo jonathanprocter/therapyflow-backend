@@ -24,9 +24,9 @@ export default function Calendar() {
       "individual": "primary",
       "couples": "secondary", 
       "family": "accent",
-      "group": "purple-600"
+      "group": "sage"
     };
-    const colors = ["primary", "secondary", "accent", "purple-600"];
+    const colors = ["primary", "secondary", "accent", "sage"];
     return colorMap[sessionType.toLowerCase()] || colors[index % colors.length];
   };
 

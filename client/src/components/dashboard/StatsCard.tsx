@@ -8,7 +8,7 @@ interface StatsCardProps {
   value: string | number;
   change?: string;
   icon: LucideIcon;
-  color?: 'sage' | 'blue' | 'amber' | 'rose';
+  color?: 'sage' | 'blue' | 'amber' | 'green';
   index?: number;
 }
 
@@ -24,7 +24,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
     sage: 'from-sage-400 to-sage-600',
     blue: 'from-accent-blue to-blue-600',
     amber: 'from-accent-amber to-amber-600',
-    rose: 'from-accent-rose to-rose-600',
+    green: 'from-sage-500 to-moss-600',
   };
 
   return (
