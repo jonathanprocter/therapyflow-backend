@@ -27,6 +27,7 @@ const navigation = [
 ];
 
 const aiProcessing = [
+  { name: "Bulk Transcripts", href: "/bulk-transcripts", icon: FileUp, badge: "NEW", isSpecial: true },
   { name: "Smart Upload", href: "/smart", icon: Sparkles, badge: "AI", isSpecial: true },
   { name: "Documents Upload", href: "/documents", icon: FileUp },
   { name: "AI Results", href: "/results", icon: Brain, badge: "AI" },

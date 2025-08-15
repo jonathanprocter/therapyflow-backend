@@ -16,6 +16,7 @@ import InteractiveNoteCreator from './pages/InteractiveNoteCreator';
 import CalendarSync from './pages/calendar-sync';
 import SemanticSearch from './pages/semantic-search';
 import TreatmentPlans from './pages/treatment-plans';
+import BulkTranscripts from './pages/bulk-transcripts';
 import Sidebar from './components/layout/sidebar';
 import TopBar from './components/layout/topbar';
 import HomePage from './pages/HomePage';
@@ -39,6 +40,7 @@ export default function App() {
               <Route path="/calendar-sync" component={CalendarSync} />
               <Route path="/search" component={SemanticSearch} />
               <Route path="/treatment-plans" component={TreatmentPlans} />
+              <Route path="/bulk-transcripts" component={BulkTranscripts} />
               <Route path="/smart" component={SmartUpload} />
               <Route path="/documents" component={DocumentsUpload} />
               <Route path="/results" component={CareNotesResults} />

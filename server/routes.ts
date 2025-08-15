@@ -17,6 +17,7 @@ import {
   insertAllianceScoreSchema
 } from "@shared/schema";
 import multer from "multer";
+import { registerTranscriptRoutes } from "./routes/transcript-routes";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -1189,6 +1190,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch calendar list" });
     }
   });
+
+  // Register transcript processing routes
+  registerTranscriptRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;

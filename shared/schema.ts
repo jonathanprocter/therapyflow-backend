@@ -162,6 +162,72 @@ export const aiInsights = pgTable("ai_insights", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Bulk Transcript Upload Batches
+export const transcriptBatches = pgTable("transcript_batches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  name: text("name").notNull(), // User-provided batch name
+  totalFiles: integer("total_files").notNull(),
+  processedFiles: integer("processed_files").default(0),
+  successfulFiles: integer("successful_files").default(0),
+  failedFiles: integer("failed_files").default(0),
+  status: text("status").notNull().default("uploading"), // uploading, processing, completed, failed
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+  completedAt: timestamp("completed_at"),
+});
+
+// Individual Transcript Files
+export const transcriptFiles = pgTable("transcript_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  batchId: varchar("batch_id").notNull().references(() => transcriptBatches.id),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  fileName: text("file_name").notNull(),
+  fileSize: integer("file_size"),
+  filePath: text("file_path").notNull(), // Object storage path
+  extractedText: text("extracted_text"),
+  status: text("status").notNull().default("uploaded"), // uploaded, processing, processed, failed, assigned
+  processingStatus: text("processing_status").default("pending"), // pending, extracting_text, analyzing, matching_client, creating_note, completed, failed
+  
+  // AI Processing Results
+  clientMatchConfidence: real("client_match_confidence"), // 0-1 confidence score
+  suggestedClientId: varchar("suggested_client_id").references(() => clients.id),
+  suggestedClientName: text("suggested_client_name"),
+  alternativeMatches: jsonb("alternative_matches"), // Array of {clientId, name, confidence}
+  
+  // Session Date Extraction
+  extractedSessionDate: timestamp("extracted_session_date"),
+  sessionDateConfidence: real("session_date_confidence"),
+  sessionDateSource: text("session_date_source"), // "filename", "content", "manual"
+  
+  // Content Analysis
+  sessionType: text("session_type").default("individual"), // individual, couples, session without patient present
+  aiAnalysis: jsonb("ai_analysis"), // Full AI analysis results
+  themes: text("themes").array().default([]),
+  riskLevel: text("risk_level").default("low"),
+  progressRating: integer("progress_rating"), // 1-10 scale
+  
+  // Manual Review
+  requiresManualReview: boolean("requires_manual_review").default(false),
+  manualReviewReason: text("manual_review_reason"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  manualAssignments: jsonb("manual_assignments"), // Manual overrides
+  
+  // Final Assignment
+  assignedClientId: varchar("assigned_client_id").references(() => clients.id),
+  assignedSessionDate: timestamp("assigned_session_date"),
+  assignedSessionType: text("assigned_session_type"),
+  createdProgressNoteId: varchar("created_progress_note_id").references(() => progressNotes.id),
+  
+  // Metadata
+  processingNotes: text("processing_notes"),
+  errorDetails: text("error_details"),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+  assignedAt: timestamp("assigned_at"),
+});
+
 // CareNotesAI Document Processing Pipeline Tables
 export const aiDocumentResults = pgTable("ai_document_results", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -196,6 +262,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   allianceScores: many(allianceScores),
   documents: many(documents),
   aiInsights: many(aiInsights),
+  transcriptBatches: many(transcriptBatches),
+  transcriptFiles: many(transcriptFiles),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -259,6 +327,41 @@ export const crossReferencesRelations = relations(crossReferences, ({ one }) => 
   }),
 }));
 
+export const transcriptBatchesRelations = relations(transcriptBatches, ({ one, many }) => ({
+  therapist: one(users, {
+    fields: [transcriptBatches.therapistId],
+    references: [users.id],
+  }),
+  files: many(transcriptFiles),
+}));
+
+export const transcriptFilesRelations = relations(transcriptFiles, ({ one }) => ({
+  batch: one(transcriptBatches, {
+    fields: [transcriptFiles.batchId],
+    references: [transcriptBatches.id],
+  }),
+  therapist: one(users, {
+    fields: [transcriptFiles.therapistId],
+    references: [users.id],
+  }),
+  suggestedClient: one(clients, {
+    fields: [transcriptFiles.suggestedClientId],
+    references: [clients.id],
+  }),
+  assignedClient: one(clients, {
+    fields: [transcriptFiles.assignedClientId],
+    references: [clients.id],
+  }),
+  createdProgressNote: one(progressNotes, {
+    fields: [transcriptFiles.createdProgressNoteId],
+    references: [progressNotes.id],
+  }),
+  reviewedByUser: one(users, {
+    fields: [transcriptFiles.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -310,6 +413,16 @@ export const insertAiInsightSchema = createInsertSchema(aiInsights).omit({
   createdAt: true,
 });
 
+export const insertTranscriptBatchSchema = createInsertSchema(transcriptBatches).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export const insertTranscriptFileSchema = createInsertSchema(transcriptFiles).omit({
+  id: true,
+  uploadedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -337,3 +450,9 @@ export type Document = typeof documents.$inferSelect;
 
 export type InsertAiInsight = z.infer<typeof insertAiInsightSchema>;
 export type AiInsight = typeof aiInsights.$inferSelect;
+
+export type InsertTranscriptBatch = z.infer<typeof insertTranscriptBatchSchema>;
+export type TranscriptBatch = typeof transcriptBatches.$inferSelect;
+
+export type InsertTranscriptFile = z.infer<typeof insertTranscriptFileSchema>;
+export type TranscriptFile = typeof transcriptFiles.$inferSelect;

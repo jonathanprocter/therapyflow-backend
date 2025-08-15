@@ -1,13 +1,16 @@
 import { 
   users, clients, sessions, progressNotes, caseConceptualizations, 
   treatmentPlans, allianceScores, documents, aiInsights, crossReferences,
+  transcriptBatches, transcriptFiles,
   type User, type InsertUser, type Client, type InsertClient,
   type Session, type InsertSession, type ProgressNote, type InsertProgressNote,
   type CaseConceptualization, type InsertCaseConceptualization,
   type TreatmentPlan, type InsertTreatmentPlan,
   type AllianceScore, type InsertAllianceScore,
   type Document, type InsertDocument,
-  type AiInsight, type InsertAiInsight
+  type AiInsight, type InsertAiInsight,
+  type TranscriptBatch, type InsertTranscriptBatch,
+  type TranscriptFile, type InsertTranscriptFile
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, like, sql, isNull, ne } from "drizzle-orm";
@@ -82,6 +85,22 @@ export interface IStorage {
   getAiInsights(therapistId: string, limit?: number): Promise<AiInsight[]>;
   createAiInsight(insight: InsertAiInsight): Promise<AiInsight>;
   markInsightAsRead(id: string): Promise<void>;
+
+  // Transcript Batch Processing
+  createTranscriptBatch(batch: InsertTranscriptBatch): Promise<TranscriptBatch>;
+  getTranscriptBatch(id: string): Promise<TranscriptBatch | undefined>;
+  getTranscriptBatches(therapistId: string): Promise<TranscriptBatch[]>;
+  updateTranscriptBatch(id: string, updates: Partial<InsertTranscriptBatch>): Promise<TranscriptBatch>;
+  
+  // Transcript File Processing
+  createTranscriptFile(file: InsertTranscriptFile): Promise<TranscriptFile>;
+  getTranscriptFile(id: string): Promise<TranscriptFile | undefined>;
+  getTranscriptFilesByBatch(batchId: string): Promise<TranscriptFile[]>;
+  getTranscriptFilesForProcessing(therapistId: string, limit?: number): Promise<TranscriptFile[]>;
+  getTranscriptFilesForReview(therapistId: string): Promise<TranscriptFile[]>;
+  updateTranscriptFile(id: string, updates: Partial<InsertTranscriptFile>): Promise<TranscriptFile>;
+  assignTranscriptToClient(fileId: string, clientId: string, sessionDate: Date, sessionType: string): Promise<TranscriptFile>;
+  createProgressNoteFromTranscript(fileId: string): Promise<ProgressNote>;
 
   // Statistics
   getTherapistStats(therapistId: string): Promise<{
@@ -714,6 +733,145 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(sessions.scheduledAt));
+  }
+
+  // Transcript Batch Processing
+  async createTranscriptBatch(batch: InsertTranscriptBatch): Promise<TranscriptBatch> {
+    const [newBatch] = await db
+      .insert(transcriptBatches)
+      .values(batch)
+      .returning();
+    return newBatch;
+  }
+
+  async getTranscriptBatch(id: string): Promise<TranscriptBatch | undefined> {
+    const [batch] = await db.select().from(transcriptBatches).where(eq(transcriptBatches.id, id));
+    return batch || undefined;
+  }
+
+  async getTranscriptBatches(therapistId: string): Promise<TranscriptBatch[]> {
+    return await db
+      .select()
+      .from(transcriptBatches)
+      .where(eq(transcriptBatches.therapistId, therapistId))
+      .orderBy(desc(transcriptBatches.uploadedAt));
+  }
+
+  async updateTranscriptBatch(id: string, updates: Partial<InsertTranscriptBatch>): Promise<TranscriptBatch> {
+    const [updatedBatch] = await db
+      .update(transcriptBatches)
+      .set(updates)
+      .where(eq(transcriptBatches.id, id))
+      .returning();
+    return updatedBatch;
+  }
+
+  // Transcript File Processing
+  async createTranscriptFile(file: InsertTranscriptFile): Promise<TranscriptFile> {
+    const [newFile] = await db
+      .insert(transcriptFiles)
+      .values(file)
+      .returning();
+    return newFile;
+  }
+
+  async getTranscriptFile(id: string): Promise<TranscriptFile | undefined> {
+    const [file] = await db.select().from(transcriptFiles).where(eq(transcriptFiles.id, id));
+    return file || undefined;
+  }
+
+  async getTranscriptFilesByBatch(batchId: string): Promise<TranscriptFile[]> {
+    return await db
+      .select()
+      .from(transcriptFiles)
+      .where(eq(transcriptFiles.batchId, batchId))
+      .orderBy(transcriptFiles.fileName);
+  }
+
+  async getTranscriptFilesForProcessing(therapistId: string, limit = 10): Promise<TranscriptFile[]> {
+    return await db
+      .select()
+      .from(transcriptFiles)
+      .where(
+        and(
+          eq(transcriptFiles.therapistId, therapistId),
+          eq(transcriptFiles.status, "uploaded")
+        )
+      )
+      .orderBy(transcriptFiles.uploadedAt)
+      .limit(limit);
+  }
+
+  async getTranscriptFilesForReview(therapistId: string): Promise<TranscriptFile[]> {
+    return await db
+      .select()
+      .from(transcriptFiles)
+      .where(
+        and(
+          eq(transcriptFiles.therapistId, therapistId),
+          eq(transcriptFiles.requiresManualReview, true),
+          ne(transcriptFiles.status, "assigned")
+        )
+      )
+      .orderBy(transcriptFiles.uploadedAt);
+  }
+
+  async updateTranscriptFile(id: string, updates: Partial<InsertTranscriptFile>): Promise<TranscriptFile> {
+    const [updatedFile] = await db
+      .update(transcriptFiles)
+      .set(updates)
+      .where(eq(transcriptFiles.id, id))
+      .returning();
+    return updatedFile;
+  }
+
+  async assignTranscriptToClient(fileId: string, clientId: string, sessionDate: Date, sessionType: string): Promise<TranscriptFile> {
+    const [updatedFile] = await db
+      .update(transcriptFiles)
+      .set({
+        assignedClientId: clientId,
+        assignedSessionDate: sessionDate,
+        assignedSessionType: sessionType,
+        status: "assigned",
+        assignedAt: new Date()
+      })
+      .where(eq(transcriptFiles.id, fileId))
+      .returning();
+    return updatedFile;
+  }
+
+  async createProgressNoteFromTranscript(fileId: string): Promise<ProgressNote> {
+    const file = await this.getTranscriptFile(fileId);
+    if (!file || !file.assignedClientId || !file.assignedSessionDate) {
+      throw new Error("Transcript file not properly assigned");
+    }
+
+    const [progressNote] = await db
+      .insert(progressNotes)
+      .values({
+        clientId: file.assignedClientId,
+        therapistId: file.therapistId,
+        sessionDate: file.assignedSessionDate,
+        content: file.extractedText || "",
+        tags: file.themes || [],
+        aiTags: file.themes || [],
+        riskLevel: file.riskLevel || "low",
+        progressRating: file.progressRating,
+        status: "processed",
+        isPlaceholder: false,
+        requiresManualReview: file.requiresManualReview,
+        aiConfidenceScore: file.clientMatchConfidence,
+        processingNotes: file.processingNotes,
+        originalDocumentId: null // Could link to document table if needed
+      })
+      .returning();
+
+    // Update the transcript file to link to the created progress note
+    await this.updateTranscriptFile(fileId, {
+      createdProgressNoteId: progressNote.id
+    });
+
+    return progressNote;
   }
 };
 
