@@ -31,6 +31,7 @@ export default function App() {
             <Switch>
               <Route path="/dashboard" component={Dashboard} />
               <Route path="/calendar" component={Calendar} />
+              <Route path="/client" component={Clients} />
               <Route path="/clients" component={Clients} />
               <Route path="/progress-notes" component={ProgressNotes} />
               <Route path="/session-history" component={SessionHistory} />
