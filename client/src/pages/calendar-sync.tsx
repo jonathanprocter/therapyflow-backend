@@ -1,7 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import Sidebar from "@/components/layout/sidebar";
-import TopBar from "@/components/layout/topbar";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +31,7 @@ export default function CalendarSync() {
       setSyncInProgress(true);
       return apiRequest("/api/calendar/sync", {
         method: "POST",
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           startDate: "2010-01-01", 
           endDate: "2030-12-31"
@@ -75,13 +75,7 @@ export default function CalendarSync() {
   };
 
   return (
-    <div className="flex h-screen" style={{ backgroundColor: '#F2F3F1' }} data-testid="calendar-sync-page">
-      <Sidebar />
-      
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <TopBar />
-        
-        <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 overflow-y-auto p-6" data-testid="calendar-sync-page">
           <div className="mb-6">
             <h1 className="text-2xl font-bold" style={{ color: '#344C3D' }} data-testid="page-title">
               Calendar Integration
@@ -290,8 +284,6 @@ export default function CalendarSync() {
               </Card>
             )}
           </div>
-        </div>
-      </main>
     </div>
   );
 }
