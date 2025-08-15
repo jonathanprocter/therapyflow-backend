@@ -335,20 +335,24 @@ export function TherapeuticDashboardWidget() {
   const recentInsights = recentInsightsData?.insights || [];
 
   return (
-    <Card data-testid="therapeutic-dashboard-widget">
+    <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="therapeutic-dashboard-widget">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
           <Brain className="h-5 w-5" style={{ color: '#88A5BC' }} />
           Therapeutic Insights
         </CardTitle>
-        <Badge variant="outline">AI-Powered</Badge>
+        <Badge variant="outline" style={{ borderColor: '#8EA58C', color: '#8EA58C' }}>AI-Powered</Badge>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {recentInsights.slice(0, 5).map((insight: any) => (
             <div 
               key={insight.id}
-              className="p-3 bg-secondary rounded-lg cursor-pointer hover:bg-secondary/80 transition-colors"
+              className="p-3 rounded-lg cursor-pointer transition-colors"
+              style={{ 
+                backgroundColor: 'rgba(242, 243, 241, 0.5)',
+                '&:hover': { backgroundColor: 'rgba(242, 243, 241, 0.8)' }
+              }}
               onClick={() => navigate(`/clients/${insight.clientId}/journey`)}
               data-testid={`card-insight-${insight.id}`}
             >
@@ -370,7 +374,7 @@ export function TherapeuticDashboardWidget() {
         {recentInsights.length === 0 && (
           <div className="text-center py-8" style={{ color: '#738A6E' }} data-testid="text-no-insights">
             <Brain className="h-8 w-8 mx-auto mb-3 opacity-50" style={{ color: '#88A5BC' }} />
-            <p className="text-sm">
+            <p className="text-sm" style={{ color: '#738A6E' }}>
               Insights will appear as sessions are analyzed
             </p>
           </div>

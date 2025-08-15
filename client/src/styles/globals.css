@@ -714,4 +714,36 @@
   .border-french-blue { border-color: #88A5BC !important; }
   .border-sage { border-color: #8EA58C !important; }
   .border-ivory { border-color: #F2F3F1 !important; }
+
+  /* Nuclear override for any remaining yellow elements */
+  *[style*="yellow"],
+  *[class*="yellow"],
+  .bg-yellow,
+  .bg-yellow-50,
+  .bg-yellow-100,
+  .bg-yellow-200,
+  .bg-yellow-300,
+  .bg-yellow-400,
+  .bg-yellow-500,
+  .text-yellow,
+  .text-yellow-400,
+  .text-yellow-500,
+  .text-yellow-600,
+  .border-yellow,
+  .border-yellow-200,
+  .border-yellow-300,
+  .border-yellow-400 {
+    background-color: #FFFFFF !important;
+    color: #344C3D !important;
+    border-color: rgba(115, 138, 110, 0.15) !important;
+  }
+
+  /* Force secondary backgrounds to use brand colors */
+  .bg-secondary {
+    background-color: rgba(242, 243, 241, 0.5) !important;
+  }
+
+  .bg-secondary\/80 {
+    background-color: rgba(242, 243, 241, 0.8) !important;
+  }
 }
