@@ -139,7 +139,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getClient(id: string): Promise<Client | undefined> {
-    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    const [client] = await db.select().from(clients).where(
+      and(eq(clients.id, id), isNull(clients.deletedAt))
+    );
     return client || undefined;
   }
 

@@ -277,6 +277,9 @@ export default function ClientDetail() {
   const isLoading = queries.some(q => q.isLoading);
   const hasError = queries.some(q => q.isError);
   const errors = queries.filter(q => q.isError).map(q => q.error);
+  
+  // Check if client was not found (deleted or doesn't exist)
+  const clientNotFound = clientQuery.isError && clientQuery.error?.message?.includes('404');
 
   // Merge server notifications with local state
   useEffect(() => {
@@ -903,18 +906,26 @@ export default function ClientDetail() {
   }
 
   // Client not found
-  if (!client) {
+  // Handle client not found (deleted or doesn't exist)
+  if (clientNotFound || (!isLoading && !client)) {
     return (
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen" style={{backgroundColor: '#F2F3F1'}}>
         <Sidebar />
         <main className="flex-1 flex flex-col overflow-hidden">
           <TopBar />
           <div className="flex-1 overflow-y-auto p-6">
             <div className="text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Client not found</h3>
-              <p className="text-gray-500 mb-4">The requested client could not be found.</p>
+              <h3 className="text-lg font-medium mb-2" style={{color: '#344C3D'}}>Client not found</h3>
+              <p className="mb-4" style={{color: '#738A6E'}}>
+                This client may have been deleted or the link is invalid.
+              </p>
               <Link href="/clients">
-                <Button>Back to Clients</Button>
+                <Button 
+                  style={{backgroundColor: '#8EA58C', borderColor: '#8EA58C'}}
+                  className="hover:bg-opacity-90"
+                >
+                  Back to Clients
+                </Button>
               </Link>
             </div>
           </div>
