@@ -70,6 +70,18 @@ export default function SessionTimeline() {
 
   const { data: sessions, isLoading } = useQuery<SessionTimelineData[]>({
     queryKey: ["/api/sessions/timeline", filters],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== 'all' && value !== '') {
+          searchParams.append(key, value);
+        }
+      });
+      
+      const response = await fetch(`/api/sessions/timeline?${searchParams.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch timeline data');
+      return response.json();
+    },
   });
 
   const { data: clients } = useQuery({
@@ -78,6 +90,11 @@ export default function SessionTimeline() {
 
   const { data: progressNotes } = useQuery({
     queryKey: ["/api/progress-notes"],
+    queryFn: async () => {
+      const response = await fetch('/api/progress-notes?recent=true');
+      if (!response.ok) throw new Error('Failed to fetch progress notes');
+      return response.json();
+    },
   });
 
   // Filter and process sessions data

@@ -7,6 +7,12 @@ export default function SearchBar() {
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["/api/progress-notes", { search: query }],
+    queryFn: async () => {
+      if (query.length <= 2) return [];
+      const response = await fetch(`/api/progress-notes?search=${encodeURIComponent(query)}`);
+      if (!response.ok) throw new Error('Search failed');
+      return response.json();
+    },
     enabled: query.length > 2,
   });
 
