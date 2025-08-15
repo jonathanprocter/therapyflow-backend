@@ -1,9 +1,10 @@
 import { Request, Response, Router } from 'express';
 import { enhancedStorage } from "../storage-extensions";
+import { verifyClientOwnership, SecureClientQueries } from '../middleware/clientAuth';
 
 const router = Router();
 
-router.post('/synthesize/:clientId', async (req: Request, res: Response) => {
+router.post('/synthesize/:clientId', verifyClientOwnership, async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
     const { startDate, endDate, focusTags } = req.body;
@@ -30,7 +31,7 @@ router.post('/synthesize/:clientId', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/recall/:clientId', async (req: Request, res: Response) => {
+router.post('/recall/:clientId', verifyClientOwnership, async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
     const { query } = req.body;
@@ -74,7 +75,7 @@ router.get('/insights/recent', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/insights/:clientId', async (req: Request, res: Response) => {
+router.get('/insights/:clientId', verifyClientOwnership, async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
     const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
@@ -92,7 +93,7 @@ router.get('/insights/:clientId', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/tags/:clientId', async (req: Request, res: Response) => {
+router.get('/tags/:clientId', verifyClientOwnership, async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
     const { category } = req.query;

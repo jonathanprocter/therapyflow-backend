@@ -21,6 +21,9 @@ import {
 } from "@shared/schema";
 import multer from "multer";
 import { registerTranscriptRoutes } from "./routes/transcript-routes";
+import { verifyClientOwnership, SecureClientQueries } from "./middleware/clientAuth";
+import { ClinicalTransactions } from "./utils/transactions";
+import { encryptClientData, decryptClientData, ClinicalEncryption } from "./utils/encryption";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -57,13 +60,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/clients/:id", async (req, res) => {
+  app.get("/api/clients/:id", verifyClientOwnership, async (req: any, res) => {
     try {
-      const client = await storage.getClient(req.params.id);
-      if (!client) {
-        return res.status(404).json({ error: "Client not found" });
-      }
-      res.json(client);
+      // Client ownership already verified by middleware
+      const client = req.verifiedClient;
+      
+      // Decrypt sensitive data before sending to client
+      const decryptedClient = decryptClientData(client);
+      res.json(decryptedClient);
     } catch (error) {
       console.error("Error fetching client:", error);
       res.status(500).json({ error: "Failed to fetch client" });
@@ -76,44 +80,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         therapistId: req.therapistId
       });
-      const client = await storage.createClient(clientData);
-      res.json(client);
+      
+      // Encrypt sensitive data before storing
+      const encryptedClientData = encryptClientData(clientData);
+      const client = await storage.createClient(encryptedClientData);
+      
+      // Decrypt before sending response
+      const decryptedClient = decryptClientData(client);
+      res.json(decryptedClient);
     } catch (error) {
       console.error("Error creating client:", error);
       res.status(400).json({ error: "Failed to create client" });
     }
   });
 
-  app.put("/api/clients/:id", async (req, res) => {
+  app.put("/api/clients/:id", async (req: any, res) => {
     try {
       const clientData = insertClientSchema.partial().parse(req.body);
-      const client = await storage.updateClient(req.params.id, clientData);
-      res.json(client);
+      const therapistId = req.therapistId;
+      
+      // Use secure transaction for client updates
+      const client = await ClinicalTransactions.updateClientSafely(
+        req.params.id,
+        therapistId,
+        clientData
+      );
+      
+      // Decrypt before sending response
+      const decryptedClient = decryptClientData(client);
+      res.json(decryptedClient);
     } catch (error) {
       console.error("Error updating client:", error);
+      if (error instanceof Error && error.message === 'Client access denied') {
+        return res.status(403).json({ error: "Access denied" });
+      }
       res.status(400).json({ error: "Failed to update client" });
     }
   });
 
-  app.delete("/api/clients/:id", async (req, res) => {
+  app.delete("/api/clients/:id", async (req: any, res) => {
     try {
       const clientId = req.params.id;
+      const therapistId = req.therapistId;
 
-      // Verify the client exists first
-      const client = await storage.getClient(clientId);
-      if (!client) {
-        return res.status(404).json({ error: "Client not found" });
-      }
-
-      // Delete the client and all related data
-      await storage.deleteClient(clientId);
+      // Use secure soft delete (recommended for audit compliance)
+      const result = await ClinicalTransactions.softDeleteClient(clientId, therapistId);
 
       res.json({ 
         success: true, 
-        message: `Client ${client.name} and all associated data have been deleted successfully` 
+        message: `Client ${result.name} has been deactivated successfully` 
       });
     } catch (error) {
       console.error("Error deleting client:", error);
+      if (error instanceof Error && error.message === 'Client access denied') {
+        return res.status(403).json({ error: "Access denied" });
+      }
       res.status(500).json({ 
         error: "Failed to delete client", 
         details: error instanceof Error ? error.message : "Unknown error" 
@@ -367,20 +388,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (recent === "true") {
         const notes = await storage.getRecentProgressNotes(req.therapistId);
-        // Fetch client data for each note
+        // Fetch client data for each note and decrypt
         const notesWithClients = await Promise.all(
           notes.map(async (note) => {
             const client = await storage.getClient(note.clientId);
-            return { ...note, client };
+            return { 
+              ...note, 
+              client,
+              // Decrypt progress note content
+              content: note.content ? ClinicalEncryption.decrypt(note.content) : null
+            };
           })
         );
         res.json(notesWithClients);
       } else if (search) {
         const notes = await storage.searchProgressNotes(req.therapistId, search);
-        res.json(notes);
+        // Decrypt content before returning
+        const decryptedNotes = notes.map(note => ({
+          ...note,
+          content: note.content ? ClinicalEncryption.decrypt(note.content) : null
+        }));
+        res.json(decryptedNotes);
       } else if (clientId) {
+        // Verify client ownership before returning notes
+        const clientCheck = await SecureClientQueries.getClient(clientId, req.therapistId);
+        if (clientCheck.length === 0) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        
         const notes = await storage.getProgressNotes(clientId);
-        res.json(notes);
+        // Decrypt content before returning
+        const decryptedNotes = notes.map(note => ({
+          ...note,
+          content: note.content ? ClinicalEncryption.decrypt(note.content) : null
+        }));
+        res.json(decryptedNotes);
       } else {
         res.status(400).json({ error: "clientId, search, or recent parameter required" });
       }
@@ -397,31 +439,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         therapistId: req.therapistId
       });
 
+      // Verify client ownership before creating note
+      const clientCheck = await SecureClientQueries.getClient(noteData.clientId, req.therapistId);
+      if (clientCheck.length === 0) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
       // Generate AI tags and embedding if content exists
       const aiTags = noteData.content ? await aiService.generateClinicalTags(noteData.content) : [];
       const embedding = noteData.content ? await aiService.generateEmbedding(noteData.content) : [];
 
-      const note = await storage.createProgressNote({
-        ...noteData,
-        aiTags: aiTags.map(tag => tag.name),
-        embedding
-      });
+      // Use secure transaction for creating progress note
+      const result = await ClinicalTransactions.createProgressNoteWithAnalysis(
+        {
+          clientId: noteData.clientId,
+          content: noteData.content || '',
+          sessionDate: noteData.sessionDate,
+          therapistId: req.therapistId,
+          sessionId: noteData.sessionId || undefined,
+          tags: noteData.tags || [],
+          aiTags: aiTags.map(tag => tag.name),
+          riskLevel: noteData.riskLevel || 'low',
+          progressRating: noteData.progressRating || undefined
+        },
+        aiTags.length > 0 ? {
+          insights: aiTags.map(tag => tag.name),
+          tags: aiTags.map(tag => tag.name),
+          riskFactors: []
+        } : undefined
+      );
 
-      // Find cross-references with existing notes if content exists
-      let crossRefs = [];
-      if (noteData.content) {
-        const existingNotes = await storage.getProgressNotes(noteData.clientId);
-        crossRefs = await aiService.findCrossReferences(
-          noteData.content,
-          existingNotes.map(n => ({ id: n.id, content: n.content || '', embedding: n.embedding || undefined }))
-        );
-      }
+      // Decrypt content before returning
+      const decryptedNote = {
+        ...result.progressNote,
+        content: result.progressNote.content ? ClinicalEncryption.decrypt(result.progressNote.content) : null
+      };
 
-      // Store cross-references (implement in storage if needed)
-
-      res.json(note);
+      res.json(decryptedNote);
     } catch (error) {
       console.error("Error creating progress note:", error);
+      if (error instanceof Error && error.message === 'Client access denied') {
+        return res.status(403).json({ error: "Access denied" });
+      }
       res.status(400).json({ error: "Failed to create progress note" });
     }
   });
@@ -502,17 +561,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/progress-notes/:id", async (req: any, res) => {
     try {
-      const { id } = req.params;
-      const updates = req.body;
+      const noteId = req.params.id;
+      const updates = insertProgressNoteSchema.partial().parse(req.body);
 
-      // If content is being added to a placeholder, update status
-      if (updates.content && updates.isPlaceholder) {
-        updates.isPlaceholder = false;
-        updates.status = 'uploaded';
+      // Get the existing note to verify ownership
+      const existingNote = await storage.getProgressNote(noteId);
+      if (!existingNote) {
+        return res.status(404).json({ error: "Progress note not found" });
       }
 
-      const note = await storage.updateProgressNote(id, updates);
-      res.json(note);
+      // Verify client ownership
+      const clientCheck = await SecureClientQueries.getClient(existingNote.clientId, req.therapistId);
+      if (clientCheck.length === 0) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Encrypt content if being updated
+      if (updates.content) {
+        const originalContent = updates.content;
+        updates.content = ClinicalEncryption.encrypt(originalContent);
+        
+        // Generate AI tags and embedding if content was updated
+        const aiTags = await aiService.generateClinicalTags(originalContent);
+        const embedding = await aiService.generateEmbedding(originalContent);
+        updates.aiTags = aiTags.map(tag => tag.name);
+        updates.embedding = embedding;
+        
+        // If content is being added to a placeholder, update status
+        if (existingNote.isPlaceholder) {
+          updates.isPlaceholder = false;
+          updates.status = 'uploaded';
+        }
+      }
+
+      const note = await storage.updateProgressNote(noteId, updates);
+      
+      // Decrypt content before returning
+      const decryptedNote = {
+        ...note,
+        content: note.content ? ClinicalEncryption.decrypt(note.content) : null
+      };
+      
+      res.json(decryptedNote);
     } catch (error) {
       console.error("Error updating progress note:", error);
       res.status(500).json({ error: "Failed to update progress note" });
@@ -521,18 +611,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/progress-notes/:id", async (req: any, res) => {
     try {
-      const { id } = req.params;
+      const noteId = req.params.id;
 
-      // Verify the note belongs to the authenticated therapist
-      const note = await storage.getProgressNote(id);
-      if (!note) {
+      // Get the existing note to verify ownership
+      const existingNote = await storage.getProgressNote(noteId);
+      if (!existingNote) {
         return res.status(404).json({ error: "Progress note not found" });
       }
-      if (note.therapistId !== req.therapistId) {
+
+      // Verify client ownership (additional security layer)
+      const clientCheck = await SecureClientQueries.getClient(existingNote.clientId, req.therapistId);
+      if (clientCheck.length === 0) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      await storage.deleteProgressNote(id);
+      // Also verify direct therapist ownership
+      if (existingNote.therapistId !== req.therapistId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      await storage.deleteProgressNote(noteId);
       res.json({ success: true, message: "Progress note deleted successfully" });
     } catch (error) {
       console.error("Error deleting progress note:", error);
