@@ -356,6 +356,143 @@
     --tw-prose-th-borders: #738A6E !important;
     --tw-prose-td-borders: #738A6E !important;
   }
+
+  /* CRITICAL DASHBOARD ICON OVERRIDES - Target specific non-brand colored icons */
+  
+  /* Force all icon colors to brand colors based on their context */
+  .text-yellow-500, .text-yellow-600, .text-yellow-400,
+  .text-amber-500, .text-amber-600, .text-amber-400 {
+    color: #8EA58C !important; /* Force to sage */
+  }
+
+  .text-pink-500, .text-pink-600, .text-pink-400,
+  .text-rose-500, .text-rose-600, .text-rose-400,
+  .text-fuchsia-500, .text-fuchsia-600, .text-fuchsia-400 {
+    color: #88A5BC !important; /* Force to French blue */
+  }
+
+  .text-red-500, .text-red-600, .text-red-400 {
+    color: #344C3D !important; /* Force to evergreen */
+  }
+
+  .text-blue-500, .text-blue-600, .text-blue-400 {
+    color: #88A5BC !important; /* Force to French blue */
+  }
+
+  .text-green-500, .text-green-600, .text-green-400 {
+    color: #8EA58C !important; /* Force to sage */
+  }
+
+  .text-orange-500, .text-orange-600, .text-orange-400 {
+    color: #738A6E !important; /* Force to moss */
+  }
+
+  .text-purple-500, .text-purple-600, .text-purple-400,
+  .text-violet-500, .text-violet-600, .text-violet-400,
+  .text-indigo-500, .text-indigo-600, .text-indigo-400 {
+    color: #8EA58C !important; /* Force to sage */
+  }
+
+  /* Force background colors for feature cards */
+  .bg-yellow-50, .bg-yellow-100, .bg-amber-50, .bg-amber-100 {
+    background-color: rgba(242, 243, 241, 0.5) !important; /* Light ivory */
+  }
+
+  .bg-pink-50, .bg-pink-100, .bg-rose-50, .bg-rose-100,
+  .bg-fuchsia-50, .bg-fuchsia-100 {
+    background-color: rgba(136, 165, 188, 0.1) !important; /* Light French blue */
+  }
+
+  .bg-blue-50, .bg-blue-100 {
+    background-color: rgba(136, 165, 188, 0.1) !important; /* Light French blue */
+  }
+
+  .bg-green-50, .bg-green-100 {
+    background-color: rgba(142, 165, 140, 0.1) !important; /* Light sage */
+  }
+
+  .bg-orange-50, .bg-orange-100 {
+    background-color: rgba(115, 138, 110, 0.1) !important; /* Light moss */
+  }
+
+  .bg-purple-50, .bg-purple-100, .bg-violet-50, .bg-violet-100,
+  .bg-indigo-50, .bg-indigo-100 {
+    background-color: rgba(142, 165, 140, 0.1) !important; /* Light sage */
+  }
+
+  /* CRITICAL: Force any CSS custom properties to brand values */
+  :root {
+    --color-accent-amber: 142, 165, 140 !important; /* Force to sage */
+    --color-accent-rose: 136, 165, 188 !important; /* Force to french blue */
+    --accent-amber: #8EA58C !important; /* Force to sage hex */
+    --accent-rose: #88A5BC !important; /* Force to french blue hex */
+  }
+
+  /* NUCLEAR OPTION: Override any possible source of non-brand colors */
+  
+  /* Force all possible icon containers to use brand backgrounds */
+  [class*="bg-yellow"], [class*="bg-amber"], [class*="bg-orange"] {
+    background: rgba(142, 165, 140, 0.1) !important; /* Light sage */
+  }
+
+  [class*="bg-pink"], [class*="bg-rose"], [class*="bg-fuchsia"] {
+    background: rgba(136, 165, 188, 0.1) !important; /* Light French blue */
+  }
+
+  [class*="bg-red"], [class*="bg-crimson"] {
+    background: rgba(52, 76, 61, 0.1) !important; /* Light evergreen */
+  }
+
+  [class*="bg-purple"], [class*="bg-violet"], [class*="bg-indigo"] {
+    background: rgba(142, 165, 140, 0.1) !important; /* Light sage */
+  }
+
+  /* Force all possible icon text colors */
+  [class*="text-yellow"], [class*="text-amber"], [class*="text-orange"] {
+    color: #8EA58C !important; /* Sage */
+  }
+
+  [class*="text-pink"], [class*="text-rose"], [class*="text-fuchsia"] {
+    color: #88A5BC !important; /* French blue */
+  }
+
+  [class*="text-red"], [class*="text-crimson"] {
+    color: #344C3D !important; /* Evergreen */
+  }
+
+  [class*="text-purple"], [class*="text-violet"], [class*="text-indigo"] {
+    color: #8EA58C !important; /* Sage */
+  }
+
+  /* Force SVG fills and strokes */
+  svg [fill*="yellow"], svg [fill*="amber"], svg [fill*="orange"] {
+    fill: #8EA58C !important; /* Sage */
+  }
+
+  svg [fill*="pink"], svg [fill*="rose"], svg [fill*="fuchsia"] {
+    fill: #88A5BC !important; /* French blue */
+  }
+
+  svg [fill*="red"], svg [fill*="crimson"] {
+    fill: #344C3D !important; /* Evergreen */
+  }
+
+  svg [fill*="purple"], svg [fill*="violet"], svg [fill*="indigo"] {
+    fill: #8EA58C !important; /* Sage */
+  }
+
+  /* Force lucide react icons and FontAwesome to use brand colors */
+  .lucide-icon, .fa, [data-lucide] {
+    color: inherit !important;
+  }
+
+  /* Dashboard feature card icon override */
+  .grid > div > div > div > i,
+  .grid > div > div > div > svg,
+  .p-6 i, .p-6 svg,
+  .p-4 i, .p-4 svg {
+    color: inherit !important;
+  }
 }
 
 @layer components {

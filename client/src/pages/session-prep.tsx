@@ -275,7 +275,7 @@ export default function SessionPrep() {
             {caseConceptualization && (
               <div>
                 <h4 className="font-medium text-sm mb-2 flex items-center">
-                  <AlertTriangle className="w-4 h-4 mr-1 text-amber-500" />
+                  <AlertTriangle className="w-4 h-4 mr-1 text-sage" />
                   Perpetuating Factors
                 </h4>
                 <p className="text-sm text-gray-600">{caseConceptualization.perpetuating}</p>

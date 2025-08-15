@@ -19,7 +19,7 @@ export const FloatingOrb: React.FC<FloatingOrbProps> = ({
   const colorMap: Record<string, string> = {
     sage: 'from-sage-400/20 to-sage-600/10',
     blue: 'from-accent-blue/20 to-accent-blue/10',
-    amber: 'from-accent-amber/20 to-accent-amber/10',
+    amber: 'from-sage-400/20 to-sage-600/10', // Force amber to sage
   };
 
   return (

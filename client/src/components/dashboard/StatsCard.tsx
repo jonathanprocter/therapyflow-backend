@@ -23,7 +23,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   const colorMap = {
     sage: 'from-sage-400 to-sage-600',
     blue: 'from-accent-blue to-blue-600',
-    amber: 'from-accent-amber to-amber-600',
+    amber: 'from-sage-400 to-sage-600', // Force amber to use sage colors
     green: 'from-sage-500 to-moss-600',
   };
 
@@ -47,7 +47,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
           {change && (
             <motion.span
               className={`text-sm mt-2 inline-block ${
-                change.startsWith('+') ? 'text-accent-green' : 'text-accent-amber'
+                change.startsWith('+') ? 'text-accent-green' : 'text-sage' // Replace amber with sage
               }`}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}

@@ -37,8 +37,8 @@ const config: Config = {
           foreground: 'rgb(var(--accent-foreground) / <alpha-value>)',
           blue: 'rgb(var(--color-accent-blue) / <alpha-value>)',
           green: 'rgb(var(--color-accent-green) / <alpha-value>)',
-          amber: 'rgb(var(--color-accent-amber) / <alpha-value>)',
-          rose: 'rgb(var(--color-accent-rose) / <alpha-value>)',
+          amber: 'rgb(var(--color-sage) / <alpha-value>)', // Force amber to sage
+          rose: 'rgb(var(--color-french-blue) / <alpha-value>)', // Force rose to french blue
         },
         destructive: {
           DEFAULT: 'rgb(var(--destructive) / <alpha-value>)',
