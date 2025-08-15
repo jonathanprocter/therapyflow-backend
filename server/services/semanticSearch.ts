@@ -210,29 +210,27 @@ export class ClinicalSemanticSearch {
    */
   private static async performKeywordSearch(searchQuery: SearchQuery): Promise<SemanticSearchResult[]> {
     try {
-      let query = db
+      let whereConditions = [eq(progressNotes.therapistId, searchQuery.therapistId)];
+
+      // Apply client filter
+      if (searchQuery.clientId) {
+        whereConditions.push(eq(progressNotes.clientId, searchQuery.clientId));
+      }
+
+      // Apply date range filter
+      if (searchQuery.dateRange) {
+        whereConditions.push(sql`${progressNotes.sessionDate} >= ${searchQuery.dateRange.start}`);
+        whereConditions.push(sql`${progressNotes.sessionDate} <= ${searchQuery.dateRange.end}`);
+      }
+
+      const results = await db
         .select({
           note: progressNotes,
           client: clients,
         })
         .from(progressNotes)
         .leftJoin(clients, eq(progressNotes.clientId, clients.id))
-        .where(eq(progressNotes.therapistId, searchQuery.therapistId));
-
-      // Apply client filter
-      if (searchQuery.clientId) {
-        query = query.where(eq(progressNotes.clientId, searchQuery.clientId));
-      }
-
-      // Apply date range filter
-      if (searchQuery.dateRange) {
-        query = query.where(and(
-          sql`${progressNotes.sessionDate} >= ${searchQuery.dateRange.start}`,
-          sql`${progressNotes.sessionDate} <= ${searchQuery.dateRange.end}`
-        ));
-      }
-
-      const results = await query
+        .where(and(...whereConditions))
         .orderBy(desc(progressNotes.sessionDate))
         .limit(50);
 
@@ -351,7 +349,7 @@ export class ClinicalSemanticSearch {
         if (content.includes(keyword)) {
           // Extract sentence containing the keyword
           const sentences = note.content.split(/[.!?]+/);
-          const matchingSentence = sentences.find(s => 
+          const matchingSentence = sentences.find((s: string) => 
             s.toLowerCase().includes(keyword)
           );
           if (matchingSentence) {
@@ -362,7 +360,7 @@ export class ClinicalSemanticSearch {
     }
 
     // Return unique patterns, limited to 10
-    return [...new Set(patterns)].slice(0, 10);
+    return Array.from(new Set(patterns)).slice(0, 10);
   }
 
   /**

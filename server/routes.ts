@@ -21,9 +21,28 @@ import {
 } from "@shared/schema";
 import multer from "multer";
 import { registerTranscriptRoutes } from "./routes/transcript-routes";
+import { aiRoutes } from "./routes/ai-routes";
 import { verifyClientOwnership, SecureClientQueries } from "./middleware/clientAuth";
 import { ClinicalTransactions } from "./utils/transactions";
 import { encryptClientData, decryptClientData, ClinicalEncryption } from "./utils/encryption";
+import { ClinicalAuditLogger, AuditAction } from "./utils/auditLogger";
+
+// Helper function to safely decrypt content (handles non-encrypted legacy data)
+function safeDecrypt(content: string): string | null {
+  if (!content) return null;
+  
+  try {
+    // Check if content looks encrypted (base64 with specific format)
+    if (content.includes(':') && content.length > 50) {
+      return ClinicalEncryption.decrypt(content);
+    }
+    // Return as-is if not encrypted (legacy data)
+    return content;
+  } catch (error) {
+    console.warn('[DECRYPTION] Failed to decrypt, returning original content:', error.message);
+    return content; // Return original content if decryption fails
+  }
+}
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -395,18 +414,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return { 
               ...note, 
               client,
-              // Decrypt progress note content
-              content: note.content ? ClinicalEncryption.decrypt(note.content) : null
+              // Decrypt progress note content (gracefully handle non-encrypted data)
+              content: note.content ? safeDecrypt(note.content) : null
             };
           })
         );
         res.json(notesWithClients);
       } else if (search) {
         const notes = await storage.searchProgressNotes(req.therapistId, search);
-        // Decrypt content before returning
+        // Decrypt content before returning (gracefully handle non-encrypted data)
         const decryptedNotes = notes.map(note => ({
           ...note,
-          content: note.content ? ClinicalEncryption.decrypt(note.content) : null
+          content: note.content ? safeDecrypt(note.content) : null
         }));
         res.json(decryptedNotes);
       } else if (clientId) {
@@ -417,10 +436,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         const notes = await storage.getProgressNotes(clientId);
-        // Decrypt content before returning
+        // Decrypt content before returning (gracefully handle non-encrypted data)
         const decryptedNotes = notes.map(note => ({
           ...note,
-          content: note.content ? ClinicalEncryption.decrypt(note.content) : null
+          content: note.content ? safeDecrypt(note.content) : null
         }));
         res.json(decryptedNotes);
       } else {
@@ -469,10 +488,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } : undefined
       );
 
-      // Decrypt content before returning
+      // Decrypt content before returning (gracefully handle non-encrypted data)
       const decryptedNote = {
         ...result.progressNote,
-        content: result.progressNote.content ? ClinicalEncryption.decrypt(result.progressNote.content) : null
+        content: result.progressNote.content ? safeDecrypt(result.progressNote.content) : null
       };
 
       res.json(decryptedNote);
@@ -596,10 +615,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const note = await storage.updateProgressNote(noteId, updates);
       
-      // Decrypt content before returning
+      // Decrypt content before returning (gracefully handle non-encrypted data)
       const decryptedNote = {
         ...note,
-        content: note.content ? ClinicalEncryption.decrypt(note.content) : null
+        content: note.content ? safeDecrypt(note.content) : null
       };
       
       res.json(decryptedNote);
@@ -1304,6 +1323,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register transcript processing routes
   registerTranscriptRoutes(app);
+
+  // Register enhanced AI routes
+  app.use('/api/ai', aiRoutes);
+  
+  console.log("🤖 AI Services available at:");
+  console.log("   POST /api/ai/analyze-note");
+  console.log("   POST /api/ai/search");
+  console.log("   GET  /api/ai/related-notes/:noteId");
+  console.log("   GET  /api/ai/progress-patterns/:clientId");
+  console.log("   POST /api/ai/safety-report");
+  console.log("   GET  /api/ai/health");
 
   // Register session timeline routes
   app.use('/api/sessions', (await import('./routes/session-timeline-routes')).default);

@@ -102,12 +102,12 @@ export class ClinicalAIService {
           };
         }
 
-      } catch (error) {
+      } catch (error: any) {
         lastError = error;
         retryCount++;
         
         console.error(`[AI] Analysis attempt ${retryCount} failed:`, {
-          error: error.message,
+          error: error?.message || 'Unknown error',
           provider: retryCount === 1 ? 'openai' : 'anthropic',
           contentLength: content.length,
         });
@@ -187,7 +187,7 @@ export class ClinicalAIService {
       ],
     });
 
-    const rawResponse = message.content[0]?.text;
+    const rawResponse = (message.content[0] as any)?.text;
     if (!rawResponse) {
       throw new Error('Empty response from Anthropic');
     }
@@ -208,9 +208,9 @@ export class ClinicalAIService {
   private validateAIResponse(response: any): AIAnalysisResult {
     try {
       return aiAnalysisSchema.parse(response);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[AI] Response validation failed:', error);
-      throw new Error(`Invalid AI response structure: ${error.message}`);
+      throw new Error(`Invalid AI response structure: ${error?.message || 'Unknown validation error'}`);
     }
   }
 

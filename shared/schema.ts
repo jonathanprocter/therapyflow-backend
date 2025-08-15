@@ -5,6 +5,7 @@ import {
   varchar, 
   timestamp, 
   integer, 
+  json,
   jsonb, 
   real,
   boolean,
@@ -362,6 +363,31 @@ export const transcriptFilesRelations = relations(transcriptFiles, ({ one }) => 
     references: [users.id],
   }),
 }));
+
+// Audit Logs for HIPAA Compliance
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().$defaultFn(() => nanoid()),
+  userId: varchar("user_id").notNull(),
+  action: varchar("action", { length: 50 }).notNull(),
+  resourceType: varchar("resource_type", { length: 20 }).notNull(),
+  resourceId: varchar("resource_id"),
+  clientId: varchar("client_id"),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
+  userAgent: text("user_agent"),
+  sessionId: varchar("session_id"),
+  details: json("details"),
+  riskLevel: varchar("risk_level", { length: 10 }).notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
+// Note Embeddings for Semantic Search
+export const noteEmbeddings = pgTable("note_embeddings", {
+  id: varchar("id").primaryKey().$defaultFn(() => nanoid()),
+  noteId: varchar("note_id").notNull().references(() => progressNotes.id, { onDelete: "cascade" }),
+  embedding: json("embedding"), // Vector embedding for semantic search
+  content: text("content").notNull(), // Cached content for search
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
