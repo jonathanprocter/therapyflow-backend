@@ -1,10 +1,23 @@
 import natural from 'natural';
-import * as Sentiment from 'sentiment';
 import { sessionTags, sessionInsights, type InsertSessionTag, type InsertSessionInsight } from '@shared/schema-extensions';
 import { db } from '../../db';
 import { eq } from 'drizzle-orm';
 
-const sentiment = new (Sentiment as any)();
+// Simple sentiment analysis fallback
+const analyzeSentiment = (text: string) => {
+  const positiveWords = ['happy', 'good', 'great', 'excellent', 'positive', 'joy', 'love', 'satisfied'];
+  const negativeWords = ['sad', 'bad', 'terrible', 'negative', 'angry', 'hate', 'frustrated', 'depressed'];
+  
+  const words = text.toLowerCase().split(/\s+/);
+  let score = 0;
+  
+  words.forEach(word => {
+    if (positiveWords.includes(word)) score += 1;
+    if (negativeWords.includes(word)) score -= 1;
+  });
+  
+  return { score, comparative: score / words.length };
+};
 const tokenizer = new natural.WordTokenizer();
 
 interface TagPattern {
@@ -155,7 +168,7 @@ export class AutoTagger {
   }
 
   private analyzeSentiment(content: string): number {
-    const result = sentiment.analyze(content);
+    const result = analyzeSentiment(content);
     const maxScore = Math.max(Math.abs(result.score), 1);
     return result.score / maxScore;
   }

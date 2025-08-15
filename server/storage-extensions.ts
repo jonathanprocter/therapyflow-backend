@@ -12,7 +12,7 @@ export class EnhancedDatabaseStorage extends DatabaseStorage {
       try {
         await autoTagger.tagContent(
           note.content,
-          note.sessionId,
+          note.sessionId || '',
           note.clientId,
           note.therapistId
         );
