@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { clients } from "@shared/schema";
+import { db } from "./db";
 import { aiService } from "./services/aiService";
 import { calendarService } from "./services/calendarService";
 import { pdfService } from "./services/pdfService";
@@ -1108,15 +1110,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Try to match or create a real client if we have a valid client name
             if (extractedClientName && extractedClientName !== 'Unidentified Client' && !extractedClientName.includes('Birthday')) {
               try {
-                // First, try to find existing client by name match
-                const existingClients = await storage.getClients(req.therapistId);
-                const matchingClient = existingClients.find(client => 
+                // First, try to find existing client by name match (including soft-deleted ones)
+                const allClients = await db
+                  .select()
+                  .from(clients)
+                  .where(eq(clients.therapistId, req.therapistId));
+                
+                const matchingClient = allClients.find(client => 
                   client.name.toLowerCase() === extractedClientName.toLowerCase() ||
                   // Handle name variations (Chris vs Christopher, etc.)
                   isNameVariation(client.name, extractedClientName)
                 );
 
-                if (matchingClient) {
+                // If we found a soft-deleted client, skip creating a new one
+                if (matchingClient && matchingClient.deletedAt) {
+                  console.log(`Skipping creation of soft-deleted client: ${extractedClientName}`);
+                  continue; // Skip this session, don't create client or session
+                }
+
+                if (matchingClient && !matchingClient.deletedAt) {
                   clientId = matchingClient.id;
                   console.log(`Matched session to existing client: ${extractedClientName} -> ${matchingClient.name}`);
                 } else {

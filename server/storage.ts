@@ -134,7 +134,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(clients)
-      .where(eq(clients.therapistId, therapistId))
+      .where(and(eq(clients.therapistId, therapistId), isNull(clients.deletedAt)))
       .orderBy(desc(clients.createdAt));
   }
 
@@ -166,16 +166,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteClient(id: string): Promise<void> {
-    // Delete related data first (cascading delete)
-    await db.delete(progressNotes).where(eq(progressNotes.clientId, id));
-    await db.delete(sessions).where(eq(sessions.clientId, id));
-    await db.delete(documents).where(eq(documents.clientId, id));
-    await db.delete(treatmentPlans).where(eq(treatmentPlans.clientId, id));
-    await db.delete(caseConceptualizations).where(eq(caseConceptualizations.clientId, id));
-    await db.delete(allianceScores).where(eq(allianceScores.clientId, id));
-
-    // Delete the client
-    await db.delete(clients).where(eq(clients.id, id));
+    // Soft delete the client by setting deletedAt timestamp
+    // This prevents calendar sync from recreating them
+    await db
+      .update(clients)
+      .set({ 
+        deletedAt: new Date(),
+        status: 'deleted',
+        updatedAt: new Date()
+      })
+      .where(eq(clients.id, id));
   }
 
   async getSessions(clientId: string): Promise<Session[]> {

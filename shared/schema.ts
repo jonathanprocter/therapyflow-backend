@@ -36,6 +36,7 @@ export const clients = pgTable("clients", {
   insurance: jsonb("insurance"), // {provider, policyNumber, groupNumber}
   tags: text("tags").array().default([]),
   status: text("status").notNull().default("active"), // active, inactive, discharged
+  deletedAt: timestamp("deleted_at"), // Track when client was soft-deleted
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
