@@ -18,23 +18,25 @@ export default function CopingStrategies({ clientId }: { clientId: string }) {
   }, [clientId]);
 
   return (
-    <Card>
+    <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-blue-500" />
+        <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+          <Shield className="h-5 w-5" style={{ color: '#738A6E' }} />
           Progress & Coping Strategies
         </CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-4">Loading strategies...</div>
+          <div className="text-center py-4" style={{ color: '#738A6E' }}>Loading strategies...</div>
         ) : strategies.length > 0 ? (
           <div className="space-y-3">
             {strategies.slice(0, 8).map((item: any, idx: number) => (
               <div key={idx} className="space-y-1">
                 <div className="flex justify-between text-sm">
-                  <span>{Array.isArray(item.tags?.tags) ? item.tags.tags.join(', ') : 'strategy'}</span>
-                  <span className="text-muted-foreground">
+                  <span style={{ color: '#344C3D' }}>
+                    {Array.isArray(item.tags?.tags) ? item.tags.tags.join(', ') : 'strategy'}
+                  </span>
+                  <span style={{ color: '#738A6E' }}>
                     {new Date(item.tags?.createdAt || Date.now()).toLocaleDateString()}
                   </span>
                 </div>
@@ -43,7 +45,7 @@ export default function CopingStrategies({ clientId }: { clientId: string }) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8" style={{ color: '#738A6E' }}>
             Coping strategies will be tracked as sessions progress
           </div>
         )}

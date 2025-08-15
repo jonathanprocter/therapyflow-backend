@@ -21,19 +21,21 @@ export default function InsightsPanel({ clientId }: { clientId: string }) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
-        <Lightbulb className="h-5 w-5 text-yellow-500" />
+      <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: '#344C3D' }}>
+        <Lightbulb className="h-5 w-5" style={{ color: '#88A5BC' }} />
         Key Insights ({insights.length})
       </h3>
       
       {insights.length > 0 ? (
         insights.map((insight: any) => (
-          <Card key={insight.id}>
+          <Card key={insight.id} style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
             <CardContent className="p-4">
-              <p className="text-sm mb-2">{insight.insight}</p>
+              <p className="text-sm mb-2" style={{ color: '#738A6E' }}>{insight.insight}</p>
               <div className="flex gap-2">
-                <Badge variant="secondary">{insight.insightType || 'insight'}</Badge>
-                <span className="text-xs text-muted-foreground">
+                <Badge variant="secondary" style={{ backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' }}>
+                  {insight.insightType || 'insight'}
+                </Badge>
+                <span className="text-xs" style={{ color: '#738A6E' }}>
                   {new Date(insight.createdAt).toLocaleDateString()}
                 </span>
               </div>
@@ -41,8 +43,8 @@ export default function InsightsPanel({ clientId }: { clientId: string }) {
           </Card>
         ))
       ) : (
-        <Card>
-          <CardContent className="text-center py-8 text-muted-foreground">
+        <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
+          <CardContent className="text-center py-8" style={{ color: '#738A6E' }}>
             Insights will appear as sessions are analyzed
           </CardContent>
         </Card>

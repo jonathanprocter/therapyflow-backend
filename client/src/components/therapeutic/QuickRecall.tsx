@@ -40,8 +40,14 @@ export default function QuickRecall({ clientId }: { clientId: string }) {
           onChange={(e) => setQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           className="flex-1"
+          style={{ borderColor: 'rgba(115, 138, 110, 0.3)' }}
         />
-        <Button onClick={handleSearch} disabled={loading} style={{backgroundColor: '#88A5BC', borderColor: '#88A5BC'}} className="hover:opacity-90">
+        <Button 
+          onClick={handleSearch} 
+          disabled={loading} 
+          style={{backgroundColor: '#88A5BC', borderColor: '#88A5BC'}} 
+          className="hover:opacity-90"
+        >
           <Search className="h-4 w-4" />
         </Button>
       </div>
@@ -49,10 +55,10 @@ export default function QuickRecall({ clientId }: { clientId: string }) {
       {results.length > 0 && (
         <div className="space-y-2">
           {results.map((result: any) => (
-            <Card key={result.id}>
+            <Card key={result.id} style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
               <CardContent className="p-3">
-                <p className="text-sm">{result.content}</p>
-                <div className="mt-1 text-xs text-muted-foreground">
+                <p className="text-sm" style={{ color: '#738A6E' }}>{result.content}</p>
+                <div className="mt-1 text-xs" style={{ color: '#738A6E' }}>
                   {result.type} • {Math.round((result.relevance || 0) * 100)}% match
                 </div>
               </CardContent>
@@ -62,8 +68,8 @@ export default function QuickRecall({ clientId }: { clientId: string }) {
       )}
       
       {results.length === 0 && query && !loading && (
-        <Card>
-          <CardContent className="text-center py-4 text-muted-foreground">
+        <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
+          <CardContent className="text-center py-4" style={{ color: '#738A6E' }}>
             No results found for "{query}"
           </CardContent>
         </Card>

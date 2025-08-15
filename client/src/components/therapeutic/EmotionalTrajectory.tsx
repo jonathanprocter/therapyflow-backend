@@ -17,31 +17,35 @@ export default function EmotionalTrajectory({ clientId }: { clientId: string }) 
   }, [clientId]);
 
   return (
-    <Card>
+    <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Heart className="h-5 w-5 text-red-500" />
+        <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+          <Heart className="h-5 w-5" style={{ color: '#8EA58C' }} />
           Emotional Journey
         </CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-4">Loading emotional data...</div>
+          <div className="text-center py-4" style={{ color: '#738A6E' }}>Loading emotional data...</div>
         ) : emotionData.length > 0 ? (
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground mb-3">
+            <p className="text-sm mb-3" style={{ color: '#738A6E' }}>
               Tracking {emotionData.length} emotional markers
             </p>
             <div className="flex flex-wrap gap-2">
               {emotionData.slice(0, 20).map((item: any, idx: number) => (
-                <span key={idx} className="px-3 py-1 bg-secondary rounded-full text-xs">
+                <span 
+                  key={idx} 
+                  className="px-3 py-1 rounded-full text-xs"
+                  style={{ backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' }}
+                >
                   {Array.isArray(item.tags?.tags) ? item.tags.tags.join(', ') : 'emotion'}
                 </span>
               ))}
             </div>
           </div>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8" style={{ color: '#738A6E' }}>
             Emotional data will appear as sessions progress
           </div>
         )}

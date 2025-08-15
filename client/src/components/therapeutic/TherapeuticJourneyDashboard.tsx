@@ -56,8 +56,8 @@ export default function TherapeuticJourneyDashboard({
 
   if (!clientId) {
     return (
-      <Alert>
-        <AlertDescription>
+      <Alert style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
+        <AlertDescription style={{ color: '#738A6E' }}>
           Please select a client to view their therapeutic journey.
         </AlertDescription>
       </Alert>
@@ -66,13 +66,13 @@ export default function TherapeuticJourneyDashboard({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <Card>
+      <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
             <Brain className="h-6 w-6" style={{color: '#88A5BC'}} />
             Therapeutic Journey Analysis
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm" style={{ color: '#738A6E' }}>
             AI-powered insights and pattern analysis from therapy sessions
           </p>
         </CardHeader>
