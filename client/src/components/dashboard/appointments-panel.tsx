@@ -21,28 +21,52 @@ export default function AppointmentsPanel() {
 
   if (isLoading) {
     return (
-      <Card className="xl:col-span-2">
+      <Card className="xl:col-span-2" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Today's Schedule</h3>
+            <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>Today's Schedule</h3>
             <div className="flex items-center space-x-2">
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-6 w-16" />
+              <div 
+                className="h-6 w-32 rounded"
+                style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+              ></div>
+              <div 
+                className="h-6 w-16 rounded"
+                style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}
+              ></div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-              <Skeleton className="h-12 w-12 rounded-lg" />
+            <div key={i} className="flex items-center space-x-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(242, 243, 241, 0.5)' }}>
+              <div 
+                className="h-12 w-12 rounded-lg"
+                style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+              ></div>
               <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-48" />
-                <Skeleton className="h-3 w-40" />
+                <div 
+                  className="h-4 w-32 rounded"
+                  style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                ></div>
+                <div 
+                  className="h-3 w-48 rounded"
+                  style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}
+                ></div>
+                <div 
+                  className="h-3 w-40 rounded"
+                  style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)' }}
+                ></div>
               </div>
               <div className="space-y-2">
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-5 w-24" />
+                <div 
+                  className="h-6 w-20 rounded"
+                  style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                ></div>
+                <div 
+                  className="h-5 w-24 rounded"
+                  style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}
+                ></div>
               </div>
             </div>
           ))}
@@ -52,7 +76,7 @@ export default function AppointmentsPanel() {
   }
 
   return (
-    <Card className="xl:col-span-2 bg-white" data-testid="appointments-panel">
+    <Card className="xl:col-span-2" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="appointments-panel">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -67,6 +91,7 @@ export default function AppointmentsPanel() {
                 <Button
                   variant="outline"
                   size="sm"
+                  style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
                   className={cn("justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}
                   data-testid="date-picker-trigger"
                 >
@@ -94,7 +119,7 @@ export default function AppointmentsPanel() {
               Google Calendar Synced
             </span>
             <Link href="/calendar">
-              <Button variant="ghost" size="sm" data-testid="view-all-appointments">
+              <Button variant="ghost" size="sm" style={{ color: '#88A5BC' }} data-testid="view-all-appointments">
                 View All
               </Button>
             </Link>
@@ -128,7 +153,11 @@ export default function AppointmentsPanel() {
             });
             
             const getSessionColor = (index: number) => {
-              const colors = ['primary', 'secondary', 'accent'];
+              const colors = [
+                { bg: 'rgba(136, 165, 188, 0.1)', text: '#88A5BC' },
+                { bg: 'rgba(142, 165, 140, 0.1)', text: '#8EA58C' },
+                { bg: 'rgba(115, 138, 110, 0.1)', text: '#738A6E' }
+              ];
               return colors[index % colors.length];
             };
             
@@ -137,11 +166,15 @@ export default function AppointmentsPanel() {
             return (
               <div
                 key={session.id}
-                className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg transition-colors hover:bg-gray-100"
+                className="flex items-center space-x-4 p-4 rounded-lg transition-colors hover:bg-opacity-70"
+                style={{ backgroundColor: 'rgba(242, 243, 241, 0.5)' }}
                 data-testid={`appointment-${session.id}`}
               >
-                <div className={`flex-shrink-0 w-12 h-12 bg-${color}/10 rounded-lg flex items-center justify-center`}>
-                  <span className={`text-${color} font-bold text-sm`}>
+                <div 
+                  className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: color.bg }}
+                >
+                  <span className="font-bold text-sm" style={{ color: color.text }}>
                     {session.client?.name 
                       ? session.client.name
                           .split(' ')
@@ -155,14 +188,14 @@ export default function AppointmentsPanel() {
                 
                 <div className="flex-1">
                   <Link href={`/clients/${session.client?.id}`}>
-                    <h4 className="font-medium text-gray-900 hover:text-blue-600 cursor-pointer transition-colors" data-testid={`appointment-client-${session.id}`}>
+                    <h4 className="font-medium cursor-pointer transition-colors" style={{ color: '#344C3D' }} data-testid={`appointment-client-${session.id}`}>
                       {session.client?.name || "Unknown Client"}
                     </h4>
                   </Link>
-                  <p className="text-sm text-gray-500" data-testid={`appointment-type-${session.id}`}>
+                  <p className="text-sm" style={{ color: '#738A6E' }} data-testid={`appointment-type-${session.id}`}>
                     {session.sessionType}
                   </p>
-                  <div className="flex items-center mt-1 text-xs text-gray-400">
+                  <div className="flex items-center mt-1 text-xs" style={{ color: '#738A6E' }}>
                     <i className="fas fa-clock mr-1"></i>
                     <span data-testid={`appointment-time-${session.id}`}>
                       {edtFormatter.format(sessionTime)} - {edtFormatter.format(endTime)} EDT
@@ -174,11 +207,15 @@ export default function AppointmentsPanel() {
                   <Button
                     size="sm"
                     className="text-xs"
+                    style={{ backgroundColor: '#8EA58C', color: '#FFFFFF' }}
                     data-testid={`prep-session-${session.id}`}
                   >
                     Prep Session
                   </Button>
-                  <span className={`inline-flex items-center px-2 py-1 text-xs bg-${color}/10 text-${color} rounded`}>
+                  <span 
+                    className="inline-flex items-center px-2 py-1 text-xs rounded"
+                    style={{ backgroundColor: color.bg, color: color.text }}
+                  >
                     <i className="fas fa-chart-line mr-1"></i>
                     {session.status === 'scheduled' ? 'Scheduled' : session.status}
                   </span>

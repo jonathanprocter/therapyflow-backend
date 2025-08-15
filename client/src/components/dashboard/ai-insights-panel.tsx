@@ -6,28 +6,28 @@ import type { AiInsight } from "@/types/clinical";
 
 const insightConfig = {
   pattern_recognition: {
-    color: "primary",
+    color: "#88A5BC",
     icon: "fas fa-lightbulb",
-    bgColor: "bg-blue-50",
-    borderColor: "border-primary"
+    bgColor: "rgba(136, 165, 188, 0.1)",
+    borderColor: "#88A5BC"
   },
   progress_milestone: {
-    color: "secondary", 
+    color: "#8EA58C", 
     icon: "fas fa-chart-line",
-    bgColor: "bg-green-50",
-    borderColor: "border-secondary"
+    bgColor: "rgba(142, 165, 140, 0.1)",
+    borderColor: "#8EA58C"
   },
   risk_alert: {
-    color: "accent",
+    color: "#738A6E",
     icon: "fas fa-exclamation-triangle", 
-    bgColor: "bg-amber-50",
-    borderColor: "border-accent"
+    bgColor: "rgba(115, 138, 110, 0.1)",
+    borderColor: "#738A6E"
   },
   resource_match: {
-    color: "purple-600",
+    color: "#344C3D",
     icon: "fas fa-book",
-    bgColor: "bg-purple-50",
-    borderColor: "border-purple-500"
+    bgColor: "rgba(52, 76, 61, 0.1)",
+    borderColor: "#344C3D"
   }
 };
 
@@ -51,25 +51,40 @@ export default function AIInsightsPanel() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold flex items-center gap-2" style={{color: '#344C3D'}}>
             <span className="w-2 h-2 rounded-full" style={{backgroundColor: '#88A5BC'}}></span>
             AI Clinical Insights
           </h3>
-            <Skeleton className="h-5 w-5" />
+            <div 
+              className="h-5 w-5 rounded"
+              style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+            ></div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-300">
+            <div key={i} className="p-4 rounded-lg border-l-4" style={{ backgroundColor: 'rgba(242, 243, 241, 0.5)', borderLeftColor: 'rgba(115, 138, 110, 0.3)' }}>
               <div className="flex items-start space-x-3">
-                <Skeleton className="h-5 w-5 mt-1" />
+                <div 
+                  className="h-5 w-5 mt-1 rounded"
+                  style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                ></div>
                 <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-3 w-24" />
+                  <div 
+                    className="h-4 w-32 rounded"
+                    style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                  ></div>
+                  <div 
+                    className="h-16 w-full rounded"
+                    style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}
+                  ></div>
+                  <div 
+                    className="h-3 w-24 rounded"
+                    style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)' }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -80,7 +95,7 @@ export default function AIInsightsPanel() {
   }
 
   return (
-    <Card className="bg-white" data-testid="ai-insights-panel">
+    <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="ai-insights-panel">
       <CardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold flex items-center gap-2" style={{color: '#344C3D'}} data-testid="insights-title">
@@ -104,22 +119,27 @@ export default function AIInsightsPanel() {
             return (
               <div
                 key={insight.id}
-                className={`p-4 ${config.bgColor} rounded-lg border-l-4 ${config.borderColor} transition-all hover:shadow-sm`}
+                className="p-4 rounded-lg border-l-4 transition-all hover:shadow-sm"
+                style={{ 
+                  backgroundColor: config.bgColor,
+                  borderLeftColor: config.borderColor
+                }}
                 data-testid={`insight-${insight.id}`}
               >
                 <div className="flex items-start space-x-3">
-                  <i className={`${config.icon} text-${config.color} mt-1`}></i>
+                  <i className={`${config.icon} mt-1`} style={{ color: config.color }}></i>
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900" data-testid={`insight-title-${insight.id}`}>
+                    <h4 className="font-medium" style={{ color: '#344C3D' }} data-testid={`insight-title-${insight.id}`}>
                       {insight.title}
                     </h4>
-                    <p className="text-sm text-gray-600 mt-1" data-testid={`insight-description-${insight.id}`}>
+                    <p className="text-sm mt-1" style={{ color: '#738A6E' }} data-testid={`insight-description-${insight.id}`}>
                       {insight.description}
                     </p>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={`text-xs text-${config.color} hover:text-${config.color} mt-2 p-0 h-auto font-medium`}
+                      className="text-xs mt-2 p-0 h-auto font-medium"
+                      style={{ color: config.color }}
                       data-testid={`insight-action-${insight.id}`}
                     >
                       View Details →

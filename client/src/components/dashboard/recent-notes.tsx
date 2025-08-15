@@ -11,32 +11,59 @@ export default function RecentNotes() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Progress Notes</h3>
-            <Skeleton className="h-8 w-24" />
+            <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>Recent Progress Notes</h3>
+            <div 
+              className="h-8 w-24 rounded"
+              style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+            ></div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="p-4 border border-gray-200 rounded-lg">
+            <div key={i} className="p-4 border rounded-lg" style={{ borderColor: 'rgba(115, 138, 110, 0.2)' }}>
               <div className="flex items-start justify-between">
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center space-x-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-20" />
+                    <div 
+                      className="h-4 w-32 rounded"
+                      style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                    ></div>
+                    <div 
+                      className="h-3 w-20 rounded"
+                      style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}
+                    ></div>
                   </div>
-                  <Skeleton className="h-12 w-full" />
+                  <div 
+                    className="h-12 w-full rounded"
+                    style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)' }}
+                  ></div>
                   <div className="flex items-center space-x-2">
-                    <Skeleton className="h-5 w-16" />
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-5 w-12" />
+                    <div 
+                      className="h-5 w-16 rounded"
+                      style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                    ></div>
+                    <div 
+                      className="h-5 w-20 rounded"
+                      style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}
+                    ></div>
+                    <div 
+                      className="h-5 w-12 rounded"
+                      style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)' }}
+                    ></div>
                   </div>
                 </div>
                 <div className="flex flex-col items-end space-y-1">
-                  <Skeleton className="h-6 w-6" />
-                  <Skeleton className="h-3 w-16" />
+                  <div 
+                    className="h-6 w-6 rounded"
+                    style={{ backgroundColor: 'rgba(115, 138, 110, 0.2)' }}
+                  ></div>
+                  <div 
+                    className="h-3 w-16 rounded"
+                    style={{ backgroundColor: 'rgba(115, 138, 110, 0.15)' }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -47,7 +74,7 @@ export default function RecentNotes() {
   }
 
   return (
-    <Card className="bg-white" data-testid="recent-notes">
+    <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="recent-notes">
       <CardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }} data-testid="notes-title">
@@ -122,12 +149,13 @@ export default function RecentNotes() {
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      className="text-gray-400 hover:text-primary h-auto p-1"
+                      className="h-auto p-1"
+                      style={{ color: '#88A5BC' }}
                       data-testid={`edit-note-${note.id}`}
                     >
                       <i className="fas fa-edit"></i>
                     </Button>
-                    <span className="text-xs text-gray-400" data-testid={`note-ai-status-${note.id}`}>
+                    <span className="text-xs" style={{ color: '#738A6E' }} data-testid={`note-ai-status-${note.id}`}>
                       AI Tagged
                     </span>
                   </div>
@@ -136,7 +164,7 @@ export default function RecentNotes() {
             ))}
 
             <div className="text-center pt-4">
-              <Button variant="ghost" data-testid="view-all-notes">
+              <Button variant="ghost" style={{ color: '#88A5BC' }} data-testid="view-all-notes">
                 View All Notes →
               </Button>
             </div>

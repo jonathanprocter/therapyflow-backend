@@ -6,13 +6,13 @@ const workflowTasks: any[] = [];
 
 export default function ClinicalWorkflows() {
   return (
-    <Card className="bg-white" data-testid="clinical-workflows">
+    <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="clinical-workflows">
       <CardHeader>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }} data-testid="workflows-title">
             Clinical Workflows
           </h3>
-          <Button variant="outline" size="sm" data-testid="configure-workflows">
+          <Button variant="outline" size="sm" style={{ borderColor: '#8EA58C', color: '#8EA58C' }} data-testid="configure-workflows">
             <i className="fas fa-cog mr-2"></i>
             Configure
           </Button>
@@ -87,7 +87,7 @@ export default function ClinicalWorkflows() {
           <div className="text-center py-6" style={{ color: '#738A6E' }} data-testid="no-workflows">
             <i className="fas fa-tasks text-3xl mb-3 opacity-50" style={{ color: '#88A5BC' }}></i>
             <p className="text-sm">No additional workflows configured</p>
-            <Button variant="outline" size="sm" className="mt-3" data-testid="setup-workflows">
+            <Button variant="outline" size="sm" className="mt-3" style={{ borderColor: '#8EA58C', color: '#8EA58C' }} data-testid="setup-workflows">
               <i className="fas fa-plus mr-2"></i>
               Setup Workflows
             </Button>
