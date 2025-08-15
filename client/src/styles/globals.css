@@ -101,6 +101,8 @@
     box-sizing: border-box;
   }
 
+  /* NUCLEAR CSS OVERRIDES - Eliminate ALL non-brand colors */
+  
   /* Force all Badge components to use only brand colors */
   .inline-flex.items-center.rounded-full[class*="bg-"]:not([style*="background"]),
   .inline-flex.items-center.rounded[class*="bg-"]:not([style*="background"]) {
@@ -111,9 +113,139 @@
 
   /* Override any non-brand color classes globally */
   [class*="bg-pink"], [class*="bg-purple"], [class*="bg-magenta"], [class*="bg-rose"],
-  [class*="bg-red"], [class*="bg-orange"], [class*="bg-yellow"]:not([style*="background"]) {
+  [class*="bg-red"], [class*="bg-orange"], [class*="bg-yellow"], [class*="bg-amber"],
+  [class*="bg-lime"], [class*="bg-emerald"], [class*="bg-teal"], [class*="bg-cyan"],
+  [class*="bg-sky"], [class*="bg-blue"], [class*="bg-indigo"], [class*="bg-violet"],
+  [class*="bg-fuchsia"]:not([style*="background"]) {
     background-color: #8EA58C !important; /* Force to brand sage */
     color: white !important;
+  }
+
+  /* Force all text colors to brand colors */
+  [class*="text-pink"], [class*="text-purple"], [class*="text-magenta"], [class*="text-rose"],
+  [class*="text-red"], [class*="text-orange"], [class*="text-yellow"], [class*="text-amber"],
+  [class*="text-lime"], [class*="text-emerald"], [class*="text-teal"], [class*="text-cyan"],
+  [class*="text-sky"], [class*="text-blue"], [class*="text-indigo"], [class*="text-violet"],
+  [class*="text-fuchsia"] {
+    color: #344C3D !important; /* Force to brand evergreen */
+  }
+
+  /* Force all border colors to brand colors */
+  [class*="border-pink"], [class*="border-purple"], [class*="border-magenta"], [class*="border-rose"],
+  [class*="border-red"], [class*="border-orange"], [class*="border-yellow"], [class*="border-amber"],
+  [class*="border-lime"], [class*="border-emerald"], [class*="border-teal"], [class*="border-cyan"],
+  [class*="border-sky"], [class*="border-blue"], [class*="border-indigo"], [class*="border-violet"],
+  [class*="border-fuchsia"] {
+    border-color: #738A6E !important; /* Force to brand moss */
+  }
+
+  /* Force specific status badge colors to brand palette */
+  [data-status="completed"] {
+    background-color: #8EA58C !important; /* Sage for completed */
+    color: white !important;
+  }
+
+  [data-status="processing"] {
+    background-color: #88A5BC !important; /* French blue for processing */
+    color: white !important;
+  }
+
+  [data-status="failed"] {
+    background-color: #344C3D !important; /* Evergreen for failed */
+    color: white !important;
+  }
+
+  [data-status="pending"] {
+    background-color: #738A6E !important; /* Moss for pending */
+    color: white !important;
+  }
+
+  /* Override progress bar colors */
+  [role="progressbar"] {
+    background-color: #F2F3F1 !important; /* Ivory background */
+  }
+
+  [role="progressbar"] > div {
+    background-color: #8EA58C !important; /* Sage fill */
+  }
+
+  /* Nuclear override for any remaining color variants */
+  [class*="-50"], [class*="-100"], [class*="-200"], [class*="-300"], [class*="-400"],
+  [class*="-500"], [class*="-600"], [class*="-700"], [class*="-800"], [class*="-900"] {
+    /* Only allow these if they're part of brand colors */
+  }
+  
+  /* Override specific Tailwind color variants that might slip through */
+  .bg-pink-50, .bg-pink-100, .bg-pink-200, .bg-pink-300, .bg-pink-400, .bg-pink-500,
+  .bg-pink-600, .bg-pink-700, .bg-pink-800, .bg-pink-900, .bg-pink-950,
+  .bg-yellow-50, .bg-yellow-100, .bg-yellow-200, .bg-yellow-300, .bg-yellow-400, .bg-yellow-500,
+  .bg-yellow-600, .bg-yellow-700, .bg-yellow-800, .bg-yellow-900, .bg-yellow-950,
+  .bg-orange-50, .bg-orange-100, .bg-orange-200, .bg-orange-300, .bg-orange-400, .bg-orange-500,
+  .bg-orange-600, .bg-orange-700, .bg-orange-800, .bg-orange-900, .bg-orange-950 {
+    background-color: #8EA58C !important; /* Force to sage */
+    color: white !important;
+  }
+
+  /* Override hover states for non-brand colors */
+  [class*="hover:bg-pink"]:hover, [class*="hover:bg-yellow"]:hover, [class*="hover:bg-orange"]:hover,
+  [class*="hover:bg-red"]:hover, [class*="hover:bg-purple"]:hover, [class*="hover:bg-blue"]:hover {
+    background-color: #738A6E !important; /* Hover to moss */
+    color: white !important;
+  }
+
+  /* Final nuclear override for any inline styles or dynamic colors */
+  [style*="background-color:"] {
+    /* Allow these only if explicitly branded */
+  }
+
+  /* Force CSS custom properties for brand consistency */
+  :root {
+    --color-primary: #8EA58C !important;
+    --color-secondary: #738A6E !important;
+    --color-accent: #88A5BC !important;
+    --color-text: #344C3D !important;
+    --color-background: #F2F3F1 !important;
+  }
+
+  /* Override any remaining Tailwind utilities */
+  .text-blue-600, .text-blue-500, .text-blue-700, .text-blue-800, .text-blue-900 {
+    color: #88A5BC !important; /* French blue */
+  }
+
+  .text-green-600, .text-green-500, .text-green-700, .text-green-800, .text-green-900 {
+    color: #8EA58C !important; /* Sage */
+  }
+
+  .text-red-600, .text-red-500, .text-red-700, .text-red-800, .text-red-900 {
+    color: #344C3D !important; /* Evergreen */
+  }
+
+  .text-orange-600, .text-orange-500, .text-orange-700, .text-orange-800, .text-orange-900 {
+    color: #738A6E !important; /* Moss */
+  }
+
+  .text-yellow-600, .text-yellow-500, .text-yellow-700, .text-yellow-800, .text-yellow-900 {
+    color: #344C3D !important; /* Evergreen */
+  }
+
+  .bg-blue-600, .bg-blue-500, .bg-blue-700, .bg-blue-800, .bg-blue-900 {
+    background-color: #88A5BC !important; /* French blue */
+  }
+
+  .bg-green-600, .bg-green-500, .bg-green-700, .bg-green-800, .bg-green-900 {
+    background-color: #8EA58C !important; /* Sage */
+  }
+
+  .bg-red-600, .bg-red-500, .bg-red-700, .bg-red-800, .bg-red-900 {
+    background-color: #344C3D !important; /* Evergreen */
+  }
+
+  .bg-orange-600, .bg-orange-500, .bg-orange-700, .bg-orange-800, .bg-orange-900 {
+    background-color: #738A6E !important; /* Moss */
+  }
+
+  .bg-yellow-600, .bg-yellow-500, .bg-yellow-700, .bg-yellow-800, .bg-yellow-900 {
+    background-color: #8EA58C !important; /* Sage */
   }
 
   html, body, #root {
