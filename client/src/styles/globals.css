@@ -2,6 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shimmer animation for processing progress bars */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Interactive Batch Processing Animations */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+}
+
 @layer base {
   :root {
     /* Core Brand Colors - EXACT hex values */

@@ -135,6 +135,39 @@ export function registerTranscriptRoutes(app: Express): void {
     }
   });
 
+  // Get detailed files for a specific batch (for drill-down visualization)
+  app.get('/api/transcripts/batches/:batchId/files', async (req, res) => {
+    try {
+      const { batchId } = req.params;
+      const files = await storage.getTranscriptFilesByBatch(batchId);
+      res.json(files);
+    } catch (error) {
+      console.error('Error fetching batch files:', error);
+      res.status(500).json({ error: 'Failed to fetch batch files' });
+    }
+  });
+
+  // Get processing statistics for visualization
+  app.get('/api/transcripts/stats', async (req, res) => {
+    try {
+      const therapistId = 'dr-jonathan-procter'; // Mock therapist ID
+      const batches = await storage.getTranscriptBatches(therapistId);
+      
+      const stats = {
+        totalBatches: batches.length,
+        totalFiles: batches.reduce((sum, batch) => sum + batch.totalFiles, 0),
+        processedFiles: batches.reduce((sum, batch) => sum + (batch.processedFiles || 0), 0),
+        filesNeedingReview: batches.reduce((sum, batch) => sum + (batch.failedFiles || 0), 0),
+        recentBatches: batches.slice(0, 5) // Latest 5 batches
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching transcript stats:', error);
+      res.status(500).json({ error: 'Failed to fetch transcript stats' });
+    }
+  });
+
   // Get files that need manual review
   app.get('/api/transcripts/review', async (req, res) => {
     try {
