@@ -368,9 +368,12 @@ export function TherapeuticDashboardWidget() {
         </div>
         
         {recentInsights.length === 0 && (
-          <p className="text-center text-muted-foreground py-4" data-testid="text-no-insights">
-            Insights will appear as sessions are analyzed
-          </p>
+          <div className="text-center py-8" style={{ color: '#738A6E' }} data-testid="text-no-insights">
+            <Brain className="h-8 w-8 mx-auto mb-3 opacity-50" style={{ color: '#88A5BC' }} />
+            <p className="text-sm">
+              Insights will appear as sessions are analyzed
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

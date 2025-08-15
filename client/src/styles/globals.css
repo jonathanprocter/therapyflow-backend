@@ -322,6 +322,18 @@
     background-color: rgb(255 255 255 / var(--tw-bg-opacity)) !important;
   }
 
+  /* Additional yellow overrides */
+  *[style*="background-color: yellow"],
+  *[style*="backgroundColor: yellow"],
+  *[style*="background: yellow"],
+  *[style*="#ff"],
+  *[style*="#FF"],
+  *[style*="rgb(255, 255, 0)"],
+  *[style*="hsl(60,"] {
+    background-color: #F2F3F1 !important;
+    color: #344C3D !important;
+  }
+
   /* AI badges */
   .px-2.py-1.text-xs.font-medium.rounded {
     background-color: #88A5BC !important;
