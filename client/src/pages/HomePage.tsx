@@ -2,62 +2,32 @@ import { Link } from 'wouter';
 
 export default function HomePage() {
   return (
-    <div style={{ backgroundColor: '#F2F3F1', minHeight: '100vh', paddingTop: '30px' }}>
+    <div className="bg-ivory min-h-screen pt-8">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4" style={{ color: '#344C3D' }}>
+          <h1 className="text-4xl font-bold mb-4 text-evergreen">
             Welcome to TherapyFlow
           </h1>
-          <p className="text-xl mb-6" style={{ color: '#738A6E' }}>
+          <p className="text-xl mb-6 text-moss">
             Comprehensive clinical management platform with AI-powered document processing
           </p>
 
           {/* Quick Actions Banner */}
-          <div className="rounded-lg p-6 mb-8" style={{
-            backgroundColor: 'rgba(142, 165, 140, 0.08)',
-            border: '1px solid rgba(142, 165, 140, 0.2)'
-          }}>
-            <h3 className="text-lg font-semibold mb-3" style={{ color: '#344C3D' }}>
+          <div className="rounded-lg p-6 mb-8 bg-sage/10 border border-sage/20">
+            <h3 className="text-lg font-semibold mb-3 text-evergreen">
               Get Started
             </h3>
-            <p className="mb-4 text-sm" style={{ color: '#738A6E' }}>
+            <p className="mb-4 text-sm text-moss">
               Begin managing your clinical practice with AI-powered tools
             </p>
             <div className="flex justify-center gap-3">
               <Link href="/dashboard">
-                <button 
-                  className="px-5 py-2.5 rounded-md font-medium transition-all text-sm hover:shadow-md"
-                  style={{ 
-                    backgroundColor: '#8EA58C', 
-                    color: '#FFFFFF' 
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#7A8F78';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#8EA58C';
-                  }}
-                >
+                <button className="btn-primary">
                   View Dashboard
                 </button>
               </Link>
               <Link href="/smart">
-                <button 
-                  className="px-5 py-2.5 rounded-md font-medium transition-all text-sm hover:shadow-md"
-                  style={{ 
-                    backgroundColor: 'transparent',
-                    color: '#88A5BC',
-                    border: '2px solid #88A5BC'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#88A5BC';
-                    e.currentTarget.style.color = '#FFFFFF';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#88A5BC';
-                  }}
-                >
+                <button className="btn-secondary">
                   Upload Documents
                 </button>
               </Link>
@@ -68,34 +38,18 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4">
           {/* Clinical Management Section */}
           <div>
-            <h2 className="text-2xl font-semibold mb-6 text-center" style={{ color: '#344C3D' }}>
+            <h2 className="text-2xl font-semibold mb-6 text-center text-evergreen">
               Clinical Management
             </h2>
 
             <Link href="/dashboard">
-              <div 
-                className="p-6 rounded-lg transition-all cursor-pointer h-[180px] flex flex-col justify-between"
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid rgba(115, 138, 110, 0.15)',
-                  marginBottom: '20px',
-                  boxShadow: '0 2px 4px rgba(52, 76, 61, 0.08)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(52, 76, 61, 0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(52, 76, 61, 0.08)';
-                }}
-              >
+              <div className="card p-6 transition-all cursor-pointer h-[180px] flex flex-col justify-between mb-5">
                 <div className="text-3xl mb-3">🏠</div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2" style={{ color: '#344C3D' }}>
+                  <h3 className="text-lg font-semibold mb-2 text-evergreen">
                     Dashboard
                   </h3>
-                  <p className="text-sm" style={{ color: '#738A6E' }}>
+                  <p className="text-sm text-moss">
                     Overview of appointments, insights, and clinical metrics
                   </p>
                 </div>
@@ -197,7 +151,7 @@ export default function HomePage() {
 
           {/* AI Document Processing Section */}
           <div>
-            <h2 className="text-2xl font-semibold mb-6 text-center" style={{ color: '#344C3D' }}>
+            <h2 className="text-2xl font-semibold mb-6 text-center text-evergreen">
               AI Document Processing
             </h2>
 
@@ -346,7 +300,7 @@ export default function HomePage() {
 
           {/* Analysis & Reports Section */}
           <div>
-            <h2 className="text-2xl font-semibold mb-6 text-center" style={{ color: '#344C3D' }}>
+            <h2 className="text-2xl font-semibold mb-6 text-center text-evergreen">
               Analysis & Reports
             </h2>
 

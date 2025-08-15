@@ -1,4 +1,3 @@
-
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
@@ -9,6 +8,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Brand colors
+        ivory: '#F2F3F1',
+        sage: '#8EA58C',
+        moss: '#738A6E',
+        evergreen: '#344C3D',
+        'french-blue': '#88A5BC',
+
+        // Tailwind design system
         background: 'rgb(var(--background) / <alpha-value>)',
         foreground: 'rgb(var(--foreground) / <alpha-value>)',
         surface: 'rgb(var(--color-surface) / <alpha-value>)',
@@ -35,10 +42,6 @@ const config: Config = {
         accent: {
           DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
           foreground: 'rgb(var(--accent-foreground) / <alpha-value>)',
-          blue: 'rgb(var(--color-accent-blue) / <alpha-value>)',
-          green: 'rgb(var(--color-accent-green) / <alpha-value>)',
-          amber: 'rgb(var(--color-sage) / <alpha-value>)', // Force amber to sage
-          rose: 'rgb(var(--color-french-blue) / <alpha-value>)', // Force rose to french blue
         },
         destructive: {
           DEFAULT: 'rgb(var(--destructive) / <alpha-value>)',

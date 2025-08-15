@@ -40,29 +40,15 @@ export default function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <aside 
-      className="w-64 flex flex-col" 
-      style={{
-        backgroundColor: '#FFFFFF', 
-        borderRight: '1px solid rgba(115, 138, 110, 0.15)'
-      }}
-    >
+    <aside className="sidebar w-64 flex flex-col">
       {/* Logo and Header */}
-      <div 
-        className="h-16 px-6 flex items-center" 
-        style={{
-          borderBottom: '1px solid rgba(115, 138, 110, 0.15)'
-        }}
-      >
+      <div className="h-16 px-6 flex items-center border-b border-moss/15">
         <Link href="/">
           <div className="flex items-center space-x-3 cursor-pointer">
-            <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: '#88A5BC' }}
-            >
-              <Brain className="w-4 h-4" style={{ color: '#FFFFFF' }} />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-french-blue">
+              <Brain className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-xl font-bold" style={{ color: '#344C3D' }}>
+            <h1 className="text-xl font-bold text-evergreen">
               TherapyFlow
             </h1>
           </div>

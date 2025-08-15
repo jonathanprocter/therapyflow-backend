@@ -2,1178 +2,160 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Shimmer animation for processing progress bars */
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
-}
-
-/* Interactive Batch Processing Animations */
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s linear infinite;
-}
-
 @layer base {
   :root {
-    /* Core Brand Colors - EXACT hex values */
-    --color-ivory: 242 243 241;      /* #F2F3F1 - Warm white for backgrounds */
-    --color-sage: 142 165 140;       /* #8EA58C - Primary brand color */
-    --color-moss: 115 138 110;       /* #738A6E - Secondary/body text */
-    --color-evergreen: 52 76 61;     /* #344C3D - Headers and emphasis */
-    --color-french-blue: 136 165 188; /* #88A5BC - Accent for links and CTAs */
-    --color-white: 255 255 255;       /* #FFFFFF - Pure white when needed */
+    /* TherapyFlow Brand Colors */
+    --color-ivory: #F2F3F1;
+    --color-sage: #8EA58C;
+    --color-moss: #738A6E;
+    --color-evergreen: #344C3D;
+    --color-french-blue: #88A5BC;
+    --color-white: #FFFFFF;
 
-    /* Standard Theme Variables mapped to brand colors */
+    /* Tailwind CSS variables mapped to brand colors */
     --background: 242 243 241;        /* Ivory */
-    --foreground: 52 76 61;           /* Evergreen for main text */
-    --card: 255 255 255;              /* Pure white #FFFFFF for cards */
-    --card-foreground: 52 76 61;      /* Evergreen #344C3D for card text */
-    --popover: 242 243 241;           /* EXACT Ivory #F2F3F1 for popovers */
-    --popover-foreground: 52 76 61;   /* EXACT Evergreen #344C3D for popover text */
-    --primary: 142 165 140;           /* Sage as primary */
-    --primary-foreground: 255 255 255; /* White text on sage */
-    --secondary: 242 243 241;         /* Ivory for secondary */
-    --secondary-foreground: 52 76 61; /* Evergreen text on ivory */
-    --muted: 242 243 241;             /* Ivory for muted backgrounds */
-    --muted-foreground: 115 138 110;  /* Moss for muted text */
-    --accent: 136 165 188;            /* French blue for accents */
-    --accent-foreground: 255 255 255; /* White text on blue */
-    --destructive: 52 76 61;          /* Use evergreen instead of red */
-    --destructive-foreground: 255 255 255;
-    --border: 115 138 110;            /* Moss for borders */
-    --input: 242 243 241;             /* Ivory for input backgrounds */
-    --ring: 142 165 140;              /* Sage for focus rings */
-
-    /* Chart Colors using brand palette */
-    --chart-1: 142 165 140;           /* Sage for primary data */
-    --chart-2: 115 138 110;           /* Moss for secondary data */
-    --chart-3: 136 165 188;           /* French blue for tertiary data */
-    --chart-4: 122 143 120;           /* Sage dark for additional data */
-    --chart-5: 107 139 166;           /* Blue dark for additional data */
-
-    /* Radius */
+    --foreground: 52 76 61;           /* Evergreen */
+    --card: 255 255 255;              /* White */
+    --card-foreground: 52 76 61;      /* Evergreen */
+    --popover: 255 255 255;           /* White */
+    --popover-foreground: 52 76 61;   /* Evergreen */
+    --primary: 142 165 140;           /* Sage */
+    --primary-foreground: 255 255 255; /* White */
+    --secondary: 242 243 241;         /* Ivory */
+    --secondary-foreground: 52 76 61; /* Evergreen */
+    --muted: 242 243 241;             /* Ivory */
+    --muted-foreground: 115 138 110;  /* Moss */
+    --accent: 136 165 188;            /* French Blue */
+    --accent-foreground: 255 255 255; /* White */
+    --destructive: 52 76 61;          /* Evergreen */
+    --destructive-foreground: 255 255 255; /* White */
+    --border: 115 138 110;            /* Moss */
+    --input: 242 243 241;             /* Ivory */
+    --ring: 136 165 188;              /* French Blue */
     --radius: 0.75rem;
   }
 
-  .dark {
-    /* Dark mode using inverted brand colors */
-    --background: 52 76 61;           /* Evergreen for dark background */
-    --foreground: 242 243 241;        /* Ivory for dark text */
-    --card: 115 138 110;              /* Moss for dark cards */
-    --card-foreground: 242 243 241;   /* Ivory for dark card text */
-    --popover: 115 138 110;           /* Moss for dark popovers */
-    --popover-foreground: 242 243 241; /* Ivory for dark popover text */
-    --primary: 142 165 140;           /* Keep sage as primary */
-    --primary-foreground: 52 76 61;   /* Evergreen text on sage */
-    --secondary: 115 138 110;         /* Moss for dark secondary */
-    --secondary-foreground: 242 243 241; /* Ivory text on moss */
-    --muted: 115 138 110;             /* Moss for dark muted backgrounds */
-    --muted-foreground: 142 165 140;  /* Sage for dark muted text */
-    --accent: 136 165 188;            /* Keep french blue for accents */
-    --accent-foreground: 52 76 61;    /* Evergreen text on blue */
-    --destructive: 242 243 241;       /* Ivory for dark destructive (inverted) */
-    --destructive-foreground: 52 76 61;
-    --border: 142 165 140;            /* Sage for dark borders */
-    --input: 115 138 110;             /* Moss for dark input backgrounds */
-    --ring: 142 165 140;              /* Sage for dark focus rings */
-  }
-
-  *, *::before, *::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  /* NUCLEAR CSS OVERRIDES - Eliminate ALL non-brand colors */
-  
-  /* Force all Badge components to use only brand colors */
-  .inline-flex.items-center.rounded-full[class*="bg-"]:not([style*="background"]),
-  .inline-flex.items-center.rounded[class*="bg-"]:not([style*="background"]) {
-    background-color: #8EA58C !important; /* Sage */
-    color: white !important;
-    border-color: #8EA58C !important;
-  }
-
-  /* Override any non-brand color classes globally */
-  [class*="bg-pink"], [class*="bg-purple"], [class*="bg-magenta"], [class*="bg-rose"],
-  [class*="bg-red"], [class*="bg-orange"], [class*="bg-yellow"], [class*="bg-amber"],
-  [class*="bg-lime"], [class*="bg-emerald"], [class*="bg-teal"], [class*="bg-cyan"],
-  [class*="bg-sky"], [class*="bg-blue"], [class*="bg-indigo"], [class*="bg-violet"],
-  [class*="bg-fuchsia"]:not([style*="background"]) {
-    background-color: #8EA58C !important; /* Force to brand sage */
-    color: white !important;
-  }
-
-  /* Override any loading spinners or animated elements */
-  .animate-spin, .animate-pulse, .animate-bounce,
-  [class*="loading"], [class*="spinner"], [class*="progress"] {
-    color: #8EA58C !important; /* Sage for loading indicators */
-  }
-
-  /* Force all GitCommit icons and similar UI elements to brand colors */
-  svg[class*="h-16"], svg[class*="w-16"],
-  .text-center svg, .mx-auto svg {
-    color: #8EA58C !important; /* Force to brand sage */
-  }
-
-  /* Override any muted/disabled state colors */
-  [class*="opacity-"], [class*="text-muted"], 
-  [class*="text-gray"], [class*="text-slate"],
-  .text-muted, .text-muted-foreground {
-    color: #738A6E !important; /* Force to moss */
-    opacity: 0.7 !important;
-  }
-
-  /* Force all Badge and pill-like elements to brand colors */
-  .inline-flex[class*="rounded"], 
-  .rounded[class*="px-"], .rounded-full[class*="px-"],
-  .rounded-md[class*="px-"], .rounded-lg[class*="px-"] {
-    background-color: #8EA58C !important; /* Sage */
-    color: white !important;
-    border-color: #8EA58C !important;
-  }
-
-  /* Override any accent or highlight colors */
-  [class*="accent-"], [class*="highlight-"],
-  [class*="border-accent"], [class*="bg-accent"] {
-    background-color: #88A5BC !important; /* French Blue */
-    border-color: #88A5BC !important;
-    color: white !important;
-  }
-
-  /* Force all text colors to brand colors */
-  [class*="text-pink"], [class*="text-purple"], [class*="text-magenta"], [class*="text-rose"],
-  [class*="text-red"], [class*="text-orange"], [class*="text-yellow"], [class*="text-amber"],
-  [class*="text-lime"], [class*="text-emerald"], [class*="text-teal"], [class*="text-cyan"],
-  [class*="text-sky"], [class*="text-blue"], [class*="text-indigo"], [class*="text-violet"],
-  [class*="text-fuchsia"] {
-    color: #344C3D !important; /* Force to brand evergreen */
-  }
-
-  /* Force all border colors to brand colors */
-  [class*="border-pink"], [class*="border-purple"], [class*="border-magenta"], [class*="border-rose"],
-  [class*="border-red"], [class*="border-orange"], [class*="border-yellow"], [class*="border-amber"],
-  [class*="border-lime"], [class*="border-emerald"], [class*="border-teal"], [class*="border-cyan"],
-  [class*="border-sky"], [class*="border-blue"], [class*="border-indigo"], [class*="border-violet"],
-  [class*="border-fuchsia"] {
-    border-color: #738A6E !important; /* Force to brand moss */
-  }
-
-  /* Force specific status badge colors to brand palette */
-  [data-status="completed"] {
-    background-color: #8EA58C !important; /* Sage for completed */
-    color: white !important;
-  }
-
-  [data-status="processing"] {
-    background-color: #88A5BC !important; /* French blue for processing */
-    color: white !important;
-  }
-
-  [data-status="failed"] {
-    background-color: #344C3D !important; /* Evergreen for failed */
-    color: white !important;
-  }
-
-  [data-status="pending"] {
-    background-color: #738A6E !important; /* Moss for pending */
-    color: white !important;
-  }
-
-  /* Override progress bar colors */
-  [role="progressbar"] {
-    background-color: #F2F3F1 !important; /* Ivory background */
-  }
-
-  [role="progressbar"] > div {
-    background-color: #8EA58C !important; /* Sage fill */
-  }
-
-  /* Nuclear override for any remaining color variants */
-  [class*="-50"], [class*="-100"], [class*="-200"], [class*="-300"], [class*="-400"],
-  [class*="-500"], [class*="-600"], [class*="-700"], [class*="-800"], [class*="-900"] {
-    /* Only allow these if they're part of brand colors */
-  }
-  
-  /* Override specific Tailwind color variants that might slip through */
-  .bg-pink-50, .bg-pink-100, .bg-pink-200, .bg-pink-300, .bg-pink-400, .bg-pink-500,
-  .bg-pink-600, .bg-pink-700, .bg-pink-800, .bg-pink-900, .bg-pink-950,
-  .bg-yellow-50, .bg-yellow-100, .bg-yellow-200, .bg-yellow-300, .bg-yellow-400, .bg-yellow-500,
-  .bg-yellow-600, .bg-yellow-700, .bg-yellow-800, .bg-yellow-900, .bg-yellow-950,
-  .bg-orange-50, .bg-orange-100, .bg-orange-200, .bg-orange-300, .bg-orange-400, .bg-orange-500,
-  .bg-orange-600, .bg-orange-700, .bg-orange-800, .bg-orange-900, .bg-orange-950 {
-    background-color: #8EA58C !important; /* Force to sage */
-    color: white !important;
-  }
-
-  /* Override hover states for non-brand colors */
-  [class*="hover:bg-pink"]:hover, [class*="hover:bg-yellow"]:hover, [class*="hover:bg-orange"]:hover,
-  [class*="hover:bg-red"]:hover, [class*="hover:bg-purple"]:hover, [class*="hover:bg-blue"]:hover {
-    background-color: #738A6E !important; /* Hover to moss */
-    color: white !important;
-  }
-
-  /* Final nuclear override for any inline styles or dynamic colors */
-  [style*="background-color:"] {
-    /* Allow these only if explicitly branded */
-  }
-
-  /* Force CSS custom properties for brand consistency */
-  :root {
-    --color-primary: #8EA58C !important;
-    --color-secondary: #738A6E !important;
-    --color-accent: #88A5BC !important;
-    --color-text: #344C3D !important;
-    --color-background: #F2F3F1 !important;
-  }
-
-  /* Override any remaining Tailwind utilities */
-  .text-blue-600, .text-blue-500, .text-blue-700, .text-blue-800, .text-blue-900 {
-    color: #88A5BC !important; /* French blue */
-  }
-
-  .text-green-600, .text-green-500, .text-green-700, .text-green-800, .text-green-900 {
-    color: #8EA58C !important; /* Sage */
-  }
-
-  .text-red-600, .text-red-500, .text-red-700, .text-red-800, .text-red-900 {
-    color: #344C3D !important; /* Evergreen */
-  }
-
-  .text-orange-600, .text-orange-500, .text-orange-700, .text-orange-800, .text-orange-900 {
-    color: #738A6E !important; /* Moss */
-  }
-
-  .text-yellow-600, .text-yellow-500, .text-yellow-700, .text-yellow-800, .text-yellow-900 {
-    color: #344C3D !important; /* Evergreen */
-  }
-
-  .bg-blue-600, .bg-blue-500, .bg-blue-700, .bg-blue-800, .bg-blue-900 {
-    background-color: #88A5BC !important; /* French blue */
-  }
-
-  .bg-green-600, .bg-green-500, .bg-green-700, .bg-green-800, .bg-green-900 {
-    background-color: #8EA58C !important; /* Sage */
-  }
-
-  .bg-red-600, .bg-red-500, .bg-red-700, .bg-red-800, .bg-red-900 {
-    background-color: #344C3D !important; /* Evergreen */
-  }
-
-  .bg-orange-600, .bg-orange-500, .bg-orange-700, .bg-orange-800, .bg-orange-900 {
-    background-color: #738A6E !important; /* Moss */
-  }
-
-  .bg-yellow-600, .bg-yellow-500, .bg-yellow-700, .bg-yellow-800, .bg-yellow-900 {
-    background-color: #8EA58C !important; /* Sage */
+  * {
+    @apply border-border;
   }
 
   html, body, #root {
     background-color: #F2F3F1;
-    color: #738A6E;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    line-height: 1.6;
+    color: #344C3D;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
     padding: 0;
     min-height: 100vh;
+  }
+
+  body {
+    @apply bg-background text-foreground;
   }
 
   h1, h2, h3, h4, h5, h6 {
     color: #344C3D;
   }
 
-  p, span, .text-sm {
+  p, span {
     color: #738A6E;
   }
 
   a {
     color: #88A5BC;
     text-decoration: none;
-    transition: color 0.2s ease;
   }
 
   a:hover {
     color: #6B8BA6;
   }
-
-  /* CRITICAL FINAL OVERRIDES - Target any remaining non-brand colors */
-  
-  /* Force all empty state elements to brand colors */
-  .text-center .h-16.w-16, .text-center svg.h-16, .mx-auto svg,
-  .h-16.w-16.text-sage\/40, .h-16.w-16.mx-auto {
-    color: #8EA58C !important; /* Force sage for all large icons */
-  }
-
-  /* Override any system-generated colors that might appear */
-  [style*="color: rgb("], [style*="background-color: rgb("] {
-    color: #8EA58C !important;
-    background-color: #F2F3F1 !important;
-  }
-
-  /* Force all SVG elements to use brand colors */
-  svg {
-    color: inherit !important;
-  }
-
-  /* Specific override for empty states in timeline */
-  .text-center.py-12 svg, .text-center .h-16, .mx-auto.mb-4 {
-    color: #8EA58C !important; /* Sage for empty state icons */
-  }
-
-  /* Override any remaining purple/pink system colors */
-  * {
-    --tw-prose-body: #738A6E !important;
-    --tw-prose-headings: #344C3D !important;
-    --tw-prose-links: #88A5BC !important;
-    --tw-prose-bold: #344C3D !important;
-    --tw-prose-counters: #8EA58C !important;
-    --tw-prose-bullets: #8EA58C !important;
-    --tw-prose-hr: #738A6E !important;
-    --tw-prose-quotes: #344C3D !important;
-    --tw-prose-quote-borders: #8EA58C !important;
-    --tw-prose-captions: #738A6E !important;
-    --tw-prose-kbd: #344C3D !important;
-    --tw-prose-code: #8EA58C !important;
-    --tw-prose-pre-code: #F2F3F1 !important;
-    --tw-prose-pre-bg: #344C3D !important;
-    --tw-prose-th-borders: #738A6E !important;
-    --tw-prose-td-borders: #738A6E !important;
-  }
-
-  /* CRITICAL DASHBOARD ICON OVERRIDES - Target specific non-brand colored icons */
-  
-  /* Force all icon colors to brand colors based on their context */
-  .text-yellow-500, .text-yellow-600, .text-yellow-400,
-  .text-amber-500, .text-amber-600, .text-amber-400 {
-    color: #8EA58C !important; /* Force to sage */
-  }
-
-  .text-pink-500, .text-pink-600, .text-pink-400,
-  .text-rose-500, .text-rose-600, .text-rose-400,
-  .text-fuchsia-500, .text-fuchsia-600, .text-fuchsia-400 {
-    color: #88A5BC !important; /* Force to French blue */
-  }
-
-  .text-red-500, .text-red-600, .text-red-400 {
-    color: #344C3D !important; /* Force to evergreen */
-  }
-
-  .text-blue-500, .text-blue-600, .text-blue-400 {
-    color: #88A5BC !important; /* Force to French blue */
-  }
-
-  .text-green-500, .text-green-600, .text-green-400 {
-    color: #8EA58C !important; /* Force to sage */
-  }
-
-  .text-orange-500, .text-orange-600, .text-orange-400 {
-    color: #738A6E !important; /* Force to moss */
-  }
-
-  .text-purple-500, .text-purple-600, .text-purple-400,
-  .text-violet-500, .text-violet-600, .text-violet-400,
-  .text-indigo-500, .text-indigo-600, .text-indigo-400 {
-    color: #8EA58C !important; /* Force to sage */
-  }
-
-  /* Force background colors for feature cards */
-  .bg-yellow-50, .bg-yellow-100, .bg-amber-50, .bg-amber-100 {
-    background-color: rgba(242, 243, 241, 0.5) !important; /* Light ivory */
-  }
-
-  .bg-pink-50, .bg-pink-100, .bg-rose-50, .bg-rose-100,
-  .bg-fuchsia-50, .bg-fuchsia-100 {
-    background-color: rgba(136, 165, 188, 0.1) !important; /* Light French blue */
-  }
-
-  .bg-blue-50, .bg-blue-100 {
-    background-color: rgba(136, 165, 188, 0.1) !important; /* Light French blue */
-  }
-
-  .bg-green-50, .bg-green-100 {
-    background-color: rgba(142, 165, 140, 0.1) !important; /* Light sage */
-  }
-
-  .bg-orange-50, .bg-orange-100 {
-    background-color: rgba(115, 138, 110, 0.1) !important; /* Light moss */
-  }
-
-  .bg-purple-50, .bg-purple-100, .bg-violet-50, .bg-violet-100,
-  .bg-indigo-50, .bg-indigo-100 {
-    background-color: rgba(142, 165, 140, 0.1) !important; /* Light sage */
-  }
-
-  /* CRITICAL: Force any CSS custom properties to brand values */
-  :root {
-    --color-accent-amber: 142, 165, 140 !important; /* Force to sage */
-    --color-accent-rose: 136, 165, 188 !important; /* Force to french blue */
-    --accent-amber: #8EA58C !important; /* Force to sage hex */
-    --accent-rose: #88A5BC !important; /* Force to french blue hex */
-  }
-
-  /* NUCLEAR OPTION: Override any possible source of non-brand colors */
-  
-  /* Force all possible icon containers to use brand backgrounds */
-  [class*="bg-yellow"], [class*="bg-amber"], [class*="bg-orange"] {
-    background: rgba(142, 165, 140, 0.1) !important; /* Light sage */
-  }
-
-  [class*="bg-pink"], [class*="bg-rose"], [class*="bg-fuchsia"] {
-    background: rgba(136, 165, 188, 0.1) !important; /* Light French blue */
-  }
-
-  [class*="bg-red"], [class*="bg-crimson"] {
-    background: rgba(52, 76, 61, 0.1) !important; /* Light evergreen */
-  }
-
-  [class*="bg-purple"], [class*="bg-violet"], [class*="bg-indigo"] {
-    background: rgba(142, 165, 140, 0.1) !important; /* Light sage */
-  }
-
-  /* Force all possible icon text colors */
-  [class*="text-yellow"], [class*="text-amber"], [class*="text-orange"] {
-    color: #8EA58C !important; /* Sage */
-  }
-
-  [class*="text-pink"], [class*="text-rose"], [class*="text-fuchsia"] {
-    color: #88A5BC !important; /* French blue */
-  }
-
-  [class*="text-red"], [class*="text-crimson"] {
-    color: #344C3D !important; /* Evergreen */
-  }
-
-  [class*="text-purple"], [class*="text-violet"], [class*="text-indigo"] {
-    color: #8EA58C !important; /* Sage */
-  }
-
-  /* Force SVG fills and strokes */
-  svg [fill*="yellow"], svg [fill*="amber"], svg [fill*="orange"] {
-    fill: #8EA58C !important; /* Sage */
-  }
-
-  svg [fill*="pink"], svg [fill*="rose"], svg [fill*="fuchsia"] {
-    fill: #88A5BC !important; /* French blue */
-  }
-
-  svg [fill*="red"], svg [fill*="crimson"] {
-    fill: #344C3D !important; /* Evergreen */
-  }
-
-  svg [fill*="purple"], svg [fill*="violet"], svg [fill*="indigo"] {
-    fill: #8EA58C !important; /* Sage */
-  }
-
-  /* Force lucide react icons and FontAwesome to use brand colors */
-  .lucide-icon, .fa, [data-lucide] {
-    color: inherit !important;
-  }
-
-  /* Dashboard feature card icon override */
-  .grid > div > div > div > i,
-  .grid > div > div > div > svg,
-  .p-6 i, .p-6 svg,
-  .p-4 i, .p-4 svg {
-    color: inherit !important;
-  }
 }
 
 @layer components {
-  /* CRITICAL CARD FIXES - Maximum Specificity */
-  .p-6.rounded-lg.transition-all.cursor-pointer {
-    background-color: #FFFFFF !important;
-    border: 1px solid rgba(115, 138, 110, 0.15) !important;
-    box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08) !important;
-  }
-
-  /* Sidebar Styling */
-  aside {
-    background-color: #FFFFFF !important;
-    border-right: 1px solid rgba(115, 138, 110, 0.15) !important;
-  }
-
-  /* Top bar */
-  [data-testid="topbar"] {
-    background-color: #FFFFFF !important;
-    border-bottom: 1px solid rgba(115, 138, 110, 0.15) !important;
-  }
-
-  /* CRITICAL INPUT FIELD OVERRIDES */
-  input,
-  input[type="text"],
-  input[type="date"],
-  input[type="file"],
-  textarea,
-  select {
-    background-color: #FFFFFF !important;
-    border-color: rgba(115, 138, 110, 0.3) !important;
-    color: #344C3D !important;
-  }
-
-  /* SELECT AND DROPDOWN OVERRIDES */
-  select,
-  [data-radix-select-trigger],
-  [data-radix-select-content] {
-    background-color: #FFFFFF !important;
-    border-color: rgba(115, 138, 110, 0.3) !important;
-    color: #344C3D !important;
-  }
-
-  [data-radix-select-trigger]:focus {
-    border-color: #88A5BC !important;
-    box-shadow: 0 0 0 1px #88A5BC !important;
-  }
-
-  /* FILE INPUT SPECIFIC OVERRIDES */
-  input[type="file"] {
-    background-color: #FFFFFF !important;
-    border: 1px solid rgba(115, 138, 110, 0.3) !important;
-    padding: 8px 12px !important;
-    border-radius: 6px !important;
-  }
-
-  input[type="file"]::-webkit-file-upload-button {
-    background-color: #8EA58C !important;
-    color: #FFFFFF !important;
-    border: none !important;
-    padding: 6px 12px !important;
-    border-radius: 4px !important;
-    margin-right: 8px !important;
-    cursor: pointer !important;
-  }
-
-  input[type="file"]::file-selector-button {
-    background-color: #8EA58C !important;
-    color: #FFFFFF !important;
-    border: none !important;
-    padding: 6px 12px !important;
-    border-radius: 4px !important;
-    margin-right: 8px !important;
-    cursor: pointer !important;
-  }
-
-  /* CALENDAR COMPONENT OVERRIDES */
-  .react-calendar,
-  [data-testid="date-picker"],
-  .rdp,
-  .rdp-months,
-  .rdp-month,
-  .rdp-table,
-  .rdp-tbody,
-  .rdp-tfoot {
-    background-color: #FFFFFF !important;
-  }
-
-  /* Calendar day buttons */
-  .rdp-button,
-  .rdp-day,
-  button[name="day"] {
-    background-color: transparent !important;
-    color: #344C3D !important;
-    border: none !important;
-    border-radius: 6px !important;
-  }
-
-  .rdp-button:hover,
-  .rdp-day:hover,
-  button[name="day"]:hover {
-    background-color: rgba(136, 165, 188, 0.1) !important;
-    color: #88A5BC !important;
-  }
-
-  /* Selected date */
-  .rdp-button[aria-selected="true"],
-  .rdp-day[aria-selected="true"],
-  button[name="day"][aria-selected="true"],
-  .rdp-day_selected {
-    background-color: #8EA58C !important;
-    color: #FFFFFF !important;
-  }
-
-  /* Today's date */
-  .rdp-day_today,
-  .rdp-button[data-today="true"] {
-    background-color: rgba(88, 165, 188, 0.1) !important;
-    color: #88A5BC !important;
-    font-weight: bold !important;
-  }
-
-  /* Calendar navigation */
-  .rdp-nav_button,
-  .rdp-nav button {
-    background-color: transparent !important;
-    color: #8EA58C !important;
-    border: 1px solid rgba(115, 138, 110, 0.3) !important;
-  }
-
-  .rdp-nav_button:hover,
-  .rdp-nav button:hover {
-    background-color: rgba(142, 165, 140, 0.1) !important;
-    color: #8EA58C !important;
-  }
-
-  /* Calendar month/year headers */
-  .rdp-caption,
-  .rdp-caption_label {
-    color: #344C3D !important;
-  }
-
-  /* Weekday headers */
-  .rdp-head_cell,
-  .rdp-weekday {
-    color: #738A6E !important;
-  }
-
-  /* Override any yellow/warning colors globally */
-  button:focus,
-  button:focus-visible,
-  .btn:focus,
-  .btn:focus-visible,
-  input:focus,
-  textarea:focus,
-  select:focus {
-    outline: none !important;
-    box-shadow: 0 0 0 1px #88A5BC !important;
-    border-color: #88A5BC !important;
-    background-color: #FFFFFF !important;
-  }
-
-  /* Remove yellow from disabled states */
-  button:disabled,
-  .btn:disabled,
-  input:disabled {
-    background-color: rgba(242, 243, 241, 0.5) !important;
-    color: rgba(115, 138, 110, 0.6) !important;
-    border-color: rgba(115, 138, 110, 0.3) !important;
-  }
-
-  /* Override any potential warning/yellow classes */
-  .text-yellow-500,
-  .text-yellow-600,
-  .text-yellow-300,
-  .text-yellow-400,
-  .bg-yellow-100,
-  .bg-yellow-200,
-  .bg-yellow-300,
-  .bg-yellow-400,
-  .bg-yellow-500,
-  .border-yellow-300,
-  .border-yellow-400,
-  .ring-yellow-500,
-  input.bg-yellow-100,
-  input.bg-yellow-200,
-  *[class*="yellow"] {
-    color: #344C3D !important;
-    background-color: #FFFFFF !important;
-    border-color: rgba(115, 138, 110, 0.3) !important;
-    box-shadow: none !important;
-  }
-
-  /* Force override any element with yellow styling */
-  * {
-    --tw-bg-opacity: 1 !important;
-  }
-  
-  .bg-yellow-50,
-  .bg-yellow-100,
-  .bg-yellow-200,
-  .bg-yellow-300,
-  .bg-yellow-400,
-  .bg-yellow-500 {
-    background-color: rgb(255 255 255 / var(--tw-bg-opacity)) !important;
-  }
-
-  /* Additional yellow overrides */
-  *[style*="background-color: yellow"],
-  *[style*="backgroundColor: yellow"],
-  *[style*="background: yellow"],
-  *[style*="#ff"],
-  *[style*="#FF"],
-  *[style*="rgb(255, 255, 0)"],
-  *[style*="hsl(60,"] {
-    background-color: #F2F3F1 !important;
-    color: #344C3D !important;
-  }
-
-  /* Override ALL non-brand colors - Pink/Purple/Blue hover states */
-  .hover\:bg-pink-50:hover,
-  .hover\:bg-pink-100:hover,
-  .hover\:bg-purple-50:hover,
-  .hover\:bg-purple-100:hover,
-  .hover\:bg-blue-50:hover,
-  .hover\:bg-blue-100:hover,
-  .hover\:bg-indigo-50:hover,
-  .hover\:bg-indigo-100:hover,
-  .hover\:bg-violet-50:hover,
-  .hover\:bg-violet-100:hover,
-  .bg-pink-50,
-  .bg-pink-100,
-  .bg-pink-200,
-  .bg-pink-300,
-  .bg-pink-400,
-  .bg-pink-500,
-  .bg-purple-50,
-  .bg-purple-100,
-  .bg-purple-200,
-  .bg-purple-300,
-  .bg-purple-400,
-  .bg-purple-500,
-  .bg-magenta-50,
-  .bg-magenta-100,
-  .bg-magenta-200,
-  .bg-magenta-300,
-  .bg-magenta-400,
-  .bg-magenta-500,
-  .text-pink-500,
-  .text-pink-600,
-  .text-purple-500,
-  .text-purple-600,
-  .text-magenta-500,
-  .text-magenta-600,
-  .border-pink-200,
-  .border-pink-300,
-  .border-purple-200,
-  .border-purple-300,
-  .border-magenta-200,
-  .border-magenta-300,
-  *[class*="pink"]:hover,
-  *[class*="purple"]:hover,
-  *[class*="violet"]:hover,
-  *[class*="indigo"]:hover,
-  .bg-pink-50,
-  .bg-pink-100,
-  .bg-purple-50,
-  .bg-purple-100,
-  .bg-blue-50,
-  .bg-blue-100,
-  .bg-indigo-50,
-  .bg-indigo-100,
-  .bg-violet-50,
-  .bg-violet-100 {
-    background-color: rgba(242, 243, 241, 0.5) !important;
-    color: #344C3D !important;
-  }
-
-  /* Force all hover states to use brand colors */
-  *:hover {
-    color: inherit !important;
-  }
-
-  /* Client list and management hover states */
-  .hover\:bg-muted:hover,
-  .hover\:bg-secondary:hover,
-  .hover\:bg-accent:hover {
-    background-color: rgba(136, 165, 188, 0.1) !important;
-    color: #344C3D !important;
-  }
-
-  /* Button hover states */
-  button:hover,
-  .btn:hover {
-    background-color: #7A8F78 !important;
-    color: #FFFFFF !important;
-  }
-
-  /* Link hover states */
-  a:hover {
-    color: #6B8BA6 !important;
-  }
-
-  /* Card hover states */
-  .hover\:shadow-sm:hover,
-  .hover\:shadow-md:hover {
-    background-color: rgba(242, 243, 241, 0.8) !important;
-    box-shadow: 0 1px 3px rgba(115, 138, 110, 0.2) !important;
-  }
-
-  /* AI badges */
-  .px-2.py-1.text-xs.font-medium.rounded {
-    background-color: #88A5BC !important;
-    color: #FFFFFF !important;
-  }
-
   /* Button styles */
-  button {
-    background-color: #8EA58C !important;
-    color: #FFFFFF !important;
+  .btn-primary {
+    background-color: #8EA58C;
+    color: #FFFFFF;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
   }
 
-  button[style*="border"] {
-    background-color: transparent !important;
-    border: 2px solid #88A5BC !important;
-    color: #88A5BC !important;
+  .btn-primary:hover {
+    background-color: #7A8F78;
   }
 
-  /* Nuclear pink/magenta elimination */
-  *[class*="pink"]:not([class*="brand"]),
-  *[class*="magenta"]:not([class*="brand"]),
-  *[class*="purple"]:not([class*="brand"]) {
-    background-color: #FFFFFF !important;
-    color: #344C3D !important;
-    border-color: rgba(115, 138, 110, 0.3) !important;
+  .btn-secondary {
+    background-color: transparent;
+    color: #88A5BC;
+    border: 2px solid #88A5BC;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
   }
 
-  /* Force override progress bars and gradients */
-  .progress,
-  .progress-bar,
-  [role="progressbar"],
-  *[class*="progress"] {
-    background-color: #F2F3F1 !important;
-  }
-  
-  .progress-bar,
-  *[class*="progress"]:not([class*="bg"]) > * {
-    background: linear-gradient(90deg, #8EA58C 0%, #738A6E 100%) !important;
+  .btn-secondary:hover {
+    background-color: #88A5BC;
+    color: #FFFFFF;
   }
 
-  /* French Blue icons */
-  span[style*="88A5BC"] {
-    color: #88A5BC !important;
+  /* Card styles */
+  .card {
+    background-color: #FFFFFF;
+    border: 1px solid rgba(115, 138, 110, 0.15);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08);
   }
 
-  /* Comprehensive focus and active states */
-  *:focus,
-  *:focus-visible,
-  *[data-state="open"],
-  *[data-highlighted] {
-    outline: 2px solid #88A5BC !important;
-    outline-offset: 1px !important;
-    background-color: rgba(136, 165, 188, 0.05) !important;
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 76, 61, 0.12);
   }
 
-  /* Selection states */
-  *[data-selected="true"],
-  *[aria-selected="true"] {
-    background-color: rgba(136, 165, 188, 0.15) !important;
-    color: #344C3D !important;
+  /* Sidebar styles */
+  .sidebar {
+    background-color: #FFFFFF;
+    border-right: 1px solid rgba(115, 138, 110, 0.15);
   }
 
-  /* Dropdown and menu items */
-  .hover\:bg-accent\/50:hover {
-    background-color: rgba(136, 165, 188, 0.1) !important;
+  /* Input styles */
+  input, textarea, select {
+    background-color: #FFFFFF;
+    border: 1px solid rgba(115, 138, 110, 0.3);
+    color: #344C3D;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
   }
 
-  /* Table and list item hover */
-  tr:hover,
-  li:hover {
-    background-color: rgba(242, 243, 241, 0.7) !important;
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #88A5BC;
+    box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2);
   }
 
-  /* Dropdown menu item hover overrides */
-  [role="menuitem"]:hover,
-  [data-radix-collection-item]:hover,
-  .dropdown-menu-item:hover,
-  div[role="menuitem"]:hover {
-    background-color: rgba(136, 165, 188, 0.1) !important;
-    color: #344C3D !important;
+  /* Badge styles */
+  .badge {
+    background-color: #8EA58C;
+    color: #FFFFFF;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
   }
 
-  /* Card hover states - ensure no pink/purple */
-  .hover\:shadow-md:hover {
-    background-color: rgba(242, 243, 241, 0.9) !important;
-    box-shadow: 0 4px 6px rgba(115, 138, 110, 0.15) !important;
+  .badge-blue {
+    background-color: #88A5BC;
+    color: #FFFFFF;
   }
+}
 
-  /* Badge and status hover states */
-  .hover\:bg-secondary\/80:hover {
-    background-color: rgba(142, 165, 140, 0.8) !important;
-  }
-
-  /* All Radix UI component overrides */
-  [data-radix-popper-content-wrapper] [role="menuitem"]:hover,
-  [data-radix-dropdown-menu-content] [role="menuitem"]:hover,
-  [data-radix-context-menu-content] [role="menuitem"]:hover {
-    background-color: rgba(136, 165, 188, 0.1) !important;
-    color: #344C3D !important;
-  }
-
-  /* Comprehensive non-brand color elimination */
-  *[class*="rose"]:hover,
-  *[class*="pink"]:hover,
-  *[class*="fuchsia"]:hover,
-  *[class*="purple"]:hover,
-  *[class*="violet"]:hover,
-  *[class*="indigo"]:hover,
-  *[class*="cyan"]:hover,
-  *[class*="teal"]:hover,
-  *[class*="emerald"]:hover,
-  *[class*="lime"]:hover,
-  *[class*="amber"]:hover,
-  *[class*="orange"]:hover,
-  *[class*="red"]:hover,
-  .hover\:bg-slate-100:hover,
-  .hover\:bg-gray-100:hover,
-  .hover\:bg-zinc-100:hover,
-  .hover\:bg-neutral-100:hover,
-  .hover\:bg-stone-100:hover,
-  .bg-rose-50,
-  .bg-pink-50,
-  .bg-fuchsia-50,
-  .bg-purple-50,
-  .bg-violet-50,
-  .bg-indigo-50,
-  .bg-slate-50,
-  .bg-gray-50,
-  .bg-zinc-50 {
-    background-color: rgba(242, 243, 241, 0.5) !important;
-    color: #344C3D !important;
-  }
-
-  /* Dialog and Alert Dialog overrides */
-  [data-radix-dialog-content],
-  [role="dialog"],
-  [role="alertdialog"] {
-    background-color: #FFFFFF !important;
-    border: 2px solid rgba(115, 138, 110, 0.2) !important;
-  }
-
-  /* Dialog buttons - specifically target destructive actions */
-  [role="dialog"] button,
-  [role="alertdialog"] button,
-  .dialog-button,
-  button[class*="destructive"] {
-    background-color: #8EA58C !important;
-    color: #FFFFFF !important;
-    border: none !important;
-  }
-
-  button[class*="destructive"]:hover,
-  [role="dialog"] button:hover,
-  [role="alertdialog"] button:hover {
-    background-color: #7A8F78 !important;
-    color: #FFFFFF !important;
-  }
-
-  /* Cancel buttons in dialogs */
-  button[class*="cancel"],
-  button[variant="outline"] {
-    background-color: transparent !important;
-    color: #344C3D !important;
-    border: 2px solid #344C3D !important;
-  }
-
-  button[class*="cancel"]:hover,
-  button[variant="outline"]:hover {
-    background-color: #344C3D !important;
-    color: #FFFFFF !important;
-  }
-
-  /* Force all interactive elements to brand colors */
-  * {
-    --tw-ring-color: #88A5BC !important;
-  }
-
-  /* Override any default focus rings */
-  *:focus-visible {
-    outline: 2px solid #88A5BC !important;
-    outline-offset: 2px !important;
-  }
-
-  /* Nuclear option - override ALL possible non-brand colors with !important */
-  .text-rose-500, .text-pink-500, .text-fuchsia-500, .text-purple-500,
-  .text-violet-500, .text-indigo-500, .text-blue-500, .text-sky-500,
-  .text-cyan-500, .text-teal-500, .text-emerald-500, .text-green-500,
-  .text-lime-500, .text-yellow-500, .text-amber-500, .text-orange-500,
-  .text-red-500, .text-stone-500, .text-neutral-500, .text-zinc-500,
-  .text-gray-500, .text-slate-500,
-  .hover\:text-rose-500:hover, .hover\:text-pink-500:hover,
-  .hover\:text-fuchsia-500:hover, .hover\:text-purple-500:hover,
-  .hover\:text-violet-500:hover, .hover\:text-indigo-500:hover,
-  .hover\:text-blue-500:hover, .hover\:text-sky-500:hover,
-  .hover\:text-cyan-500:hover, .hover\:text-teal-500:hover,
-  .hover\:text-emerald-500:hover, .hover\:text-green-500:hover,
-  .hover\:text-lime-500:hover, .hover\:text-yellow-500:hover,
-  .hover\:text-amber-500:hover, .hover\:text-orange-500:hover,
-  .hover\:text-red-500:hover {
-    color: #344C3D !important;
-  }
-
-  .bg-rose-500, .bg-pink-500, .bg-fuchsia-500, .bg-purple-500,
-  .bg-violet-500, .bg-indigo-500, .bg-blue-500, .bg-sky-500,
-  .bg-cyan-500, .bg-teal-500, .bg-emerald-500, .bg-green-500,
-  .bg-lime-500, .bg-yellow-500, .bg-amber-500, .bg-orange-500,
-  .bg-red-500, .bg-stone-500, .bg-neutral-500, .bg-zinc-500,
-  .bg-gray-500, .bg-slate-500,
-  .hover\:bg-rose-500:hover, .hover\:bg-pink-500:hover,
-  .hover\:bg-fuchsia-500:hover, .hover\:bg-purple-500:hover,
-  .hover\:bg-violet-500:hover, .hover\:bg-indigo-500:hover,
-  .hover\:bg-blue-500:hover, .hover\:bg-sky-500:hover,
-  .hover\:bg-cyan-500:hover, .hover\:bg-teal-500:hover,
-  .hover\:bg-emerald-500:hover, .hover\:bg-green-500:hover,
-  .hover\:bg-lime-500:hover, .hover\:bg-yellow-500:hover,
-  .hover\:bg-amber-500:hover, .hover\:bg-orange-500:hover,
-  .hover\:bg-red-500:hover {
-    background-color: rgba(242, 243, 241, 0.5) !important;
-  }
-
-  /* Absolute final override for any missed cases */
-  *:not([style*="#8EA58C"]):not([style*="#738A6E"]):not([style*="#344C3D"]):not([style*="#88A5BC"]):not([style*="#F2F3F1"]) {
-    --tw-ring-color: #88A5BC !important;
-    --tw-ring-offset-color: #F2F3F1 !important;
-  }
-
-  /* Force all Radix primitives to use brand colors */
-  [data-radix-collection-item],
-  [data-radix-dropdown-menu-item],
-  [data-radix-context-menu-item],
-  [data-radix-select-item],
-  [data-radix-menubar-item] {
-    color: #344C3D !important;
-    background-color: transparent !important;
-  }
-
-  [data-radix-collection-item]:hover,
-  [data-radix-dropdown-menu-item]:hover,
-  [data-radix-context-menu-item]:hover,
-  [data-radix-select-item]:hover,
-  [data-radix-menubar-item]:hover,
-  [data-radix-collection-item][data-highlighted],
-  [data-radix-dropdown-menu-item][data-highlighted],
-  [data-radix-context-menu-item][data-highlighted],
-  [data-radix-select-item][data-highlighted],
-  [data-radix-menubar-item][data-highlighted] {
-    background-color: rgba(136, 165, 188, 0.1) !important;
-    color: #344C3D !important;
-  }
-
-  /* Lucide icons */
-  .lucide-sparkles,
-  .lucide-calendar,
-  .lucide-search {
-    color: #88A5BC !important;
-  }
-
-  /* Additional yellow overrides - target more specific cases */
-  .bg-yellow-400,
-  .bg-yellow-300,
-  .bg-yellow-200,
-  .bg-yellow-100,
-  .hover\:bg-yellow-400:hover,
-  .hover\:bg-yellow-300:hover,
-  .hover\:bg-yellow-200:hover,
-  .hover\:bg-yellow-100:hover,
-  *[style*="background-color: yellow"],
-  *[style*="background: yellow"],
-  *[style*="#ffff00"],
-  *[style*="#FFFF00"],
-  *[style*="rgb(255, 255, 0)"],
-  *[class*="yellow"] {
-    background-color: #F2F3F1 !important;
-    color: #344C3D !important;
-  }
-
-  /* Force any remaining yellow elements */
-  div[style*="yellow"],
-  span[style*="yellow"],
-  p[style*="yellow"],
-  .text-yellow-500,
-  .text-yellow-400,
-  .text-yellow-300,
-  .border-yellow-500,
-  .border-yellow-400,
-  .border-yellow-300 {
-    background-color: #F2F3F1 !important;
-    color: #344C3D !important;
-    border-color: rgba(115, 138, 110, 0.3) !important;
-  }
-
-  /* Clinical workflows specific overrides */
-  .clinical-workflows .fas,
-  .clinical-workflows i {
-    color: #88A5BC !important;
-  }
-
-  /* Any remaining bright/neon colors */
-  *[style*="rgb(255, 255, 0)"],
-  *[style*="hsl(60, 100%, 50%)"],
-  *[class*="bg-warning"],
-  *[class*="text-warning"],
-  .warning {
-    background-color: #F2F3F1 !important;
-    color: #344C3D !important;
-  }
-
-  /* Target any bright yellow or golden backgrounds */
-  *[style*="#FFFF00"],
-  *[style*="#FFD700"],
-  *[style*="#FFF800"],
-  *[style*="#FFEB3B"],
-  *[style*="background-color:yellow"],
-  *[style*="background:yellow"],
-  *[style*="background-color: rgb(255, 255, 0)"],
-  div[class*="bg-yellow"],
-  span[class*="bg-yellow"] {
-    background: linear-gradient(to right, rgba(136, 165, 188, 0.05), rgba(142, 165, 140, 0.05)) !important;
-    border: 1px solid rgba(136, 165, 188, 0.2) !important;
-    color: #344C3D !important;
-  }
-
-  /* Add brand color utility classes */
-  .text-moss { color: #738A6E !important; }
-  .text-evergreen { color: #344C3D !important; }
-  .text-french-blue { color: #88A5BC !important; }
-  .text-sage { color: #8EA58C !important; }
-  .text-ivory { color: #F2F3F1 !important; }
-  
-  .bg-moss { background-color: #738A6E !important; }
-  .bg-evergreen { background-color: #344C3D !important; }
-  .bg-french-blue { background-color: #88A5BC !important; }
-  .bg-french-blue-light { background-color: rgba(136, 165, 188, 0.1) !important; }
-  .bg-sage { background-color: #8EA58C !important; }
-  .bg-ivory { background-color: #F2F3F1 !important; }
-  
-  .border-moss { border-color: #738A6E !important; }
-  .border-evergreen { border-color: #344C3D !important; }
-  .border-french-blue { border-color: #88A5BC !important; }
-  .border-sage { border-color: #8EA58C !important; }
-  .border-ivory { border-color: #F2F3F1 !important; }
-
-  /* Nuclear override for any remaining yellow elements */
-  *[style*="yellow"],
-  *[class*="yellow"],
-  .bg-yellow,
-  .bg-yellow-50,
-  .bg-yellow-100,
-  .bg-yellow-200,
-  .bg-yellow-300,
-  .bg-yellow-400,
-  .bg-yellow-500,
-  .text-yellow,
-  .text-yellow-400,
-  .text-yellow-500,
-  .text-yellow-600,
-  .border-yellow,
-  .border-yellow-200,
-  .border-yellow-300,
-  .border-yellow-400 {
-    background-color: #FFFFFF !important;
-    color: #344C3D !important;
-    border-color: rgba(115, 138, 110, 0.15) !important;
-  }
-
-  /* Force secondary backgrounds to use brand colors */
-  .bg-secondary {
-    background-color: rgba(242, 243, 241, 0.5) !important;
-  }
-
-  .bg-secondary\/80 {
-    background-color: rgba(242, 243, 241, 0.8) !important;
-  }
+/* Override any remaining non-brand colors */
+.bg-yellow-50, .bg-yellow-100, .bg-yellow-200,
+.bg-pink-50, .bg-pink-100, .bg-pink-200,
+.bg-purple-50, .bg-purple-100, .bg-purple-200,
+.text-yellow-500, .text-yellow-600,
+.text-pink-500, .text-pink-600,
+.text-purple-500, .text-purple-600 {
+  background-color: rgba(242, 243, 241, 0.5) !important;
+  color: #344C3D !important;
 }
