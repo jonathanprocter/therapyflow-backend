@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Sidebar from "@/components/layout/sidebar";
-import TopBar from "@/components/layout/topbar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,121 +60,115 @@ export default function Calendar() {
   };
 
   return (
-    <div className="flex h-screen" style={{ backgroundColor: '#F2F3F1' }} data-testid="calendar-page">
-      <Sidebar />
-      
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <TopBar />
-        
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: '#344C3D' }} data-testid="calendar-title">
-                Calendar & Scheduling
-              </h1>
-              <p style={{ color: '#738A6E' }} data-testid="calendar-subtitle">
-                Manage appointments with Google Calendar integration
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm" style={{ color: '#8EA58C' }}>
-                <i className="fas fa-sync"></i>
-                <span>Google Calendar Synced</span>
-              </div>
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C', color: '#FFFFFF' }}
-                    className="hover:bg-opacity-90"
-                    data-testid="create-session-button"
-                  >
-                    <i className="fas fa-plus mr-2"></i>
-                    Schedule Session
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Schedule New Session</DialogTitle>
-                  </DialogHeader>
-                  <div className="p-4 text-center text-gray-500">
-                    Session scheduling form would be implemented here
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+    <div className="space-y-6" data-testid="calendar-page">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: '#344C3D' }} data-testid="calendar-title">
+            Calendar & Scheduling
+          </h1>
+          <p style={{ color: '#738A6E' }} data-testid="calendar-subtitle">
+            Manage appointments with Google Calendar integration
+          </p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 text-sm" style={{ color: '#8EA58C' }}>
+            <i className="fas fa-sync"></i>
+            <span>Google Calendar Synced</span>
           </div>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C', color: '#FFFFFF' }}
+                className="hover:bg-opacity-90"
+                data-testid="create-session-button"
+              >
+                <i className="fas fa-plus mr-2"></i>
+                Schedule Session
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Schedule New Session</DialogTitle>
+              </DialogHeader>
+              <div className="p-4 text-center text-gray-500">
+                Session scheduling form would be implemented here
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Calendar Component */}
-            <Card className="lg:col-span-1" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="calendar-widget">
-              <CardHeader>
-                <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>Calendar</h3>
-              </CardHeader>
-              <CardContent>
-                <CalendarComponent
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
-                  className="rounded-md border"
-                  data-testid="date-picker"
-                />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Calendar Component */}
+        <Card className="lg:col-span-1" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="calendar-widget">
+          <CardHeader>
+            <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>Calendar</h3>
+          </CardHeader>
+          <CardContent>
+            <CalendarComponent
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
+              className="rounded-md border"
+              data-testid="date-picker"
+            />
                 
-                <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(115, 138, 110, 0.15)' }}>
-                  <h4 className="text-sm font-medium mb-2" style={{ color: '#344C3D' }}>
-                    Quick Stats
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span style={{ color: '#738A6E' }}>Today's Sessions</span>
-                      <span className="font-medium" style={{ color: '#344C3D' }} data-testid="today-sessions-count">
-                        {todaySessions?.length || 0}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: '#738A6E' }}>This Week</span>
-                      <span className="font-medium" style={{ color: '#344C3D' }}>18</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: '#738A6E' }}>This Month</span>
-                      <span className="font-medium" style={{ color: '#344C3D' }}>72</span>
-                    </div>
-                  </div>
+            <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(115, 138, 110, 0.15)' }}>
+              <h4 className="text-sm font-medium mb-2" style={{ color: '#344C3D' }}>
+                Quick Stats
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span style={{ color: '#738A6E' }}>Today's Sessions</span>
+                  <span className="font-medium" style={{ color: '#344C3D' }} data-testid="today-sessions-count">
+                    {todaySessions?.length || 0}
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex justify-between">
+                  <span style={{ color: '#738A6E' }}>This Week</span>
+                  <span className="font-medium" style={{ color: '#344C3D' }}>18</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: '#738A6E' }}>This Month</span>
+                  <span className="font-medium" style={{ color: '#344C3D' }}>72</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-            {/* Sessions List */}
-            <Card className="lg:col-span-2" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="sessions-list">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>
-                    {selectedDate.toDateString() === new Date().toDateString() 
-                      ? "Today's Sessions" 
-                      : `Sessions for ${selectedDate.toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          month: 'long', 
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}`
-                    }
-                  </h3>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
-                    data-testid="calendar-view-button"
-                  >
-                    <i className="fas fa-calendar-week mr-2"></i>
-                    Week View
-                  </Button>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="max-h-[600px] overflow-y-auto">
-                {isLoading ? (
-                  <div className="space-y-4">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} className="animate-pulse">
+        {/* Sessions List */}
+        <Card className="lg:col-span-2" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="sessions-list">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>
+                {selectedDate.toDateString() === new Date().toDateString() 
+                  ? "Today's Sessions" 
+                  : `Sessions for ${selectedDate.toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'long', 
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}`
+                }
+              </h3>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
+                data-testid="calendar-view-button"
+              >
+                <i className="fas fa-calendar-week mr-2"></i>
+                Week View
+              </Button>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="max-h-[600px] overflow-y-auto">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
                         <div 
                           className="flex items-center space-x-4 p-4 rounded-lg"
                           style={{ backgroundColor: 'rgba(242, 243, 241, 0.5)' }}
@@ -342,46 +334,44 @@ export default function Calendar() {
                 )}
               </CardContent>
             </Card>
-          </div>
+      </div>
 
-          {/* Calendar Integration Status */}
-          <Card className="mt-6" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="calendar-integration">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: 'rgba(142, 165, 140, 0.1)' }}
-                  >
-                    <i className="fas fa-google" style={{ color: '#8EA58C' }}></i>
-                  </div>
-                  <div>
-                    <h4 className="font-medium" style={{ color: '#344C3D' }}>Google Calendar Integration</h4>
-                    <p className="text-sm" style={{ color: '#738A6E' }}>
-                      All sessions are automatically synced with your Google Calendar
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2" style={{ color: '#8EA58C' }}>
-                    <i className="fas fa-check-circle"></i>
-                    <span className="text-sm">Connected</span>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
-                    data-testid="calendar-settings"
-                  >
-                    <i className="fas fa-cog mr-2"></i>
-                    Settings
-                  </Button>
-                </div>
+      {/* Calendar Integration Status */}
+      <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="calendar-integration">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(142, 165, 140, 0.1)' }}
+              >
+                <i className="fas fa-google" style={{ color: '#8EA58C' }}></i>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+              <div>
+                <h4 className="font-medium" style={{ color: '#344C3D' }}>Google Calendar Integration</h4>
+                <p className="text-sm" style={{ color: '#738A6E' }}>
+                  All sessions are automatically synced with your Google Calendar
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2" style={{ color: '#8EA58C' }}>
+                <i className="fas fa-check-circle"></i>
+                <span className="text-sm">Connected</span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
+                data-testid="calendar-settings"
+              >
+                <i className="fas fa-cog mr-2"></i>
+                Settings
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
