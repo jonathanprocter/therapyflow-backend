@@ -145,7 +145,7 @@ export function EnhancedClientDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-yellow-500" />
+                <Sparkles className="h-5 w-5" style={{ color: '#88A5BC' }} />
                 Recent Insights
               </CardTitle>
               <Button 

@@ -86,7 +86,7 @@ export default function SessionSummaryGenerator({
   const getRiskLevelColor = (level: string) => {
     switch (level) {
       case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'moderate': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'moderate': return 'bg-french-blue-light text-evergreen';
       case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
       case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
@@ -95,7 +95,7 @@ export default function SessionSummaryGenerator({
 
   const getProgressColor = (rating: number) => {
     if (rating >= 8) return 'bg-green-500';
-    if (rating >= 6) return 'bg-yellow-500';
+    if (rating >= 6) return 'bg-sage';
     if (rating >= 4) return 'bg-orange-500';
     return 'bg-red-500';
   };

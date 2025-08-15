@@ -220,7 +220,7 @@ export default function EnhancedDocumentUpload() {
   const getScoreColor = (score?: number) => {
     if (!score) return 'text-gray-500';
     if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
+    if (score >= 60) return 'text-moss';
     if (score >= 40) return 'text-orange-600';
     return 'text-red-600';
   };
@@ -229,7 +229,7 @@ export default function EnhancedDocumentUpload() {
     switch (riskLevel) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
       case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'moderate': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'moderate': return 'bg-french-blue-light text-evergreen border-french-blue';
       case 'low': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }

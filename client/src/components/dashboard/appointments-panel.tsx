@@ -12,7 +12,12 @@ import { cn } from "@/lib/utils";
 import type { SessionWithClient } from "@/types/clinical";
 
 export default function AppointmentsPanel() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // Initialize selectedDate to today in EDT
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const now = new Date();
+    const edtNow = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+    return edtNow;
+  });
   
   const { data: sessions, isLoading } = useQuery<SessionWithClient[]>({
     queryKey: ["/api/sessions", selectedDate.toISOString().split('T')[0]],
@@ -81,10 +86,13 @@ export default function AppointmentsPanel() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }} data-testid="appointments-title">
-              {selectedDate.toDateString() === new Date().toDateString() 
-                ? "Today's Schedule" 
-                : `Schedule for ${formatInTimeZone(selectedDate, 'America/New_York', 'MMM dd, yyyy')}`
-              }
+              {(() => {
+                const selectedDateEDT = formatInTimeZone(selectedDate, 'America/New_York', 'yyyy-MM-dd');
+                const todayEDT = formatInTimeZone(new Date(), 'America/New_York', 'yyyy-MM-dd');
+                return selectedDateEDT === todayEDT 
+                  ? "Today's Schedule" 
+                  : `Schedule for ${formatInTimeZone(selectedDate, 'America/New_York', 'MMM dd, yyyy')}`;
+              })()}
             </h3>
             <Popover>
               <PopoverTrigger asChild>
@@ -132,10 +140,13 @@ export default function AppointmentsPanel() {
           <div className="text-center py-8" style={{ color: '#738A6E' }} data-testid="no-appointments">
             <i className="fas fa-calendar-day text-4xl mb-4 opacity-50" style={{ color: '#88A5BC' }}></i>
             <p>
-              {selectedDate.toDateString() === new Date().toDateString() 
-                ? "No appointments scheduled for today"
-                : `No appointments scheduled for ${formatInTimeZone(selectedDate, 'America/New_York', 'MMMM dd, yyyy')}`
-              }
+              {(() => {
+                const selectedDateEDT = formatInTimeZone(selectedDate, 'America/New_York', 'yyyy-MM-dd');
+                const todayEDT = formatInTimeZone(new Date(), 'America/New_York', 'yyyy-MM-dd');
+                return selectedDateEDT === todayEDT 
+                  ? "No appointments scheduled for today"
+                  : `No appointments scheduled for ${formatInTimeZone(selectedDate, 'America/New_York', 'MMMM dd, yyyy')}`;
+              })()}
             </p>
           </div>
         ) : (

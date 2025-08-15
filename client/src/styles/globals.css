@@ -630,5 +630,88 @@
     color: #88A5BC !important;
   }
 
-  /* Update replit.md to document comprehensive color fixes */
+  /* Additional yellow overrides - target more specific cases */
+  .bg-yellow-400,
+  .bg-yellow-300,
+  .bg-yellow-200,
+  .bg-yellow-100,
+  .hover\:bg-yellow-400:hover,
+  .hover\:bg-yellow-300:hover,
+  .hover\:bg-yellow-200:hover,
+  .hover\:bg-yellow-100:hover,
+  *[style*="background-color: yellow"],
+  *[style*="background: yellow"],
+  *[style*="#ffff00"],
+  *[style*="#FFFF00"],
+  *[style*="rgb(255, 255, 0)"],
+  *[class*="yellow"] {
+    background-color: #F2F3F1 !important;
+    color: #344C3D !important;
+  }
+
+  /* Force any remaining yellow elements */
+  div[style*="yellow"],
+  span[style*="yellow"],
+  p[style*="yellow"],
+  .text-yellow-500,
+  .text-yellow-400,
+  .text-yellow-300,
+  .border-yellow-500,
+  .border-yellow-400,
+  .border-yellow-300 {
+    background-color: #F2F3F1 !important;
+    color: #344C3D !important;
+    border-color: rgba(115, 138, 110, 0.3) !important;
+  }
+
+  /* Clinical workflows specific overrides */
+  .clinical-workflows .fas,
+  .clinical-workflows i {
+    color: #88A5BC !important;
+  }
+
+  /* Any remaining bright/neon colors */
+  *[style*="rgb(255, 255, 0)"],
+  *[style*="hsl(60, 100%, 50%)"],
+  *[class*="bg-warning"],
+  *[class*="text-warning"],
+  .warning {
+    background-color: #F2F3F1 !important;
+    color: #344C3D !important;
+  }
+
+  /* Target any bright yellow or golden backgrounds */
+  *[style*="#FFFF00"],
+  *[style*="#FFD700"],
+  *[style*="#FFF800"],
+  *[style*="#FFEB3B"],
+  *[style*="background-color:yellow"],
+  *[style*="background:yellow"],
+  *[style*="background-color: rgb(255, 255, 0)"],
+  div[class*="bg-yellow"],
+  span[class*="bg-yellow"] {
+    background: linear-gradient(to right, rgba(136, 165, 188, 0.05), rgba(142, 165, 140, 0.05)) !important;
+    border: 1px solid rgba(136, 165, 188, 0.2) !important;
+    color: #344C3D !important;
+  }
+
+  /* Add brand color utility classes */
+  .text-moss { color: #738A6E !important; }
+  .text-evergreen { color: #344C3D !important; }
+  .text-french-blue { color: #88A5BC !important; }
+  .text-sage { color: #8EA58C !important; }
+  .text-ivory { color: #F2F3F1 !important; }
+  
+  .bg-moss { background-color: #738A6E !important; }
+  .bg-evergreen { background-color: #344C3D !important; }
+  .bg-french-blue { background-color: #88A5BC !important; }
+  .bg-french-blue-light { background-color: rgba(136, 165, 188, 0.1) !important; }
+  .bg-sage { background-color: #8EA58C !important; }
+  .bg-ivory { background-color: #F2F3F1 !important; }
+  
+  .border-moss { border-color: #738A6E !important; }
+  .border-evergreen { border-color: #344C3D !important; }
+  .border-french-blue { border-color: #88A5BC !important; }
+  .border-sage { border-color: #8EA58C !important; }
+  .border-ivory { border-color: #F2F3F1 !important; }
 }
