@@ -106,22 +106,22 @@ export default function ClientDetail() {
     switch (relation.toLowerCase()) {
       case 'treats':
       case 'improves':
-        return "bg-green-100 text-green-800";
+        return "bg-sage text-ivory";
       case 'causes':
       case 'worsens':
-        return "bg-red-100 text-red-800";
+        return "bg-moss text-ivory";
       case 'relates':
       case 'connects':
-        return "bg-blue-100 text-blue-800";
+        return "bg-french-blue text-ivory";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-evergreen text-ivory";
     }
   };
 
   const renderEdgeList = (edges: SemanticEdge[], titlePrefix: string) => (
     <div className="space-y-3">
       {edges.map((edge) => (
-        <Card key={edge.id} className="p-4" data-testid={`card-edge-${edge.id}`}>
+        <Card key={edge.id} className="p-4" style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid={`card-edge-${edge.id}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
               <Badge variant="outline" className="font-mono text-xs">
@@ -138,7 +138,7 @@ export default function ClientDetail() {
                 {edge.to}
               </Badge>
             </div>
-            <div className="text-right text-sm text-muted-foreground">
+            <div className="text-right text-sm" style={{ color: '#738A6E' }}>
               {edge.weight && (
                 <div>Weight: {edge.weight}</div>
               )}
@@ -153,16 +153,16 @@ export default function ClientDetail() {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Client Semantic Analysis</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-3xl font-bold" style={{ color: '#344C3D' }}>Client Semantic Analysis</h1>
+        <p className="mt-2" style={{ color: '#738A6E' }}>
           Explore semantic connections and recall relevant clinical information
         </p>
       </div>
 
-      <Card>
+      <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
         <CardHeader>
-          <CardTitle>Client Selection</CardTitle>
-          <CardDescription>
+          <CardTitle style={{ color: '#344C3D' }}>Client Selection</CardTitle>
+          <CardDescription style={{ color: '#738A6E' }}>
             Enter a client ID to view their semantic graph and search their clinical data
           </CardDescription>
         </CardHeader>
@@ -201,13 +201,13 @@ export default function ClientDetail() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+            <Search className="h-5 w-5" style={{ color: '#88A5BC' }} />
             Semantic Recall
           </CardTitle>
-          <CardDescription>
+          <CardDescription style={{ color: '#738A6E' }}>
             Search for specific concepts within the client's clinical data
           </CardDescription>
         </CardHeader>
@@ -247,13 +247,13 @@ export default function ClientDetail() {
       </Card>
 
       {graphEdges.length > 0 && (
-        <Card>
+        <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+              <Network className="h-5 w-5" style={{ color: '#88A5BC' }} />
               Semantic Graph
             </CardTitle>
-            <CardDescription>
+            <CardDescription style={{ color: '#738A6E' }}>
               All semantic connections for client "{clientId}" ({graphEdges.length} edges)
             </CardDescription>
           </CardHeader>
@@ -264,13 +264,13 @@ export default function ClientDetail() {
       )}
 
       {recallResults.length > 0 && (
-        <Card>
+        <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2" style={{ color: '#344C3D' }}>
+              <Brain className="h-5 w-5" style={{ color: '#88A5BC' }} />
               Recall Results
             </CardTitle>
-            <CardDescription>
+            <CardDescription style={{ color: '#738A6E' }}>
               Semantic connections matching "{searchQuery}" ({recallResults.length} results)
             </CardDescription>
           </CardHeader>
@@ -281,11 +281,11 @@ export default function ClientDetail() {
       )}
 
       {clientId && !loadingGraph && graphEdges.length === 0 && (
-        <Card>
+        <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}>
           <CardContent className="text-center py-8">
-            <Network className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Semantic Graph Found</h3>
-            <p className="text-muted-foreground">
+            <Network className="h-12 w-12 mx-auto mb-4" style={{ color: '#88A5BC', opacity: 0.5 }} />
+            <h3 className="text-lg font-semibold mb-2" style={{ color: '#344C3D' }}>No Semantic Graph Found</h3>
+            <p style={{ color: '#738A6E' }}>
               No semantic connections found for client "{clientId}". 
               Upload and process documents first to build the semantic graph.
             </p>
