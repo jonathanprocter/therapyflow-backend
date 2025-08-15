@@ -1,7 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
-import Sidebar from "@/components/layout/sidebar";
-import TopBar from "@/components/layout/topbar";
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,9 +21,7 @@ export default function Clients() {
 
   const deleteClientMutation = useMutation({
     mutationFn: async (clientId: string) => {
-      return apiRequest(`/api/clients/${clientId}`, {
-        method: 'DELETE',
-      });
+      return apiRequest(`/api/clients/${clientId}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
@@ -44,17 +41,7 @@ export default function Clients() {
   });
 
   return (
-    <div 
-      className="flex h-screen" 
-      style={{ backgroundColor: '#F2F3F1' }} 
-      data-testid="clients-page"
-    >
-      <Sidebar />
-      
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <TopBar />
-        
-        <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 overflow-y-auto p-6" data-testid="clients-page">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 
@@ -148,8 +135,7 @@ export default function Clients() {
                         <h3 
                           className="font-semibold cursor-pointer transition-colors" 
                           style={{ 
-                            color: '#344C3D',
-                            '--hover-color': '#88A5BC'
+                            color: '#344C3D'
                           }}
                           onMouseEnter={(e) => { e.currentTarget.style.color = '#88A5BC'; }}
                           onMouseLeave={(e) => { e.currentTarget.style.color = '#344C3D'; }}
@@ -308,8 +294,6 @@ export default function Clients() {
               </AlertDialogContent>
             </AlertDialog>
           )}
-        </div>
-      </main>
     </div>
   );
 }

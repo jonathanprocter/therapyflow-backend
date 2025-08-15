@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Sidebar from "@/components/layout/sidebar";
-import TopBar from "@/components/layout/topbar";
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,17 +48,7 @@ export default function ProgressNotes() {
   };
 
   return (
-    <div 
-      className="flex h-screen" 
-      style={{ backgroundColor: '#F2F3F1' }} 
-      data-testid="progress-notes-page"
-    >
-      <Sidebar />
-
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <TopBar />
-
-        <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 overflow-y-auto p-6" data-testid="progress-notes-page">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 
@@ -273,8 +262,6 @@ export default function ProgressNotes() {
               ))}
             </div>
           )}
-        </div>
-      </main>
     </div>
   );
 }
