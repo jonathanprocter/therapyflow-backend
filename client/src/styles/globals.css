@@ -73,6 +73,21 @@
     box-sizing: border-box;
   }
 
+  /* Force all Badge components to use only brand colors */
+  .inline-flex.items-center.rounded-full[class*="bg-"]:not([style*="background"]),
+  .inline-flex.items-center.rounded[class*="bg-"]:not([style*="background"]) {
+    background-color: #8EA58C !important; /* Sage */
+    color: white !important;
+    border-color: #8EA58C !important;
+  }
+
+  /* Override any non-brand color classes globally */
+  [class*="bg-pink"], [class*="bg-purple"], [class*="bg-magenta"], [class*="bg-rose"],
+  [class*="bg-red"], [class*="bg-orange"], [class*="bg-yellow"]:not([style*="background"]) {
+    background-color: #8EA58C !important; /* Force to brand sage */
+    color: white !important;
+  }
+
   html, body, #root {
     background-color: #F2F3F1;
     color: #738A6E;
