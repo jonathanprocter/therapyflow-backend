@@ -140,13 +140,29 @@ export default function BulkTranscripts() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      uploading: { variant: 'secondary' as const, text: 'Uploading' },
-      processing: { variant: 'default' as const, text: 'Processing' },
-      completed: { variant: 'secondary' as const, text: 'Completed' },
-      failed: { variant: 'destructive' as const, text: 'Failed' },
+      uploading: { 
+        variant: 'secondary' as const, 
+        text: 'Uploading',
+        className: 'bg-blue-100 text-blue-800 border-blue-200' 
+      },
+      processing: { 
+        variant: 'default' as const, 
+        text: 'Processing',
+        className: 'bg-moss-200 text-moss-800 border-moss-300' 
+      },
+      completed: { 
+        variant: 'secondary' as const, 
+        text: 'Completed',
+        className: 'bg-sage/20 text-evergreen border-sage/30' 
+      },
+      failed: { 
+        variant: 'destructive' as const, 
+        text: 'Failed',
+        className: 'bg-red-100 text-red-800 border-red-200' 
+      },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.processing;
-    return <Badge variant={config.variant}>{config.text}</Badge>;
+    return <Badge variant={config.variant} className={config.className}>{config.text}</Badge>;
   };
 
   const formatDate = (dateString: string) => {

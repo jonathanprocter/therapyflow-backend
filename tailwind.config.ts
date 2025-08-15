@@ -25,7 +25,12 @@ export default {
         },
         moss: {
           DEFAULT: "hsl(var(--color-moss))",
-          light: "hsl(var(--color-moss-light) / 0.7)", // 70% opacity
+          50: "hsl(115 138 110 / 0.05)",
+          100: "hsl(115 138 110 / 0.1)",
+          200: "hsl(115 138 110 / 0.2)",
+          300: "hsl(115 138 110 / 0.3)",
+          500: "hsl(var(--color-moss))",
+          800: "hsl(115 138 110 / 0.9)",
         },
         evergreen: "hsl(var(--color-evergreen))",
         "french-blue": {
