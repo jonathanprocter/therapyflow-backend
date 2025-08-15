@@ -121,6 +121,43 @@
     color: white !important;
   }
 
+  /* Override any loading spinners or animated elements */
+  .animate-spin, .animate-pulse, .animate-bounce,
+  [class*="loading"], [class*="spinner"], [class*="progress"] {
+    color: #8EA58C !important; /* Sage for loading indicators */
+  }
+
+  /* Force all GitCommit icons and similar UI elements to brand colors */
+  svg[class*="h-16"], svg[class*="w-16"],
+  .text-center svg, .mx-auto svg {
+    color: #8EA58C !important; /* Force to brand sage */
+  }
+
+  /* Override any muted/disabled state colors */
+  [class*="opacity-"], [class*="text-muted"], 
+  [class*="text-gray"], [class*="text-slate"],
+  .text-muted, .text-muted-foreground {
+    color: #738A6E !important; /* Force to moss */
+    opacity: 0.7 !important;
+  }
+
+  /* Force all Badge and pill-like elements to brand colors */
+  .inline-flex[class*="rounded"], 
+  .rounded[class*="px-"], .rounded-full[class*="px-"],
+  .rounded-md[class*="px-"], .rounded-lg[class*="px-"] {
+    background-color: #8EA58C !important; /* Sage */
+    color: white !important;
+    border-color: #8EA58C !important;
+  }
+
+  /* Override any accent or highlight colors */
+  [class*="accent-"], [class*="highlight-"],
+  [class*="border-accent"], [class*="bg-accent"] {
+    background-color: #88A5BC !important; /* French Blue */
+    border-color: #88A5BC !important;
+    color: white !important;
+  }
+
   /* Force all text colors to brand colors */
   [class*="text-pink"], [class*="text-purple"], [class*="text-magenta"], [class*="text-rose"],
   [class*="text-red"], [class*="text-orange"], [class*="text-yellow"], [class*="text-amber"],
@@ -274,6 +311,50 @@
 
   a:hover {
     color: #6B8BA6;
+  }
+
+  /* CRITICAL FINAL OVERRIDES - Target any remaining non-brand colors */
+  
+  /* Force all empty state elements to brand colors */
+  .text-center .h-16.w-16, .text-center svg.h-16, .mx-auto svg,
+  .h-16.w-16.text-sage\/40, .h-16.w-16.mx-auto {
+    color: #8EA58C !important; /* Force sage for all large icons */
+  }
+
+  /* Override any system-generated colors that might appear */
+  [style*="color: rgb("], [style*="background-color: rgb("] {
+    color: #8EA58C !important;
+    background-color: #F2F3F1 !important;
+  }
+
+  /* Force all SVG elements to use brand colors */
+  svg {
+    color: inherit !important;
+  }
+
+  /* Specific override for empty states in timeline */
+  .text-center.py-12 svg, .text-center .h-16, .mx-auto.mb-4 {
+    color: #8EA58C !important; /* Sage for empty state icons */
+  }
+
+  /* Override any remaining purple/pink system colors */
+  * {
+    --tw-prose-body: #738A6E !important;
+    --tw-prose-headings: #344C3D !important;
+    --tw-prose-links: #88A5BC !important;
+    --tw-prose-bold: #344C3D !important;
+    --tw-prose-counters: #8EA58C !important;
+    --tw-prose-bullets: #8EA58C !important;
+    --tw-prose-hr: #738A6E !important;
+    --tw-prose-quotes: #344C3D !important;
+    --tw-prose-quote-borders: #8EA58C !important;
+    --tw-prose-captions: #738A6E !important;
+    --tw-prose-kbd: #344C3D !important;
+    --tw-prose-code: #8EA58C !important;
+    --tw-prose-pre-code: #F2F3F1 !important;
+    --tw-prose-pre-bg: #344C3D !important;
+    --tw-prose-th-borders: #738A6E !important;
+    --tw-prose-td-borders: #738A6E !important;
   }
 }
 
