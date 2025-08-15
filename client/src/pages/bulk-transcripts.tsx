@@ -11,6 +11,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { FileText, Upload, Users, Clock, CheckCircle, AlertCircle, Eye } from 'lucide-react';
 import type { TranscriptBatch, TranscriptFile, Client } from '@shared/schema';
+import { formatEDTDate, formatEDTDateTime } from '@/utils/timezone';
 
 interface UploadStats {
   totalBatches: number;
@@ -165,15 +166,7 @@ export default function BulkTranscripts() {
     return <Badge variant={config.variant} className={config.className}>{config.text}</Badge>;
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+
 
   return (
     <div className="space-y-8" data-testid="bulk-transcripts-page">
@@ -350,7 +343,7 @@ export default function BulkTranscripts() {
                         <div>
                           <h3 className="font-semibold text-gray-900">{batch.name}</h3>
                           <p className="text-sm text-gray-600">
-                            Uploaded: {formatDate(batch.uploadedAt.toString())}
+                            Uploaded: {formatEDTDateTime(batch.uploadedAt)}
                           </p>
                           <div className="mt-2 flex items-center space-x-4 text-sm">
                             <span className="text-gray-600">
