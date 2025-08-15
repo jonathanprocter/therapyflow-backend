@@ -14,28 +14,36 @@ async function throwIfResNotOk(res: Response) {
 
 export async function apiRequest(
   url: string,
-  method: string,
-  data?: unknown | undefined,
+  options: RequestInit = {},
 ): Promise<any> {
   // Validate HTTP method
   const validMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
-  const upperMethod = method.toUpperCase();
+  const method = (options.method || 'GET').toUpperCase();
   
-  if (!validMethods.includes(upperMethod)) {
+  if (!validMethods.includes(method)) {
     throw new Error(`Invalid HTTP method: ${method}`);
   }
 
+  // Set default headers, but don't override if headers are already provided
+  const headers = new Headers(options.headers);
+  
+  // If body is FormData, don't set Content-Type (browser will set it with boundary)
+  // If body is an object/string and no Content-Type is set, default to JSON
+  if (options.body && !(options.body instanceof FormData) && !headers.get('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
   const res = await fetch(url, {
-    method: upperMethod,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    ...options,
+    method,
+    headers,
     credentials: "include",
   });
 
   await throwIfResNotOk(res);
   
   // For DELETE requests that return JSON, parse it
-  if (upperMethod === 'DELETE' && res.headers.get('content-type')?.includes('application/json')) {
+  if (method === 'DELETE' && res.headers.get('content-type')?.includes('application/json')) {
     return res.json();
   }
   
