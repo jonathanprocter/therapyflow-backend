@@ -373,6 +373,36 @@
   .hover\:bg-indigo-100:hover,
   .hover\:bg-violet-50:hover,
   .hover\:bg-violet-100:hover,
+  .bg-pink-50,
+  .bg-pink-100,
+  .bg-pink-200,
+  .bg-pink-300,
+  .bg-pink-400,
+  .bg-pink-500,
+  .bg-purple-50,
+  .bg-purple-100,
+  .bg-purple-200,
+  .bg-purple-300,
+  .bg-purple-400,
+  .bg-purple-500,
+  .bg-magenta-50,
+  .bg-magenta-100,
+  .bg-magenta-200,
+  .bg-magenta-300,
+  .bg-magenta-400,
+  .bg-magenta-500,
+  .text-pink-500,
+  .text-pink-600,
+  .text-purple-500,
+  .text-purple-600,
+  .text-magenta-500,
+  .text-magenta-600,
+  .border-pink-200,
+  .border-pink-300,
+  .border-purple-200,
+  .border-purple-300,
+  .border-magenta-200,
+  .border-magenta-300,
   *[class*="pink"]:hover,
   *[class*="purple"]:hover,
   *[class*="violet"]:hover,
@@ -439,6 +469,28 @@
     background-color: transparent !important;
     border: 2px solid #88A5BC !important;
     color: #88A5BC !important;
+  }
+
+  /* Nuclear pink/magenta elimination */
+  *[class*="pink"]:not([class*="brand"]),
+  *[class*="magenta"]:not([class*="brand"]),
+  *[class*="purple"]:not([class*="brand"]) {
+    background-color: #FFFFFF !important;
+    color: #344C3D !important;
+    border-color: rgba(115, 138, 110, 0.3) !important;
+  }
+
+  /* Force override progress bars and gradients */
+  .progress,
+  .progress-bar,
+  [role="progressbar"],
+  *[class*="progress"] {
+    background-color: #F2F3F1 !important;
+  }
+  
+  .progress-bar,
+  *[class*="progress"]:not([class*="bg"]) > * {
+    background: linear-gradient(90deg, #8EA58C 0%, #738A6E 100%) !important;
   }
 
   /* French Blue icons */

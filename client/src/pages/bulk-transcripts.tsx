@@ -463,7 +463,7 @@ export default function BulkTranscripts() {
                     >
                       <Collapsible>
                         <CollapsibleTrigger asChild>
-                          <div className="p-5 cursor-pointer hover:bg-ivory/50 transition-colors">
+                          <div className="p-5 cursor-pointer hover:bg-white/80 transition-colors">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <div className="flex items-center space-x-3 mb-3">
@@ -618,7 +618,7 @@ export default function BulkTranscripts() {
 
                                 {/* Individual File Processing Status */}
                                 {expandedBatches.has(batch.id) && (
-                                  <div className="mt-4 p-4 bg-ivory/30 rounded-lg border border-sage/10">
+                                  <div className="mt-4 p-4 bg-white rounded-lg border border-sage/20">
                                     <h5 className="font-medium text-evergreen mb-3 flex items-center">
                                       <FileText className="h-4 w-4 mr-2" />
                                       File Processing Details ({batch.totalFiles} files)
@@ -649,7 +649,7 @@ export default function BulkTranscripts() {
                                                     {details.length > 0 && (
                                                       <div className="mt-1 space-y-1">
                                                         {details.map((detail, idx) => (
-                                                          <p key={idx} className="text-xs text-moss">{detail}</p>
+                                                          <p key={idx} className="text-xs text-moss/80">{detail}</p>
                                                         ))}
                                                       </div>
                                                     )}
