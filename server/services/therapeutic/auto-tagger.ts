@@ -1,10 +1,10 @@
 import natural from 'natural';
-import Sentiment from 'sentiment';
+import * as Sentiment from 'sentiment';
 import { sessionTags, sessionInsights, type InsertSessionTag, type InsertSessionInsight } from '@shared/schema-extensions';
 import { db } from '../../db';
 import { eq } from 'drizzle-orm';
 
-const sentiment = new Sentiment();
+const sentiment = new (Sentiment as any)();
 const tokenizer = new natural.WordTokenizer();
 
 interface TagPattern {

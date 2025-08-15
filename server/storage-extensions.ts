@@ -110,7 +110,8 @@ export class EnhancedDatabaseStorage extends DatabaseStorage {
     clientId: string,
     category?: string
   ) {
-    const { sessionTags, sessions } = await import('@shared/schema-extensions');
+    const { sessionTags } = await import('@shared/schema-extensions');
+    const { sessions } = await import('@shared/schema');
     const { db } = await import('./db');
     const { eq, and } = await import('drizzle-orm');
 

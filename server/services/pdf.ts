@@ -22,7 +22,7 @@ export async function parsePDF(documentId: string) {
   if (!doc) throw new Error(`Document not found: ${documentId}`);
   
   // Get buffer data from metadata instead of file path
-  const bufferArray = doc.metadata?.buffer as number[] | undefined;
+  const bufferArray = (doc.metadata as any)?.buffer as number[] | undefined;
   if (!bufferArray) throw new Error(`Missing buffer data for document ${documentId}`);
 
   let text = "";
@@ -36,14 +36,14 @@ export async function parsePDF(documentId: string) {
     // Use our enhanced document processor with therapist ID
     const result = await processor.processDocument(data, doc.fileName || "document.pdf", doc.therapistId);
     
-    text = result.extractedText || "";
-    qualityScore = result.overallQuality || 0;
+    text = (result as any).extractedText || "";
+    qualityScore = (result as any).overallQuality || 0;
     
     meta = {
       method: "enhanced-processor",
       quality: qualityScore,
-      aiAnalysis: result.aiAnalysis,
-      validation: result.validation,
+      aiAnalysis: (result as any).aiAnalysis,
+      validation: (result as any).validation,
       processingNotes: result.processingNotes
     };
     
@@ -73,7 +73,7 @@ export async function parsePDF(documentId: string) {
   }
 
   // Update document with parsed text
-  await storage.updateDocument(documentId, { parsedText: text, metadata: { ...doc.metadata, ...meta } });
+  await storage.updateDocument(documentId, { extractedText: text });
   
   return { text, meta, qualityScore };
 }

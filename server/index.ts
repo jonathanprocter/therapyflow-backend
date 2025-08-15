@@ -6,8 +6,8 @@ import { documentsRouter } from "./routes/documents.js";
 import { aiRouter } from "./routes/ai.js"; 
 import { semanticRouter } from "./routes/semantic.js";
 import { storage } from "./storage.js";
-const db = storage.db;
-import { sql } from "drizzle-orm";
+// const db = storage.db;
+import { sql, eq } from "drizzle-orm";
 
 const app = express();
 app.use(express.json());
@@ -57,12 +57,12 @@ app.get("/api/health/deep", async (req, res) => {
   const start = Date.now();
   try {
     // Minimal DB check: run a simple NOW()
-    const [{ now }] = await db.execute(sql`SELECT now() as now`);
+    const [{ now }] = await (storage as any).db.execute(sql`SELECT now() as now`);
     
     // Count documents and AI results
-    const [{ count: docsCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
-    const [{ count: aiCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
-    const [{ count: edgesCount }] = await db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+    const [{ count: docsCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
+    const [{ count: aiCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
+    const [{ count: edgesCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
     
     res.json({
       ok: true,

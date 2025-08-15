@@ -37,4 +37,4 @@ export async function getAIResult(documentId: string) {
   return null;
 }
 
-export const createAIResult = storage.createAIResult;
+export const createAIResult = (storage as any).createAIResult;

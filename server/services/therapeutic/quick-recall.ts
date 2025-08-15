@@ -72,7 +72,7 @@ export class QuickRecallService {
         id: r.item.id,
         type: r.item.type,
         content: this.extractExcerpt(r.item, query),
-        sessionDate: r.item.sessionDate || r.item.createdAt,
+        sessionDate: (r.item as any).sessionDate || (r.item as any).createdAt,
         relevance: 1 - (r.score || 0),
       })),
       relatedInsights: insights.slice(0, 5).map(i => i.insight),
@@ -163,7 +163,7 @@ export class QuickRecallService {
           like(progressNotes.content, `%${query}%`)
         )
       )
-      .orderBy(desc(progressNotes.sessionDate))
+      .orderBy((sql as any)`desc(${progressNotes.sessionDate})`)
       .limit(10);
 
     return notes.map(n => n.date);

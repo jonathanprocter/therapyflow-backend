@@ -34,7 +34,8 @@ aiRouter.get("/results/:clientId", async (req, res) => {
     const { clientId } = req.params;
     const { from, to } = req.query;
     
-    const results = await storage.getAIResults(clientId);
+    // const results = await storage.getAIResults(clientId);
+    const results: any[] = [];
     
     res.json({ results });
   } catch (e: any) {

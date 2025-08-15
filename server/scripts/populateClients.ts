@@ -1,5 +1,5 @@
 // Script to populate client database from SimplePractice appointment names
-import { db } from '../storage';
+import { storage } from '../storage';
 import { clients, sessions } from '../../shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
@@ -9,42 +9,20 @@ async function populateClientsFromAppointments() {
   
   try {
     // Get all unique client names from appointment data stored in sessions
-    const uniqueClientsQuery = await db
-      .select({
-        clientName: sql<string>`
-          TRIM(REGEXP_REPLACE(
-            CASE 
-              WHEN ${sessions.googleEventId} IS NOT NULL THEN 
-                -- This would be populated from the actual Google Calendar event summary
-                -- For now, we'll get from the client records that were already created
-                (SELECT name FROM ${clients} WHERE id = ${sessions.clientId})
-              ELSE 'Unknown'
-            END,
-            '(Appointment|Session).*$', '', 'gi'
-          ))
-        `,
-        sessionCount: sql<number>`COUNT(*)`
-      })
-      .from(sessions)
-      .where(
-        and(
-          eq(sessions.therapistId, 'dr-jonathan-procter'),
-          eq(sessions.isSimplePracticeEvent, true)
-        )
-      )
-      .groupBy(sql`1`)
-      .having(sql`COUNT(*) > 0`);
+    const sessionsData = await storage.getSessions('dr-jonathan-procter');
+    const simplePracticeSessions = sessionsData.filter((s: any) => s.isSimplePracticeEvent);
+    const uniqueClientsQuery = simplePracticeSessions.map((s: any) => ({
+      clientName: s.clientName || 'Unknown',
+      sessionCount: 1
+    }));
 
     console.log(`Found ${uniqueClientsQuery.length} unique clients in appointments`);
 
     // Get existing clients to avoid duplicates
-    const existingClients = await db
-      .select({ name: clients.name })
-      .from(clients)
-      .where(eq(clients.therapistId, 'dr-jonathan-procter'));
+    const existingClients = await storage.getClients('dr-jonathan-procter');
 
     const existingClientNames = new Set(
-      existingClients.map(c => c.name.toLowerCase().trim())
+      existingClients.map((c: any) => c.name.toLowerCase().trim())
     );
 
     console.log(`Found ${existingClients.length} existing clients in database`);
@@ -73,9 +51,7 @@ async function populateClientsFromAppointments() {
           emergencyContact: null,
           insurance: null,
           tags: ['SimplePractice Import'],
-          status: 'active' as const,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          status: 'active' as const
         });
         existingClientNames.add(cleanName.toLowerCase());
       }
@@ -83,22 +59,22 @@ async function populateClientsFromAppointments() {
 
     if (newClients.length > 0) {
       console.log(`Creating ${newClients.length} new client records...`);
-      await db.insert(clients).values(newClients);
+      for (const client of newClients) {
+        await storage.createClient(client);
+      }
       console.log('✓ Client records created successfully');
     } else {
       console.log('No new clients to create - all found clients already exist');
     }
 
     // Get final count
-    const finalCount = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(clients)
-      .where(eq(clients.therapistId, 'dr-jonathan-procter'));
+    const allClients = await storage.getClients('dr-jonathan-procter');
+    const finalCount = allClients.length;
 
-    console.log(`Total clients in database: ${finalCount[0].count}`);
+    console.log(`Total clients in database: ${finalCount}`);
     
     return {
-      totalClients: finalCount[0].count,
+      totalClients: finalCount,
       newClientsCreated: newClients.length,
       clientNames: newClients.map(c => c.name)
     };

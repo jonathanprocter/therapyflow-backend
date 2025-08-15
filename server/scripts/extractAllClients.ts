@@ -1,5 +1,5 @@
 // Extract all unique client names from the comprehensive historical session data
-import { db, storage } from '../storage';
+import { storage } from '../storage';
 import { clients, sessions } from '../../shared/schema';
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
@@ -45,13 +45,10 @@ async function createComprehensiveClientDatabase() {
   
   try {
     // Get existing clients to avoid duplicates
-    const existingClients = await db
-      .select({ name: clients.name })
-      .from(clients)
-      .where(eq(clients.therapistId, 'dr-jonathan-procter'));
+    const existingClients = await storage.getClients('dr-jonathan-procter');
 
     const existingClientNames = new Set(
-      existingClients.map(c => c.name.toLowerCase().trim())
+      existingClients.map((c: any) => c.name.toLowerCase().trim())
     );
 
     console.log(`Found ${existingClients.length} existing clients in database`);
@@ -76,9 +73,7 @@ async function createComprehensiveClientDatabase() {
           emergencyContact: null,
           insurance: null,
           tags: ['SimplePractice Import'],
-          status: 'active' as const,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          status: 'active' as const
         });
         existingClientNames.add(cleanName.toLowerCase());
       }
@@ -86,22 +81,22 @@ async function createComprehensiveClientDatabase() {
 
     if (newClients.length > 0) {
       console.log(`Creating ${newClients.length} new client records...`);
-      await db.insert(clients).values(newClients);
+      for (const client of newClients) {
+        await storage.createClient(client);
+      }
       console.log('✓ Client records created successfully');
     } else {
       console.log('No new clients to create - all clients already exist');
     }
 
     // Get final count
-    const finalCount = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(clients)
-      .where(eq(clients.therapistId, 'dr-jonathan-procter'));
+    const allClients = await storage.getClients('dr-jonathan-procter');
+    const finalCount = allClients.length;
 
-    console.log(`Total clients in database: ${finalCount[0].count}`);
+    console.log(`Total clients in database: ${finalCount}`);
     
     return {
-      totalClients: finalCount[0].count,
+      totalClients: finalCount,
       newClientsCreated: newClients.length,
       clientNames: newClients.map(c => c.name)
     };

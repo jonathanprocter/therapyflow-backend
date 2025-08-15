@@ -43,7 +43,7 @@ export class GoogleCalendarService {
       console.log('Google OAuth2 Configuration Check:');
       console.log('- Client ID:', process.env.GOOGLE_CLIENT_ID ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...` : 'MISSING');
       console.log('- Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'Present' : 'MISSING');
-      console.log('- Redirect URI:', this.oauth2Client.redirectUri);
+      console.log('- Redirect URI:', 'configured');
       
       if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
         throw new Error('Missing Google OAuth credentials. Please check your Secrets configuration.');
@@ -166,7 +166,7 @@ export class GoogleCalendarService {
                 
                 const events = response.data.items || [];
                 // Add calendar info to each event for filtering
-                const eventsWithCalendar = events.map(event => ({
+                const eventsWithCalendar = events.map((event: any) => ({
                   ...event,
                   sourceCalendarName: calendar.summary,
                   sourceCalendarId: calendar.id
@@ -178,11 +178,11 @@ export class GoogleCalendarService {
                 console.log(`  Calendar "${calendar.summary}": fetched ${events.length} events`);
               } while (calendarPageToken);
               
-            } catch (calendarError) {
+            } catch (calendarError: any) {
               console.log(`  Skipping calendar "${calendar.summary}": ${calendarError.message}`);
             }
           }
-        } catch (calendarListError) {
+        } catch (calendarListError: any) {
           // Fallback to primary calendar only
           console.log(`  Falling back to primary calendar only: ${calendarListError.message}`);
           

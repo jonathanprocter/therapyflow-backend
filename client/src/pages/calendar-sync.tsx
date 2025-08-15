@@ -22,7 +22,7 @@ export default function CalendarSync() {
   // Get Google Calendar auth URL
   const { data: authData } = useQuery({
     queryKey: ["/api/calendar/auth-url"],
-    enabled: !syncStatus?.isConnected,
+    enabled: !(syncStatus as any)?.isConnected,
   });
 
   // Manual sync mutation
@@ -57,8 +57,8 @@ export default function CalendarSync() {
   });
 
   const handleConnect = () => {
-    if (authData?.authUrl) {
-      window.open(authData.authUrl, '_blank', 'width=500,height=600');
+    if ((authData as any)?.authUrl) {
+      window.open((authData as any).authUrl, '_blank', 'width=500,height=600');
     }
   };
 
@@ -103,18 +103,18 @@ export default function CalendarSync() {
                 ) : (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      {syncStatus?.isConnected ? (
+                      {(syncStatus as any)?.isConnected ? (
                         <CheckCircle className="h-5 w-5" style={{ color: '#8EA58C' }} />
                       ) : (
                         <AlertCircle className="h-5 w-5" style={{ color: '#88A5BC' }} />
                       )}
                       <div>
                         <p className="font-medium" style={{ color: '#344C3D' }} data-testid="connection-status">
-                          {syncStatus?.isConnected ? "Connected" : "Not Connected"}
+                          {(syncStatus as any)?.isConnected ? "Connected" : "Not Connected"}
                         </p>
                         <p className="text-sm" style={{ color: '#738A6E' }}>
-                          {syncStatus?.isConnected 
-                            ? `Last sync: ${formatLastSync(syncStatus.lastSync)}`
+                          {(syncStatus as any)?.isConnected 
+                            ? `Last sync: ${formatLastSync((syncStatus as any).lastSync)}`
                             : "Connect to start importing appointments"
                           }
                         </p>
@@ -122,10 +122,10 @@ export default function CalendarSync() {
                     </div>
                     
                     <div className="space-x-2">
-                      {!syncStatus?.isConnected ? (
+                      {!(syncStatus as any)?.isConnected ? (
                         <Button 
                           onClick={handleConnect}
-                          disabled={!authData?.authUrl}
+                          disabled={!(authData as any)?.authUrl}
                           data-testid="connect-calendar-button"
                           style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
                           className="hover:bg-opacity-90"
@@ -156,7 +156,7 @@ export default function CalendarSync() {
             </Card>
 
             {/* Sync Statistics */}
-            {syncStatus?.isConnected && (
+            {(syncStatus as any)?.isConnected && (
               <Card data-testid="sync-statistics-card" className="bg-white">
                 <CardHeader>
                   <CardTitle style={{ color: '#344C3D' }}>Sync Statistics</CardTitle>
@@ -165,25 +165,25 @@ export default function CalendarSync() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold" style={{ color: '#88A5BC' }} data-testid="total-appointments">
-                        {syncStatus.totalAppointments || 0}
+                        {(syncStatus as any).totalAppointments || 0}
                       </div>
                       <div className="text-sm" style={{ color: '#738A6E' }}>Total Appointments</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold" style={{ color: '#8EA58C' }} data-testid="active-clients">
-                        {syncStatus.activeClients || 0}
+                        {(syncStatus as any).activeClients || 0}
                       </div>
                       <div className="text-sm" style={{ color: '#738A6E' }}>Active Clients</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold" style={{ color: '#344C3D' }} data-testid="this-month">
-                        {syncStatus.thisMonth || 0}
+                        {(syncStatus as any).thisMonth || 0}
                       </div>
                       <div className="text-sm" style={{ color: '#738A6E' }}>This Month</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold" style={{ color: '#738A6E' }} data-testid="upcoming-sessions">
-                        {syncStatus.upcomingSessions || 0}
+                        {(syncStatus as any).upcomingSessions || 0}
                       </div>
                       <div className="text-sm" style={{ color: '#738A6E' }}>Upcoming</div>
                     </div>
@@ -193,7 +193,7 @@ export default function CalendarSync() {
             )}
 
             {/* Setup Instructions */}
-            {!syncStatus?.isConnected && (
+            {!(syncStatus as any)?.isConnected && (
               <Card data-testid="setup-instructions" className="bg-white">
                 <CardHeader>
                   <CardTitle style={{ color: '#344C3D' }}>Setup Instructions</CardTitle>
@@ -247,7 +247,7 @@ export default function CalendarSync() {
             )}
 
             {/* Sync Settings */}
-            {syncStatus?.isConnected && (
+            {(syncStatus as any)?.isConnected && (
               <Card data-testid="sync-settings" className="bg-white">
                 <CardHeader>
                   <CardTitle style={{ color: '#344C3D' }}>Sync Settings</CardTitle>

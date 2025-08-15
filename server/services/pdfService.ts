@@ -11,8 +11,8 @@ const loadPdfParse = async () => {
     pdfParse = module.default || module;
     console.log('✅ pdf-parse loaded successfully via ESM');
     return pdfParse;
-  } catch (esmError) {
-    console.warn('⚠️ pdf-parse not available, will use fallback extraction:', esmError.message);
+  } catch (esmError: any) {
+    console.warn('⚠️ pdf-parse not available, will use fallback extraction:', esmError.message || esmError);
     return null;
   }
 };
@@ -131,7 +131,7 @@ export class PDFService {
 
       // If no text found, try alternative patterns
       if (!extractedText || extractedText.length < 20) {
-        const streamMatches = pdfString.match(/stream\s*(.*?)\s*endstream/gs);
+        const streamMatches = pdfString.match(/stream\s*(.*?)\s*endstream/g);
         if (streamMatches) {
           const streamText = streamMatches
             .map(match => match.replace(/stream|endstream/g, ''))

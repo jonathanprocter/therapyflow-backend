@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { clients } from "@shared/schema";
 import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { aiService } from "./services/aiService";
 import { calendarService } from "./services/calendarService";
 import { pdfService } from "./services/pdfService";

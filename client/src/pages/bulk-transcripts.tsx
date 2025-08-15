@@ -350,13 +350,13 @@ export default function BulkTranscripts() {
                         <div>
                           <h3 className="font-semibold text-gray-900">{batch.name}</h3>
                           <p className="text-sm text-gray-600">
-                            Uploaded: {formatDate(batch.uploadedAt)}
+                            Uploaded: {formatDate(batch.uploadedAt.toString())}
                           </p>
                           <div className="mt-2 flex items-center space-x-4 text-sm">
                             <span className="text-gray-600">
                               Files: {batch.successfulFiles || 0}/{batch.totalFiles}
                             </span>
-                            {batch.failedFiles > 0 && (
+                            {(batch.failedFiles || 0) > 0 && (
                               <span className="text-red-600">
                                 Failed: {batch.failedFiles}
                               </span>

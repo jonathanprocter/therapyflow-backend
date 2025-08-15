@@ -21,7 +21,7 @@ export default function Clients() {
 
   const deleteClientMutation = useMutation({
     mutationFn: async (clientId: string) => {
-      return apiRequest(`/api/clients/${clientId}`, 'DELETE');
+      return apiRequest(`/api/clients/${clientId}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/clients"] });

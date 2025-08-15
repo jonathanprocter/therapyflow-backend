@@ -1010,13 +1010,13 @@ export default function ClientDetail() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900" data-testid="client-name">
-                  {client.name}
+                  {client?.name || 'Loading...'}
                 </h1>
                 <div className="flex items-center gap-4 mt-2">
-                  <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-                    {client.status}
+                  <Badge variant={client?.status === 'active' ? 'default' : 'secondary'}>
+                    {client?.status || 'unknown'}
                   </Badge>
-                  {client.tags && client.tags.length > 0 && (
+                  {client?.tags && client.tags.length > 0 && (
                     <div className="flex gap-2">
                       {client.tags.map((tag, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
@@ -1149,49 +1149,49 @@ export default function ClientDetail() {
             </CardHeader>
             <CardContent aria-labelledby="client-info-title">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {client.email && (
+                {client?.email && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Email</label>
                     <div className="flex items-center gap-2">
-                      <p className="text-gray-900">{client.email}</p>
-                      <Button size="sm" variant="ghost" onClick={() => sendEmail(client.email)}>
+                      <p className="text-gray-900">{client?.email}</p>
+                      <Button size="sm" variant="ghost" onClick={() => sendEmail(client?.email || '')}>
                         <Mail className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                 )}
-                {client.phone && (
+                {client?.phone && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Phone</label>
                     <div className="flex items-center gap-2">
-                      <p className="text-gray-900">{client.phone}</p>
-                      <Button size="sm" variant="ghost" onClick={() => callPhone(client.phone)}>
+                      <p className="text-gray-900">{client?.phone}</p>
+                      <Button size="sm" variant="ghost" onClick={() => callPhone(client?.phone || '')}>
                         <Phone className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                 )}
-                {client.dateOfBirth && (
+                {client?.dateOfBirth && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-                    <p className="text-gray-900">{formatEDTDate(client.dateOfBirth)}</p>
+                    <p className="text-gray-900">{formatEDTDate(client?.dateOfBirth || '')}</p>
                   </div>
                 )}
-                {client.emergencyContact && (
+                {client?.emergencyContact && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Emergency Contact</label>
-                    <p className="text-gray-900">{client.emergencyContact}</p>
+                    <p className="text-gray-900">{client?.emergencyContact}</p>
                   </div>
                 )}
-                {client.insurance && (
+                {client?.insurance && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Insurance</label>
-                    <p className="text-gray-900">{client.insurance}</p>
+                    <p className="text-gray-900">{client?.insurance}</p>
                   </div>
                 )}
                 <div>
                   <label className="text-sm font-medium text-gray-500">Client Since</label>
-                  <p className="text-gray-900">{formatEDTDate(client.createdAt)}</p>
+                  <p className="text-gray-900">{formatEDTDate(client?.createdAt || '')}</p>
                 </div>
 
                 {/* Custom Fields */}

@@ -55,7 +55,7 @@ export default function ProgressNotesManagement() {
 
   // Create placeholders mutation
   const createPlaceholdersMutation = useMutation({
-    mutationFn: () => apiRequest('/api/progress-notes/create-placeholders', 'POST'),
+    mutationFn: () => apiRequest('/api/progress-notes/create-placeholders', { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/placeholders'] });
     },
@@ -64,7 +64,7 @@ export default function ProgressNotesManagement() {
   // Update progress note mutation
   const updateNoteMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: any }) =>
-      apiRequest(`/api/progress-notes/${id}`, 'PATCH', updates),
+      apiRequest(`/api/progress-notes/${id}`, { method: 'PATCH', body: JSON.stringify(updates), headers: { 'Content-Type': 'application/json' } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/placeholders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/manual-review'] });
@@ -75,7 +75,7 @@ export default function ProgressNotesManagement() {
 
   // Delete progress note mutation
   const deleteNoteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/progress-notes/${id}`, 'DELETE'),
+    mutationFn: (id: string) => apiRequest(`/api/progress-notes/${id}`, { method: 'DELETE' }),
     onSuccess: (data) => {
       console.log('Delete successful:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/placeholders'] });

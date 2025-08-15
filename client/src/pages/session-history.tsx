@@ -353,7 +353,7 @@ export default function SessionHistory() {
                       
                       <div className="flex items-center gap-2">
                         {session.hasProgressNotePlaceholder && (
-                          <FileText className="h-4 w-4" style={{ color: '#8EA58C' }} title="Has progress note placeholder" />
+                          <FileText className="h-4 w-4" style={{ color: '#8EA58C' }} />
                         )}
                         {session.isSimplePracticeEvent && (
                           <Badge variant="outline" className="text-xs" style={{ borderColor: '#88A5BC', color: '#88A5BC' }}>
@@ -401,7 +401,7 @@ export default function SessionHistory() {
               sessionId={selectedSessionForSummary.id}
               clientId={selectedSessionForSummary.clientId}
               clientName={selectedSessionForSummary.client?.name || "Unknown Client"}
-              sessionDate={selectedSessionForSummary.scheduledAt}
+              sessionDate={new Date(selectedSessionForSummary.scheduledAt).toISOString()}
               onClose={() => setSelectedSessionForSummary(null)}
             />
           </div>

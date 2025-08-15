@@ -6,6 +6,7 @@ import {
   insertTranscriptFileSchema 
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { ZodError } from "zod";
 
 // Configure multer for file upload handling
 const upload = multer({
@@ -124,10 +125,10 @@ export function registerTranscriptRoutes(app: Express): void {
         files: transcriptFiles,
         message: `Successfully uploaded ${files.length} files. Processing will begin shortly.`
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating transcript batch:', error);
       if (error.name === 'ZodError') {
-        const validationError = fromZodError(error);
+        const validationError = fromZodError(error as ZodError);
         return res.status(400).json({ error: validationError.message });
       }
       res.status(500).json({ error: 'Failed to create transcript batch' });
@@ -246,7 +247,6 @@ export function registerTranscriptRoutes(app: Express): void {
             extractedSessionDate: aiResult.extractedSessionDate,
             sessionType: aiResult.sessionType,
             themes: aiResult.themes,
-            emotions: aiResult.emotions,
             riskLevel: aiResult.riskLevel,
             processingStatus: 'completed',
             status: aiResult.clientMatchConfidence > 0.8 ? 'processed' : 'processing',
