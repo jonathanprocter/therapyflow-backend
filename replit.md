@@ -12,6 +12,15 @@ Preferred communication style: Simple, everyday language.
 - **Evergreen (#344C3D)**: Headers
 - **French Blue (#88A5BC)**: Links, accents
 
+**Comprehensive Color System Implemented** (August 15, 2025):
+- Complete elimination of all non-brand colors (pink, purple, blue, yellow, etc.) across entire application
+- Nuclear CSS overrides target all Tailwind color variants with !important declarations
+- Specific targeting of Radix UI component hover/focus states
+- Dialog and alert components forced to use brand colors only
+- All interactive states (hover, focus, active, selected) use French Blue (#88A5BC) highlights
+- Card and list item hovers use Ivory (#F2F3F1) backgrounds with Moss (#738A6E) shadows
+- Button states use Sage (#8EA58C) primary with darker variations for hover/active
+
 ## Session Type Configuration
 - Session types are LIMITED to only 3 options:
   1. "individual" (DEFAULT)
