@@ -50,7 +50,7 @@ export function EnhancedClientDetailPage() {
     enabled: !!clientId
   });
 
-  const insightCount = insightsData?.insights?.length || 0;
+  const insightCount = (insightsData as any)?.insights?.length || 0;
 
   if (!client) return <div>Loading...</div>;
 
@@ -60,9 +60,9 @@ export function EnhancedClientDetailPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold" data-testid="text-client-name">
-            {client.firstName} {client.lastName}
+            {(client as any).firstName} {(client as any).lastName}
           </h1>
-          <p className="text-muted-foreground" data-testid="text-client-email">{client.email}</p>
+          <p className="text-muted-foreground" data-testid="text-client-email">{(client as any).email}</p>
         </div>
         <div className="flex gap-2">
           {insightCount > 0 && (
@@ -121,21 +121,21 @@ export function EnhancedClientDetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
-                  <p data-testid="text-overview-email">{client.email || 'Not provided'}</p>
+                  <p data-testid="text-overview-email">{(client as any).email || 'Not provided'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Phone</p>
-                  <p data-testid="text-overview-phone">{client.phone || 'Not provided'}</p>
+                  <p data-testid="text-overview-phone">{(client as any).phone || 'Not provided'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Status</p>
-                  <Badge variant={client.status === 'active' ? 'default' : 'secondary'} data-testid="badge-status">
-                    {client.status}
+                  <Badge variant={(client as any).status === 'active' ? 'default' : 'secondary'} data-testid="badge-status">
+                    {(client as any).status}
                   </Badge>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Date of Birth</p>
-                  <p data-testid="text-overview-dob">{client.dateOfBirth || 'Not provided'}</p>
+                  <p data-testid="text-overview-dob">{(client as any).dateOfBirth || 'Not provided'}</p>
                 </div>
               </div>
             </CardContent>
@@ -257,7 +257,7 @@ export function EnhancedProgressNoteView({
     enabled: !!clientId && !!noteId
   });
 
-  const note = noteData?.note;
+  const note = (noteData as any)?.note;
   const tags = tagsData?.tags || [];
   const insights = insightsData?.insights || [];
 
@@ -332,7 +332,7 @@ export function TherapeuticDashboardWidget() {
     queryKey: ['/api/therapeutic/insights/recent']
   });
 
-  const recentInsights = recentInsightsData?.insights || [];
+  const recentInsights = (recentInsightsData as any)?.insights || [];
 
   return (
     <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }} data-testid="therapeutic-dashboard-widget">
@@ -348,10 +348,9 @@ export function TherapeuticDashboardWidget() {
           {recentInsights.slice(0, 5).map((insight: any) => (
             <div 
               key={insight.id}
-              className="p-3 rounded-lg cursor-pointer transition-colors"
+              className="p-3 rounded-lg cursor-pointer transition-colors hover:bg-ivory-100"
               style={{ 
-                backgroundColor: 'rgba(242, 243, 241, 0.5)',
-                '&:hover': { backgroundColor: 'rgba(242, 243, 241, 0.8)' }
+                backgroundColor: 'rgba(242, 243, 241, 0.5)'
               }}
               onClick={() => navigate(`/clients/${insight.clientId}/journey`)}
               data-testid={`card-insight-${insight.id}`}

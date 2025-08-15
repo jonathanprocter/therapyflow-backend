@@ -128,7 +128,7 @@ export default function SessionSummaryGenerator({
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
               Summary Type
             </label>
-            <Select value={summaryType} onValueChange={setSummaryType}>
+            <Select value={summaryType} onValueChange={(value: "brief" | "comprehensive" | "clinical" | "treatment-planning") => setSummaryType(value)}>
               <SelectTrigger data-testid="summary-type-select">
                 <SelectValue />
               </SelectTrigger>

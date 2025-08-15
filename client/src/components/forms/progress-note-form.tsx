@@ -84,7 +84,7 @@ export default function ProgressNoteForm({ onSuccess, initialData }: ProgressNot
 
   const sessionPrepMutation = useMutation({
     mutationFn: async (sessionId: string) => {
-      const response = await apiRequest("POST", `/api/ai/session-prep/${sessionId}`, {});
+      const response = await apiRequest("POST", `/api/ai/session-prep/${sessionId}`);
       return response.json();
     },
     onSuccess: (data) => {

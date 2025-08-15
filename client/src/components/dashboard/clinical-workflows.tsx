@@ -22,10 +22,9 @@ export default function ClinicalWorkflows() {
       <CardContent className="space-y-4">
         {/* File Upload Section */}
         <div 
-          className="p-4 border-2 border-dashed rounded-lg transition-colors"
+          className="p-4 border-2 border-dashed rounded-lg transition-colors hover:border-accent-blue"
           style={{ 
-            borderColor: 'rgba(115, 138, 110, 0.3)',
-            '&:hover': { borderColor: '#88A5BC' }
+            borderColor: 'rgba(115, 138, 110, 0.3)'
           }}
         >
           <div className="text-center">
