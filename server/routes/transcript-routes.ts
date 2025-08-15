@@ -33,6 +33,79 @@ const upload = multer({
   }
 });
 
+// Helper function to process a batch (extracted for reuse)
+async function processTranscriptBatch(batchId: string) {
+  console.log(`🔄 Processing batch ${batchId}`);
+  
+  // Get all files in the batch
+  const files = await storage.getTranscriptFilesByBatch(batchId);
+  console.log(`📁 Found ${files.length} files in batch`);
+
+  let processedCount = 0;
+  let failedCount = 0;
+
+  for (const file of files) {
+    try {
+      // Process each file with AI to extract client info
+      console.log(`🤖 Processing file: ${file.fileName}`);
+      
+      // Update file status to indicate processing
+      await storage.updateTranscriptFile(file.id, {
+        processingStatus: 'analyzing',
+        processedAt: new Date()
+      });
+
+      // Simulate AI processing to extract client info
+      // In a real implementation, this would use actual AI
+      const aiResult = {
+        suggestedClientName: `Client ${Math.floor(Math.random() * 100)}`,
+        clientMatchConfidence: Math.random() * 0.4 + 0.6, // 60-100%
+        extractedSessionDate: new Date(),
+        sessionType: 'individual',
+        themes: ['therapy', 'progress'],
+        emotions: ['positive', 'hopeful'],
+        riskLevel: 'low'
+      };
+
+      // Update file with AI results
+      await storage.updateTranscriptFile(file.id, {
+        suggestedClientName: aiResult.suggestedClientName,
+        clientMatchConfidence: aiResult.clientMatchConfidence,
+        extractedSessionDate: aiResult.extractedSessionDate,
+        sessionType: aiResult.sessionType,
+        themes: aiResult.themes,
+        riskLevel: aiResult.riskLevel,
+        processingStatus: 'completed',
+        status: aiResult.clientMatchConfidence > 0.8 ? 'processed' : 'processing',
+        requiresManualReview: aiResult.clientMatchConfidence <= 0.8,
+        manualReviewReason: aiResult.clientMatchConfidence <= 0.8 ? 'Low confidence client match' : null
+      });
+
+      processedCount++;
+      console.log(`✅ Processed ${file.fileName}`);
+    } catch (error) {
+      console.error(`❌ Failed to process ${file.fileName}:`, error);
+      await storage.updateTranscriptFile(file.id, {
+        processingStatus: 'failed',
+        status: 'failed',
+        errorDetails: String(error)
+      });
+      failedCount++;
+    }
+  }
+
+  // Update batch status
+  await storage.updateTranscriptBatch(batchId, {
+    status: failedCount === 0 ? 'completed' : 'failed',
+    processedFiles: processedCount,
+    failedFiles: failedCount,
+    completedAt: new Date()
+  });
+
+  console.log(`🎉 Batch processing completed: ${processedCount} processed, ${failedCount} failed`);
+  return { processedCount, failedCount, totalFiles: files.length };
+}
+
 export function registerTranscriptRoutes(app: Express): void {
   // Get all transcript batches for a therapist
   app.get('/api/transcripts/batches', async (req, res) => {
@@ -118,6 +191,11 @@ export function registerTranscriptRoutes(app: Express): void {
       await storage.updateTranscriptBatch(batch.id, {
         status: 'processing',
         processedAt: new Date()
+      });
+
+      // Trigger automatic processing in the background
+      processTranscriptBatch(batch.id).catch((error: any) => {
+        console.error(`Background processing failed for batch ${batch.id}:`, error);
       });
 
       res.json({
@@ -231,90 +309,22 @@ export function registerTranscriptRoutes(app: Express): void {
     }
   });
 
-  // Process a batch of transcripts
+  // Process a batch of transcripts (manual trigger)
   app.post('/api/transcripts/process-batch', async (req, res) => {
     try {
       const { batchId } = req.body;
-      const therapistId = 'dr-jonathan-procter'; // Mock therapist ID
 
       if (!batchId) {
         return res.status(400).json({ error: 'Batch ID is required' });
       }
 
-      console.log(`🔄 Processing batch ${batchId}`);
-
-      // Get all files in the batch
-      const files = await storage.getTranscriptFilesByBatch(batchId);
-      console.log(`📁 Found ${files.length} files in batch`);
-
-      let processedCount = 0;
-      let failedCount = 0;
-
-      for (const file of files) {
-        try {
-          // Process each file with AI to extract client info
-          console.log(`🤖 Processing file: ${file.fileName}`);
-          
-          // Update file status to indicate processing
-          await storage.updateTranscriptFile(file.id, {
-            processingStatus: 'analyzing',
-            processedAt: new Date()
-          });
-
-          // Simulate AI processing to extract client info
-          // In a real implementation, this would use actual AI
-          const aiResult = {
-            suggestedClientName: `Client ${Math.floor(Math.random() * 100)}`,
-            clientMatchConfidence: Math.random() * 0.4 + 0.6, // 60-100%
-            extractedSessionDate: new Date(),
-            sessionType: 'individual',
-            themes: ['therapy', 'progress'],
-            emotions: ['positive', 'hopeful'],
-            riskLevel: 'low'
-          };
-
-          // Update file with AI results
-          await storage.updateTranscriptFile(file.id, {
-            suggestedClientName: aiResult.suggestedClientName,
-            clientMatchConfidence: aiResult.clientMatchConfidence,
-            extractedSessionDate: aiResult.extractedSessionDate,
-            sessionType: aiResult.sessionType,
-            themes: aiResult.themes,
-            riskLevel: aiResult.riskLevel,
-            processingStatus: 'completed',
-            status: aiResult.clientMatchConfidence > 0.8 ? 'processed' : 'processing',
-            requiresManualReview: aiResult.clientMatchConfidence <= 0.8,
-            manualReviewReason: aiResult.clientMatchConfidence <= 0.8 ? 'Low confidence client match' : null
-          });
-
-          processedCount++;
-          console.log(`✅ Processed ${file.fileName}`);
-        } catch (error) {
-          console.error(`❌ Failed to process ${file.fileName}:`, error);
-          await storage.updateTranscriptFile(file.id, {
-            processingStatus: 'failed',
-            status: 'failed',
-            errorDetails: String(error)
-          });
-          failedCount++;
-        }
-      }
-
-      // Update batch status
-      await storage.updateTranscriptBatch(batchId, {
-        status: failedCount === 0 ? 'completed' : 'failed',
-        processedFiles: processedCount,
-        processedAt: new Date()
-      });
-
-      console.log(`🎉 Batch processing completed: ${processedCount} processed, ${failedCount} failed`);
+      // Use the shared processing function
+      const result = await processTranscriptBatch(batchId);
 
       res.json({
         batchId,
-        processedCount,
-        failedCount,
-        totalFiles: files.length,
-        status: failedCount === 0 ? 'completed' : 'failed'
+        ...result,
+        status: result.failedCount === 0 ? 'completed' : 'failed'
       });
     } catch (error) {
       console.error('Error processing batch:', error);
