@@ -18,6 +18,7 @@ import CalendarSync from './pages/calendar-sync';
 import SemanticSearch from './pages/semantic-search';
 import TreatmentPlans from './pages/treatment-plans';
 import BulkTranscripts from './pages/bulk-transcripts';
+import AIDashboard from './pages/AIDashboard';
 import Sidebar from './components/layout/sidebar';
 import TopBar from './components/layout/topbar';
 import HomePage from './pages/HomePage';
@@ -43,6 +44,7 @@ export default function App() {
               <Route path="/search" component={SemanticSearch} />
               <Route path="/treatment-plans" component={TreatmentPlans} />
               <Route path="/bulk-transcripts" component={BulkTranscripts} />
+              <Route path="/ai-dashboard" component={AIDashboard} />
               <Route path="/smart" component={SmartUpload} />
               <Route path="/documents" component={DocumentsUpload} />
               <Route path="/results" component={CareNotesResults} />

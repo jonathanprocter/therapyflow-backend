@@ -17,6 +17,7 @@ import {
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "AI Dashboard", href: "/ai-dashboard", icon: Brain, badge: "AI", isSpecial: true },
   { name: "Calendar", href: "/calendar", icon: Calendar, isSpecial: true },
   { name: "Clients", href: "/clients", icon: Users },
   { name: "Progress Notes", href: "/progress-notes", icon: FileText },
