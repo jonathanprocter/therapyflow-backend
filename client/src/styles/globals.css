@@ -459,6 +459,139 @@ input:invalid, textarea:invalid, select:invalid {
   --tw-ring-color: var(--color-french-blue) !important;
 }
 
+/* CALENDAR COMPONENT FIXES - Eliminate pink backgrounds */
+.react-day-picker .rdp-day_today {
+  background-color: var(--color-sage) !important;
+  color: white !important;
+}
+
+.react-day-picker .rdp-day_selected {
+  background-color: var(--color-french-blue) !important;
+  color: white !important;
+}
+
+.react-day-picker .rdp-day:hover {
+  background-color: rgba(136, 165, 188, 0.1) !important;
+}
+
+/* Calendar specific overrides */
+[data-today="true"], .rdp-day_today, .day_today {
+  background-color: var(--color-sage) !important;
+  color: white !important;
+}
+
+[data-selected="true"], .rdp-day_selected, .day_selected {
+  background-color: var(--color-french-blue) !important;
+  color: white !important;
+}
+
+/* AI Dashboard and Select component focus fixes */
+[role="combobox"], [role="listbox"], [role="option"],
+.select-trigger, .select-content, .select-item {
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+}
+
+[role="combobox"]:focus, [role="listbox"]:focus, [role="option"]:focus,
+.select-trigger:focus, .select-content:focus, .select-item:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+}
+
+/* Fix initials squares - remove ivory background from client initials */
+.client-initials, .initials-square, .avatar-initials {
+  background-color: var(--color-sage) !important;
+  color: white !important;
+}
+
+/* Override any remaining yellow/amber focus states in specific components */
+[data-radix-select-trigger]:focus,
+[data-radix-select-content]:focus,
+[data-radix-tabs-trigger]:focus,
+[data-radix-button]:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+}
+
+/* COMPREHENSIVE CALENDAR OVERRIDES */
+/* Target all react-day-picker classes to eliminate pink backgrounds */
+.rdp, .react-day-picker {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: #8EA58C !important;
+  --rdp-background-color: #F2F3F1 !important;
+}
+
+.rdp-day_today, .rdp-day_selected {
+  background-color: var(--color-sage) !important;
+  color: white !important;
+}
+
+.rdp-button:hover:not([disabled]) {
+  background-color: rgba(136, 165, 188, 0.1) !important;
+}
+
+.rdp-button:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  background-color: rgba(136, 165, 188, 0.1) !important;
+}
+
+/* Target shadcn calendar component specifically */
+.calendar .rdp-day_today {
+  background-color: var(--color-sage) !important;
+  color: white !important;
+}
+
+.calendar .rdp-day_selected {
+  background-color: var(--color-french-blue) !important;
+  color: white !important;
+}
+
+/* AI DASHBOARD COMPREHENSIVE FOCUS FIX */
+/* Select components in AI dashboard */
+[data-testid*="select"], [data-testid*="dropdown"], 
+button[role="combobox"], [aria-expanded] {
+  --tw-ring-color: var(--color-french-blue) !important;
+}
+
+[data-testid*="select"]:focus, [data-testid*="dropdown"]:focus,
+button[role="combobox"]:focus, [aria-expanded]:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  border-color: var(--color-french-blue) !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+}
+
+/* Tabs in AI dashboard */
+[role="tab"], [role="tablist"], [data-state="active"] {
+  --tw-ring-color: var(--color-french-blue) !important;
+}
+
+[role="tab"]:focus, [data-state="active"]:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+}
+
+/* Button focus in AI components */
+button[data-testid*="button"], button[data-testid*="analyze"], 
+button[data-testid*="search"], button[data-testid*="refresh"] {
+  --tw-ring-color: var(--color-french-blue) !important;
+}
+
+button[data-testid*="button"]:focus, button[data-testid*="analyze"]:focus,
+button[data-testid*="search"]:focus, button[data-testid*="refresh"]:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+}
+
 /* Utility classes for easy therapeutic color application */
 .therapeutic-primary { background-color: var(--color-sage) !important; color: white !important; }
 .therapeutic-secondary { background-color: var(--sage-100) !important; color: var(--color-evergreen) !important; }

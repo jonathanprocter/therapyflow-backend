@@ -182,10 +182,10 @@ export default function AppointmentsPanel() {
                 data-testid={`appointment-${session.id}`}
               >
                 <div 
-                  className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: color.bg }}
+                  className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center client-initials"
+                  style={{ backgroundColor: '#8EA58C' }}
                 >
-                  <span className="font-bold text-sm" style={{ color: color.text }}>
+                  <span className="font-bold text-sm" style={{ color: '#FFFFFF' }}>
                     {session.client?.name 
                       ? session.client.name
                           .split(' ')
