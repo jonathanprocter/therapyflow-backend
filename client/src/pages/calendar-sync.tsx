@@ -75,7 +75,7 @@ export default function CalendarSync() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6" data-testid="calendar-sync-page">
+    <div className="flex-1 overflow-y-auto p-6 calendar-sync" data-testid="calendar-sync-page">
           <div className="mb-6">
             <h1 className="text-2xl font-bold" style={{ color: '#344C3D' }} data-testid="page-title">
               Calendar Integration

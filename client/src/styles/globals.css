@@ -592,6 +592,75 @@ button[data-testid*="search"]:focus, button[data-testid*="refresh"]:focus {
   box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
 }
 
+/* CALENDAR SYNC OAUTH SPECIFIC FIXES */
+/* Target calendar sync page buttons and padded items */
+button[data-testid*="connect"], button[data-testid*="sync"],
+button[data-testid*="calendar"], [data-testid*="connection"] {
+  --tw-ring-color: var(--color-french-blue) !important;
+}
+
+button[data-testid*="connect"]:focus, button[data-testid*="sync"]:focus,
+button[data-testid*="calendar"]:focus, [data-testid*="connection"]:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  border-color: var(--color-french-blue) !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+}
+
+/* Target calendar integration cards and their focus states */
+[data-testid*="status-card"], [data-testid*="sync-card"],
+[data-testid*="oauth"], [data-testid*="integration"] {
+  --tw-ring-color: var(--color-french-blue) !important;
+}
+
+[data-testid*="status-card"]:focus, [data-testid*="sync-card"]:focus,
+[data-testid*="oauth"]:focus, [data-testid*="integration"]:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+}
+
+/* Generic focus override for any element with padding in calendar sync */
+.calendar-sync button, .calendar-sync [role="button"],
+.calendar-sync .p-4, .calendar-sync .p-6 {
+  --tw-ring-color: var(--color-french-blue) !important;
+}
+
+.calendar-sync button:focus, .calendar-sync [role="button"]:focus,
+.calendar-sync .p-4:focus, .calendar-sync .p-6:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+}
+
+/* FINAL COMPREHENSIVE YELLOW ELIMINATION */
+/* Nuclear option - override ANY remaining yellow, amber, orange focus rings */
+*[class*="ring-yellow"], *[class*="ring-amber"], *[class*="ring-orange"],
+*[class*="focus:ring-yellow"], *[class*="focus:ring-amber"], *[class*="focus:ring-orange"] {
+  --tw-ring-color: var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+}
+
+*[class*="ring-yellow"]:focus, *[class*="ring-amber"]:focus, *[class*="ring-orange"]:focus,
+*[class*="focus:ring-yellow"]:focus, *[class*="focus:ring-amber"]:focus, *[class*="focus:ring-orange"]:focus {
+  --tw-ring-color: var(--color-french-blue) !important;
+  ring-color: var(--color-french-blue) !important;
+  outline: 2px solid var(--color-french-blue) !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+}
+
+/* Override any CSS custom properties that might be setting yellow */
+:root, html, body, * {
+  --ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  --ring-yellow-500: var(--color-french-blue) !important;
+  --ring-amber-500: var(--color-french-blue) !important;
+  --ring-orange-500: var(--color-french-blue) !important;
+}
+
 /* Utility classes for easy therapeutic color application */
 .therapeutic-primary { background-color: var(--color-sage) !important; color: white !important; }
 .therapeutic-secondary { background-color: var(--sage-100) !important; color: var(--color-evergreen) !important; }
