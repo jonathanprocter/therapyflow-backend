@@ -13,6 +13,12 @@ export default defineConfig({
     port: 3000,
     strictPort: false, // Allow Vite to use next available port
     host: true,
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      '0.0.0.0',
+      '524d766c-fdfb-44af-bd9b-a42f854908dd-00-owso2knsvid2.janeway.replit.dev'
+    ],
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
