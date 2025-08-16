@@ -194,6 +194,28 @@ input[type="file"]::-webkit-file-upload-button {
   color: #344C3D !important;
 }
 
+/* Fix ALL input field styling - prevent any yellow backgrounds */
+input, input[type="text"], input[type="search"], input[type="email"], input[type="password"] {
+  background-color: #FFFFFF !important;
+  color: #344C3D !important;
+}
+
+input:focus, input[type="text"]:focus, input[type="search"]:focus {
+  background-color: #FFFFFF !important;
+  border-color: #88A5BC !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.1) !important;
+}
+
+/* Remove autocomplete yellow background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #FFFFFF inset !important;
+  -webkit-text-fill-color: #344C3D !important;
+  background-color: #FFFFFF !important;
+}
+
 /* Remove any yellow/orange highlighting throughout the application */
 *::-moz-selection {
   background-color: rgba(136, 165, 188, 0.3) !important; /* French Blue selection */

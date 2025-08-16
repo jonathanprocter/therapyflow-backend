@@ -97,7 +97,12 @@ export default function CareNotesResults() {
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
                 placeholder="Enter client ID to search"
-                className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
+                className="border border-gray-300 focus:border-[#88A5BC] focus:ring-[#88A5BC] bg-white"
+                style={{ 
+                  backgroundColor: '#FFFFFF !important',
+                  color: '#344C3D !important',
+                  borderColor: 'rgba(115, 138, 110, 0.3)',
+                }}
                 data-testid="input-search-client-id"
               />
             </div>
