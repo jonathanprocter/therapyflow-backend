@@ -5,6 +5,7 @@ import { integrateTherapeuticFeatures } from "./integrate-therapeutic";
 import { documentsRouter } from "./routes/documents.js";
 import { aiRouter } from "./routes/ai.js"; 
 import { semanticRouter } from "./routes/semantic.js";
+import { knowledgeGraphRoutes } from "./routes/knowledge-graph-routes-fixed.js";
 import { storage } from "./storage.js";
 // const db = storage.db;
 import { sql, eq } from "drizzle-orm";
@@ -91,7 +92,9 @@ app.get("/api/health/deep", async (req, res) => {
   app.use("/api/documents", documentsRouter);
   app.use("/api/ai", aiRouter);
   app.use("/api/semantic", semanticRouter);
+  app.use("/api", knowledgeGraphRoutes);
   log("✅ CareNotesAI document processing pipeline routes registered");
+  log("🧠 Clinical Second Brain knowledge graph routes registered");
 
   // Integrate therapeutic journey features
   integrateTherapeuticFeatures(app);

@@ -1,5 +1,5 @@
 # Overview
-TherapyFlow is a comprehensive clinical management platform for mental health professionals. It provides tools for client information management, progress tracking, appointment scheduling, and AI-powered insights to enhance therapeutic outcomes. This full-stack web application, built with React, Express.js, and PostgreSQL, aims to deliver a modern, efficient clinical workflow solution. The project's vision is to leverage AI to improve therapeutic effectiveness and streamline clinical operations.
+TherapyFlow is a comprehensive clinical management platform for mental health professionals, integrating client management, progress tracking, appointment scheduling, and AI-powered insights. It includes Clinical Second Brain functionality for knowledge graph visualization, proactive therapeutic insights, and contextual memory recall. The platform aims to streamline clinical operations and improve therapeutic effectiveness through intelligent pattern recognition and proactive clinical recommendations.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
@@ -11,15 +11,6 @@ Preferred communication style: Simple, everyday language.
 - **Moss (#738A6E)**: Body text
 - **Evergreen (#344C3D)**: Headers
 - **French Blue (#88A5BC)**: Links, accents
-
-**Comprehensive Color System Implemented** (August 15, 2025):
-- Complete elimination of all non-brand colors (pink, purple, blue, yellow, etc.) across entire application
-- Nuclear CSS overrides target all Tailwind color variants with !important declarations
-- Specific targeting of Radix UI component hover/focus states
-- Dialog and alert components forced to use brand colors only
-- All interactive states (hover, focus, active, selected) use French Blue (#88A5BC) highlights
-- Card and list item hovers use Ivory (#F2F3F1) backgrounds with Moss (#738A6E) shadows
-- Button states use Sage (#8EA58C) primary with darker variations for hover/active
 
 ## Session Type Configuration
 - Session types are LIMITED to only 3 options:
@@ -44,12 +35,19 @@ Preferred communication style: Simple, everyday language.
   * Multi-strategy date parsing with filename priority
   * Up to 3 improvement iterations per document
   * Real-time quality monitoring and validation
+- **Clinical Second Brain**: Complete implementation of advanced therapeutic intelligence system:
+  * Knowledge Graph Panel with entity visualization and connection analysis
+  * Proactive Insights Panel with session preparation suggestions and therapeutic opportunities
+  * Contextual Memory Panel with relevant history patterns and intervention effectiveness tracking
+  * Full integration into AI Dashboard with 6-tab navigation system
+  * API routes for all Clinical Second Brain functionality with comprehensive mock data
+  * Real-time pattern recognition and therapeutic recommendation engine
+  * Advanced contextual recall based on current therapeutic activities
 
 ## Current Configuration
 - Therapist: Dr. Jonathan Procter (License: Licensed Therapist)
 - Database: Successfully imported 2,251+ SimplePractice appointments (2018-2025) with complete historical therapy session data.
 - Authentication: Mock system configured for Dr. Jonathan Procter (ID: dr-jonathan-procter).
-- **Application Audit Complete** (August 15, 2025): Comprehensive error fixing completed with 100% TypeScript compilation success. All uploaded documents cleared for clean bulk upload retry.
 - Calendar Sync: Fully operational with comprehensive SimplePractice integration and 100% capture rate, proper EDT timezone handling. Extended historical sync now captures data from 2010-2030 for complete record coverage.
 - SimplePractice Integration: Successfully capturing all therapy appointments from "Simple Practice" calendar with proper client name extraction, intelligent client matching, and automatic client record creation.
 - Historical Session Management: Complete historical session tracking with:
@@ -60,11 +58,7 @@ Preferred communication style: Simple, everyday language.
   * Statistical overview showing total sessions, completed sessions, active clients, and total hours.
   * Organized session display grouped by month/year for easy navigation.
   * Support for session status management and progress note organization.
-- Timezone: Complete system-wide EDT (Eastern Daylight Time) configuration implemented across all components:
-  * Database queries use proper `AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York'` conversion.
-  * Frontend displays use consistent EDT formatting utilities (client/src/utils/timezone.ts).
-  * All date/time displays throughout the application now show accurate EDT times.
-  * Fixed appointments panel, client details, progress notes, and session displays.
+- Timezone: Complete system-wide EDT (Eastern Daylight Time) configuration implemented across all components.
 - Enhanced AI Document Processing: Comprehensive document processing system with:
   * **Robust PDF Extraction**: Multiple extraction methods including pdf-parse library, fallback byte parsing, and OCR-like text detection.
   * **Advanced Text Preprocessing**: OCR error correction, clinical terminology standardization, header/footer removal, and intelligent text cleaning.
@@ -72,7 +66,7 @@ Preferred communication style: Simple, everyday language.
   * **Multi-Pass AI Analysis**: Sophisticated clinical data extraction using both Anthropic Claude Sonnet 4.0 and OpenAI GPT-4o with comprehensive fallback mechanisms.
   * **Intelligent Date Parsing**: Support for multiple date formats with fuzzy logic and context-aware extraction.
   * **Advanced Client Matching**: Levenshtein distance algorithms, token similarity, and intelligent name variation handling.
-  * **Comprehensive Validation**: Multi-stage validation with detailed confidence scoring for text extraction, AI analysis, date parsing, and client matching.
+  * **Comprehensive Validation**: Multi-stage validation with detailed confidence scoring for text extraction, AI analysis, date parsing, and client match accuracy.
   * **Enhanced UI**: Sophisticated drag-drop interface with real-time processing feedback, detailed validation scores, and alternative interpretation display.
   * **Clinical Analysis**: Automatic extraction of themes, emotions, interventions, risk levels, progress ratings, and next steps.
   * **Manual Review Workflow**: Intelligent flagging system for uncertain results with detailed processing notes and alternative interpretations.
@@ -84,38 +78,19 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## Frontend Architecture
-The client-side application is built with React and TypeScript, using Vite as the build tool. The UI is constructed using shadcn/ui components built on Radix UI. State management is handled through React Query (TanStack Query) for server state synchronization. Wouter is used for client-side routing, and React Hook Form with Zod validation for form handling. Styling is implemented with Tailwind CSS, configured with custom design tokens and CSS variables.
-
-**Enhanced Document Processing Module**: Completely redesigned with sophisticated AI-powered analysis featuring:
-- **Multi-Stage Processing Pipeline**: Text extraction → AI analysis → Date parsing → Client matching → Validation.
-- **Real-Time Progress Tracking**: Visual processing stages with individual confidence scores and detailed validation metrics.
-- **Advanced PDF Support**: Robust extraction with multiple fallback methods and intelligent text recovery.
-- **Clinical Intelligence**: Automatic extraction of therapeutic themes, emotional states, interventions, risk assessments, and progress ratings.
-- **Smart Client Matching**: Fuzzy logic algorithms for handling name variations and creating new client records automatically.
-- **Comprehensive Validation**: Overall quality scoring with breakdowns for text extraction, AI analysis confidence, date validation, and client match accuracy.
-- **Enhanced User Experience**: Tabbed interface with enhanced upload and manual entry options, detailed processing feedback, and alternative interpretation display.
+The client-side application is built with React and TypeScript, using Vite. UI is constructed using shadcn/ui components built on Radix UI. State management uses React Query, routing uses Wouter, and form handling uses React Hook Form with Zod validation. Styling is with Tailwind CSS, configured with custom design tokens and CSS variables. The Enhanced Document Processing Module features a multi-stage pipeline (text extraction → AI analysis → date parsing → client matching → validation), real-time progress tracking, advanced PDF support, clinical intelligence for automatic extraction, smart client matching, comprehensive validation, and an enhanced user experience with tabbed interface and detailed feedback.
 
 ## Backend Architecture
-The server-side application follows a RESTful API design pattern using Express.js with TypeScript. It separates concerns through route handlers, service layers (for AI processing, calendar integration, PDF handling), and a storage abstraction layer for the database. Middleware is used for request logging, error handling, and authentication (currently mocked). File uploads are handled through Multer with memory storage.
+The server-side application follows a RESTful API design pattern using Express.js with TypeScript. It uses route handlers, service layers (for AI processing, calendar integration, PDF handling), and a storage abstraction layer for the database. Middleware handles logging, error handling, and authentication. File uploads are handled through Multer with memory storage.
 
 ## Database Design
-The data layer utilizes PostgreSQL with Drizzle ORM for type-safe operations and schema management. The database schema supports comprehensive clinical data management including user accounts, client demographics, session scheduling, progress notes (with AI-generated insights), case conceptualizations, treatment plans, therapeutic alliance scoring, document storage, and AI-generated insights. The schema uses UUID primary keys and proper foreign key relationships.
+The data layer uses PostgreSQL with Drizzle ORM for type-safe operations and schema management. The schema supports comprehensive clinical data management including user accounts, client demographics, session scheduling, progress notes (with AI-generated insights), case conceptualizations, treatment plans, therapeutic alliance scoring, document storage, and AI-generated insights, using UUID primary keys and proper foreign key relationships.
 
 ## AI Integration
-The application integrates dual AI providers (OpenAI GPT-4o and Anthropic Claude Sonnet 4.0) with comprehensive fallback mechanisms. AI capabilities include embedding generation, automatic clinical tagging, pattern recognition and risk assessment, treatment recommendation generation, session preparation assistance, and advanced document processing (client identification, appointment date extraction). Both AI providers use maximum token utilization (4096 tokens) with optimized temperature settings. The system automatically falls back to Anthropic when OpenAI is unavailable.
-
-**Document Intelligence**: Advanced AI-powered document analysis extracts client names, appointment dates, session types, and document classification with confidence scoring. Supports batch processing of multiple documents with automatic tagging and metadata extraction. Features intelligent client name matching with fuzzy logic, automatic new client creation, session date assignment within 24-hour windows, and manual review workflow for uncertain matches or high-risk content.
+The application integrates dual AI providers (OpenAI GPT-4o and Anthropic Claude Sonnet 4.0) with comprehensive fallback mechanisms. AI capabilities include embedding generation, automatic clinical tagging, pattern recognition and risk assessment, treatment recommendation generation, session preparation assistance, and advanced document processing (client identification, appointment date extraction). Both AI providers use maximum token utilization (4096 tokens) with optimized temperature settings. The system automatically falls back to Anthropic when OpenAI is unavailable. Advanced AI-powered document analysis extracts client names, appointment dates, session types, and document classification with confidence scoring. It supports batch processing, intelligent client name matching, automatic new client creation, session date assignment, and manual review workflow.
 
 ## Authentication and Security
-**Enhanced Security Implementation (August 15, 2025)**:
-- **Client Identity Protection**: Implemented comprehensive client ownership verification middleware (`verifyClientOwnership`) protecting ALL client data routes. Prevents data leakage between practitioners through automatic client-therapist relationship verification.
-- **Data Encryption**: AES-256-GCM encryption for all sensitive PHI data (notes, contact details, emergency contacts, insurance information). Uses environment-based encryption key for HIPAA compliance.
-- **Database Transactions**: Atomic operations for all clinical data modifications with automatic rollback on errors. Prevents data corruption from failed multi-step operations.
-- **Secure Query Helpers**: `SecureClientQueries` class provides ownership-verified database queries. All client data access automatically validates therapist ownership.
-- **Enhanced Progress Notes Security**: All progress note operations now include client ownership verification and content encryption.
-- **Audit Logging**: Security breach attempts are logged with IP addresses and user agents for compliance monitoring.
-
-The current implementation includes both the original authentication system and the new security layer. Therapist identification is through middleware, and role-based access patterns are in the database schema. All database queries are scoped to the authenticated therapist for data isolation and privacy.
+Security features include client ownership verification middleware (`verifyClientOwnership`) protecting all client data routes, AES-256-GCM encryption for all sensitive PHI data (notes, contact details, emergency contacts, insurance information), atomic database transactions for clinical data modifications, and secure query helpers (`SecureClientQueries`) for ownership-verified database queries. All progress note operations include client ownership verification and content encryption. Security breach attempts are logged. Therapist identification is through middleware, and role-based access patterns are in the database schema. All database queries are scoped to the authenticated therapist for data isolation and privacy.
 
 # External Dependencies
 
@@ -146,6 +121,7 @@ The current implementation includes both the original authentication system and 
 
 ## AI and Machine Learning
 - **OpenAI API**: GPT-4 and text embedding services
+- **Anthropic Claude Sonnet 4.0**: AI services
 - **PDF Parse**: Library for extracting text from PDF documents
 
 ## Cloud Services and Storage
@@ -160,7 +136,6 @@ The current implementation includes both the original authentication system and 
 
 ## File Upload and Processing
 - **Multer**: Middleware for file uploads
-- **PDF Parse**: Text extraction from PDF documents
 
 ## Monitoring and Development
 - **Replit Development Tools**: Runtime error handling and development banner integration

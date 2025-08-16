@@ -13,6 +13,11 @@ import { AIAnalysisPanel } from '@/components/ai/AIAnalysisPanel';
 import { SemanticSearchPanel } from '@/components/ai/SemanticSearchPanel';
 import { ProgressPatternsPanel } from '@/components/ai/ProgressPatternsPanel';
 
+// Import Clinical Second Brain Components
+import { KnowledgeGraphPanel } from '@/components/secondbrain/KnowledgeGraphPanel';
+import { ProactiveInsightsPanel } from '@/components/secondbrain/ProactiveInsightsPanel';
+import { ContextualMemoryPanel } from '@/components/secondbrain/ContextualMemoryPanel';
+
 interface Client {
   id: string;
   firstName: string;
@@ -160,9 +165,9 @@ export default function AIDashboard() {
         </CardContent>
       </Card>
 
-      {/* AI Tools Tabs */}
+      {/* AI Tools Tabs - Enhanced with Clinical Second Brain */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="analysis" className="flex items-center gap-2" data-testid="tab-analysis">
             <Brain className="h-4 w-4" />
             AI Analysis
@@ -174,6 +179,18 @@ export default function AIDashboard() {
           <TabsTrigger value="patterns" className="flex items-center gap-2" data-testid="tab-patterns">
             <TrendingUp className="h-4 w-4" />
             Progress Patterns
+          </TabsTrigger>
+          <TabsTrigger value="knowledge" className="flex items-center gap-2" data-testid="tab-knowledge">
+            <Brain className="h-4 w-4" />
+            Knowledge Graph
+          </TabsTrigger>
+          <TabsTrigger value="insights" className="flex items-center gap-2" data-testid="tab-insights">
+            <Shield className="h-4 w-4" />
+            Proactive Insights
+          </TabsTrigger>
+          <TabsTrigger value="memory" className="flex items-center gap-2" data-testid="tab-memory">
+            <Brain className="h-4 w-4" />
+            Contextual Memory
           </TabsTrigger>
         </TabsList>
 
@@ -213,6 +230,75 @@ export default function AIDashboard() {
                       Progress patterns analysis requires a specific client to be selected.
                     </p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Clinical Second Brain Tabs */}
+        
+        {/* Knowledge Graph Tab */}
+        <TabsContent value="knowledge" className="space-y-6">
+          {selectedClientId !== 'all-clients' ? (
+            <KnowledgeGraphPanel 
+              clientId={selectedClientId}
+              onEntitySelect={(entity) => {
+                console.log('Knowledge graph entity selected:', entity);
+              }}
+            />
+          ) : (
+            <Card>
+              <CardContent className="py-8">
+                <div className="text-center">
+                  <Brain className="h-12 w-12 mx-auto text-moss mb-4" />
+                  <h3 className="text-lg font-medium text-evergreen mb-2">Knowledge Graph</h3>
+                  <p className="text-moss text-sm">
+                    Select a specific client to build their clinical knowledge graph and explore therapeutic connections.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Proactive Insights Tab */}
+        <TabsContent value="insights" className="space-y-6">
+          {selectedClientId !== 'all-clients' ? (
+            <ProactiveInsightsPanel 
+              clientId={selectedClientId}
+              context="session_opening"
+            />
+          ) : (
+            <Card>
+              <CardContent className="py-8">
+                <div className="text-center">
+                  <Shield className="h-12 w-12 mx-auto text-moss mb-4" />
+                  <h3 className="text-lg font-medium text-evergreen mb-2">Proactive Insights</h3>
+                  <p className="text-moss text-sm">
+                    Select a specific client to generate proactive insights and session preparation suggestions.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Contextual Memory Tab */}
+        <TabsContent value="memory" className="space-y-6">
+          {selectedClientId !== 'all-clients' ? (
+            <ContextualMemoryPanel 
+              clientId={selectedClientId}
+            />
+          ) : (
+            <Card>
+              <CardContent className="py-8">
+                <div className="text-center">
+                  <Brain className="h-12 w-12 mx-auto text-moss mb-4" />
+                  <h3 className="text-lg font-medium text-evergreen mb-2">Contextual Memory</h3>
+                  <p className="text-moss text-sm">
+                    Select a specific client to access their contextual memory and relevant therapeutic history.
+                  </p>
                 </div>
               </CardContent>
             </Card>
