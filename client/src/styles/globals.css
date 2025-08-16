@@ -384,6 +384,81 @@ input:-webkit-autofill:active {
   border-color: var(--color-sage) !important;
 }
 
+/* CRITICAL FOCUS STATE OVERRIDES - Eliminate yellow focus rings */
+*:focus, *:focus-visible, *:focus-within,
+input:focus, select:focus, textarea:focus, button:focus,
+[role="button"]:focus, [role="tab"]:focus, [role="option"]:focus,
+[tabindex]:focus, [data-state="open"]:focus {
+  outline: 2px solid var(--color-french-blue) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+  ring-color: var(--color-french-blue) !important;
+  --tw-ring-color: var(--color-french-blue) !important;
+  --tw-ring-opacity: 0.5 !important;
+}
+
+/* Override Radix UI focus states */
+[data-radix-focus-guard], [data-radix-collection-item]:focus,
+[data-highlighted], [data-state="active"]:focus,
+[data-state="checked"]:focus, [data-state="selected"]:focus {
+  background-color: rgba(136, 165, 188, 0.1) !important;
+  color: var(--color-evergreen) !important;
+  outline: 2px solid var(--color-french-blue) !important;
+}
+
+/* Override any hover states that might be yellow */
+*:hover, button:hover, [role="button"]:hover,
+input:hover, select:hover, textarea:hover {
+  border-color: var(--color-sage) !important;
+}
+
+/* Override active/pressed states */
+*:active, button:active, [role="button"]:active,
+input:active, select:active, textarea:active {
+  background-color: rgba(142, 165, 140, 0.1) !important;
+  border-color: var(--color-sage) !important;
+}
+
+/* BROWSER-SPECIFIC YELLOW ELIMINATION */
+/* Chrome/Safari autofill yellow override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px var(--color-ivory) inset !important;
+  -webkit-text-fill-color: var(--color-evergreen) !important;
+  background-color: var(--color-ivory) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Firefox form validation yellow override */
+input:invalid, textarea:invalid, select:invalid {
+  box-shadow: none !important;
+  border-color: var(--color-sage) !important;
+}
+
+/* Override browser default highlights */
+::-moz-selection {
+  background: rgba(136, 165, 188, 0.3) !important;
+  color: var(--color-evergreen) !important;
+}
+
+/* Override any framework CSS that might inject yellow */
+.ring-yellow-500, .ring-yellow-400, .ring-amber-500, .ring-amber-400 {
+  --tw-ring-color: var(--color-french-blue) !important;
+}
+
+.focus\:ring-yellow-500:focus, .focus\:ring-yellow-400:focus,
+.focus\:ring-amber-500:focus, .focus\:ring-amber-400:focus {
+  --tw-ring-color: var(--color-french-blue) !important;
+}
+
 /* Utility classes for easy therapeutic color application */
 .therapeutic-primary { background-color: var(--color-sage) !important; color: white !important; }
 .therapeutic-secondary { background-color: var(--sage-100) !important; color: var(--color-evergreen) !important; }
