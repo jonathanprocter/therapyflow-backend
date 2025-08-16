@@ -7,6 +7,7 @@ import {
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { ZodError } from "zod";
+import { EnhancedDocumentProcessor } from "../services/enhanced-document-processor";
 
 // Configure multer for file upload handling
 const upload = multer({
@@ -33,8 +34,11 @@ const upload = multer({
   }
 });
 
+// Initialize the enhanced document processor
+const enhancedProcessor = new EnhancedDocumentProcessor();
+
 // Helper function to process a batch (extracted for reuse)
-async function processTranscriptBatch(batchId: string) {
+async function processTranscriptBatch(batchId: string, fileBuffers?: { [filename: string]: Buffer }) {
   console.log(`🔄 Processing batch ${batchId}`);
   
   // Get all files in the batch
@@ -55,34 +59,61 @@ async function processTranscriptBatch(batchId: string) {
         processedAt: new Date()
       });
 
-      // Simulate AI processing to extract client info
-      // In a real implementation, this would use actual AI
-      const aiResult = {
-        suggestedClientName: `Client ${Math.floor(Math.random() * 100)}`,
-        clientMatchConfidence: Math.random() * 0.4 + 0.6, // 60-100%
-        extractedSessionDate: new Date(),
-        sessionType: 'individual',
-        themes: ['therapy', 'progress'],
-        emotions: ['positive', 'hopeful'],
-        riskLevel: 'low'
-      };
+      // Get the file buffer if available (from memory during upload)
+      const fileBuffer = fileBuffers?.[file.fileName];
+      if (!fileBuffer) {
+        throw new Error(`File buffer not found for ${file.fileName}`);
+      }
 
-      // Update file with AI results
+      // Use the enhanced document processor for real AI processing
+      const processingResult = await enhancedProcessor.processDocument(
+        fileBuffer, 
+        file.fileName, 
+        file.therapistId
+      );
+
+      console.log(`📊 Processing quality: ${processingResult.overallQuality}%`);
+
+      // Extract client and date information from the AI analysis
+      const clientName = processingResult.extractedData?.clientName || 'Unknown Client';
+      const sessionDate = processingResult.extractedData?.sessionDate || null;
+      const sessionType = processingResult.extractedData?.sessionType || 'individual';
+      const riskLevel = processingResult.extractedData?.riskLevel || 'low';
+
+      // Calculate confidence based on processing quality and AI confidence
+      const clientMatchConfidence = Math.min(
+        (processingResult.overallQuality / 100) * (processingResult.extractedData?.confidence || 0.8),
+        1.0
+      );
+
+      // Update file with real AI results
       await storage.updateTranscriptFile(file.id, {
-        suggestedClientName: aiResult.suggestedClientName,
-        clientMatchConfidence: aiResult.clientMatchConfidence,
-        extractedSessionDate: aiResult.extractedSessionDate,
-        sessionType: aiResult.sessionType,
-        themes: aiResult.themes,
-        riskLevel: aiResult.riskLevel,
+        suggestedClientName: clientName,
+        clientMatchConfidence: clientMatchConfidence,
+        extractedSessionDate: sessionDate,
+        sessionType: sessionType,
+        themes: processingResult.extractedData?.keyTopics || ['session notes'],
+        riskLevel: riskLevel,
         processingStatus: 'completed',
-        status: aiResult.clientMatchConfidence > 0.8 ? 'processed' : 'processing',
-        requiresManualReview: aiResult.clientMatchConfidence <= 0.8,
-        manualReviewReason: aiResult.clientMatchConfidence <= 0.8 ? 'Low confidence client match' : null
+        status: clientMatchConfidence > 0.75 ? 'processed' : 'processing',
+        requiresManualReview: clientMatchConfidence <= 0.75 || processingResult.overallQuality < 85,
+        manualReviewReason: clientMatchConfidence <= 0.75 ? 
+          `Low confidence client match (${Math.round(clientMatchConfidence * 100)}%)` : 
+          processingResult.overallQuality < 85 ? 
+            `Low processing quality (${processingResult.overallQuality}%)` : null
       });
 
+      // Create progress note from the processed document
+      if (processingResult.progressNote && processingResult.matchedClient) {
+        console.log(`📝 Creating progress note for client: ${processingResult.matchedClient.name}`);
+        
+        // The enhanced processor already creates the progress note
+        // We just need to make sure it's properly linked to the transcript file
+      }
+
       processedCount++;
-      console.log(`✅ Processed ${file.fileName}`);
+      console.log(`✅ Processed ${file.fileName} - Client: ${clientName}, Confidence: ${Math.round(clientMatchConfidence * 100)}%`);
+      
     } catch (error) {
       console.error(`❌ Failed to process ${file.fileName}:`, error);
       await storage.updateTranscriptFile(file.id, {
@@ -167,11 +198,14 @@ export function registerTranscriptRoutes(app: Express): void {
       // Create the batch
       const batch = await storage.createTranscriptBatch(validatedBatch);
 
-      // Process each file
+      // Process each file and store buffers for processing
       const transcriptFiles = [];
+      const fileBuffers: { [filename: string]: Buffer } = {};
+      
       for (const file of files) {
-        // For now, we'll store files in memory and create database records
-        // In a real implementation, you'd upload to object storage first
+        // Store file buffer in memory for processing
+        fileBuffers[file.originalname] = file.buffer;
+        
         const fileData = {
           batchId: batch.id,
           therapistId,
@@ -193,8 +227,8 @@ export function registerTranscriptRoutes(app: Express): void {
         processedAt: new Date()
       });
 
-      // Trigger automatic processing in the background
-      processTranscriptBatch(batch.id).catch((error: any) => {
+      // Trigger automatic processing in the background with file buffers
+      processTranscriptBatch(batch.id, fileBuffers).catch((error: any) => {
         console.error(`Background processing failed for batch ${batch.id}:`, error);
       });
 
