@@ -1,277 +1,196 @@
-import type { Buffer } from 'buffer';
+// server/services/pdfService.ts
+import { Buffer } from 'node:buffer';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 
-let pdfParse: any = null;
-
-// Initialize pdf-parse without test file
-async function initPdfParse() {
-  try {
-    // Use dynamic import to avoid require issues
-    const module = await import('pdf-parse/lib/pdf-parse.js');
-    pdfParse = module.default || module;
-    console.log('✅ pdf-parse loaded successfully');
-  } catch (error) {
-    console.warn('⚠️ pdf-parse not available, using fallback extraction');
-    pdfParse = null;
-  }
-}
-
-// Call this on startup
-initPdfParse();
-
-export interface ExtractedPDFData {
+interface PDFData {
   text: string;
-  pages: number;
-  metadata?: {
-    title?: string;
-    author?: string;
-    subject?: string;
-    creator?: string;
-    producer?: string;
-    creationDate?: Date;
-    modificationDate?: Date;
-  };
+  numpages?: number;
+  numrender?: number;
+  info?: any;
+  metadata?: any;
+  version?: string;
 }
 
-export async function extractPdfText(buffer: Buffer): Promise<string> {
-  if (!buffer || buffer.length === 0) {
-    throw new Error('Invalid PDF buffer');
+class PDFService {
+  private pdfParse: any = null;
+  private initialized = false;
+  private initPromise: Promise<void> | null = null;
+
+  constructor() {
+    // Auto-initialize on construction
+    this.initPromise = this.initialize();
   }
 
-  if (pdfParse) {
-    try {
-      const data = await pdfParse(buffer);
-      return data.text;
-    } catch (error) {
-      console.error('PDF parse error:', error);
-      return fallbackPdfExtraction(buffer);
-    }
-  } else {
-    return fallbackPdfExtraction(buffer);
-  }
-}
+  private async initialize(): Promise<void> {
+    if (this.initialized) return;
+    
+    console.log('🔄 Initializing PDF service...');
+    
+    // Try multiple PDF parsing libraries
+    const libraries = [
+      { name: 'pdf-parse-fork', import: () => import('pdf-parse-fork') },
+      { name: 'pdf-parse', import: () => import('pdf-parse') },
+      { name: 'pdfjs-dist', import: () => import('pdfjs-dist') },
+    ];
 
-// Fallback extraction (basic implementation)
-function fallbackPdfExtraction(buffer: Buffer): string {
-  // Simple fallback - extract readable text from buffer
-  const text = buffer.toString('utf8', 0, Math.min(buffer.length, 1000));
-  // Remove non-printable characters
-  return text.replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-export class PDFService {
-  async extractText(buffer: Buffer): Promise<ExtractedPDFData> {
-    try {
-      console.log('🔍 Starting PDF text extraction...');
-
-      if (pdfParse) {
-        console.log('📄 Using pdf-parse library for extraction');
-        const data = await pdfParse(buffer, {
-          normalizeWhitespace: true,
-          disableCombineTextItems: false
-        });
-
-        if (data.text && data.text.length > 20) {
-          console.log(`✅ PDF extraction successful: ${data.text.length} characters extracted`);
-          return {
-            text: data.text,
-            pages: data.numpages || 1,
-            metadata: {
-              title: data.info?.Title,
-              author: data.info?.Author,
-              subject: data.info?.Subject,
-              creator: data.info?.Creator,
-              producer: data.info?.Producer,
-              creationDate: data.info?.CreationDate ? new Date(data.info.CreationDate) : undefined,
-              modificationDate: data.info?.ModDate ? new Date(data.info.ModDate) : undefined,
-            }
-          };
-        }
+    for (const lib of libraries) {
+      try {
+        const module = await lib.import();
+        this.pdfParse = module.default || module;
+        console.log(`✅ PDF service initialized with ${lib.name}`);
+        this.initialized = true;
+        return;
+      } catch (error) {
+        console.log(`⚠️ Could not load ${lib.name}:`, (error as Error).message);
       }
+    }
 
-      // Fallback extraction method
-      console.log('⚠️ Primary PDF extraction failed, trying alternative method...');
-      const fallbackText = fallbackPdfExtraction(buffer);
+    console.warn('⚠️ No PDF parsing library available - using fallback extraction');
+    this.initialized = true;
+  }
 
-      if (fallbackText && fallbackText.length > 50) {
-        console.log(`✅ Fallback extraction successful: ${fallbackText.length} characters`);
-        return {
-          text: fallbackText,
-          pages: 1,
-          metadata: {
-            title: 'PDF (Fallback Extraction)'
+  async extractText(buffer: Buffer): Promise<string> {
+    // Ensure initialization is complete
+    if (this.initPromise) {
+      await this.initPromise;
+    }
+
+    if (!buffer || buffer.length === 0) {
+      throw new Error('Invalid or empty PDF buffer');
+    }
+
+    // Check if it's actually a PDF
+    const pdfHeader = buffer.slice(0, 5).toString();
+    if (!pdfHeader.includes('%PDF')) {
+      throw new Error('Buffer does not appear to be a valid PDF file');
+    }
+
+    if (this.pdfParse) {
+      try {
+        const data: PDFData = await this.pdfParse(buffer);
+        
+        if (!data.text) {
+          console.warn('PDF parsed but no text extracted');
+          return this.fallbackExtraction(buffer);
+        }
+        
+        console.log(`✅ Extracted ${data.text.length} characters from PDF`);
+        return this.cleanText(data.text);
+      } catch (error) {
+        console.error('PDF parse error:', error);
+        return this.fallbackExtraction(buffer);
+      }
+    }
+
+    return this.fallbackExtraction(buffer);
+  }
+
+  async extractFromFile(filePath: string): Promise<string> {
+    try {
+      const buffer = await fs.readFile(filePath);
+      return this.extractText(buffer);
+    } catch (error) {
+      throw new Error(`Failed to read PDF file: ${(error as Error).message}`);
+    }
+  }
+
+  private fallbackExtraction(buffer: Buffer): string {
+    console.log('📄 Using fallback PDF extraction...');
+    
+    try {
+      // Look for text streams in the PDF
+      const bufferStr = buffer.toString('binary');
+      const textMatches: string[] = [];
+      
+      // Extract text between BT (Begin Text) and ET (End Text) markers
+      const textRegex = /BT\s*(.*?)\s*ET/gs;
+      let match;
+      
+      while ((match = textRegex.exec(bufferStr)) !== null) {
+        const textContent = match[1];
+        
+        // Extract text from Tj and TJ operators
+        const tjRegex = /\((.*?)\)\s*Tj/g;
+        const tjArrayRegex = /\[(.*?)\]\s*TJ/g;
+        
+        let tjMatch;
+        while ((tjMatch = tjRegex.exec(textContent)) !== null) {
+          textMatches.push(this.decodePDFString(tjMatch[1]));
+        }
+        
+        while ((tjMatch = tjArrayRegex.exec(textContent)) !== null) {
+          const arrayContent = tjMatch[1];
+          const stringRegex = /\((.*?)\)/g;
+          let stringMatch;
+          while ((stringMatch = stringRegex.exec(arrayContent)) !== null) {
+            textMatches.push(this.decodePDFString(stringMatch[1]));
           }
-        };
+        }
       }
-
-      // Final fallback with user guidance
-      console.log('❌ PDF extraction failed - returning guidance message');
-      return {
-        text: 'PDF text extraction encountered difficulties. The enhanced AI processor can still analyze the document, but for optimal results, consider saving your progress notes as TXT files which provide 95% confidence and full feature support.',
-        pages: 1,
-        metadata: {
-          title: 'PDF Processing Guidance'
-        }
-      };
-
-    } catch (error) {
-      console.error('❌ Error extracting PDF text:', error);
-
-      // Try one more fallback
-      const emergencyText = this.extractPDFTextFallback(buffer);
-
-      return {
-        text: emergencyText || 'PDF processing encountered an error. For reliable processing with comprehensive AI analysis, please save your document as TXT format.',
-        pages: 1,
-        metadata: {
-          title: 'PDF Error Recovery'
-        }
-      };
-    }
-  }
-
-  /**
-   * Fallback PDF text extraction using basic byte parsing
-   */
-  private extractPDFTextFallback(buffer: Buffer): string {
-    try {
-      // Convert buffer to string and look for text patterns
-      const pdfString = buffer.toString('latin1');
-
-      // Extract text between parentheses (common PDF text encoding)
-      const textMatches = pdfString.match(/\(([^)]+)\)/g);
-      let extractedText = '';
-
-      if (textMatches) {
-        extractedText = textMatches
-          .map(match => match.slice(1, -1)) // Remove parentheses
-          .join(' ')
-          .replace(/\\[rn]/g, ' ') // Replace escape sequences
+      
+      const extractedText = textMatches.join(' ');
+      
+      if (extractedText.length < 50) {
+        // If we couldn't extract much, try a simpler approach
+        const simpleText = buffer.toString('utf8', 0, Math.min(buffer.length, 10000))
+          .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
+        
+        return simpleText.length > extractedText.length ? simpleText : extractedText;
       }
-
-      // If no text found, try alternative patterns
-      if (!extractedText || extractedText.length < 20) {
-        const streamMatches = pdfString.match(/stream\s*(.*?)\s*endstream/g);
-        if (streamMatches) {
-          const streamText = streamMatches
-            .map(match => match.replace(/stream|endstream/g, ''))
-            .join(' ')
-            .replace(/[^\x20-\x7E\s]/g, ' ') // Keep only printable chars
-            .replace(/\s+/g, ' ')
-            .trim();
-
-          if (streamText.length > extractedText.length) {
-            extractedText = streamText;
-          }
-        }
-      }
-
-      return extractedText.length > 20 ? extractedText : '';
-
+      
+      return this.cleanText(extractedText);
     } catch (error) {
-      console.error('Fallback PDF extraction failed:', error);
+      console.error('Fallback extraction failed:', error);
       return '';
     }
   }
 
-  extractClinicalSections(text: string): {
-    assessment?: string;
-    diagnosis?: string;
-    treatmentPlan?: string;
-    progressNotes?: string;
-    recommendations?: string;
-  } {
-    const sections: { [key: string]: string } = {};
+  private decodePDFString(str: string): string {
+    // Decode PDF escape sequences
+    return str
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      .replace(/\\b/g, '\b')
+      .replace(/\\f/g, '\f')
+      .replace(/\\\(/g, '(')
+      .replace(/\\\)/g, ')')
+      .replace(/\\\\/g, '\\')
+      .replace(/\\(\d{1,3})/g, (match, octal) => {
+        return String.fromCharCode(parseInt(octal, 8));
+      });
+  }
 
-    // Common clinical document section headers
-    const sectionPatterns = {
-      assessment: new RegExp("(?:clinical\\s+assessment|initial\\s+assessment|assessment\\s+summary|psychological\\s+assessment):(.*?)(?=\\n[A-Z][A-Z\\s]*:|$)", "gis"),
-      diagnosis: new RegExp("(?:diagnosis|diagnostic\\s+impression|clinical\\s+diagnosis):(.*?)(?=\\n[A-Z][A-Z\\s]*:|$)", "gis"),
-      treatmentPlan: new RegExp("(?:treatment\\s+plan|therapeutic\\s+plan|intervention\\s+plan):(.*?)(?=\\n[A-Z][A-Z\\s]*:|$)", "gis"),
-      progressNotes: new RegExp("(?:progress\\s+notes?|session\\s+notes?|clinical\\s+notes?):(.*?)(?=\\n[A-Z][A-Z\\s]*:|$)", "gis"),
-      recommendations: new RegExp("(?:recommendations?|treatment\\s+recommendations?|next\\s+steps?):(.*?)(?=\\n[A-Z][A-Z\\s]*:|$)", "gis"),
+  private cleanText(text: string): string {
+    return text
+      .replace(/\s+/g, ' ')           // Normalize whitespace
+      .replace(/[^\x20-\x7E\n\r]/g, '') // Remove non-printable chars
+      .replace(/\n{3,}/g, '\n\n')     // Limit consecutive newlines
+      .trim();
+  }
+
+  // Utility method to check if PDF parsing is available
+  isAvailable(): boolean {
+    return this.initialized && this.pdfParse !== null;
+  }
+
+  // Get service status
+  getStatus(): { initialized: boolean; library: string | null } {
+    return {
+      initialized: this.initialized,
+      library: this.pdfParse ? 'Available' : 'Fallback',
     };
-
-    for (const [sectionName, pattern] of Object.entries(sectionPatterns)) {
-      const match = pattern.exec(text);
-      if (match && match[1]) {
-        sections[sectionName] = match[1].trim();
-      }
-    }
-
-    return sections;
-  }
-
-  identifyDocumentType(text: string): string {
-    const documentTypes = [
-      { type: 'intake_form', patterns: ['intake', 'initial assessment', 'client information'] },
-      { type: 'progress_note', patterns: ['progress note', 'session note', 'therapy note'] },
-      { type: 'treatment_plan', patterns: ['treatment plan', 'care plan', 'therapeutic plan'] },
-      { type: 'assessment_report', patterns: ['psychological assessment', 'clinical assessment', 'evaluation report'] },
-      { type: 'discharge_summary', patterns: ['discharge summary', 'termination summary', 'final report'] },
-      { type: 'consent_form', patterns: ['consent', 'informed consent', 'authorization'] },
-    ];
-
-    const lowerText = text.toLowerCase();
-
-    for (const docType of documentTypes) {
-      if (docType.patterns.some(pattern => lowerText.includes(pattern))) {
-        return docType.type;
-      }
-    }
-
-    return 'clinical_document';
-  }
-
-  extractClientInformation(text: string): {
-    name?: string;
-    dateOfBirth?: string;
-    phoneNumber?: string;
-    email?: string;
-    emergencyContact?: string;
-  } {
-    const info: { [key: string]: string } = {};
-
-    // Extract name (looking for patterns like "Name:", "Client Name:", etc.)
-    const namePattern = /(?:client\s+name|name|patient\s+name):\s*([A-Za-z\s]+)/i;
-    const nameMatch = text.match(namePattern);
-    if (nameMatch) {
-      info.name = nameMatch[1].trim();
-    }
-
-    // Extract date of birth
-    const dobPattern = /(?:date\s+of\s+birth|dob|birth\s+date):\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i;
-    const dobMatch = text.match(dobPattern);
-    if (dobMatch) {
-      info.dateOfBirth = dobMatch[1];
-    }
-
-    // Extract phone number
-    const phonePattern = /(?:phone|telephone|cell|mobile):\s*(\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4})/i;
-    const phoneMatch = text.match(phonePattern);
-    if (phoneMatch) {
-      info.phoneNumber = phoneMatch[1];
-    }
-
-    // Extract email
-    const emailPattern = /(?:email|e-mail):\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i;
-    const emailMatch = text.match(emailPattern);
-    if (emailMatch) {
-      info.email = emailMatch[1];
-    }
-
-    // Extract emergency contact
-    const emergencyPattern = /(?:emergency\s+contact|emergency):\s*([A-Za-z\s]+(?:\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4})?)/i;
-    const emergencyMatch = text.match(emergencyPattern);
-    if (emergencyMatch) {
-      info.emergencyContact = emergencyMatch[1].trim();
-    }
-
-    return info;
   }
 }
 
+// Export singleton instance
 export const pdfService = new PDFService();
+
+// Export convenience functions
+export const extractPdfText = (buffer: Buffer) => pdfService.extractText(buffer);
+export const extractPdfFromFile = (filePath: string) => pdfService.extractFromFile(filePath);
+export const isPdfServiceAvailable = () => pdfService.isAvailable();
+export const getPdfServiceStatus = () => pdfService.getStatus();

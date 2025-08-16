@@ -10,6 +10,9 @@ import { storage } from "./storage.js";
 // const db = storage.db;
 import { sql, eq } from "drizzle-orm";
 
+// Import services
+import { pdfService, getPdfServiceStatus } from './services/pdfService';
+
 // Global error handlers for unhandled promises and exceptions
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
@@ -62,6 +65,18 @@ app.get("/api/health", (req, res) => {
     ok: true,
     version: process.env.APP_VERSION || "dev",
     time: new Date().toISOString(),
+    services: {
+      pdf: getPdfServiceStatus(),
+    },
+  });
+});
+
+// AI Health endpoint
+app.get('/api/ai/health', (req, res) => {
+  res.json({
+    openai: !!process.env.OPENAI_API_KEY,
+    anthropic: !!process.env.ANTHROPIC_API_KEY,
+    timestamp: new Date().toISOString(),
   });
 });
 
