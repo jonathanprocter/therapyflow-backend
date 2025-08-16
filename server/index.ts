@@ -122,6 +122,7 @@ app.get("/api/health/deep", async (req, res) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  
   server.listen({
     port,
     host: "0.0.0.0",
@@ -133,5 +134,12 @@ app.get("/api/health/deep", async (req, res) => {
     log(`   POST /api/therapeutic/recall/:clientId`);
     log(`   GET  /api/therapeutic/insights/:clientId`);
     log(`   GET  /api/therapeutic/tags/:clientId`);
+  }).on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${port} is already in use. Please stop other processes or restart the Repl.`);
+      process.exit(1);
+    } else {
+      throw err;
+    }
   });
 })();

@@ -25,13 +25,18 @@ function useApiHealth(pollMs = 10000) {
 
   const check = React.useCallback(async () => {
     try {
-      const r = await fetch("/api/health", { method: "GET" });
+      const r = await fetch("/api/health", { 
+        method: "GET",
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
       if (!r.ok) throw new Error(`health ${r.status}`);
       const j = await r.json();
       setHealthy(!!j.ok);
       setVersion(j.version || "dev");
-    } catch {
+    } catch (error) {
+      // Silently fail for health checks to avoid runtime overlays
       setHealthy(false);
+      setVersion("offline");
     }
   }, []);
 
