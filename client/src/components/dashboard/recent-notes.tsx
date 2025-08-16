@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatToEDT, getDashboardDateDisplay } from "../../../../shared/utils/timezone";
 import type { ProgressNoteWithClient } from "@/types/clinical";
 
 export default function RecentNotes() {
@@ -115,7 +116,7 @@ export default function RecentNotes() {
                         {note.client?.name || "Unknown Client"}
                       </h4>
                       <span className="text-xs" style={{ color: '#738A6E' }} data-testid={`note-date-${note.id}`}>
-                        {new Date(note.sessionDate).toLocaleDateString()}
+                        {formatToEDT(note.sessionDate, 'MMM dd, yyyy')}
                       </span>
                     </div>
                     <p className="text-sm mb-3 line-clamp-2" style={{ color: '#738A6E' }} data-testid={`note-content-${note.id}`}>

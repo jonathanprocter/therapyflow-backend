@@ -38,7 +38,7 @@ function safeDecrypt(content: string): string | null {
     }
     // Return as-is if not encrypted (legacy data)
     return content;
-  } catch (error) {
+  } catch (error: any) {
     console.warn('[DECRYPTION] Failed to decrypt, returning original content:', error.message);
     return content; // Return original content if decryption fails
   }
@@ -960,6 +960,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         error: error?.message || 'Failed to generate quick insights'
+      });
+    }
+  });
+
+  // Session Export endpoint
+  app.post("/api/sessions/:sessionId/export", async (req: any, res) => {
+    try {
+      const { exportService } = await import('./services/export-service.js');
+      
+      const exportRequest = {
+        sessionId: req.params.sessionId,
+        clientId: req.body.clientId,
+        therapistId: req.therapistId,
+        exportFormat: req.body.exportFormat || 'json',
+        includeProgressNotes: req.body.includeProgressNotes !== false,
+        includePreviousSessions: req.body.includePreviousSessions !== false,
+        summaryType: req.body.summaryType || 'comprehensive'
+      };
+      
+      const result = await exportService.exportSessionSummary(exportRequest);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error exporting session summary:", error);
+      res.status(500).json({ 
+        success: false,
+        error: error?.message || "Failed to export session summary" 
       });
     }
   });

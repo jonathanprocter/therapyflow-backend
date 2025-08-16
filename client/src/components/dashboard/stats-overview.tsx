@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Clock } from "lucide-react";
+import { getCurrentTimeEDT, formatToEDT } from "../../../../shared/utils/timezone";
 import type { DashboardStats } from "@/types/clinical";
 
 const statsConfig = [
@@ -50,6 +52,10 @@ export default function StatsOverview() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
+
+  // Real-time EDT timezone information  
+  const currentTimeEDT = getCurrentTimeEDT();
+  const timeDisplay = formatToEDT(currentTimeEDT, 'h:mm a EEEE, MMMM do, yyyy');
 
   if (isLoading) {
     return (
@@ -101,48 +107,82 @@ export default function StatsOverview() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-testid="stats-overview">
-      {statsConfig.map((config) => (
-        <Card 
-          key={config.key} 
-          className="transition-shadow hover:shadow-md"
-          style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p 
-                  className="text-base font-semibold" 
-                  style={{ color: '#344C3D' }}
-                  data-testid={`stat-label-${config.key}`}
-                >
-                  {config.title}
-                </p>
-                <p 
-                  className="text-xs mt-2" 
-                  style={config.suffixColor} 
-                  data-testid={`stat-suffix-${config.key}`}
-                >
-                  <i className={`${config.suffixIcon} mr-1`}></i>
-                  {config.suffix}
-                </p>
-              </div>
+    <div className="space-y-6 mb-8" data-testid="stats-overview">
+      {/* EDT Timezone Header */}
+      <Card style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(136, 165, 188, 0.15)' }}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
               <div 
-                className="w-16 h-16 rounded-lg flex items-center justify-center" 
-                style={config.iconBg}
+                className="h-10 w-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(136, 165, 188, 0.1)' }}
               >
-                <span 
-                  className="text-2xl font-bold" 
-                  style={config.iconColor} 
-                  data-testid={`stat-box-value-${config.key}`}
-                >
-                  {stats[config.key]}
-                </span>
+                <Clock className="h-5 w-5" style={{ color: '#88A5BC' }} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }}>
+                  Dashboard Overview
+                </h3>
+                <p className="text-sm" style={{ color: '#738A6E' }}>
+                  {timeDisplay} (EDT)
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      ))}
+            <span 
+              className="inline-flex items-center px-3 py-1 text-xs rounded-full"
+              style={{ backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' }}
+            >
+              <i className="fas fa-sync mr-1"></i>
+              Real-time EDT Sync
+            </span>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statsConfig.map((config) => (
+          <Card 
+            key={config.key} 
+            className="transition-shadow hover:shadow-md"
+            style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p 
+                    className="text-base font-semibold" 
+                    style={{ color: '#344C3D' }}
+                    data-testid={`stat-label-${config.key}`}
+                  >
+                    {config.title}
+                  </p>
+                  <p 
+                    className="text-xs mt-2" 
+                    style={config.suffixColor} 
+                    data-testid={`stat-suffix-${config.key}`}
+                  >
+                    <i className={`${config.suffixIcon} mr-1`}></i>
+                    {config.suffix}
+                  </p>
+                </div>
+                <div 
+                  className="w-16 h-16 rounded-lg flex items-center justify-center" 
+                  style={config.iconBg}
+                >
+                  <span 
+                    className="text-2xl font-bold" 
+                    style={config.iconColor} 
+                    data-testid={`stat-box-value-${config.key}`}
+                  >
+                    {stats[config.key]}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

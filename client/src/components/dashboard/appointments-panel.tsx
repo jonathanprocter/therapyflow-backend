@@ -1,32 +1,70 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Download, Brain, FileText } from "lucide-react";
 import { Link } from "wouter";
-import { formatInTimeZone } from "date-fns-tz";
 import { cn } from "@/lib/utils";
+import { 
+  formatToEDT, 
+  getTodayEDT, 
+  getDashboardDateDisplay, 
+  initializeDashboardDate,
+  formatSessionTimeRange,
+  isToday 
+} from "../../../../shared/utils/timezone";
+import { apiRequest } from "@/lib/queryClient";
 import type { SessionWithClient } from "@/types/clinical";
 
 export default function AppointmentsPanel() {
-  // Initialize selectedDate to today in EDT
-  const [selectedDate, setSelectedDate] = useState<Date>(() => {
-    const now = new Date();
-    const edtNow = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-    return edtNow;
-  });
+  const queryClient = useQueryClient();
   
+  // Initialize selectedDate to today in EDT using timezone utility
+  const [selectedDate, setSelectedDate] = useState<Date>(() => initializeDashboardDate());
+  
+  // Get dashboard display information
+  const dashboardDisplay = getDashboardDateDisplay(selectedDate);
+  
+  // AI-powered export functionality
+  const exportSessionMutation = useMutation({
+    mutationFn: async ({ sessionId, clientId, format, summaryType }: {
+      sessionId: string;
+      clientId: string;
+      format: 'json' | 'csv' | 'pdf' | 'docx';
+      summaryType: 'brief' | 'comprehensive' | 'clinical' | 'treatment-planning';
+    }) => {
+      return apiRequest(`/api/sessions/${sessionId}/export`, {
+        method: 'POST',
+        body: {
+          clientId,
+          exportFormat: format,
+          summaryType,
+          includeProgressNotes: true,
+          includePreviousSessions: true
+        }
+      });
+    },
+    onSuccess: (data) => {
+      if (data.success && data.downloadUrl) {
+        // Create download link
+        const link = document.createElement('a');
+        link.href = data.downloadUrl;
+        link.download = data.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+  });
+
   const { data: sessions, isLoading } = useQuery<SessionWithClient[]>({
-    queryKey: ["/api/sessions", { upcoming: true, date: selectedDate.toISOString().split('T')[0] }],
+    queryKey: ["/api/sessions", { date: formatToEDT(selectedDate, 'yyyy-MM-dd'), isToday: dashboardDisplay.isToday }],
     queryFn: () => {
-      const today = formatInTimeZone(new Date(), 'America/New_York', 'yyyy-MM-dd');
-      const selectedDateFormatted = formatInTimeZone(selectedDate, 'America/New_York', 'yyyy-MM-dd');
-      
-      // If selected date is today, use upcoming sessions endpoint
-      if (selectedDateFormatted === today) {
+      // Use timezone-aware date logic
+      if (dashboardDisplay.isToday) {
         return fetch('/api/sessions?upcoming=true').then(res => res.json());
       } else {
         return fetch(`/api/sessions?date=${selectedDate.toISOString()}`).then(res => res.json());
@@ -96,14 +134,11 @@ export default function AppointmentsPanel() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <h3 className="text-lg font-semibold" style={{ color: '#344C3D' }} data-testid="appointments-title">
-              {(() => {
-                const selectedDateEDT = formatInTimeZone(selectedDate, 'America/New_York', 'yyyy-MM-dd');
-                const todayEDT = formatInTimeZone(new Date(), 'America/New_York', 'yyyy-MM-dd');
-                return selectedDateEDT === todayEDT 
-                  ? "Today's Schedule" 
-                  : `Schedule for ${formatInTimeZone(selectedDate, 'America/New_York', 'MMM dd, yyyy')}`;
-              })()}
+              {dashboardDisplay.title}
             </h3>
+            <div className="text-sm" style={{ color: '#738A6E' }}>
+              {dashboardDisplay.subtitle}
+            </div>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -114,7 +149,7 @@ export default function AppointmentsPanel() {
                   data-testid="date-picker-trigger"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? formatInTimeZone(selectedDate, 'America/New_York', 'MMM dd') : "Pick a date"}
+                  {selectedDate ? formatToEDT(selectedDate, 'MMM dd') : "Pick a date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -150,28 +185,15 @@ export default function AppointmentsPanel() {
           <div className="text-center py-8" style={{ color: '#738A6E' }} data-testid="no-appointments">
             <i className="fas fa-calendar-day text-4xl mb-4 opacity-50" style={{ color: '#88A5BC' }}></i>
             <p>
-              {(() => {
-                const selectedDateEDT = formatInTimeZone(selectedDate, 'America/New_York', 'yyyy-MM-dd');
-                const todayEDT = formatInTimeZone(new Date(), 'America/New_York', 'yyyy-MM-dd');
-                return selectedDateEDT === todayEDT 
-                  ? "No appointments scheduled for today"
-                  : `No appointments scheduled for ${formatInTimeZone(selectedDate, 'America/New_York', 'MMMM dd, yyyy')}`;
-              })()}
+              {dashboardDisplay.isToday 
+                ? "No appointments scheduled for today"
+                : `No appointments scheduled for ${formatToEDT(selectedDate, 'MMMM dd, yyyy')}`}
             </p>
           </div>
         ) : (
           sessions.map((session, index) => {
-            // Convert UTC time to EDT for display
-            const sessionTime = new Date(session.scheduledAt);
-            const endTime = new Date(sessionTime.getTime() + session.duration * 60000);
-            
-            // Create EDT timezone formatter
-            const edtFormatter = new Intl.DateTimeFormat('en-US', {
-              timeZone: 'America/New_York',
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true
-            });
+            // Use timezone utility for consistent EDT formatting
+            const sessionTiming = formatSessionTimeRange(session.scheduledAt, session.duration);
             
             const getSessionColor = (index: number) => {
               const colors = [
@@ -219,18 +241,48 @@ export default function AppointmentsPanel() {
                   <div className="flex items-center mt-1 text-xs" style={{ color: '#738A6E' }}>
                     <i className="fas fa-clock mr-1"></i>
                     <span data-testid={`appointment-time-${session.id}`}>
-                      {edtFormatter.format(sessionTime)} - {edtFormatter.format(endTime)} EDT
+                      {sessionTiming.timeRange}
                     </span>
                   </div>
                 </div>
                 
                 <div className="flex flex-col space-y-2">
+                  <div className="flex space-x-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      style={{ borderColor: '#88A5BC', color: '#88A5BC' }}
+                      data-testid={`export-summary-${session.id}`}
+                      onClick={() => exportSessionMutation.mutate({
+                        sessionId: session.id,
+                        clientId: session.clientId,
+                        format: 'json',
+                        summaryType: 'comprehensive'
+                      })}
+                      disabled={exportSessionMutation.isPending}
+                    >
+                      <Download className="w-3 h-3 mr-1" />
+                      Export
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
+                      data-testid={`ai-summary-${session.id}`}
+                    >
+                      <Brain className="w-3 h-3 mr-1" />
+                      AI Summary
+                    </Button>
+                  </div>
                   <Button
                     size="sm"
                     className="text-xs"
                     style={{ backgroundColor: '#8EA58C', color: '#FFFFFF' }}
                     data-testid={`prep-session-${session.id}`}
                   >
+                    <FileText className="w-3 h-3 mr-1" />
                     Prep Session
                   </Button>
                   <span 
