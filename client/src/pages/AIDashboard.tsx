@@ -20,8 +20,11 @@ import { ContextualMemoryPanel } from '@/components/secondbrain/ContextualMemory
 
 interface Client {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
+  therapistId: string;
+  email?: string;
+  phone?: string;
+  status: string;
 }
 
 export default function AIDashboard() {
@@ -150,7 +153,7 @@ export default function AIDashboard() {
                   <SelectItem value="all-clients">All Clients</SelectItem>
                   {clients?.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.firstName} {client.lastName}
+                      {client.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -158,7 +161,7 @@ export default function AIDashboard() {
             </div>
             {selectedClient && (
               <Badge variant="secondary" className="bg-sage/10 text-sage">
-                {selectedClient.firstName} {selectedClient.lastName}
+                {selectedClient.name}
               </Badge>
             )}
           </div>
