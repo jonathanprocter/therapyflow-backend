@@ -81,8 +81,10 @@ async function processTranscriptBatch(batchId: string, fileBuffers?: { [filename
       const riskLevel = processingResult.extractedData?.riskLevel || 'low';
 
       // Calculate confidence based on processing quality and AI confidence
+      const overallQuality = processingResult.overallQuality || 90;
+      const aiConfidence = processingResult.extractedData?.confidence || 0.8;
       const clientMatchConfidence = Math.min(
-        (processingResult.overallQuality / 100) * (processingResult.extractedData?.confidence || 0.8),
+        (overallQuality / 100) * aiConfidence,
         1.0
       );
 
