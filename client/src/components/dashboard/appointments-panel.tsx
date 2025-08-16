@@ -38,13 +38,13 @@ export default function AppointmentsPanel() {
     }) => {
       return apiRequest(`/api/sessions/${sessionId}/export`, {
         method: 'POST',
-        body: {
+        body: JSON.stringify({
           clientId,
           exportFormat: format,
           summaryType,
           includeProgressNotes: true,
           includePreviousSessions: true
-        }
+        })
       });
     },
     onSuccess: (data) => {

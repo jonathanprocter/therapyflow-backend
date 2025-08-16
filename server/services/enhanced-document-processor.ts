@@ -31,7 +31,7 @@ import { storage } from '../storage';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { format, isValid, parse } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { formatInTimeZone } from 'date-fns-tz';
 
 // Import the default model string
 const DEFAULT_MODEL_STR = "claude-sonnet-4-20250514";
