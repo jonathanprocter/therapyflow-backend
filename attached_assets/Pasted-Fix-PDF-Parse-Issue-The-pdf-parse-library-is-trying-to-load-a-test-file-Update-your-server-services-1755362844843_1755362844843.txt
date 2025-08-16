@@ -1,0 +1,163 @@
+Fix PDF Parse Issue
+The pdf-parse library is trying to load a test file. Update your server/services/pdfService.ts:
+typescript// server/services/pdfService.ts
+import type { Buffer } from 'buffer';
+
+let pdfParse: any = null;
+
+// Initialize pdf-parse without test file
+async function initPdfParse() {
+  try {
+    // Use dynamic import to avoid require issues
+    const module = await import('pdf-parse/lib/pdf-parse.js');
+    pdfParse = module.default || module;
+    console.log('✅ pdf-parse loaded successfully');
+  } catch (error) {
+    console.warn('⚠️ pdf-parse not available, using fallback extraction');
+    pdfParse = null;
+  }
+}
+
+// Call this on startup
+initPdfParse();
+
+export async function extractPdfText(buffer: Buffer): Promise<string> {
+  if (!buffer || buffer.length === 0) {
+    throw new Error('Invalid PDF buffer');
+  }
+
+  if (pdfParse) {
+    try {
+      const data = await pdfParse(buffer);
+      return data.text;
+    } catch (error) {
+      console.error('PDF parse error:', error);
+      return fallbackPdfExtraction(buffer);
+    }
+  } else {
+    return fallbackPdfExtraction(buffer);
+  }
+}
+
+// Fallback extraction (basic implementation)
+function fallbackPdfExtraction(buffer: Buffer): string {
+  // Simple fallback - extract readable text from buffer
+  const text = buffer.toString('utf8', 0, Math.min(buffer.length, 1000));
+  // Remove non-printable characters
+  return text.replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+3. Update Server to Handle Port Conflicts
+Update your server/index.ts to handle port conflicts better:
+typescript// server/index.ts
+import express from 'express';
+import { createServer } from 'http';
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Function to start server with port fallback
+async function startServer(port: number, maxRetries = 5): Promise<void> {
+  for (let i = 0; i < maxRetries; i++) {
+    const currentPort = port + i;
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const server = createServer(app);
+        
+        server.on('error', (err: any) => {
+          if (err.code === 'EADDRINUSE') {
+            console.log(`⚠️ Port ${currentPort} is in use, trying ${currentPort + 1}...`);
+            server.close();
+            reject(err);
+          } else {
+            reject(err);
+          }
+        });
+        
+        server.listen(currentPort, () => {
+          console.log(`✅ Server running on port ${currentPort}`);
+          resolve();
+        });
+      });
+      
+      // If we get here, server started successfully
+      return;
+    } catch (err) {
+      if (i === maxRetries - 1) {
+        console.error('❌ Could not find an available port');
+        process.exit(1);
+      }
+    }
+  }
+}
+
+// Start the server
+startServer(Number(PORT));
+4. Update Vite Config for Port Management
+Update client/vite.config.ts:
+typescript// client/vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3000,
+    strictPort: false, // Allow Vite to use next available port
+    host: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        // Handle different server ports
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('proxy error', err);
+          });
+        }
+      }
+    }
+  },
+  // Prevent re-optimization issues
+  optimizeDeps: {
+    force: false,
+  },
+  cacheDir: '.vite',
+});
+5. Create a Clean Start Script
+Create a clean-start.sh script:
+bash#!/bin/bash
+# clean-start.sh
+
+echo "🧹 Cleaning up old processes..."
+
+# Kill processes on our ports
+npx kill-port 5000 3000 3001 3002 2>/dev/null || true
+
+# Alternative: Kill all node processes
+# pkill -f node || true
+
+# Wait a moment for ports to be released
+sleep 2
+
+echo "🚀 Starting fresh..."
+npm run dev
+Make it executable:
+bashchmod +x clean-start.sh
+6. Environment Variables Solution
+Create a .env file in your root directory:
+env# .env
+PORT=5000
+VITE_PORT=3000
+NODE_ENV=development
+Update your package.json scripts:
+json{
+  "scripts": {
+    "dev": "npm run clean && concurrently \"npm run server\" \"npm run client\"",
+    "clean": "npx kill-port 5000 3000 3001 3002 || true",
+    "server": "NODE_ENV=development tsx server/index.ts",
+    "client": "cd client && npm run dev"
+  }
+}
+Quick Fix Commands

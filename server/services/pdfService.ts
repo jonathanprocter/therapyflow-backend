@@ -1,24 +1,22 @@
-// Lazy load pdf-parse to avoid startup issues
+import type { Buffer } from 'buffer';
+
 let pdfParse: any = null;
 
-// Dynamic import for ESM compatibility
-const loadPdfParse = async () => {
-  if (pdfParse) return pdfParse;
-
+// Initialize pdf-parse without test file
+async function initPdfParse() {
   try {
-    // Try dynamic import first (ESM)
-    const module = await import('pdf-parse');
+    // Use dynamic import to avoid require issues
+    const module = await import('pdf-parse/lib/pdf-parse.js');
     pdfParse = module.default || module;
-    console.log('✅ pdf-parse loaded successfully via ESM');
-    return pdfParse;
-  } catch (esmError: any) {
-    console.warn('⚠️ pdf-parse not available, will use fallback extraction:', esmError.message || esmError);
-    return null;
+    console.log('✅ pdf-parse loaded successfully');
+  } catch (error) {
+    console.warn('⚠️ pdf-parse not available, using fallback extraction');
+    pdfParse = null;
   }
-};
+}
 
-// Initialize on first use
-loadPdfParse().catch(console.warn);
+// Call this on startup
+initPdfParse();
 
 export interface ExtractedPDFData {
   text: string;
@@ -34,17 +32,42 @@ export interface ExtractedPDFData {
   };
 }
 
+export async function extractPdfText(buffer: Buffer): Promise<string> {
+  if (!buffer || buffer.length === 0) {
+    throw new Error('Invalid PDF buffer');
+  }
+
+  if (pdfParse) {
+    try {
+      const data = await pdfParse(buffer);
+      return data.text;
+    } catch (error) {
+      console.error('PDF parse error:', error);
+      return fallbackPdfExtraction(buffer);
+    }
+  } else {
+    return fallbackPdfExtraction(buffer);
+  }
+}
+
+// Fallback extraction (basic implementation)
+function fallbackPdfExtraction(buffer: Buffer): string {
+  // Simple fallback - extract readable text from buffer
+  const text = buffer.toString('utf8', 0, Math.min(buffer.length, 1000));
+  // Remove non-printable characters
+  return text.replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export class PDFService {
   async extractText(buffer: Buffer): Promise<ExtractedPDFData> {
     try {
       console.log('🔍 Starting PDF text extraction...');
 
-      // Ensure pdf-parse is loaded
-      const parser = await loadPdfParse();
-
-      if (parser) {
+      if (pdfParse) {
         console.log('📄 Using pdf-parse library for extraction');
-        const data = await parser(buffer, {
+        const data = await pdfParse(buffer, {
           normalizeWhitespace: true,
           disableCombineTextItems: false
         });
@@ -69,7 +92,7 @@ export class PDFService {
 
       // Fallback extraction method
       console.log('⚠️ Primary PDF extraction failed, trying alternative method...');
-      const fallbackText = this.extractPDFTextFallback(buffer);
+      const fallbackText = fallbackPdfExtraction(buffer);
 
       if (fallbackText && fallbackText.length > 50) {
         console.log(`✅ Fallback extraction successful: ${fallbackText.length} characters`);

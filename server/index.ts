@@ -10,6 +10,18 @@ import { storage } from "./storage.js";
 // const db = storage.db;
 import { sql, eq } from "drizzle-orm";
 
+// Global error handlers for unhandled promises and exceptions
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't crash the process, just log it
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // For uncaught exceptions, we should exit gracefully
+  process.exit(1);
+});
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
