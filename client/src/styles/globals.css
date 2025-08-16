@@ -661,6 +661,25 @@ button[data-testid*="calendar"]:focus, [data-testid*="connection"]:focus {
   --ring-orange-500: var(--color-french-blue) !important;
 }
 
+/* COMPREHENSIVE CLIENT INITIALS FIX */
+/* Force all client initials to use therapeutic colors */
+.client-initials, [data-testid*="client-initials"], 
+[data-testid*="initials"], .initials,
+.w-12.h-12.rounded-lg, .w-12.h-12.rounded-lg.flex {
+  background-color: #8EA58C !important;
+  color: #FFFFFF !important;
+}
+
+/* Additional specificity for any remaining ivory squares */
+div.flex-shrink-0.w-12.h-12.rounded-lg.flex.items-center.justify-center,
+.flex-shrink-0.w-12.h-12.rounded-lg.flex.items-center.justify-center {
+  background-color: #8EA58C !important;
+}
+
+.flex-shrink-0.w-12.h-12.rounded-lg.flex.items-center.justify-center span {
+  color: #FFFFFF !important;
+}
+
 /* Utility classes for easy therapeutic color application */
 .therapeutic-primary { background-color: var(--color-sage) !important; color: white !important; }
 .therapeutic-secondary { background-color: var(--sage-100) !important; color: var(--color-evergreen) !important; }

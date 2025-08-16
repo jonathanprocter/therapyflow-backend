@@ -20,8 +20,18 @@ export default function AppointmentsPanel() {
   });
   
   const { data: sessions, isLoading } = useQuery<SessionWithClient[]>({
-    queryKey: ["/api/sessions", selectedDate.toISOString().split('T')[0]],
-    queryFn: () => fetch(`/api/sessions?date=${selectedDate.toISOString().split('T')[0]}`).then(res => res.json()),
+    queryKey: ["/api/sessions", { upcoming: true, date: selectedDate.toISOString().split('T')[0] }],
+    queryFn: () => {
+      const today = formatInTimeZone(new Date(), 'America/New_York', 'yyyy-MM-dd');
+      const selectedDateFormatted = formatInTimeZone(selectedDate, 'America/New_York', 'yyyy-MM-dd');
+      
+      // If selected date is today, use upcoming sessions endpoint
+      if (selectedDateFormatted === today) {
+        return fetch('/api/sessions?upcoming=true').then(res => res.json());
+      } else {
+        return fetch(`/api/sessions?date=${selectedDate.toISOString()}`).then(res => res.json());
+      }
+    },
   });
 
   if (isLoading) {

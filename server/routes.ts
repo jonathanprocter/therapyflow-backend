@@ -177,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         res.json(sessionsWithClients);
       } else if (upcoming === "true") {
-        const sessions = await storage.getUpcomingSessions(req.therapistId);
+        const sessions = await storage.getTodaysSessions(req.therapistId);
         // Fetch client data for each session
         const sessionsWithClients = await Promise.all(
           sessions.map(async (session) => {
