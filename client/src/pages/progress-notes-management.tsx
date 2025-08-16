@@ -119,7 +119,7 @@ export default function ProgressNotesManagement() {
 
   const getStatusBadge = (note: ProgressNote) => {
     if (note.isPlaceholder) {
-      return <Badge variant="outline" className="text-yellow-600"><Clock className="w-3 h-3 mr-1" />Placeholder</Badge>;
+      return <Badge variant="outline" className="text-moss"><Clock className="w-3 h-3 mr-1" />Placeholder</Badge>;
     }
     if (note.requiresManualReview) {
       return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" />Needs Review</Badge>;
@@ -200,7 +200,7 @@ export default function ProgressNotesManagement() {
               ) : (
                 <div className="grid gap-4">
                   {placeholders.map((note: ProgressNote) => (
-                    <Card key={note.id} className="border-l-4 border-l-yellow-400">
+                    <Card key={note.id} className="border-l-4 border-l-sage">
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
                           <div className="space-y-2">
@@ -298,7 +298,7 @@ export default function ProgressNotesManagement() {
                               <span>{format(new Date(note.sessionDate), 'PPP p')}</span>
                             </div>
                             {note.processingNotes && (
-                              <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-sm">
+                              <div className="bg-ivory border border-moss/20 rounded p-2 text-sm">
                                 <strong>Processing Notes:</strong> {note.processingNotes}
                               </div>
                             )}

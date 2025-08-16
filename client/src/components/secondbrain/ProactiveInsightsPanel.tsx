@@ -67,7 +67,7 @@ export function ProactiveInsightsPanel({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-50 text-red-700 border-red-200';
-      case 'medium': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'medium': return 'bg-french-blue/10 text-french-blue border-french-blue/20';
       case 'low': return 'bg-sage/10 text-sage border-sage/20';
       default: return 'bg-ivory text-moss border-moss/20';
     }
@@ -335,7 +335,7 @@ export function ProactiveInsightsPanel({
                             variant="secondary" 
                             className={`text-xs ${
                               alert.priority === 'high' ? 'bg-red-100 text-red-700' :
-                              alert.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              alert.priority === 'medium' ? 'bg-french-blue/10 text-french-blue' :
                               'bg-sage/10 text-sage'
                             }`}
                           >

@@ -806,7 +806,7 @@ export default function ClientDetail() {
           {annotations.map(annotation => (
             <div
               key={annotation.id}
-              className="absolute w-6 h-6 bg-yellow-400 rounded-full cursor-pointer"
+              className="absolute w-6 h-6 bg-sage rounded-full cursor-pointer"
               style={{ left: `${annotation.x}%`, top: `${annotation.y}%` }}
               title={annotation.text}
             >
@@ -823,7 +823,7 @@ export default function ClientDetail() {
             {annotations.map((annotation, idx) => (
               <div key={annotation.id} className="border rounded p-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-yellow-600">#{idx + 1}</span>
+                  <span className="text-xs font-medium text-white">#{idx + 1}</span>
                   <span className="text-xs text-gray-500">{formatRelativeTime(annotation.createdAt)}</span>
                 </div>
                 <p className="text-sm">{annotation.text}</p>
@@ -1251,7 +1251,7 @@ export default function ClientDetail() {
 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Zap className="h-4 w-4 text-yellow-600" />
+                      <Zap className="h-4 w-4 text-sage" />
                       <span className="text-sm font-medium">Consistency Score</span>
                     </div>
                     <div className="text-2xl font-bold">{analytics.consistencyScore.toFixed(0)}%</div>
@@ -1344,7 +1344,7 @@ export default function ClientDetail() {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
-                      <Clock className="h-5 w-5 text-yellow-600" />
+                      <Clock className="h-5 w-5 text-sage" />
                       <div>
                         <p className="text-sm font-medium text-gray-500">Scheduled</p>
                         <p className="text-2xl font-bold text-gray-900">{sessionStats.scheduled}</p>

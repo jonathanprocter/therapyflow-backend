@@ -67,7 +67,7 @@ export function ContextualMemoryPanel({ clientId, className = '' }: ContextualMe
   const getSignificanceColor = (significance: string) => {
     switch (significance) {
       case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'medium': return 'text-french-blue bg-french-blue/10 border-french-blue/20';
       case 'low': return 'text-sage bg-sage/10 border-sage/20';
       default: return 'text-moss bg-ivory border-moss/20';
     }
@@ -76,7 +76,7 @@ export function ContextualMemoryPanel({ clientId, className = '' }: ContextualMe
   const getFrequencyColor = (frequency: string) => {
     switch (frequency.toLowerCase()) {
       case 'high': return 'text-red-600 bg-red-50';
-      case 'medium': return 'text-yellow-600 bg-yellow-50';
+      case 'medium': return 'text-french-blue bg-french-blue/10';
       case 'low': return 'text-sage bg-sage/10';
       default: return 'text-moss bg-ivory';
     }

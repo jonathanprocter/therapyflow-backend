@@ -149,8 +149,8 @@
   }
 }
 
-/* Override any remaining non-brand colors */
-.bg-yellow-50, .bg-yellow-100, .bg-yellow-200, .bg-yellow-300, .bg-yellow-400, .bg-yellow-500,
+/* Override any remaining non-brand colors - CRITICAL FIX for bright yellow highlighting */
+.bg-yellow-50, .bg-yellow-100, .bg-yellow-200, .bg-yellow-300, .bg-yellow-400, .bg-yellow-500, .bg-yellow-600, .bg-yellow-700, .bg-yellow-800, .bg-yellow-900,
 .bg-orange-50, .bg-orange-100, .bg-orange-200, .bg-orange-300, .bg-orange-400, .bg-orange-500,
 .bg-pink-50, .bg-pink-100, .bg-pink-200,
 .bg-purple-50, .bg-purple-100, .bg-purple-200,
@@ -160,9 +160,28 @@
 .text-purple-500, .text-purple-600,
 .border-yellow-200, .border-yellow-300, .border-yellow-400, .border-yellow-500,
 .border-orange-200, .border-orange-300, .border-orange-400, .border-orange-500 {
-  background-color: rgba(242, 243, 241, 0.5) !important;
+  background-color: rgba(242, 243, 241, 0.8) !important;
   color: #344C3D !important;
-  border-color: #738A6E !important;
+  border-color: rgba(115, 138, 110, 0.3) !important;
+}
+
+/* EMERGENCY FIX: Force override any yellow highlighting throughout the app */
+* {
+  background-color: inherit;
+}
+
+.bg-yellow-400 {
+  background-color: #F2F3F1 !important; /* Force ivory background instead of yellow */
+}
+
+/* Fix any cards or panels that might have yellow backgrounds */
+[class*="bg-yellow"] {
+  background-color: #F2F3F1 !important; /* Ivory */
+  border-color: rgba(115, 138, 110, 0.2) !important; /* Moss border */
+}
+
+[class*="text-yellow"] {
+  color: #344C3D !important; /* Evergreen text */
 }
 
 /* Remove any yellow/orange highlighting throughout the application */
