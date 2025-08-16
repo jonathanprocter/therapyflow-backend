@@ -1,21 +1,31 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import ProgressNoteForm from "@/components/forms/progress-note-form";
 import EnhancedDocumentUpload from "@/components/enhanced-document-upload";
 import { formatEDTDateShort } from "@/utils/timezone";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { ProgressNoteWithClient } from "@/types/clinical";
-import { Plus, Brain, FileText, Eye, Edit, Bot } from "lucide-react";
+import { Plus, Brain, FileText, Eye, Edit, Bot, Trash2 } from "lucide-react";
 
 export default function ProgressNotes() {
   const [selectedClient, setSelectedClient] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [viewNoteDialog, setViewNoteDialog] = useState<{open: boolean, note: ProgressNoteWithClient | null}>({open: false, note: null});
+  const [editNoteDialog, setEditNoteDialog] = useState<{open: boolean, note: ProgressNoteWithClient | null}>({open: false, note: null});
+  const [deleteNoteDialog, setDeleteNoteDialog] = useState<{open: boolean, note: ProgressNoteWithClient | null}>({open: false, note: null});
+  const [editContent, setEditContent] = useState("");
+  const { toast } = useToast();
 
   const { data: notes, isLoading } = useQuery<ProgressNoteWithClient[]>({
     queryKey: ["/api/progress-notes", { recent: "true" }],
@@ -25,9 +35,86 @@ export default function ProgressNotes() {
     queryKey: ["/api/clients"],
   });
 
+  // Mutations for updating and deleting notes
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ id, content }: { id: string; content: string }) => {
+      return apiRequest(`/api/progress-notes/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ content }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/progress-notes"] });
+      setEditNoteDialog({ open: false, note: null });
+      toast({
+        title: "Success",
+        description: "Progress note updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update progress note",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest(`/api/progress-notes/${id}`, {
+        method: "DELETE"
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/progress-notes"] });
+      setDeleteNoteDialog({ open: false, note: null });
+      toast({
+        title: "Success",
+        description: "Progress note deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete progress note",
+        variant: "destructive",
+      });
+    }
+  });
+
   const filteredNotes = notes?.filter(note => 
     selectedClient === "all" || note.clientId === selectedClient
   ) || [];
+
+  // Handlers for note actions
+  const handleViewNote = (note: ProgressNoteWithClient) => {
+    setViewNoteDialog({ open: true, note });
+  };
+
+  const handleEditNote = (note: ProgressNoteWithClient) => {
+    setEditContent(note.content || "");
+    setEditNoteDialog({ open: true, note });
+  };
+
+  const handleDeleteNote = (note: ProgressNoteWithClient) => {
+    setDeleteNoteDialog({ open: true, note });
+  };
+
+  const confirmDelete = () => {
+    if (deleteNoteDialog.note) {
+      deleteNoteMutation.mutate(deleteNoteDialog.note.id);
+    }
+  };
+
+  const saveEdit = () => {
+    if (editNoteDialog.note) {
+      updateNoteMutation.mutate({
+        id: editNoteDialog.note.id,
+        content: editContent
+      });
+    }
+  };
 
   const getRiskLevelColor = (riskLevel?: string) => {
     switch (riskLevel) {
@@ -249,11 +336,30 @@ export default function ProgressNotes() {
                         Created {new Date(note.createdAt).toLocaleDateString()}
                       </span>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline" data-testid={`view-note-${note.id}`}>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleViewNote(note)}
+                          data-testid={`view-note-${note.id}`}
+                        >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="outline" data-testid={`edit-note-${note.id}`}>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleEditNote(note)}
+                          data-testid={`edit-note-${note.id}`}
+                        >
                           <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleDeleteNote(note)}
+                          data-testid={`delete-note-${note.id}`}
+                          className="hover:bg-red-50 hover:border-red-200"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
@@ -262,6 +368,179 @@ export default function ProgressNotes() {
               ))}
             </div>
           )}
+        
+        {/* View Note Dialog */}
+        <Dialog open={viewNoteDialog.open} onOpenChange={(open) => setViewNoteDialog({open, note: null})}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>View Progress Note</DialogTitle>
+            </DialogHeader>
+            {viewNoteDialog.note && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="font-medium">Client:</Label>
+                    <p style={{ color: '#738A6E' }}>{viewNoteDialog.note.client?.name || "Unknown Client"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-medium">Session Date:</Label>
+                    <p style={{ color: '#738A6E' }}>{formatEDTDateShort(viewNoteDialog.note.sessionDate)}</p>
+                  </div>
+                  <div>
+                    <Label className="font-medium">Risk Level:</Label>
+                    <Badge 
+                      className="rounded w-fit"
+                      style={getRiskLevelColor(viewNoteDialog.note.riskLevel)}
+                    >
+                      {viewNoteDialog.note.riskLevel || "Low"} Risk
+                    </Badge>
+                  </div>
+                  {viewNoteDialog.note.progressRating && (
+                    <div>
+                      <Label className="font-medium">Progress Rating:</Label>
+                      <p 
+                        className="font-medium"
+                        style={getProgressRatingColor(viewNoteDialog.note.progressRating)}
+                      >
+                        {viewNoteDialog.note.progressRating}/10
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <Label className="font-medium">Content:</Label>
+                  <div 
+                    className="mt-2 p-4 rounded border bg-gray-50 whitespace-pre-wrap"
+                    style={{ color: '#738A6E' }}
+                  >
+                    {viewNoteDialog.note.content || "No content available"}
+                  </div>
+                </div>
+                
+                {viewNoteDialog.note.aiTags.length > 0 && (
+                  <div>
+                    <Label className="font-medium">AI Tags:</Label>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {viewNoteDialog.note.aiTags.map((tag, index) => {
+                        const tagStyles = [
+                          { backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' },
+                          { backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' },
+                          { backgroundColor: 'rgba(115, 138, 110, 0.1)', color: '#738A6E' },
+                          { backgroundColor: 'rgba(52, 76, 61, 0.1)', color: '#344C3D' }
+                        ];
+                        return (
+                          <span 
+                            key={tag}
+                            className="inline-flex items-center px-2 py-1 text-xs rounded"
+                            style={tagStyles[index % tagStyles.length]}
+                          >
+                            <Bot className="w-3 h-3 mr-1" />
+                            {tag}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {viewNoteDialog.note.tags.length > 0 && (
+                  <div>
+                    <Label className="font-medium">Manual Tags:</Label>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {viewNoteDialog.note.tags.map((tag) => (
+                        <span 
+                          key={tag}
+                          className="inline-flex items-center px-2 py-1 text-xs rounded"
+                          style={{ backgroundColor: 'rgba(115, 138, 110, 0.1)', color: '#738A6E' }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Note Dialog */}
+        <Dialog open={editNoteDialog.open} onOpenChange={(open) => setEditNoteDialog({open, note: null})}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Progress Note</DialogTitle>
+            </DialogHeader>
+            {editNoteDialog.note && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="font-medium">Client:</Label>
+                    <p style={{ color: '#738A6E' }}>{editNoteDialog.note.client?.name || "Unknown Client"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-medium">Session Date:</Label>
+                    <p style={{ color: '#738A6E' }}>{formatEDTDateShort(editNoteDialog.note.sessionDate)}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="edit-content" className="font-medium">Content:</Label>
+                  <Textarea
+                    id="edit-content"
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="mt-2 min-h-[200px]"
+                    placeholder="Enter progress note content..."
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setEditNoteDialog({open: false, note: null})}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={saveEdit}
+                    disabled={updateNoteMutation.isPending}
+                    style={{ backgroundColor: '#8EA58C', borderColor: '#8EA58C' }}
+                    className="hover:bg-opacity-90"
+                  >
+                    {updateNoteMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Note Confirmation Dialog */}
+        <AlertDialog open={deleteNoteDialog.open} onOpenChange={(open) => setDeleteNoteDialog({open, note: null})}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Progress Note</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this progress note for{" "}
+                <strong>{deleteNoteDialog.note?.client?.name}</strong> from{" "}
+                <strong>{deleteNoteDialog.note ? formatEDTDateShort(deleteNoteDialog.note.sessionDate) : ""}</strong>?
+                <br /><br />
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                disabled={deleteNoteMutation.isPending}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {deleteNoteMutation.isPending ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }
