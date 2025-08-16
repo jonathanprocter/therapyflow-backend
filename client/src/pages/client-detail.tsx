@@ -1260,7 +1260,7 @@ export default function ClientDetail() {
 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle className="h-4 w-4 text-orange-600" />
+                      <AlertCircle className="h-4 w-4 text-red-600" />
                       <span className="text-sm font-medium">No-Show Risk</span>
                     </div>
                     <div className="text-2xl font-bold">

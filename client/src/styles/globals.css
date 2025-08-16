@@ -166,22 +166,32 @@
 }
 
 /* EMERGENCY FIX: Force override any yellow highlighting throughout the app */
-* {
-  background-color: inherit;
+input[type="file"] {
+  background-color: transparent !important;
+  color: #344C3D !important;
 }
 
-.bg-yellow-400 {
-  background-color: #F2F3F1 !important; /* Force ivory background instead of yellow */
-}
-
-/* Fix any cards or panels that might have yellow backgrounds */
-[class*="bg-yellow"] {
-  background-color: #F2F3F1 !important; /* Ivory */
+/* Force override all yellow/orange/amber styling throughout app */
+.bg-yellow-400, [class*="bg-yellow"], [class*="bg-orange"], [class*="bg-amber"] {
+  background-color: #F2F3F1 !important; /* Force ivory background */
   border-color: rgba(115, 138, 110, 0.2) !important; /* Moss border */
 }
 
-[class*="text-yellow"] {
+[class*="text-yellow"], [class*="text-orange"], [class*="text-amber"] {
   color: #344C3D !important; /* Evergreen text */
+}
+
+/* Fix file input highlight */
+input[type="file"]::-webkit-file-upload-button {
+  background-color: #8EA58C !important; /* Sage background */
+  color: white !important;
+  border: 1px solid #8EA58C !important;
+}
+
+/* Override any browser default yellow highlights */
+::selection {
+  background: rgba(142, 165, 140, 0.3) !important; /* Sage selection */
+  color: #344C3D !important;
 }
 
 /* Remove any yellow/orange highlighting throughout the application */

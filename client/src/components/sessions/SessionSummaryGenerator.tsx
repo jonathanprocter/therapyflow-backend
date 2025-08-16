@@ -87,7 +87,7 @@ export default function SessionSummaryGenerator({
     switch (level) {
       case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
       case 'moderate': return 'bg-french-blue-light text-evergreen';
-      case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
+      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
     }
@@ -96,7 +96,7 @@ export default function SessionSummaryGenerator({
   const getProgressColor = (rating: number) => {
     if (rating >= 8) return 'bg-green-500';
     if (rating >= 6) return 'bg-sage';
-    if (rating >= 4) return 'bg-orange-500';
+    if (rating >= 4) return 'bg-moss';
     return 'bg-red-500';
   };
 
@@ -209,7 +209,7 @@ export default function SessionSummaryGenerator({
                     <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                       {quickInsights.insights.riskFlags.slice(0, 2).map((flag: string, idx: number) => (
                         <li key={idx} className="flex items-start">
-                          <i className="fas fa-exclamation-triangle text-xs mt-2 mr-2 text-orange-500"></i>
+                          <i className="fas fa-exclamation-triangle text-xs mt-2 mr-2 text-red-500"></i>
                           {flag}
                         </li>
                       ))}
@@ -427,7 +427,7 @@ export default function SessionSummaryGenerator({
                         <ul className="space-y-1">
                           {generateSummaryMutation.data.summary.riskAssessment.factors.map((factor: string, idx: number) => (
                             <li key={idx} className="flex items-start">
-                              <i className="fas fa-exclamation-triangle text-xs mt-2 mr-3 text-orange-500"></i>
+                              <i className="fas fa-exclamation-triangle text-xs mt-2 mr-3 text-red-500"></i>
                               <span className="text-gray-700 dark:text-gray-300">{factor}</span>
                             </li>
                           ))}
