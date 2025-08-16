@@ -1,0 +1,894 @@
+Complete CareNotesAI Fix Implementation
+🚨 Critical Issues Analysis
+Based on your file structure and errors, here are ALL the issues that need addressing:
+
+1. File Extension Mismatches
+tailwind.config.ts should be .js or .mjs
+PostCSS expects JavaScript configuration files
+TypeScript configs in wrong places
+2. Service Architecture Issues
+PDF service initialization timing
+Multiple service dependencies not properly managed
+OAuth2 redirect URI issues for Google Calendar
+3. Module Resolution Conflicts
+Mixed ESM/CommonJS causing import failures
+Incorrect file extensions for module type
+📁 Complete File Fixes
+1. Fix PostCSS Configuration
+File: client/postcss.config.js (NOT .ts)
+
+javascript
+// client/postcss.config.js
+export default {
+  plugins: {
+    'tailwindcss/nesting': 'postcss-nesting',
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+If you get module errors, try CommonJS format:
+
+javascript
+// client/postcss.config.js (CommonJS fallback)
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+2. Fix Tailwind Configuration
+File: client/tailwind.config.js (rename from .ts to .js)
+
+javascript
+// client/tailwind.config.js (NOT .ts!)
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        // Primary palette for healthcare/therapy
+        primary: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
+        },
+        // Semantic colors for therapeutic context
+        therapeutic: {
+          calm: '#e0f2fe',      // Light blue for calming elements
+          trust: '#dbeafe',     // Soft blue for trust-building
+          growth: '#d9f99d',    // Light green for progress
+          insight: '#fef3c7',   // Light yellow for discoveries
+          balance: '#e9d5ff',   // Light purple for balance
+          safety: '#fecaca',    // Light red for safety concerns
+        },
+        // Status colors
+        status: {
+          success: '#22c55e',
+          warning: '#f59e0b',
+          error: '#ef4444',
+          info: '#3b82f6',
+        },
+        // Neutral grays
+        gray: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
+          950: '#030712',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Cal Sans', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'pulse-soft': 'pulseSoft 2s infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        pulseSoft: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.8' },
+        },
+      },
+    },
+  },
+  plugins: [],
+}
+3. Complete PDF Service Fix
+File: server/services/pdfService.ts
+
+typescript
+// server/services/pdfService.ts
+import { Buffer } from 'node:buffer';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+
+interface PDFData {
+  text: string;
+  numpages?: number;
+  numrender?: number;
+  info?: any;
+  metadata?: any;
+  version?: string;
+}
+
+class PDFService {
+  private pdfParse: any = null;
+  private initialized = false;
+  private initPromise: Promise<void> | null = null;
+
+  constructor() {
+    // Auto-initialize on construction
+    this.initPromise = this.initialize();
+  }
+
+  private async initialize(): Promise<void> {
+    if (this.initialized) return;
+    
+    console.log('🔄 Initializing PDF service...');
+    
+    // Try multiple PDF parsing libraries
+    const libraries = [
+      { name: 'pdf-parse-fork', import: () => import('pdf-parse-fork') },
+      { name: 'pdf-parse', import: () => import('pdf-parse') },
+      { name: 'pdfjs-dist', import: () => import('pdfjs-dist') },
+    ];
+
+    for (const lib of libraries) {
+      try {
+        const module = await lib.import();
+        this.pdfParse = module.default || module;
+        console.log(`✅ PDF service initialized with ${lib.name}`);
+        this.initialized = true;
+        return;
+      } catch (error) {
+        console.log(`⚠️ Could not load ${lib.name}:`, (error as Error).message);
+      }
+    }
+
+    console.warn('⚠️ No PDF parsing library available - using fallback extraction');
+    this.initialized = true;
+  }
+
+  async extractText(buffer: Buffer): Promise<string> {
+    // Ensure initialization is complete
+    if (this.initPromise) {
+      await this.initPromise;
+    }
+
+    if (!buffer || buffer.length === 0) {
+      throw new Error('Invalid or empty PDF buffer');
+    }
+
+    // Check if it's actually a PDF
+    const pdfHeader = buffer.slice(0, 5).toString();
+    if (!pdfHeader.includes('%PDF')) {
+      throw new Error('Buffer does not appear to be a valid PDF file');
+    }
+
+    if (this.pdfParse) {
+      try {
+        const data: PDFData = await this.pdfParse(buffer);
+        
+        if (!data.text) {
+          console.warn('PDF parsed but no text extracted');
+          return this.fallbackExtraction(buffer);
+        }
+        
+        console.log(`✅ Extracted ${data.text.length} characters from PDF`);
+        return this.cleanText(data.text);
+      } catch (error) {
+        console.error('PDF parse error:', error);
+        return this.fallbackExtraction(buffer);
+      }
+    }
+
+    return this.fallbackExtraction(buffer);
+  }
+
+  async extractFromFile(filePath: string): Promise<string> {
+    try {
+      const buffer = await fs.readFile(filePath);
+      return this.extractText(buffer);
+    } catch (error) {
+      throw new Error(`Failed to read PDF file: ${(error as Error).message}`);
+    }
+  }
+
+  private fallbackExtraction(buffer: Buffer): string {
+    console.log('📄 Using fallback PDF extraction...');
+    
+    try {
+      // Look for text streams in the PDF
+      const bufferStr = buffer.toString('binary');
+      const textMatches: string[] = [];
+      
+      // Extract text between BT (Begin Text) and ET (End Text) markers
+      const textRegex = /BT\s*(.*?)\s*ET/gs;
+      let match;
+      
+      while ((match = textRegex.exec(bufferStr)) !== null) {
+        const textContent = match[1];
+        
+        // Extract text from Tj and TJ operators
+        const tjRegex = /\((.*?)\)\s*Tj/g;
+        const tjArrayRegex = /\[(.*?)\]\s*TJ/g;
+        
+        let tjMatch;
+        while ((tjMatch = tjRegex.exec(textContent)) !== null) {
+          textMatches.push(this.decodePDFString(tjMatch[1]));
+        }
+        
+        while ((tjMatch = tjArrayRegex.exec(textContent)) !== null) {
+          const arrayContent = tjMatch[1];
+          const stringRegex = /\((.*?)\)/g;
+          let stringMatch;
+          while ((stringMatch = stringRegex.exec(arrayContent)) !== null) {
+            textMatches.push(this.decodePDFString(stringMatch[1]));
+          }
+        }
+      }
+      
+      const extractedText = textMatches.join(' ');
+      
+      if (extractedText.length < 50) {
+        // If we couldn't extract much, try a simpler approach
+        const simpleText = buffer.toString('utf8', 0, Math.min(buffer.length, 10000))
+          .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        return simpleText.length > extractedText.length ? simpleText : extractedText;
+      }
+      
+      return this.cleanText(extractedText);
+    } catch (error) {
+      console.error('Fallback extraction failed:', error);
+      return '';
+    }
+  }
+
+  private decodePDFString(str: string): string {
+    // Decode PDF escape sequences
+    return str
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      .replace(/\\b/g, '\b')
+      .replace(/\\f/g, '\f')
+      .replace(/\\(/g, '(')
+      .replace(/\\)/g, ')')
+      .replace(/\\\\/g, '\\')
+      .replace(/\\(\d{1,3})/g, (match, octal) => {
+        return String.fromCharCode(parseInt(octal, 8));
+      });
+  }
+
+  private cleanText(text: string): string {
+    return text
+      .replace(/\s+/g, ' ')           // Normalize whitespace
+      .replace(/[^\x20-\x7E\n\r]/g, '') // Remove non-printable chars
+      .replace(/\n{3,}/g, '\n\n')     // Limit consecutive newlines
+      .trim();
+  }
+
+  // Utility method to check if PDF parsing is available
+  isAvailable(): boolean {
+    return this.initialized && this.pdfParse !== null;
+  }
+
+  // Get service status
+  getStatus(): { initialized: boolean; library: string | null } {
+    return {
+      initialized: this.initialized,
+      library: this.pdfParse ? 'Available' : 'Fallback',
+    };
+  }
+}
+
+// Export singleton instance
+export const pdfService = new PDFService();
+
+// Export convenience functions
+export const extractPdfText = (buffer: Buffer) => pdfService.extractText(buffer);
+export const extractPdfFromFile = (filePath: string) => pdfService.extractFromFile(filePath);
+export const isPdfServiceAvailable = () => pdfService.isAvailable();
+export const getPdfServiceStatus = () => pdfService.getStatus();
+4. Complete Server Index Fix
+File: server/index.ts
+
+typescript
+// server/index.ts
+import express from 'express';
+import cors from 'cors';
+import { createServer } from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+// ESM compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Import services
+import { pdfService, getPdfServiceStatus } from './services/pdfService.js';
+
+// Import routes (adjust these based on your actual routes)
+// import aiRoutes from './routes/ai.js';
+// import clientRoutes from './routes/clients.js';
+// import notesRoutes from './routes/notes.js';
+// import therapeuticRoutes from './routes/therapeutic.js';
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const time = new Date().toLocaleTimeString();
+    const method = req.method;
+    const url = req.originalUrl;
+    const status = res.statusCode;
+    const color = status >= 400 ? '\x1b[31m' : '\x1b[32m';
+    const reset = '\x1b[0m';
+    
+    console.log(`${time} [express] ${color}${method} ${url} ${status}${reset} in ${duration}ms`);
+  });
+  next();
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    version: process.env.NODE_ENV || 'development',
+    time: new Date().toISOString(),
+    services: {
+      pdf: getPdfServiceStatus(),
+    },
+  });
+});
+
+// AI Health endpoint
+app.get('/api/ai/health', (req, res) => {
+  res.json({
+    openai: !!process.env.OPENAI_API_KEY,
+    anthropic: !!process.env.ANTHROPIC_API_KEY,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Mount routes
+// app.use('/api/ai', aiRoutes);
+// app.use('/api/clients', clientRoutes);
+// app.use('/api/notes', notesRoutes);
+// app.use('/api/therapeutic', therapeuticRoutes);
+
+// Static file serving in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../../client/dist')));
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+  });
+}
+
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
+
+// Server configuration
+const PORT = process.env.PORT || 5000;
+const IS_REPLIT = process.env.REPL_ID !== undefined;
+
+class ServerManager {
+  private server: ReturnType<typeof createServer> | null = null;
+  private currentPort: number = Number(PORT);
+  private isShuttingDown: boolean = false;
+
+  async start(): Promise<void> {
+    if (this.server) {
+      console.log('Server is already running');
+      return;
+    }
+
+    // For Replit, always use the assigned port
+    if (IS_REPLIT) {
+      await this.startOnPort(Number(PORT));
+      return;
+    }
+
+    // For local development, try multiple ports
+    const maxRetries = 5;
+    for (let i = 0; i < maxRetries; i++) {
+      const port = this.currentPort + i;
+      try {
+        await this.startOnPort(port);
+        return;
+      } catch (error: any) {
+        if (error.code === 'EADDRINUSE') {
+          console.log(`⚠️ Port ${port} is in use, trying ${port + 1}...`);
+          continue;
+        }
+        throw error;
+      }
+    }
+    
+    throw new Error('❌ Could not find an available port');
+  }
+
+  private startOnPort(port: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.server = createServer(app);
+      
+      this.server.once('error', (error: any) => {
+        this.server = null;
+        reject(error);
+      });
+      
+      this.server.listen(port, () => {
+        this.currentPort = port;
+        console.log(`\n${'='.repeat(50)}`);
+        console.log(`✅ CareNotesAI Server Started`);
+        console.log(`📍 Environment: ${IS_REPLIT ? 'Replit' : 'Local Development'}`);
+        console.log(`🚀 Server: http://localhost:${port}`);
+        console.log(`🤖 AI Services: ${process.env.OPENAI_API_KEY ? '✓' : '✗'} OpenAI | ${process.env.ANTHROPIC_API_KEY ? '✓' : '✗'} Anthropic`);
+        console.log(`📄 PDF Service: ${getPdfServiceStatus().library}`);
+        
+        // List available endpoints
+        console.log(`\n📚 Available Endpoints:`);
+        console.log(`   GET  /api/health`);
+        console.log(`   GET  /api/ai/health`);
+        // Add your other endpoints here
+        
+        console.log(`${'='.repeat(50)}\n`);
+        
+        resolve();
+      });
+    });
+  }
+
+  async shutdown(): Promise<void> {
+    if (this.isShuttingDown) return;
+    this.isShuttingDown = true;
+    
+    console.log('\n📛 Shutting down server gracefully...');
+    
+    if (this.server) {
+      await new Promise<void>((resolve) => {
+        this.server!.close(() => {
+          console.log('✅ Server closed');
+          resolve();
+        });
+      });
+      this.server = null;
+    }
+  }
+}
+
+// Create and start server
+const serverManager = new ServerManager();
+
+// Handle process signals
+process.on('SIGTERM', async () => {
+  await serverManager.shutdown();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  await serverManager.shutdown();
+  process.exit(0);
+});
+
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Start the server
+serverManager.start().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});
+
+export { app };
+5. Fix Client Package.json
+File: client/package.json
+
+json
+{
+  "name": "carenotes-client",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dropdown-menu": "^2.0.6",
+    "axios": "^1.6.2",
+    "clsx": "^2.0.0",
+    "lucide-react": "^0.294.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  }
+}
+6. Root Package.json with All Scripts
+File: package.json (root)
+
+json
+{
+  "name": "carenotes-ai",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CareNotesAI - Therapeutic Journey Management System",
+  "scripts": {
+    "dev": "node scripts/startup.js && concurrently -n \"server,client\" -c \"cyan,magenta\" \"npm:server:dev\" \"npm:client:dev\"",
+    "server:dev": "tsx watch --clear-screen=false server/index.ts",
+    "client:dev": "cd client && npm run dev",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "tsc -p server/tsconfig.json",
+    "start": "NODE_ENV=production node dist/server/index.js",
+    "clean": "rimraf dist client/dist node_modules/.cache client/node_modules/.vite",
+    "clean:all": "npm run clean && rimraf node_modules client/node_modules",
+    "fresh": "npm run clean:all && npm install && cd client && npm install",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts,.tsx",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "pdf-parse-fork": "^1.2.0",
+    "openai": "^4.20.0",
+    "@anthropic-ai/sdk": "^0.9.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.0",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "@types/cors": "^2.8.17",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/multer": "^1.4.11",
+    "concurrently": "^8.2.2",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3",
+    "rimraf": "^5.0.5",
+    "vitest": "^1.0.4"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
+7. Startup Script
+File: scripts/startup.js
+
+javascript
+#!/usr/bin/env node
+// scripts/startup.js
+
+import { spawn } from 'child_process';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const rootDir = join(__dirname, '..');
+
+console.log('🚀 Starting CareNotesAI...\n');
+
+// Check for .env file
+const envPath = join(rootDir, '.env');
+if (!existsSync(envPath)) {
+  console.log('📝 Creating .env file...');
+  const envTemplate = `# CareNotesAI Configuration
+
+# API Keys
+OPENAI_API_KEY=your_openai_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
+
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+SESSION_SECRET=your_session_secret_here
+
+# Database
+DATABASE_URL=mongodb://localhost:27017/carenotes
+
+# Google OAuth (for Calendar integration)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=
+
+# Client Configuration
+VITE_API_URL=http://localhost:5000
+VITE_APP_NAME=CareNotesAI
+`;
+  writeFileSync(envPath, envTemplate);
+  console.log('✅ Created .env file - Please add your API keys\n');
+}
+
+// Check for required directories
+const dirs = [
+  'uploads',
+  'logs',
+  'temp',
+];
+
+dirs.forEach(dir => {
+  const dirPath = join(rootDir, dir);
+  if (!existsSync(dirPath)) {
+    mkdirSync(dirPath, { recursive: true });
+    console.log(`📁 Created directory: ${dir}`);
+  }
+});
+
+// Kill processes on common ports (for local development)
+if (process.platform !== 'win32') {
+  const ports = [5000, 3000, 3001];
+  ports.forEach(port => {
+    try {
+      spawn('lsof', ['-ti', `:${port}`], { stdio: 'pipe' })
+        .on('exit', (code) => {
+          if (code === 0) {
+            spawn('kill', ['-9', `$(lsof -ti :${port})`], { shell: true });
+            console.log(`🧹 Cleared port ${port}`);
+          }
+        });
+    } catch (e) {
+      // Port is free
+    }
+  });
+}
+
+console.log('\n✅ Startup checks complete\n');
+8. TypeScript Configurations
+File: server/tsconfig.json
+
+json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022"],
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "outDir": "../dist/server",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["*"],
+      "@services/*": ["services/*"],
+      "@routes/*": ["routes/*"],
+      "@middleware/*": ["middleware/*"],
+      "@models/*": ["models/*"],
+      "@utils/*": ["utils/*"]
+    },
+    "types": ["node"],
+    "allowJs": true
+  },
+  "include": ["**/*.ts", "**/*.js"],
+  "exclude": ["node_modules", "dist"]
+}
+File: client/tsconfig.json
+
+json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+9. Vite Configuration
+File: client/vite.config.ts
+
+typescript
+// client/vite.config.ts
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const IS_REPLIT = process.env.REPL_ID !== undefined;
+  
+  return {
+    plugins: [react()],
+    
+    server: {
+      port: 3000,
+      strictPort: false,
+      host: IS_REPLIT ? '0.0.0.0' : 'localhost',
+      
+      proxy: {
+        '/api': {
+          target: env.VITE_API_URL || 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+        },
+      },
+    },
+    
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
+    
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-router-dom'],
+      exclude: ['@vite/client', '@vite/env'],
+    },
+    
+    build: {
+      outDir: 'dist',
+      sourcemap: mode === 'development',
+    },
+  };
+});
+🚀 Implementation Commands
+Execute these in order:
+
+bash
+# 1. Stop everything
+pkill -f node || true
+
+# 2. Rename config files to correct extensions
+mv client/tailwind.config.ts client/tailwind.config.js 2>/dev/null || true
+mv client/postcss.config.ts client/postcss.config.js 2>/dev/null || true
+
+# 3. Fix package.json module types
+cd client && npm pkg set type="module" && cd ..
+
+# 4. Clean everything
+rm -rf node_modules client/node_modules
+rm -rf dist client/dist
+rm -rf node_modules/.cache client/node_modules/.vite
+
+# 5. Install correct PDF library
+npm install pdf-parse-fork
+npm uninstall pdf-parse
+
+# 6. Install all dependencies
+npm install
+cd client && npm install && cd ..
+
+# 7. Create required directories
+mkdir -p uploads logs temp
+
+# 8. Start fresh
+npm run dev
+🔍 Validation Checklist
+After implementing these fixes, verify:
+
+ No module resolution errors
+ PDF service initializes (check logs)
+ No port conflicts
+ Theme colors render correctly
+ API endpoints respond
+ Client proxies to server correctly
+ No Vite re-optimization loops
+📝 Replit-Specific Notes
+For Replit, add to .replit:
+
+toml
+run = "npm run dev"
+entrypoint = "server/index.ts"
+
+[env]
+PATH = "/home/runner/$REPL_SLUG/node_modules/.bin:$PATH"
+
+[packager]
+language = "nodejs"
+
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
+
+[languages.javascript.languageServer]
+start = "typescript-language-server --stdio"
+This comprehensive fix addresses ALL the issues in your CareNotesAI application. The key changes are:
+
+Correct file extensions (.js not .ts for configs)
+Proper ESM module configuration
+Robust PDF service with fallback
+Better error handling and logging
+Replit-aware configuration
