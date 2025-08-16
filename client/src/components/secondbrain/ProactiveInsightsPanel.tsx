@@ -44,7 +44,7 @@ interface ProactiveInsightsPanelProps {
 export function ProactiveInsightsPanel({ 
   clientId, 
   context = 'session_opening', 
-  className = '' 
+  className="" 
 }: ProactiveInsightsPanelProps) {
   const [activeTab, setActiveTab] = useState<'suggestions' | 'patterns' | 'alerts'>('suggestions');
 

@@ -17,7 +17,7 @@ interface TherapeuticJourneyProps {
 
 export default function TherapeuticJourneyDashboard({ 
   clientId, 
-  className = "" 
+  className="" 
 }: TherapeuticJourneyProps) {
   const [loading, setLoading] = useState(false);
   const [synthesisData, setSynthesisData] = useState<any>(null);

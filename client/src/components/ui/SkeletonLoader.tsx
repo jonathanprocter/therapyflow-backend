@@ -8,7 +8,7 @@ interface SkeletonProps {
 }
 
 export const SkeletonLoader: React.FC<SkeletonProps> = ({
-  className = '',
+  className="",
   variant = 'text',
   count = 1,
 }) => {

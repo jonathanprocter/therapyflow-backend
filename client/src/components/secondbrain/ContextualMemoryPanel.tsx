@@ -44,7 +44,7 @@ interface ContextualMemoryPanelProps {
   className?: string;
 }
 
-export function ContextualMemoryPanel({ clientId, className = '' }: ContextualMemoryPanelProps) {
+export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemoryPanelProps) {
   const [selectedActivity, setSelectedActivity] = useState<string>('session_opening');
   const [focusArea, setFocusArea] = useState<string>('');
 

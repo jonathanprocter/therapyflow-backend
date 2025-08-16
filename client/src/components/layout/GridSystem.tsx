@@ -14,7 +14,7 @@ export const Grid: React.FC<GridProps> = ({
   children,
   columns = 3,
   gap = 'brand', // Default to brand spacing
-  className = '',
+  className="",
   animate = true,
   staggerDelay = 0.08, // Slightly faster for professional feel
 }) => {
@@ -106,7 +106,7 @@ export const GridCard: React.FC<{
   onClick?: () => void;
   href?: string;
   className?: string;
-}> = ({ children, onClick, href, className = '' }) => {
+}> = ({ children, onClick, href, className="" }) => {
   const cardStyle: React.CSSProperties = {
     backgroundColor: '#FFFFFF',
     border: '1px solid rgba(115, 138, 110, 0.15)',
@@ -152,7 +152,7 @@ export const GridHeader: React.FC<{
   title: string; 
   subtitle?: string;
   className?: string;
-}> = ({ title, subtitle, className = '' }) => {
+}> = ({ title, subtitle, className="" }) => {
   return (
     <div className={`text-center mb-8 ${className}`}>
       <h2 

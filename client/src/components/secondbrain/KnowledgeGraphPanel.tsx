@@ -60,7 +60,7 @@ interface KnowledgeGraphPanelProps {
   className?: string;
 }
 
-export function KnowledgeGraphPanel({ clientId, onEntitySelect, className = '' }: KnowledgeGraphPanelProps) {
+export function KnowledgeGraphPanel({ clientId, onEntitySelect, className="" }: KnowledgeGraphPanelProps) {
   const [activeView, setActiveView] = useState<'entities' | 'connections' | 'journey'>('entities');
   const [selectedEntityType, setSelectedEntityType] = useState<string>('all');
 

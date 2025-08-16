@@ -4,13 +4,46 @@
 
 @layer base {
   :root {
-    /* TherapyFlow Brand Colors */
+    /* TherapyFlow Brand Colors - HEX values */
     --color-ivory: #F2F3F1;
     --color-sage: #8EA58C;
     --color-moss: #738A6E;
     --color-evergreen: #344C3D;
     --color-french-blue: #88A5BC;
     --color-white: #FFFFFF;
+
+    /* Sage color variants for complete palette */
+    --sage-50: #f7f9f7;
+    --sage-100: #e8ede7;
+    --sage-200: #d1dbd0;
+    --sage-300: #b3c4b1;
+    --sage-400: #8EA58C;  /* Main sage */
+    --sage-500: #738A6E;  /* Moss */
+    --sage-600: #5a6e57;
+    --sage-700: #475646;
+    --sage-800: #3a453a;
+    --sage-900: #344C3D;  /* Evergreen */
+
+    /* Override ALL yellow color variables globally */
+    --yellow-50: var(--sage-50);
+    --yellow-100: var(--sage-100);
+    --yellow-200: var(--sage-200);
+    --yellow-300: var(--sage-300);
+    --yellow-400: var(--sage-400);
+    --yellow-500: var(--sage-500);
+    --yellow-600: var(--sage-600);
+    --yellow-700: var(--sage-700);
+    --yellow-800: var(--sage-800);
+    --yellow-900: var(--sage-900);
+
+    /* Override amber colors */
+    --amber-50: var(--sage-50);
+    --amber-100: var(--sage-100);
+    --amber-200: var(--sage-200);
+    --amber-300: var(--sage-300);
+    --amber-400: var(--sage-400);
+    --amber-500: var(--sage-500);
+    --amber-600: var(--sage-600);
 
     /* Tailwind CSS variables mapped to brand colors */
     --background: 242 243 241;        /* Ivory */
@@ -149,36 +182,102 @@
   }
 }
 
-/* Override any remaining non-brand colors - CRITICAL FIX for bright yellow highlighting */
-.bg-yellow-50, .bg-yellow-100, .bg-yellow-200, .bg-yellow-300, .bg-yellow-400, .bg-yellow-500, .bg-yellow-600, .bg-yellow-700, .bg-yellow-800, .bg-yellow-900,
-.bg-orange-50, .bg-orange-100, .bg-orange-200, .bg-orange-300, .bg-orange-400, .bg-orange-500,
-.bg-pink-50, .bg-pink-100, .bg-pink-200,
-.bg-purple-50, .bg-purple-100, .bg-purple-200,
-.text-yellow-500, .text-yellow-600, .text-yellow-700, .text-yellow-800, .text-yellow-900,
-.text-orange-500, .text-orange-600, .text-orange-700, .text-orange-800, .text-orange-900,
-.text-pink-500, .text-pink-600,
-.text-purple-500, .text-purple-600,
-.border-yellow-200, .border-yellow-300, .border-yellow-400, .border-yellow-500,
-.border-orange-200, .border-orange-300, .border-orange-400, .border-orange-500 {
-  background-color: rgba(242, 243, 241, 0.8) !important;
-  color: #344C3D !important;
-  border-color: rgba(115, 138, 110, 0.3) !important;
+/* COMPLETE YELLOW COLOR OVERRIDE - Force sage-green therapeutic palette */
+
+/* Background color overrides */
+.bg-yellow-50, .bg-yellow-100 { background-color: var(--sage-50) !important; }
+.bg-yellow-200 { background-color: var(--sage-100) !important; }
+.bg-yellow-300 { background-color: var(--sage-200) !important; }
+.bg-yellow-400 { background-color: var(--sage-300) !important; }
+.bg-yellow-500 { background-color: var(--color-sage) !important; }
+.bg-yellow-600 { background-color: var(--color-moss) !important; }
+.bg-yellow-700 { background-color: var(--sage-600) !important; }
+.bg-yellow-800 { background-color: var(--sage-700) !important; }
+.bg-yellow-900 { background-color: var(--color-evergreen) !important; }
+
+/* Amber overrides */
+.bg-amber-50, .bg-amber-100 { background-color: var(--sage-50) !important; }
+.bg-amber-200 { background-color: var(--sage-100) !important; }
+.bg-amber-300 { background-color: var(--sage-200) !important; }
+.bg-amber-400 { background-color: var(--sage-300) !important; }
+.bg-amber-500 { background-color: var(--color-sage) !important; }
+.bg-amber-600 { background-color: var(--color-moss) !important; }
+
+/* Text color overrides */
+.text-yellow-400 { color: var(--color-sage) !important; }
+.text-yellow-500, .text-yellow-600 { color: var(--color-moss) !important; }
+.text-yellow-700, .text-yellow-800, .text-yellow-900 { color: var(--color-evergreen) !important; }
+.text-amber-400 { color: var(--color-sage) !important; }
+.text-amber-500, .text-amber-600 { color: var(--color-moss) !important; }
+.text-amber-700, .text-amber-800 { color: var(--color-evergreen) !important; }
+
+/* Border color overrides */
+.border-yellow-200 { border-color: var(--sage-100) !important; }
+.border-yellow-300 { border-color: var(--sage-200) !important; }
+.border-yellow-400 { border-color: var(--sage-300) !important; }
+.border-yellow-500 { border-color: var(--color-sage) !important; }
+.border-amber-200 { border-color: var(--sage-100) !important; }
+.border-amber-300 { border-color: var(--sage-200) !important; }
+.border-amber-400 { border-color: var(--sage-300) !important; }
+
+/* Hover state overrides */
+.hover\:bg-yellow-50:hover { background-color: var(--sage-50) !important; }
+.hover\:bg-yellow-100:hover { background-color: var(--sage-100) !important; }
+.hover\:bg-yellow-200:hover { background-color: var(--sage-200) !important; }
+.hover\:bg-yellow-500:hover { background-color: var(--color-sage) !important; }
+.hover\:bg-amber-500:hover { background-color: var(--color-sage) !important; }
+
+/* Orange overrides for good measure */
+.bg-orange-50, .bg-orange-100, .bg-orange-200 { background-color: var(--sage-50) !important; }
+.bg-orange-300 { background-color: var(--sage-200) !important; }
+.bg-orange-400, .bg-orange-500 { background-color: var(--color-sage) !important; }
+.text-orange-500, .text-orange-600 { color: var(--color-moss) !important; }
+
+/* COMPREHENSIVE WILDCARD OVERRIDES - Catch any remaining yellow/amber/orange */
+[class*="bg-yellow"], [class*="bg-amber"], [class*="bg-orange"] {
+  background-color: var(--color-ivory) !important;
+  border-color: rgba(115, 138, 110, 0.2) !important;
 }
 
-/* EMERGENCY FIX: Force override any yellow highlighting throughout the app */
+[class*="text-yellow"], [class*="text-amber"], [class*="text-orange"] {
+  color: var(--color-evergreen) !important;
+}
+
+[class*="border-yellow"], [class*="border-amber"], [class*="border-orange"] {
+  border-color: var(--color-sage) !important;
+}
+
+/* Component-specific therapeutic overrides */
+.filter-label, .session-label, .batch-label, .risk-label, .progress-label, .status-label,
+.badge, .tag, .chip, .label {
+  background-color: var(--sage-50) !important;
+  color: var(--color-evergreen) !important;
+  border: 1px solid var(--sage-300) !important;
+}
+
+/* AI Feature highlights - use French Blue */
+.ai-highlight, .ai-feature, .ai-badge, .ai-tag,
+[class*="ai-"], [class*="AI-"], [data-ai="true"] {
+  background-color: rgba(136, 165, 188, 0.1) !important;
+  color: var(--color-french-blue) !important;
+  border-color: var(--color-french-blue) !important;
+}
+
+/* Button comprehensive overrides */
+.btn-primary, button[class*="yellow"], button[class*="amber"], button[class*="orange"] {
+  background-color: var(--color-sage) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-primary:hover, button[class*="yellow"]:hover, button[class*="amber"]:hover {
+  background-color: var(--color-moss) !important;
+}
+
+/* File input comprehensive fix */
 input[type="file"] {
   background-color: transparent !important;
-  color: #344C3D !important;
-}
-
-/* Force override all yellow/orange/amber styling throughout app */
-.bg-yellow-400, [class*="bg-yellow"], [class*="bg-orange"], [class*="bg-amber"] {
-  background-color: #F2F3F1 !important; /* Force ivory background */
-  border-color: rgba(115, 138, 110, 0.2) !important; /* Moss border */
-}
-
-[class*="text-yellow"], [class*="text-orange"], [class*="text-amber"] {
-  color: #344C3D !important; /* Evergreen text */
+  color: var(--color-evergreen) !important;
 }
 
 /* Fix file input highlight */
@@ -239,3 +338,56 @@ input:-webkit-autofill:active {
   background-color: rgba(136, 165, 188, 0.1) !important; /* French Blue background */
   color: #344C3D !important; /* Evergreen text */
 }
+
+/* ULTIMATE YELLOW OVERRIDE - Catch anything that might slip through */
+* {
+  /* Override any CSS variables that might contain yellow */
+  --yellow-50: var(--sage-50) !important;
+  --yellow-100: var(--sage-100) !important;
+  --yellow-200: var(--sage-200) !important;
+  --yellow-300: var(--sage-300) !important;
+  --yellow-400: var(--sage-400) !important;
+  --yellow-500: var(--sage-500) !important;
+  --yellow-600: var(--sage-600) !important;
+  --yellow-700: var(--sage-700) !important;
+  --yellow-800: var(--sage-800) !important;
+  --yellow-900: var(--sage-900) !important;
+  
+  --amber-50: var(--sage-50) !important;
+  --amber-100: var(--sage-100) !important;
+  --amber-200: var(--sage-200) !important;
+  --amber-300: var(--sage-300) !important;
+  --amber-400: var(--sage-400) !important;
+  --amber-500: var(--sage-500) !important;
+  --amber-600: var(--sage-600) !important;
+}
+
+/* Final comprehensive override for any elements using yellow/amber/orange anywhere */
+[style*="yellow"], [style*="amber"], [style*="orange"], [style*="#ff"], [style*="rgb(255"] {
+  background-color: var(--color-ivory) !important;
+  color: var(--color-evergreen) !important;
+}
+
+/* Override computed styles that might be yellow */
+[style*="background-color: yellow"], [style*="background-color: amber"], [style*="background-color: orange"] {
+  background-color: var(--color-sage) !important;
+}
+
+[style*="color: yellow"], [style*="color: amber"], [style*="color: orange"] {
+  color: var(--color-evergreen) !important;
+}
+
+/* Final catch-all for any remaining yellow artifacts */
+[class*="-yellow-"], [class*="-amber-"], [class*="-orange-"] {
+  background-color: var(--color-ivory) !important;
+  color: var(--color-evergreen) !important;
+  border-color: var(--color-sage) !important;
+}
+
+/* Utility classes for easy therapeutic color application */
+.therapeutic-primary { background-color: var(--color-sage) !important; color: white !important; }
+.therapeutic-secondary { background-color: var(--sage-100) !important; color: var(--color-evergreen) !important; }
+.therapeutic-accent { background-color: var(--color-french-blue) !important; color: white !important; }
+.therapeutic-muted { background-color: var(--color-ivory) !important; color: var(--color-moss) !important; }
+.therapeutic-text { color: var(--color-evergreen) !important; }
+.therapeutic-border { border-color: var(--color-sage) !important; }

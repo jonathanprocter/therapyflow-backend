@@ -11,7 +11,7 @@ interface AIStatusWidgetProps {
   className?: string;
 }
 
-export function AIStatusWidget({ compact = false, showRefresh = true, className = '' }: AIStatusWidgetProps) {
+export function AIStatusWidget({ compact = false, showRefresh = true, className="" }: AIStatusWidgetProps) {
   const { data: aiHealth, refetch, isLoading } = useQuery<{ 
     openai: boolean; 
     anthropic: boolean; 

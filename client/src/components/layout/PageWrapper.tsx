@@ -13,7 +13,7 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
   children,
   title,
   showOrbs = true,
-  className = '',
+  className="",
 }) => {
   useEffect(() => {
     // Smooth scroll to top on mount
