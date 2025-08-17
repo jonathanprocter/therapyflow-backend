@@ -76,14 +76,13 @@ export default function ProgressNotesManagement() {
   // Delete progress note mutation
   const deleteNoteMutation = useMutation({
     mutationFn: (id: string) => apiRequest(`/api/progress-notes/${id}`, { method: 'DELETE' }),
-    onSuccess: (data) => {
-      console.log('Delete successful:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/placeholders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/manual-review'] });
     },
     onError: (error: Error) => {
-      console.error('Delete error:', error);
-      alert(`Failed to delete progress note: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      alert(`Failed to delete progress note: ${errorMessage}`);
     },
   });
 
@@ -108,12 +107,7 @@ export default function ProgressNotesManagement() {
 
   const handleDeleteNote = (noteId: string, noteName: string) => {
     if (window.confirm(`Are you sure you want to delete the progress note for "${noteName}"? This action cannot be undone.`)) {
-      try {
-        deleteNoteMutation.mutate(noteId);
-      } catch (error) {
-        console.error('Error initiating delete:', error);
-        alert('Failed to delete progress note. Please try again.');
-      }
+      deleteNoteMutation.mutate(noteId);
     }
   };
 

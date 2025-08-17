@@ -52,10 +52,10 @@ export default function CareNotesResults() {
       });
 
     } catch (error) {
-      console.error('Fetch error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Fetch Failed",
-        description: String(error),
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

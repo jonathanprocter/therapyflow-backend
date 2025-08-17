@@ -146,10 +146,10 @@ export default function EnhancedDocumentUpload() {
           });
         }
       } catch (error) {
-        console.error('Error processing upload result:', error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
         toast({
           title: "Processing Error",
-          description: "An error occurred while processing the upload result",
+          description: errorMessage,
           variant: "destructive"
         });
       }

@@ -94,10 +94,10 @@ export default function SmartUpload() {
       });
 
     } catch (error) {
-      console.error('Smart upload error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Upload Failed",
-        description: String(error),
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

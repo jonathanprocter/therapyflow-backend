@@ -22,7 +22,13 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    // Log to external error monitoring service in production
+    if (import.meta.env.PROD) {
+      // Example: Send to error monitoring service
+    } else {
+      // Only log in development
+      console.error('Uncaught error:', error, errorInfo);
+    }
   }
 
   public render() {

@@ -53,10 +53,10 @@ export default function ClientDetail() {
       });
 
     } catch (error) {
-      console.error('Graph load error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Graph Load Failed",
-        description: String(error),
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -91,10 +91,10 @@ export default function ClientDetail() {
       });
 
     } catch (error) {
-      console.error('Recall error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Recall Failed",
-        description: String(error),
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

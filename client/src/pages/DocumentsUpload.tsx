@@ -72,10 +72,10 @@ export default function DocumentsUpload() {
       });
 
     } catch (error) {
-      console.error('Upload error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Upload Failed",
-        description: String(error),
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -123,10 +123,10 @@ export default function DocumentsUpload() {
       });
 
     } catch (error) {
-      console.error('Processing error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Processing Failed",
-        description: String(error),
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
