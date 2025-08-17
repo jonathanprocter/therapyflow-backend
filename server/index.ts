@@ -16,12 +16,29 @@ import { pdfService, getPdfServiceStatus } from './services/pdfService';
 // Global error handlers for unhandled promises and exceptions
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't crash the process, just log it
+  
+  // Check if it's a Google Calendar API error and handle gracefully
+  if (reason && typeof reason === 'object') {
+    const reasonStr = reason.toString();
+    if (reasonStr.includes('Google') || reasonStr.includes('calendar') || reasonStr.includes('oauth')) {
+      console.log('Google Calendar related error - continuing operation');
+      return;
+    }
+  }
+  
+  // Don't crash the process for other errors, just log them
 });
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  // For uncaught exceptions, we should exit gracefully
+  
+  // Check if it's a Google Calendar API error
+  if (error.message && (error.message.includes('Google') || error.message.includes('calendar'))) {
+    console.log('Google Calendar related exception - continuing operation');
+    return;
+  }
+  
+  // For other uncaught exceptions, we should exit gracefully
   process.exit(1);
 });
 

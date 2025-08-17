@@ -1337,6 +1337,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/calendar/sync-status", async (req, res) => {
+    try {
+      // Check if we have valid Google credentials
+      const hasCredentials = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+      const hasRefreshToken = !!process.env.GOOGLE_REFRESH_TOKEN;
+      
+      // Get basic sync information
+      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const sessions = await storage.getUpcomingSessions(therapistId, new Date('2010-01-01'));
+      const lastSync = sessions.length > 0 
+        ? sessions.reduce((latest, session) => 
+            session.createdAt > latest.createdAt ? session : latest
+          ).createdAt 
+        : null;
+
+      res.json({
+        isConnected: hasCredentials && hasRefreshToken,
+        hasCredentials,
+        hasRefreshToken,
+        lastSync: lastSync?.toISOString() || null,
+        totalSessions: sessions.length,
+        syncedSessions: sessions.filter(s => s.googleEventId).length
+      });
+    } catch (error) {
+      console.error("Error getting sync status:", error);
+      res.status(500).json({ 
+        error: "Failed to get sync status",
+        isConnected: false,
+        hasCredentials: false,
+        hasRefreshToken: false
+      });
+    }
+  });
+
   app.get("/api/calendar/calendars", async (req, res) => {
     try {
       const calendars = await googleCalendarService.getCalendarList();
