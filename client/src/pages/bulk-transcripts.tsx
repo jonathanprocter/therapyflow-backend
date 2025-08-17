@@ -32,38 +32,35 @@ export default function BulkTranscripts() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch transcript statistics
+  // Fetch transcript statistics with optimized caching
   const { data: stats, isLoading: statsLoading } = useQuery<UploadStats>({
     queryKey: ['/api/transcripts/stats'],
+    refetchInterval: enableRealTimeUpdates ? 20000 : false, // Poll every 20 seconds
+    refetchIntervalInBackground: false,
+    staleTime: 10000, // 10 seconds cache
   });
 
-  // Fetch transcript batches with real-time updates
+  // Fetch transcript batches with reduced polling
   const { data: batches, isLoading: batchesLoading } = useQuery<TranscriptBatch[]>({
     queryKey: ['/api/transcripts/batches'],
-    refetchInterval: enableRealTimeUpdates ? 2000 : false, // Poll every 2 seconds for processing batches
+    refetchInterval: enableRealTimeUpdates ? 10000 : false, // Poll every 10 seconds (reduced from 2)
     refetchIntervalInBackground: false,
   });
 
-  // Fetch files needing review with real-time updates
+  // Fetch files needing review with reduced polling
   const { data: reviewFiles, isLoading: reviewLoading } = useQuery<TranscriptFile[]>({
     queryKey: ['/api/transcripts/review'],
-    refetchInterval: enableRealTimeUpdates ? 3000 : false, // Poll every 3 seconds
+    refetchInterval: enableRealTimeUpdates ? 15000 : false, // Poll every 15 seconds (reduced from 3)
     refetchIntervalInBackground: false,
   });
 
-  // Fetch clients for assignment
+  // Fetch clients for assignment (no polling needed)
   const { data: clients } = useQuery<Client[]>({
     queryKey: ['/api/clients'],
+    staleTime: 300000, // 5 minutes cache
   });
 
-  // Enhanced stats fetch with real-time updates
-  const { data: enhancedStats, isLoading: enhancedStatsLoading } = useQuery<UploadStats>({
-    queryKey: ['/api/transcripts/stats'],
-    refetchInterval: enableRealTimeUpdates ? 5000 : false, // Poll every 5 seconds
-    refetchIntervalInBackground: false,
-  });
-
-  // Individual file status for expanded batches
+  // Individual file status for expanded batches with optimized caching
   const expandedBatchFiles = useQuery<TranscriptFile[][]>({
     queryKey: ['/api/transcripts/batch-files', Array.from(expandedBatches)],
     queryFn: async () => {
@@ -77,7 +74,8 @@ export default function BulkTranscripts() {
       return await Promise.all(filePromises);
     },
     enabled: expandedBatches.size > 0,
-    refetchInterval: enableRealTimeUpdates ? 3000 : false,
+    refetchInterval: enableRealTimeUpdates ? 30000 : false, // Poll every 30 seconds for expanded batches
+    staleTime: 15000, // 15 seconds cache
   });
 
   // Upload mutation
@@ -339,6 +337,44 @@ export default function BulkTranscripts() {
           </Card>
         </div>
       )}
+
+      {/* Performance Controls */}
+      <Card className="bg-ivory border-sage/20">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="real-time-toggle" className="text-sm font-medium text-moss">
+                Real-time Updates
+              </Label>
+              <p className="text-xs text-moss/70 mt-1">
+                {enableRealTimeUpdates ? "Auto-refreshing data every 10-30 seconds" : "Manual refresh only"}
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                id="real-time-toggle"
+                type="checkbox"
+                checked={enableRealTimeUpdates}
+                onChange={(e) => setEnableRealTimeUpdates(e.target.checked)}
+                className="rounded border-sage/20"
+                data-testid="real-time-toggle"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/transcripts'] });
+                  toast({ title: "Data refreshed", description: "All transcript data has been updated" });
+                }}
+                className="text-sage border-sage/20 hover:bg-sage/10"
+                data-testid="manual-refresh"
+              >
+                Refresh Now
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="upload" className="space-y-6">
