@@ -120,7 +120,46 @@ export class EnhancedDocumentProcessor {
       console.log(`📊 Text quality assessment: ${textQuality.score}/100 (${textQuality.issues.join(', ') || 'no issues'})`);
       
       if (textQuality.score < 15) {
-        console.log('❌ Text extraction completely failed - document appears corrupted');
+        console.log('❌ Text extraction completely failed - attempting filename-based processing');
+        
+        // Try to extract at least client name and date from filename for image/scanned PDFs
+        const filenameClient = this.extractClientNameFromFilename(fileName);
+        const filenameDate = this.extractDateFromFilename(fileName);
+        
+        console.log('📁 Filename extraction results:', { client: filenameClient, date: filenameDate });
+        
+        if (filenameClient && filenameDate && filenameDate.confidence > 80) {
+          console.log('✅ Using filename-based data for scanned/image PDF');
+          return {
+            extractedText: `[SCANNED DOCUMENT - TEXT NOT EXTRACTABLE]\n\nFilename: ${fileName}\nClient: ${filenameClient}\nSession Date: ${filenameDate.date.toISOString().split('T')[0]}\n\nThis appears to be a scanned image or password-protected PDF where text extraction is not possible. Clinical data has been extracted from the filename.`,
+            extractedData: {
+              clientName: filenameClient,
+              sessionDate: filenameDate.date,
+              content: 'Scanned document - manual review required for clinical content',
+              sessionType: 'individual',
+              riskLevel: 'low',
+              clinicalThemes: [],
+              emotions: [],
+              interventions: [],
+              progressRating: 5,
+              nextSteps: ['Manual review required for scanned document content']
+            },
+            validationDetails: {
+              textExtractionScore: 5,
+              aiAnalysisScore: 0,
+              dateValidationScore: filenameDate.confidence,
+              clientMatchScore: filenameClient ? 95 : 0,
+              overallQuality: Math.floor((filenameDate.confidence + (filenameClient ? 95 : 0)) / 2)
+            },
+            processingNotes: `Scanned/image PDF detected. Text extraction failed but filename parsing successful. Client: ${filenameClient} (95% confidence), Date: ${filenameDate.date.toISOString().split('T')[0]} (${filenameDate.confidence}% confidence). Manual content review required.`,
+            alternativeInterpretations: [{
+              type: 'filename_extraction',
+              data: { client: filenameClient, date: filenameDate.date },
+              confidence: Math.floor((filenameDate.confidence + (filenameClient ? 95 : 0)) / 2)
+            }]
+          };
+        }
+        
         throw new Error(`Document processing failed: Unable to extract readable text from this document. This typically happens with:\n• Password-protected or encrypted PDFs\n• Scanned images without OCR text\n• Corrupted or malformed files\n• Documents with non-standard encoding\n\nPlease try:\n• Saving as a text file (.txt) instead\n• Using a different document format\n• Ensuring the document contains selectable text`);
       }
       
