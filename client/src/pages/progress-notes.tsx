@@ -83,9 +83,9 @@ export default function ProgressNotes() {
     }
   });
 
-  const filteredNotes = notes?.filter(note => 
+  const filteredNotes = Array.isArray(notes) ? notes.filter(note => 
     selectedClient === "all" || note.clientId === selectedClient
-  ) || [];
+  ) : [];
 
   // Handlers for note actions
   const handleViewNote = (note: ProgressNoteWithClient) => {
@@ -293,7 +293,7 @@ export default function ProgressNotes() {
                     </p>
 
                     {/* AI Tags */}
-                    {note.aiTags.length > 0 && (
+                    {Array.isArray(note.aiTags) && note.aiTags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3" data-testid={`note-ai-tags-${note.id}`}>
                         {note.aiTags.slice(0, 4).map((tag, index) => {
                           const tagStyles = [
@@ -317,7 +317,7 @@ export default function ProgressNotes() {
                     )}
 
                     {/* Manual Tags */}
-                    {note.tags.length > 0 && (
+                    {Array.isArray(note.tags) && note.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3" data-testid={`note-tags-${note.id}`}>
                         {note.tags.slice(0, 3).map((tag) => (
                           <span 
@@ -418,7 +418,7 @@ export default function ProgressNotes() {
                   </div>
                 </div>
                 
-                {viewNoteDialog.note.aiTags.length > 0 && (
+                {Array.isArray(viewNoteDialog.note.aiTags) && viewNoteDialog.note.aiTags.length > 0 && (
                   <div>
                     <Label className="font-medium">AI Tags:</Label>
                     <div className="flex flex-wrap gap-1 mt-2">
@@ -444,7 +444,7 @@ export default function ProgressNotes() {
                   </div>
                 )}
                 
-                {viewNoteDialog.note.tags.length > 0 && (
+                {Array.isArray(viewNoteDialog.note.tags) && viewNoteDialog.note.tags.length > 0 && (
                   <div>
                     <Label className="font-medium">Manual Tags:</Label>
                     <div className="flex flex-wrap gap-1 mt-2">

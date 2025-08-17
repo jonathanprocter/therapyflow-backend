@@ -3,6 +3,7 @@ import { Route, Switch } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { Toaster } from '@/components/ui/toaster';
+import ErrorBoundary from './components/error-boundary';
 import DocumentsUpload from './pages/DocumentsUpload';
 import CareNotesResults from './pages/CareNotesResults';
 import ClientDetail from './pages/ClientDetail';
@@ -26,12 +27,13 @@ import HomePage from './pages/HomePage';
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen flex" style={{backgroundColor: '#F2F3F1'}}>
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <TopBar />
-          <main className="flex-1 overflow-auto px-6 pt-8 pb-6" style={{backgroundColor: '#F2F3F1', color: '#738A6E'}}>
-            <Switch>
+      <ErrorBoundary>
+        <div className="min-h-screen flex" style={{backgroundColor: '#F2F3F1'}}>
+          <Sidebar />
+          <div className="flex-1 flex flex-col">
+            <TopBar />
+            <main className="flex-1 overflow-auto px-6 pt-8 pb-6" style={{backgroundColor: '#F2F3F1', color: '#738A6E'}}>
+              <Switch>
               <Route path="/dashboard" component={Dashboard} />
               <Route path="/calendar" component={Calendar} />
               <Route path="/client" component={Clients} />
@@ -56,11 +58,12 @@ export default function App() {
                   <p className="text-muted-foreground">The page you requested does not exist.</p>
                 </div>
               </Route>
-            </Switch>
-          </main>
+              </Switch>
+            </main>
+          </div>
         </div>
-      </div>
-      <Toaster />
+        <Toaster />
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

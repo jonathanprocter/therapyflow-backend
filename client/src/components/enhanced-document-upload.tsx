@@ -97,55 +97,59 @@ export default function EnhancedDocumentUpload() {
       const formData = new FormData();
       formData.append('document', file);
       
-      const response = await fetch('/api/documents/upload', {
+      return apiRequest('/api/documents/enhanced-upload', {
         method: 'POST',
         body: formData,
       });
-      
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-      
-      return response.json();
     },
-    onSuccess: (result: EnhancedProcessingResult) => {
-      setProcessingResult(result);
-      setIsProcessing(false);
-      
-      // Update final stage statuses based on results
-      setProcessingStages(prev => prev.map(stage => {
-        const scoreMap = {
-          'Text Extraction': result.validationDetails?.textExtractionScore || 0,
-          'AI Analysis': result.validationDetails?.aiAnalysisScore || 0,
-          'Date Parsing': result.validationDetails?.dateValidationScore || 0,
-          'Client Matching': result.validationDetails?.clientMatchScore || 0,
-          'Validation': result.validationDetails?.overallQuality || 0,
-        };
+    onSuccess: (result: any) => {
+      try {
+        setProcessingResult(result);
+        setIsProcessing(false);
         
-        const score = scoreMap[stage.name as keyof typeof scoreMap];
-        return {
-          ...stage,
-          status: score > 50 ? 'completed' : 'failed' as const,
-          score,
-          details: score > 80 ? 'Excellent' : score > 60 ? 'Good' : score > 40 ? 'Fair' : 'Needs Review'
-        };
-      }));
-      
-      // Show success or warning toast
-      if (result.success) {
-        toast({
-          title: result.needsManualReview ? "Processing Complete - Review Needed" : "Processing Complete",
-          description: `Document processed with ${result.confidence}% confidence. ${result.needsManualReview ? 'Manual review recommended.' : 'Ready for use.'}`,
-          variant: result.needsManualReview ? "default" : "default"
-        });
+        // Update final stage statuses based on results
+        if (result.validationDetails) {
+          setProcessingStages(prev => prev.map(stage => {
+            const scoreMap = {
+              'Text Extraction': result.validationDetails?.textExtractionScore || 0,
+              'AI Analysis': result.validationDetails?.aiAnalysisScore || 0,
+              'Date Parsing': result.validationDetails?.dateValidationScore || 0,
+              'Client Matching': result.validationDetails?.clientMatchScore || 0,
+              'Validation': result.validationDetails?.overallQuality || 0,
+            };
+            
+            const score = scoreMap[stage.name as keyof typeof scoreMap];
+            return {
+              ...stage,
+              status: score > 50 ? 'completed' : 'failed' as const,
+              score,
+              details: score > 80 ? 'Excellent' : score > 60 ? 'Good' : score > 40 ? 'Fair' : 'Needs Review'
+            };
+          }));
+        }
         
-        // Invalidate relevant queries
-        queryClient.invalidateQueries({ queryKey: ['/api/progress-notes'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
-      } else {
+        // Show success or warning toast
+        if (result.success) {
+          toast({
+            title: result.needsManualReview ? "Processing Complete - Review Needed" : "Processing Complete",
+            description: `Document processed with ${result.confidence || 50}% confidence. ${result.needsManualReview ? 'Manual review recommended.' : 'Ready for use.'}`,
+          });
+          
+          // Invalidate relevant queries
+          queryClient.invalidateQueries({ queryKey: ['/api/progress-notes'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+        } else {
+          toast({
+            title: "Processing Failed",
+            description: result.processingNotes || "Document processing failed",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error processing upload result:', error);
         toast({
-          title: "Processing Failed",
-          description: result.processingNotes,
+          title: "Processing Error",
+          description: "An error occurred while processing the upload result",
           variant: "destructive"
         });
       }

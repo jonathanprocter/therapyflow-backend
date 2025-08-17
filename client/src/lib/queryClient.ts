@@ -104,8 +104,15 @@ export const getQueryFn: <T>(options: {
       console.error('Query error for URL:', String(queryKey), error);
       
       // Don't throw for certain expected errors to prevent UI crashes
-      if (error instanceof Error && error.message.includes('401')) {
-        return null;
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('403')) {
+          return null;
+        }
+        // Also handle network errors gracefully
+        if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
+          console.warn('Network error, returning null for graceful handling');
+          return null;
+        }
       }
       
       throw error; // Re-throw to be handled by React Query
