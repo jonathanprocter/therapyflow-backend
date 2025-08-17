@@ -72,7 +72,7 @@ async function processTranscriptBatch(batchId: string, fileBuffers?: { [filename
         file.therapistId
       );
 
-      console.log(`📊 Processing quality: ${processingResult.overallQuality}%`);
+      console.log(`📊 Processing quality: ${processingResult.validationDetails.overallQuality}%`);
 
       // Extract client and date information from the AI analysis
       const clientName = processingResult.extractedData?.clientName || 'Unknown Client';
@@ -81,8 +81,8 @@ async function processTranscriptBatch(batchId: string, fileBuffers?: { [filename
       const riskLevel = processingResult.extractedData?.riskLevel || 'low';
 
       // Calculate confidence based on processing quality and AI confidence
-      const overallQuality = processingResult.overallQuality || 90;
-      const aiConfidence = processingResult.extractedData?.confidence || 0.8;
+      const overallQuality = processingResult.validationDetails.overallQuality || 90;
+      const aiConfidence = processingResult.confidence / 100;
       const clientMatchConfidence = Math.min(
         (overallQuality / 100) * aiConfidence,
         1.0
@@ -94,20 +94,20 @@ async function processTranscriptBatch(batchId: string, fileBuffers?: { [filename
         clientMatchConfidence: clientMatchConfidence,
         extractedSessionDate: sessionDate,
         sessionType: sessionType,
-        themes: processingResult.extractedData?.keyTopics || ['session notes'],
+        themes: processingResult.extractedData?.clinicalThemes || ['session notes'],
         riskLevel: riskLevel,
         processingStatus: 'completed',
         status: clientMatchConfidence > 0.75 ? 'processed' : 'processing',
-        requiresManualReview: clientMatchConfidence <= 0.75 || processingResult.overallQuality < 85,
+        requiresManualReview: clientMatchConfidence <= 0.75 || processingResult.validationDetails.overallQuality < 85,
         manualReviewReason: clientMatchConfidence <= 0.75 ? 
           `Low confidence client match (${Math.round(clientMatchConfidence * 100)}%)` : 
-          processingResult.overallQuality < 85 ? 
-            `Low processing quality (${processingResult.overallQuality}%)` : null
+          processingResult.validationDetails.overallQuality < 85 ? 
+            `Low processing quality (${processingResult.validationDetails.overallQuality}%)` : null
       });
 
       // Create progress note from the processed document
-      if (processingResult.progressNote && processingResult.matchedClient) {
-        console.log(`📝 Creating progress note for client: ${processingResult.matchedClient.name}`);
+      if (processingResult.progressNoteId && processingResult.clientId) {
+        console.log(`📝 Progress note created with ID: ${processingResult.progressNoteId}`);
         
         // The enhanced processor already creates the progress note
         // We just need to make sure it's properly linked to the transcript file

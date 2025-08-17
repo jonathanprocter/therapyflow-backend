@@ -140,12 +140,45 @@ export class EnhancedDocumentProcessor {
         throw new Error(`Document appears corrupted or unreadable. Please ensure the PDF is not damaged and contains readable text. AI detected: ${aiAnalysis.content}`);
       }
       
-      // Stage 4: Advanced Date Parsing
-      let parsedDate = this.parseSessionDateRobustly(aiAnalysis.sessionDate, cleanedText);
+      // Stage 4: Enhanced Date Parsing - prioritize filename extraction
+      const filenameDateResult = this.extractDateFromFilename(fileName);
+      let parsedDate: any;
+      
+      if (filenameDateResult && filenameDateResult.confidence > 90) {
+        console.log(`📁 Date extracted from filename with high confidence: ${filenameDateResult.date}`);
+        parsedDate = filenameDateResult;
+      } else {
+        parsedDate = this.parseSessionDateRobustly(aiAnalysis.sessionDate, cleanedText);
+        
+        // If filename had date but lower confidence, use it as backup
+        if (filenameDateResult && (!parsedDate || parsedDate.confidence < 70)) {
+          console.log(`📁 Using filename date as backup: ${filenameDateResult.date}`);
+          parsedDate = filenameDateResult;
+        }
+      }
+      
       console.log(`📅 Date parsing result: ${parsedDate?.confidence || 0}/100`);
       
-      // Stage 5: Intelligent Client Matching
-      const clientMatch = await this.findClientIntelligently(aiAnalysis.clientName, therapistId);
+      // Stage 5: Enhanced Client Matching - prioritize filename extraction
+      const filenameClientName = this.extractClientNameFromFilename(fileName);
+      let clientNameForMatching = aiAnalysis.clientName;
+      let filenameConfidenceBonus = 0;
+      
+      if (filenameClientName && filenameClientName !== 'Unknown Client') {
+        console.log(`📁 Client name detected in filename: "${filenameClientName}"`);
+        clientNameForMatching = filenameClientName;
+        filenameConfidenceBonus = 25; // Bonus points for filename extraction
+      }
+      
+      const clientMatch = await this.findClientIntelligently(clientNameForMatching, therapistId);
+      
+      // Apply filename confidence bonus
+      if (filenameConfidenceBonus > 0) {
+        clientMatch.confidence = Math.min(100, clientMatch.confidence + filenameConfidenceBonus);
+        clientMatch.method = `filename_${clientMatch.method}`;
+        console.log(`🎯 Filename bonus applied: ${clientMatch.confidence}/100 confidence`);
+      }
+      
       console.log(`👤 Client match score: ${clientMatch.confidence}/100`);
       
       // Stage 6: Session Matching with Fuzzy Logic
@@ -1002,7 +1035,77 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
   }
 
   /**
-   * Manual client name extraction using patterns
+   * Extract client name from filename with high priority patterns
+   */
+  extractClientNameFromFilename(fileName: string): string | null {
+    if (!fileName) return null;
+    
+    // Remove file extension
+    const baseName = fileName.replace(/\.(pdf|docx?|txt|rtf)$/i, '');
+    
+    // High-confidence filename patterns for client names
+    const filenamePatterns = [
+      // "David Grossman Appointment 8-16-2025 1100 hrs" -> "David Grossman"
+      /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:appointment|session|therapy|note|transcript)/i,
+      // "Appointment David Grossman 8-16-2025" -> "David Grossman"
+      /^(?:appointment|session|therapy|note|transcript)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+      // "David Grossman - 8-16-2025" -> "David Grossman"
+      /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*[-_]\s*\d/i,
+      // "8-16-2025 David Grossman" -> "David Grossman"  
+      /^\d+[-\/]\d+[-\/]\d+\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+      // Just client name at start: "David Grossman" (if it looks like a name)
+      /^([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s|$)/,
+    ];
+    
+    for (const pattern of filenamePatterns) {
+      const match = baseName.match(pattern);
+      if (match && match[1]) {
+        const name = match[1].trim();
+        // Validate it looks like a real name (2+ words, proper capitalization)
+        if (this.isValidClientName(name)) {
+          console.log(`📁 Extracted client name from filename: "${name}"`);
+          return name;
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Validate if extracted text looks like a real client name
+   */
+  isValidClientName(name: string): boolean {
+    if (!name) return false;
+    
+    const words = name.trim().split(/\s+/);
+    
+    // Must have at least 2 words (first and last name)
+    if (words.length < 2) return false;
+    
+    // Each word should be properly capitalized and alphabetic
+    return words.every(word => 
+      word.length > 1 && 
+      /^[A-Z][a-z]+$/.test(word) &&
+      !this.isCommonNonNameWord(word)
+    );
+  }
+
+  /**
+   * Check if word is commonly used in non-name contexts
+   */
+  isCommonNonNameWord(word: string): boolean {
+    const nonNameWords = [
+      'Appointment', 'Session', 'Therapy', 'Note', 'Transcript', 
+      'Hours', 'Minutes', 'Date', 'Time', 'Report', 'Document',
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return nonNameWords.includes(word);
+  }
+
+  /**
+   * Manual client name extraction using patterns (fallback)
    */
   extractClientNameManually(text: string): string | null {
     const namePatterns = [
@@ -1015,7 +1118,10 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
     for (const pattern of namePatterns) {
       const match = text.match(pattern);
       if (match && match[1]) {
-        return match[1].trim();
+        const name = match[1].trim();
+        if (this.isValidClientName(name)) {
+          return name;
+        }
       }
     }
     
@@ -1023,31 +1129,67 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
   }
 
   /**
-   * Enhanced date extraction from filename and content
+   * Enhanced date extraction from filename with high confidence scoring
+   */
+  extractDateFromFilename(fileName: string): { date: Date; confidence: number; source: string } | null {
+    if (!fileName) return null;
+    
+    const fileNameDatePatterns = [
+      // "8-16-2025" format (very common in filenames)
+      { pattern: /(\d{1,2}-\d{1,2}-\d{4})/, confidence: 95, name: 'MM-DD-YYYY' },
+      // "8/16/2025" format 
+      { pattern: /(\d{1,2}\/\d{1,2}\/\d{4})/, confidence: 95, name: 'MM/DD/YYYY' },
+      // "2025-08-16" format (ISO)
+      { pattern: /(\d{4}-\d{2}-\d{2})/, confidence: 98, name: 'YYYY-MM-DD' },
+      // "8.16.2025" format
+      { pattern: /(\d{1,2}\.\d{1,2}\.\d{4})/, confidence: 90, name: 'MM.DD.YYYY' },
+      // "Aug 16 2025" or "August 16, 2025"
+      { pattern: /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})/i, confidence: 92, name: 'Month DD YYYY' },
+      // "16-08-2025" (DD-MM-YYYY)
+      { pattern: /(\d{2}-\d{2}-\d{4})/, confidence: 85, name: 'DD-MM-YYYY' },
+    ];
+    
+    for (const { pattern, confidence, name } of fileNameDatePatterns) {
+      const match = fileName.match(pattern);
+      if (match && match[1]) {
+        let parsedDate: Date;
+        
+        // Handle different date formats
+        if (name === 'DD-MM-YYYY' && match[1].includes('-')) {
+          // Convert DD-MM-YYYY to MM-DD-YYYY for parsing
+          const parts = match[1].split('-');
+          if (parts.length === 3) {
+            parsedDate = new Date(`${parts[1]}-${parts[0]}-${parts[2]}`);
+          } else {
+            continue;
+          }
+        } else {
+          parsedDate = new Date(match[1]);
+        }
+        
+        if (isValid(parsedDate)) {
+          console.log(`📅 Date extracted from filename (${name}): ${match[1]} -> ${format(parsedDate, 'yyyy-MM-dd')}`);
+          return {
+            date: parsedDate,
+            confidence,
+            source: `filename_${name}`
+          };
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Enhanced date extraction from filename and content (fallback)
    */
   extractDateManually(text: string, fileName?: string): string | null {
-    // First, try to extract date from filename
+    // First, try the enhanced filename extraction
     if (fileName) {
-      const fileNameDatePatterns = [
-        /(\d{1,2}-\d{1,2}-\d{4})/,
-        /(\d{1,2}\/\d{1,2}\/\d{4})/,
-        /(\d{4}-\d{2}-\d{2})/,
-        /(\d{1,2}\.\d{1,2}\.\d{4})/,
-        // Handle formats like "8-1-2025"
-        /(\d{1,2}-\d{1,2}-\d{4})/,
-        // Handle formats with month names
-        /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})/i,
-      ];
-      
-      for (const pattern of fileNameDatePatterns) {
-        const match = fileName.match(pattern);
-        if (match && match[1]) {
-          const parsedDate = new Date(match[1]);
-          if (isValid(parsedDate)) {
-            console.log(`📅 Date extracted from filename: ${match[1]} -> ${format(parsedDate, 'yyyy-MM-dd')}`);
-            return format(parsedDate, 'yyyy-MM-dd');
-          }
-        }
+      const filenameResult = this.extractDateFromFilename(fileName);
+      if (filenameResult) {
+        return format(filenameResult.date, 'yyyy-MM-dd');
       }
     }
 
@@ -1327,10 +1469,19 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
       
       const bestMatch = matches[0];
       
+      if (bestMatch && bestMatch.similarity > 0.95) {
+        return {
+          id: bestMatch.id,
+          confidence: 100, // Perfect match gets 100%
+          name: bestMatch.name,
+          method: 'perfect_match'
+        };
+      }
+      
       if (bestMatch && bestMatch.similarity > 0.8) {
         return {
           id: bestMatch.id,
-          confidence: Math.round(bestMatch.similarity * 100),
+          confidence: Math.max(95, Math.round(bestMatch.similarity * 100)), // High confidence match
           name: bestMatch.name,
           method: 'exact_match'
         };
@@ -1345,11 +1496,11 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
         };
       }
       
-      // Create new client
+      // Create new client with high confidence if from filename
       const newClientId = await this.createNewClient(extractedName, therapistId);
       return {
         id: newClientId,
-        confidence: 70,
+        confidence: 85, // Higher confidence for new client creation
         name: extractedName,
         method: 'new_client_created'
       };
