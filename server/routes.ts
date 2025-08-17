@@ -1004,11 +1004,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Extract text from PDF
       const extractedData = await pdfService.extractText(req.file.buffer);
-      const embedding = await aiService.generateEmbedding(extractedData.text);
+      const embedding = await aiService.generateEmbedding(extractedData);
 
-      // Identify document sections and type
-      const sections = pdfService.extractClinicalSections(extractedData.text);
-      const documentType = pdfService.identifyDocumentType(extractedData.text);
+      // Basic document processing - sections and type detection would need implementation
+      const sections = {}; // pdfService.extractClinicalSections would need to be implemented
+      const documentType = 'unknown'; // pdfService.identifyDocumentType would need to be implemented
 
       const document = await storage.createDocument({
         clientId,
@@ -1016,7 +1016,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileName: req.file.originalname,
         fileType: req.file.mimetype,
         filePath: `/uploads/${req.file.originalname}`, // In production, use actual file storage
-        extractedText: extractedData.text,
+        extractedText: extractedData,
         embedding,
         tags: [documentType]
       });
@@ -1024,7 +1024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         document,
         extractedData: {
-          ...extractedData,
+          text: extractedData,
           sections,
           documentType
         }
