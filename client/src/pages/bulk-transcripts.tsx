@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { FileText, Upload, Users, Clock, CheckCircle, AlertCircle, Eye, ChevronDown, ChevronUp, Activity, Zap, TrendingUp, Timer } from 'lucide-react';
 import type { TranscriptBatch, TranscriptFile, Client } from '@shared/schema';
 import { formatEDTDate, formatEDTDateTime } from '@/utils/timezone';
+import '../styles/bulk-transcripts-fix.css';
 
 interface UploadStats {
   totalBatches: number;
@@ -275,7 +276,7 @@ export default function BulkTranscripts() {
 
 
   return (
-    <div className="space-y-8" data-testid="bulk-transcripts-page">
+    <div className="bulk-transcripts-page space-y-8" data-testid="bulk-transcripts-page">
       {/* Header */}
       <div>
         <h1 className="text-4xl font-bold tracking-tight text-evergreen">

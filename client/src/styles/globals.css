@@ -234,16 +234,16 @@
 .text-orange-500, .text-orange-600 { color: var(--color-moss) !important; }
 
 /* COMPREHENSIVE WILDCARD OVERRIDES - Catch any remaining yellow/amber/orange */
-[class*="bg-yellow"], [class*="bg-amber"], [class*="bg-orange"] {
+[class*="bg-yellow"]:not(.bulk-transcripts-page *), [class*="bg-amber"]:not(.bulk-transcripts-page *), [class*="bg-orange"]:not(.bulk-transcripts-page *) {
   background-color: var(--color-ivory) !important;
   border-color: rgba(115, 138, 110, 0.2) !important;
 }
 
-[class*="text-yellow"], [class*="text-amber"], [class*="text-orange"] {
+[class*="text-yellow"]:not(.bulk-transcripts-page *), [class*="text-amber"]:not(.bulk-transcripts-page *), [class*="text-orange"]:not(.bulk-transcripts-page *) {
   color: var(--color-evergreen) !important;
 }
 
-[class*="border-yellow"], [class*="border-amber"], [class*="border-orange"] {
+[class*="border-yellow"]:not(.bulk-transcripts-page *), [class*="border-amber"]:not(.bulk-transcripts-page *), [class*="border-orange"]:not(.bulk-transcripts-page *) {
   border-color: var(--color-sage) !important;
 }
 
@@ -263,14 +263,14 @@
   border-color: var(--color-french-blue) !important;
 }
 
-/* Button comprehensive overrides */
-.btn-primary, button[class*="yellow"], button[class*="amber"], button[class*="orange"] {
+/* Button comprehensive overrides - exclude bulk transcripts page */
+.btn-primary:not(.bulk-transcripts-page *), button[class*="yellow"]:not(.bulk-transcripts-page *), button[class*="amber"]:not(.bulk-transcripts-page *), button[class*="orange"]:not(.bulk-transcripts-page *) {
   background-color: var(--color-sage) !important;
   color: white !important;
   border: none !important;
 }
 
-.btn-primary:hover, button[class*="yellow"]:hover, button[class*="amber"]:hover {
+.btn-primary:hover:not(.bulk-transcripts-page *), button[class*="yellow"]:hover:not(.bulk-transcripts-page *), button[class*="amber"]:hover:not(.bulk-transcripts-page *) {
   background-color: var(--color-moss) !important;
 }
 
