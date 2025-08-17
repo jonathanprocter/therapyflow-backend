@@ -19,7 +19,7 @@ interface SessionCardProps {
 }
 
 // Avatar component with proper theming
-export function Avatar({ name, initials, size = 'md' }) {
+export function Avatar({ name, initials, size = 'md' }: { name: string; initials: string; size?: 'sm' | 'md' | 'lg' }) {
   const sizeClasses = {
     sm: 'w-8 h-8 text-xs',
     md: 'w-10 h-10 text-sm',
@@ -30,7 +30,7 @@ export function Avatar({ name, initials, size = 'md' }) {
     <div
       className={cn(
         "flex items-center justify-center rounded-lg bg-sage text-white font-semibold",
-        sizeClasses[size]
+        sizeClasses[size as keyof typeof sizeClasses]
       )}
       title={name}
     >

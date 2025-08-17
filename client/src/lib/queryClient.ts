@@ -33,27 +33,42 @@ export async function apiRequest(
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(url, {
-    ...options,
-    method,
-    headers,
-    credentials: "include",
-  });
+  // Create AbortController for timeout handling
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+  
+  try {
+    const res = await fetch(url, {
+      ...options,
+      method,
+      headers,
+      credentials: "include",
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
 
-  await throwIfResNotOk(res);
-  
-  // For DELETE requests that return JSON, parse it
-  if (method === 'DELETE' && res.headers.get('content-type')?.includes('application/json')) {
-    return res.json();
+    await throwIfResNotOk(res);
+    
+    // For DELETE requests that return JSON, parse it
+    if (method === 'DELETE' && res.headers.get('content-type')?.includes('application/json')) {
+      return res.json();
+    }
+    
+    // For other requests, try to parse JSON if available
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return res.json();
+    }
+    
+    return res;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timeout: The server took too long to respond');
+    }
+    throw error;
   }
-  
-  // For other requests, try to parse JSON if available
-  const contentType = res.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    return res.json();
-  }
-  
-  return res;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

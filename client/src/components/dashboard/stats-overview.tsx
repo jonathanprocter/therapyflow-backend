@@ -55,7 +55,7 @@ export default function StatsOverview() {
 
   // Real-time EDT timezone information  
   const currentTimeEDT = getCurrentTimeEDT();
-  const timeDisplay = formatToEDT(currentTimeEDT, 'h:mm a EEEE, MMMM do, yyyy');
+  const timeDisplay = formatToEDT(new Date(), 'h:mm a EEEE, MMMM do, yyyy');
 
   if (isLoading) {
     return (
