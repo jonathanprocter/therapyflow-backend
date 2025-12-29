@@ -120,7 +120,8 @@
     "ws": "^8.18.0",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0",
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.25.0",
+    "drizzle-kit": "^0.31.4"
   },
   "devDependencies": {
     "@replit/vite-plugin-cartographer": "^0.2.8",
@@ -140,7 +141,6 @@
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.2.0",
-    "drizzle-kit": "^0.31.4",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.20.4",
