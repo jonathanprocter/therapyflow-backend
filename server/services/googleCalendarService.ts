@@ -7,10 +7,8 @@ export class GoogleCalendarService {
   private calendar: any;
 
   constructor() {
-    // Always use Replit domain for consistency
-    const redirectUri = process.env.REPLIT_DOMAINS 
-      ? `https://${process.env.REPLIT_DOMAINS}/api/calendar/callback`
-      : 'http://localhost:5000/api/calendar/callback';
+    // Support multiple deployment environments
+    const redirectUri = this.getRedirectUri();
       
     console.log('Using OAuth2 redirect URI:', redirectUri);
       
@@ -38,12 +36,30 @@ export class GoogleCalendarService {
     this.calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
   }
 
+  /**
+   * Get the appropriate redirect URI based on the deployment environment
+   */
+  private getRedirectUri(): string {
+    // Render.com deployment
+    if (process.env.RENDER_EXTERNAL_URL) {
+      return `${process.env.RENDER_EXTERNAL_URL}/api/calendar/callback`;
+    }
+    
+    // Replit deployment
+    if (process.env.REPLIT_DOMAINS) {
+      return `https://${process.env.REPLIT_DOMAINS}/api/calendar/callback`;
+    }
+    
+    // Local development
+    return 'http://localhost:5000/api/calendar/callback';
+  }
+
   async getAuthUrl(): Promise<string> {
     try {
       console.log('Google OAuth2 Configuration Check:');
       console.log('- Client ID:', process.env.GOOGLE_CLIENT_ID ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...` : 'MISSING');
       console.log('- Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'Present' : 'MISSING');
-      console.log('- Redirect URI:', 'configured');
+      console.log('- Redirect URI:', this.getRedirectUri());
       
       if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
         throw new Error('Missing Google OAuth credentials. Please check your Secrets configuration.');
@@ -91,6 +107,22 @@ export class GoogleCalendarService {
     } catch (error) {
       console.error('Error exchanging authorization code:', error);
       console.error('Error details:', error instanceof Error ? error.message : String(error));
+      // Provide more specific error messages for common issues
+      if (error instanceof Error) {
+        if (error.message.includes('redirect_uri_mismatch')) {
+          throw new Error(
+            `OAuth redirect URI mismatch. Expected: ${this.getRedirectUri()}. ` +
+            `Please ensure this URI is added to your Google Cloud Console OAuth credentials.`
+          );
+        }
+        if (error.message.includes('invalid_grant')) {
+          throw new Error(
+            'Invalid authorization code. The code may have expired or already been used. ' +
+            'Please restart the OAuth flow.'
+          );
+        }
+      }
+      
       throw new Error(`Failed to exchange authorization code: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
