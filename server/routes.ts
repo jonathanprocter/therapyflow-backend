@@ -97,6 +97,32 @@ interface AuthenticatedRequest extends Request {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Seed endpoint to ensure therapist user exists (called before auth middleware)
+  app.post("/api/seed-therapist", async (_req, res) => {
+    try {
+      const existingUser = await storage.getUser("dr-jonathan-procter");
+      if (existingUser) {
+        res.json({ message: "Therapist already exists", user: existingUser });
+        return;
+      }
+
+      // Use raw insert to set specific ID
+      const { users } = await import("@shared/schema");
+      const [user] = await db.insert(users).values({
+        id: "dr-jonathan-procter",
+        username: "dr-jonathan-procter",
+        password: "demo-mode-no-login",
+        name: "Dr. Jonathan Procter",
+        email: "dr.jonathan.procter@therapyflow.com",
+        role: "therapist"
+      }).returning();
+      res.json({ message: "Therapist created", user });
+    } catch (error) {
+      console.error("Error seeding therapist:", error);
+      res.status(500).json({ error: "Failed to seed therapist" });
+    }
+  });
+
   // Mock authentication middleware - Dr. Jonathan Procter
   // TODO: Replace with real authentication (session-based or JWT)
   const requireAuth = (req: Request, _res: Response, next: NextFunction) => {
