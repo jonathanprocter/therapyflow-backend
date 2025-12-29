@@ -36,6 +36,50 @@ import { getAppSetting, setAppSetting } from "./utils/appSettings";
 import { buildRetentionReport, applyRetention } from "./services/retentionService";
 import { reconcileCalendar } from "./services/calendarReconciliation";
 
+// Helper function to convert session to snake_case for iOS compatibility
+function toSnakeCaseSession(session: any): any {
+  if (!session) return session;
+  return {
+    id: session.id,
+    client_id: session.clientId,
+    therapist_id: session.therapistId,
+    scheduled_at: session.scheduledAt,
+    duration: session.duration,
+    session_type: session.sessionType,
+    status: session.status,
+    google_event_id: session.googleEventId,
+    notes: session.notes,
+    has_progress_note_placeholder: session.hasProgressNotePlaceholder,
+    progress_note_status: session.progressNoteStatus,
+    is_simple_practice_event: session.isSimplePracticeEvent,
+    created_at: session.createdAt,
+    updated_at: session.updatedAt,
+    client: session.client ? toSnakeCaseClient(session.client) : undefined,
+  };
+}
+
+// Helper function to convert client to snake_case for iOS compatibility
+function toSnakeCaseClient(client: any): any {
+  if (!client) return client;
+  return {
+    id: client.id,
+    therapist_id: client.therapistId,
+    name: client.name,
+    email: client.email,
+    phone: client.phone,
+    date_of_birth: client.dateOfBirth,
+    diagnosis: client.diagnosis,
+    risk_level: client.riskLevel,
+    status: client.status,
+    intake_date: client.intakeDate,
+    emergency_contact: client.emergencyContact,
+    insurance_info: client.insuranceInfo,
+    notes: client.notes,
+    created_at: client.createdAt,
+    updated_at: client.updatedAt,
+  };
+}
+
 // Helper function to safely decrypt content (handles non-encrypted legacy data)
 function safeDecrypt(content: string): string | null {
   if (!content) return null;
@@ -436,7 +480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sessionsWithClients = await Promise.all(
           sessions.map(async (session) => {
             const client = await storage.getClient(session.clientId);
-            return { ...session, client };
+            return toSnakeCaseSession({ ...session, client });
           })
         );
         res.json(sessionsWithClients);
@@ -446,7 +490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sessionsWithClients = await Promise.all(
           sessions.map(async (session) => {
             const client = await storage.getClient(session.clientId);
-            return { ...session, client };
+            return toSnakeCaseSession({ ...session, client });
           })
         );
         res.json(sessionsWithClients);
@@ -457,13 +501,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sessionsWithClients = await Promise.all(
           sessions.map(async (session) => {
             const client = await storage.getClient(session.clientId);
-            return { ...session, client };
+            return toSnakeCaseSession({ ...session, client });
           })
         );
         res.json(sessionsWithClients);
       } else if (clientId) {
         const sessions = await storage.getSessions(clientId);
-        res.json(sessions);
+        res.json(sessions.map(toSnakeCaseSession));
       } else {
         // Return all upcoming and recent sessions for the therapist if no specific filter
         const sessions = await storage.getUpcomingSessions(req.therapistId, new Date('2010-01-01'));
@@ -471,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sessionsWithClients = await Promise.all(
           sessions.map(async (session) => {
             const client = await storage.getClient(session.clientId);
-            return { ...session, client };
+            return toSnakeCaseSession({ ...session, client });
           })
         );
         res.json(sessionsWithClients);
@@ -510,7 +554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json(session);
+      res.json(toSnakeCaseSession(session));
     } catch (error) {
       console.error("Error creating session:", error);
       res.status(400).json({ error: "Failed to create session" });
@@ -527,7 +571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Fetch client data for the session
       const client = await storage.getClient(session.clientId);
-      res.json({ ...session, client });
+      res.json(toSnakeCaseSession({ ...session, client }));
     } catch (error) {
       console.error("Error fetching session:", error);
       res.status(500).json({ error: "Failed to fetch session" });
@@ -538,7 +582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const sessionData = insertSessionSchema.partial().parse(req.body);
       const session = await storage.updateSession(req.params.id, sessionData);
-      res.json(session);
+      res.json(toSnakeCaseSession(session));
     } catch (error) {
       console.error("Error updating session:", error);
       res.status(400).json({ error: "Failed to update session" });
@@ -705,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionsWithClients = await Promise.all(
         sessions.map(async (session) => {
           const client = await storage.getClient(session.clientId);
-          return { ...session, client };
+          return toSnakeCaseSession({ ...session, client });
         })
       );
 
@@ -725,7 +769,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionsWithClients = await Promise.all(
         sessions.map(async (session) => {
           const client = await storage.getClient(session.clientId);
-          return { ...session, client };
+          return toSnakeCaseSession({ ...session, client });
         })
       );
 
