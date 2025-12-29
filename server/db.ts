@@ -9,9 +9,18 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// Render PostgreSQL requires SSL in production
+// The DATABASE_URL may already include ?sslmode=require
+const sslConfig = process.env.NODE_ENV === 'production'
+  ? { rejectUnauthorized: false }
+  : false;
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: sslConfig,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: 10
 });
 
 export const db = drizzle(pool, { schema });
