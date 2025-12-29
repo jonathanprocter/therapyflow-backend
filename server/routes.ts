@@ -112,7 +112,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/stats", async (req: any, res) => {
     try {
       const stats = await storage.getTherapistStats(req.therapistId);
-      res.json(stats);
+      // Transform to snake_case for iOS compatibility
+      res.json({
+        active_clients: stats.activeClients,
+        weekly_schedule: stats.weeklySchedule,
+        total_notes: stats.totalNotes,
+        ai_insights: stats.aiInsights,
+      });
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       res.status(500).json({ error: "Failed to fetch dashboard stats" });
