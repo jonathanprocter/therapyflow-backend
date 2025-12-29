@@ -354,9 +354,25 @@ export class AIService {
   }
 
   private cosineSimilarity(vecA: number[], vecB: number[]): number {
+    // Guard against invalid inputs
+    if (!vecA || !vecB || vecA.length === 0 || vecB.length === 0) {
+      return 0;
+    }
+    // Ensure vectors are the same length
+    if (vecA.length !== vecB.length) {
+      console.warn(`[AI] Vector length mismatch: ${vecA.length} vs ${vecB.length}`);
+      return 0;
+    }
+
     const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
     const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
     const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+
+    // Guard against division by zero
+    if (normA === 0 || normB === 0) {
+      return 0;
+    }
+
     return dotProduct / (normA * normB);
   }
 }

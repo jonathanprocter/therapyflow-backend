@@ -1,17 +1,21 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { integrateTherapeuticFeatures } from "./integrate-therapeutic";
 import { documentsRouter } from "./routes/documents.js";
-import { aiRouter } from "./routes/ai.js"; 
+import { aiRouter } from "./routes/ai.js";
 import { semanticRouter } from "./routes/semantic.js";
 import { knowledgeGraphRoutes } from "./routes/knowledge-graph-routes-fixed.js";
 import { storage } from "./storage.js";
-// const db = storage.db;
 import { sql, eq } from "drizzle-orm";
+
+// Import middleware
+import { standardRateLimit, aiProcessingRateLimit } from './middleware/rateLimit';
 
 // Import services
 import { pdfService, getPdfServiceStatus } from './services/pdfService';
+import { reconcileCalendar } from './services/calendarReconciliation';
 
 // Global error handlers for unhandled promises and exceptions
 process.on('unhandledRejection', (reason, promise) => {
@@ -43,27 +47,28 @@ process.on('uncaughtException', (error) => {
 });
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Security: Limit request body size to prevent DoS attacks
+// 10MB for JSON (allows large document content)
+// 50MB for URL-encoded (allows file uploads)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+
+// Apply standard rate limiting to all API endpoints
+app.use('/api', standardRateLimit);
+
+// Apply stricter rate limiting to AI/document processing endpoints
+app.use('/api/ai', aiProcessingRateLimit);
+app.use('/api/documents/process', aiProcessingRateLimit);
+app.use('/api/documents/analyze', aiProcessingRateLimit);
 
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
 
       if (logLine.length > 80) {
         logLine = logLine.slice(0, 79) + "…";
@@ -148,8 +153,13 @@ app.get("/api/health/deep", async (req, res) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    // Log the error for debugging
+    console.error(`[ERROR] ${status}: ${message}`, err.stack || err);
+
+    // Only send response if headers haven't been sent
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
   });
 
   // importantly only setup vite in development and after
@@ -178,6 +188,23 @@ app.get("/api/health/deep", async (req, res) => {
     log(`   POST /api/therapeutic/recall/:clientId`);
     log(`   GET  /api/therapeutic/insights/:clientId`);
     log(`   GET  /api/therapeutic/tags/:clientId`);
+    const shouldReconcile = process.env.ENABLE_CALENDAR_RECONCILIATION !== "false";
+    if (shouldReconcile) {
+      const runReconcile = async () => {
+        try {
+          const therapistId = "dr-jonathan-procter";
+          const start = new Date();
+          start.setMonth(start.getMonth() - 1);
+          const end = new Date();
+          end.setMonth(end.getMonth() + 2);
+          await reconcileCalendar(therapistId, start, end);
+        } catch (error) {
+          console.warn("Scheduled calendar reconciliation failed:", error);
+        }
+      };
+      setTimeout(runReconcile, 60 * 1000);
+      setInterval(runReconcile, 7 * 24 * 60 * 60 * 1000);
+    }
   }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
       console.error(`❌ Port ${port} is already in use. Please stop other processes or restart the Repl.`);

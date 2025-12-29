@@ -315,6 +315,74 @@ export class GoogleCalendarService {
     }
   }
 
+  private async ensureAuthenticated() {
+    const currentCredentials = this.oauth2Client.credentials;
+    if (!currentCredentials.access_token && !currentCredentials.refresh_token) {
+      const refreshToken = process.env.GOOGLE_REFRESH_TOKEN_NEW || process.env.GOOGLE_REFRESH_TOKEN;
+      if (!refreshToken) {
+        throw new Error('No authentication available. Please authenticate with Google Calendar first.');
+      }
+      this.oauth2Client.setCredentials({ refresh_token: refreshToken });
+    }
+
+    if (!this.oauth2Client.credentials.access_token) {
+      const { credentials } = await this.oauth2Client.refreshAccessToken();
+      this.oauth2Client.setCredentials(credentials);
+    }
+  }
+
+  async listEventsInRange(startDate: Date, endDate: Date): Promise<any[]> {
+    await this.ensureAuthenticated();
+
+    const events: any[] = [];
+    let pageToken: string | undefined;
+
+    try {
+      const calendars = await this.getCalendarList();
+      for (const calendar of calendars) {
+        let calendarPageToken: string | undefined;
+        do {
+          const response = await this.calendar.events.list({
+            calendarId: calendar.id,
+            timeMin: startDate.toISOString(),
+            timeMax: endDate.toISOString(),
+            singleEvents: true,
+            orderBy: 'startTime',
+            maxResults: 2500,
+            pageToken: calendarPageToken,
+            showDeleted: false,
+          });
+
+          const items = response.data.items || [];
+          const annotated = items.map((event: any) => ({
+            ...event,
+            sourceCalendarId: calendar.id,
+            sourceCalendarName: calendar.summary,
+          }));
+          events.push(...annotated);
+          calendarPageToken = response.data.nextPageToken;
+        } while (calendarPageToken);
+      }
+    } catch (error) {
+      // Fallback to primary calendar only
+      do {
+        const response = await this.calendar.events.list({
+          calendarId: 'primary',
+          timeMin: startDate.toISOString(),
+          timeMax: endDate.toISOString(),
+          singleEvents: true,
+          orderBy: 'startTime',
+          maxResults: 2500,
+          pageToken: pageToken,
+        });
+        events.push(...(response.data.items || []));
+        pageToken = response.data.nextPageToken;
+      } while (pageToken);
+    }
+
+    return events;
+  }
+
   private createDateChunks(startDate: string, endDate: string, chunkType: 'yearly' | 'monthly'): Array<{ start: string; end: string }> {
     const chunks: Array<{ start: string; end: string }> = [];
     const start = new Date(startDate);

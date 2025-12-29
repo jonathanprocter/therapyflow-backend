@@ -2,6 +2,7 @@ import { db } from '../db';
 import { clients, progressNotes, aiInsights, sessions, type InsertClient } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { ClinicalEncryption } from './encryption';
+import { calculateNoteQuality } from './noteQuality';
 
 /**
  * Safe transaction wrapper for clinical operations
@@ -51,6 +52,7 @@ export class ClinicalTransactions {
 
         // 2. Encrypt sensitive content
         const encryptedContent = ClinicalEncryption.encrypt(noteData.content);
+        const quality = calculateNoteQuality(noteData.content);
 
         // 3. Insert progress note
         const [progressNote] = await tx
@@ -65,6 +67,8 @@ export class ClinicalTransactions {
             aiTags: noteData.aiTags || [],
             riskLevel: noteData.riskLevel || 'low',
             progressRating: noteData.progressRating,
+            qualityScore: quality.score,
+            qualityFlags: quality.flags,
             status: 'completed',
             isPlaceholder: false,
             createdAt: new Date(),

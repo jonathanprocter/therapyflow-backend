@@ -37,6 +37,8 @@ export const clients = pgTable("clients", {
   emergencyContact: jsonb("emergency_contact"), // {name, phone, relationship}
   insurance: jsonb("insurance"), // {provider, policyNumber, groupNumber}
   tags: text("tags").array().default([]),
+  clinicalConsiderations: text("clinical_considerations").array().default([]),
+  preferredModalities: text("preferred_modalities").array().default([]),
   status: text("status").notNull().default("active"), // active, inactive, discharged
   deletedAt: timestamp("deleted_at"), // Track when client was soft-deleted
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -74,6 +76,8 @@ export const progressNotes = pgTable("progress_notes", {
   embedding: real("embedding").array(), // for semantic search
   riskLevel: text("risk_level").default("low"), // low, moderate, high, critical
   progressRating: integer("progress_rating"), // 1-10 scale
+  qualityScore: real("quality_score"),
+  qualityFlags: jsonb("quality_flags"),
   status: text("status").notNull().default("placeholder"), // placeholder, uploaded, processed, manual_review, completed
   isPlaceholder: boolean("is_placeholder").default(true),
   requiresManualReview: boolean("requires_manual_review").default(false),
@@ -162,6 +166,77 @@ export const aiInsights = pgTable("ai_insights", {
   priority: text("priority").notNull().default("medium"), // low, medium, high, urgent
   isRead: boolean("is_read").default(false),
   metadata: jsonb("metadata"), // Additional context data
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Application Settings (e.g., sync cursors/last sync time)
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Audit Logs
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()::text`),
+  userId: varchar("user_id").notNull(),
+  action: text("action").notNull(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: text("resource_id"),
+  clientId: varchar("client_id"),
+  ipAddress: text("ip_address").notNull(),
+  userAgent: text("user_agent"),
+  sessionId: text("session_id"),
+  details: jsonb("details"),
+  riskLevel: text("risk_level").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// AI Session Prep
+export const sessionPreps = pgTable("session_preps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()::text`),
+  sessionId: varchar("session_id").notNull().references(() => sessions.id),
+  clientId: varchar("client_id").notNull().references(() => clients.id),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  prep: jsonb("prep").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Job Runs (Async processing history)
+export const jobRuns = pgTable("job_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  therapistId: varchar("therapist_id").references(() => users.id),
+  type: text("type").notNull(),
+  status: text("status").notNull(),
+  payload: jsonb("payload"),
+  result: jsonb("result"),
+  error: text("error"),
+  retries: integer("retries").default(0),
+  maxRetries: integer("max_retries").default(2),
+  isDead: boolean("is_dead").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Document Text Versions (raw OCR + parsed text)
+export const documentTextVersions = pgTable("document_text_versions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: varchar("document_id").notNull().references(() => documents.id),
+  version: integer("version").notNull(),
+  rawText: text("raw_text"),
+  cleanedText: text("cleaned_text"),
+  method: text("method"),
+  qualityScore: integer("quality_score"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Longitudinal Tracking Records
+export const longitudinalRecords = pgTable("longitudinal_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").notNull().references(() => clients.id),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  record: jsonb("record").notNull(),
+  analysis: jsonb("analysis").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -265,8 +340,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   allianceScores: many(allianceScores),
   documents: many(documents),
   aiInsights: many(aiInsights),
+  longitudinalRecords: many(longitudinalRecords),
   transcriptBatches: many(transcriptBatches),
   transcriptFiles: many(transcriptFiles),
+  jobRuns: many(jobRuns),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -281,6 +358,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   allianceScores: many(allianceScores),
   documents: many(documents),
   aiInsights: many(aiInsights),
+  longitudinalRecords: many(longitudinalRecords),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one, many }) => ({
@@ -365,21 +443,30 @@ export const transcriptFilesRelations = relations(transcriptFiles, ({ one }) => 
   }),
 }));
 
-// Audit Logs for HIPAA Compliance
-export const auditLogs = pgTable("audit_logs", {
-  id: varchar("id").primaryKey().$defaultFn(() => nanoid()),
-  userId: varchar("user_id").notNull(),
-  action: varchar("action", { length: 50 }).notNull(),
-  resourceType: varchar("resource_type", { length: 20 }).notNull(),
-  resourceId: varchar("resource_id"),
-  clientId: varchar("client_id"),
-  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
-  userAgent: text("user_agent"),
-  sessionId: varchar("session_id"),
-  details: json("details"),
-  riskLevel: varchar("risk_level", { length: 10 }).notNull(),
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
-});
+export const jobRunsRelations = relations(jobRuns, ({ one }) => ({
+  therapist: one(users, {
+    fields: [jobRuns.therapistId],
+    references: [users.id],
+  }),
+}));
+
+export const documentTextVersionsRelations = relations(documentTextVersions, ({ one }) => ({
+  document: one(documents, {
+    fields: [documentTextVersions.documentId],
+    references: [documents.id],
+  }),
+}));
+
+export const longitudinalRecordsRelations = relations(longitudinalRecords, ({ one }) => ({
+  client: one(clients, {
+    fields: [longitudinalRecords.clientId],
+    references: [clients.id],
+  }),
+  therapist: one(users, {
+    fields: [longitudinalRecords.therapistId],
+    references: [users.id],
+  }),
+}));
 
 // Note Embeddings for Semantic Search
 export const noteEmbeddings = pgTable("note_embeddings", {
@@ -451,6 +538,22 @@ export const insertTranscriptFileSchema = createInsertSchema(transcriptFiles).om
   uploadedAt: true,
 });
 
+export const insertLongitudinalRecordSchema = createInsertSchema(longitudinalRecords).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertJobRunSchema = createInsertSchema(jobRuns).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDocumentTextVersionSchema = createInsertSchema(documentTextVersions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -484,3 +587,12 @@ export type TranscriptBatch = typeof transcriptBatches.$inferSelect;
 
 export type InsertTranscriptFile = z.infer<typeof insertTranscriptFileSchema>;
 export type TranscriptFile = typeof transcriptFiles.$inferSelect;
+
+export type InsertLongitudinalRecord = z.infer<typeof insertLongitudinalRecordSchema>;
+export type LongitudinalRecord = typeof longitudinalRecords.$inferSelect;
+
+export type InsertJobRun = z.infer<typeof insertJobRunSchema>;
+export type JobRun = typeof jobRuns.$inferSelect;
+
+export type InsertDocumentTextVersion = z.infer<typeof insertDocumentTextVersionSchema>;
+export type DocumentTextVersion = typeof documentTextVersions.$inferSelect;

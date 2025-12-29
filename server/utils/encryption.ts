@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 // IMPORTANT: Set this in your environment variables
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || (() => {
@@ -7,35 +7,53 @@ const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || (() => {
   return crypto.randomBytes(32).toString('hex');
 })();
 
-const ALGORITHM = 'aes-256-cbc';
+const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
+
+// Derive a proper 32-byte key from the hex key string
+const getKeyBuffer = (): Buffer => {
+  // If the key is already 64 hex chars (32 bytes), use it directly
+  if (/^[0-9a-fA-F]{64}$/.test(ENCRYPTION_KEY)) {
+    return Buffer.from(ENCRYPTION_KEY, 'hex');
+  }
+  // Otherwise, derive a key using SHA-256
+  return crypto.createHash('sha256').update(ENCRYPTION_KEY).digest();
+};
 
 /**
  * Clinical Data Encryption Utilities
  * Use these for all sensitive PHI data (notes, client info, etc.)
+ * Uses AES-256-GCM for authenticated encryption
  */
 export class ClinicalEncryption {
   /**
-   * Encrypt sensitive clinical data
+   * Encrypt sensitive clinical data using AES-256-GCM
+   * Format: iv:authTag:encryptedData (all hex encoded)
    */
   static encrypt(text: string): string {
     if (!text) return text;
 
     try {
-      // Simple encryption for development - in production use stronger methods
-      const cipher = crypto.createCipher('aes192', ENCRYPTION_KEY);
+      const iv = crypto.randomBytes(IV_LENGTH);
+      const key = getKeyBuffer();
+      const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+
       let encrypted = cipher.update(text, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      return encrypted;
+
+      const authTag = cipher.getAuthTag().toString('hex');
+
+      // Format: iv:authTag:encryptedData
+      return `${iv.toString('hex')}:${authTag}:${encrypted}`;
     } catch (error) {
       console.error('[ENCRYPTION] Failed to encrypt clinical data:', error);
-      return text; // Return original text if encryption fails
+      throw new Error('Encryption failed - data not saved');
     }
   }
 
   /**
-   * Decrypt sensitive clinical data
+   * Decrypt sensitive clinical data using AES-256-GCM
    */
   static decrypt(encryptedData: string): string {
     if (!encryptedData) {
@@ -43,15 +61,42 @@ export class ClinicalEncryption {
     }
 
     try {
-      // Check if it looks like encrypted data (hex string)
-      if (/^[0-9a-f]+$/.test(encryptedData) && encryptedData.length > 32) {
-        const decipher = crypto.createDecipher('aes192', ENCRYPTION_KEY);
-        let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
-        decrypted += decipher.final('utf8');
-        return decrypted;
+      // Check if it's in our new format (iv:authTag:data)
+      if (encryptedData.includes(':')) {
+        const parts = encryptedData.split(':');
+        if (parts.length === 3) {
+          const [ivHex, authTagHex, encrypted] = parts;
+          const iv = Buffer.from(ivHex, 'hex');
+          const authTag = Buffer.from(authTagHex, 'hex');
+          const key = getKeyBuffer();
+
+          const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+          decipher.setAuthTag(authTag);
+
+          let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+          decrypted += decipher.final('utf8');
+          return decrypted;
+        }
       }
-      
-      // Return as-is if not encrypted (legacy data)
+
+      // Check if it's legacy encrypted data (plain hex string)
+      if (/^[0-9a-fA-F]+$/.test(encryptedData) && encryptedData.length > 32) {
+        // Attempt legacy decryption with deprecation warning
+        console.warn('[ENCRYPTION] Attempting legacy decryption - consider re-encrypting data');
+        try {
+          // Use scrypt to derive key for legacy compatibility
+          const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 24);
+          const decipher = crypto.createDecipheriv('aes-192-cbc', key, Buffer.alloc(16, 0));
+          let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+          decrypted += decipher.final('utf8');
+          return decrypted;
+        } catch {
+          // If legacy decryption fails, return as-is (might be unencrypted)
+          return encryptedData;
+        }
+      }
+
+      // Return as-is if not encrypted (legacy unencrypted data)
       return encryptedData;
     } catch (error) {
       console.error('[ENCRYPTION] Failed to decrypt clinical data:', error);

@@ -25,9 +25,12 @@ try {
 function hasPdfParse(): boolean {
   return typeof (globalThis as any).__PDF_PARSE__ === 'function';
 }
+import fs from 'fs';
+import path from 'path';
 import mammoth from 'mammoth';
 import { stripHtml } from 'string-strip-html';
 import { storage } from '../storage';
+import { checkRiskEscalation } from './riskMonitor';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { format, isValid, parse } from 'date-fns';
@@ -52,6 +55,8 @@ export interface RobustProcessingResult {
   confidence: number;
   processingNotes: string;
   needsManualReview: boolean;
+  rawText?: string;
+  cleanedText?: string;
   extractedData: {
     clientName?: string;
     sessionDate?: Date;
@@ -75,6 +80,7 @@ export interface RobustProcessingResult {
 }
 
 export interface ExtractedClinicalData {
+  documentType?: 'raw_content' | 'progress_note';
   clientName: string;
   sessionDate: string;
   sessionType: string;
@@ -102,7 +108,8 @@ export class EnhancedDocumentProcessor {
   async processDocument(
     file: Buffer,
     fileName: string,
-    therapistId: string
+    therapistId: string,
+    documentId?: string
   ): Promise<RobustProcessingResult> {
     console.log(`🔄 Starting enhanced processing for: ${fileName}`);
     
@@ -114,10 +121,28 @@ export class EnhancedDocumentProcessor {
       // Stage 2: Text Preprocessing and Cleaning
       const cleanedText = this.preprocessText(extractionResult.text);
       console.log(`🧹 Text preprocessed, length: ${cleanedText.length} chars`);
+      const rawText = extractionResult.rawText ?? extractionResult.text;
       
       // Stage 2.5: Text Quality Validation
       const textQuality = this.assessTextQuality(cleanedText);
       console.log(`📊 Text quality assessment: ${textQuality.score}/100 (${textQuality.issues.join(', ') || 'no issues'})`);
+
+      if (documentId) {
+        try {
+          const existingVersions = await storage.getDocumentTextVersions(documentId);
+          const nextVersion = existingVersions.length > 0 ? existingVersions[0].version + 1 : 1;
+          await storage.createDocumentTextVersion({
+            documentId,
+            version: nextVersion,
+            rawText,
+            cleanedText,
+            method: extractionResult.method,
+            qualityScore: Math.round(extractionResult.quality),
+          });
+        } catch (error) {
+          console.warn("Failed to record document text version:", error);
+        }
+      }
       
       if (textQuality.score < 15) {
         console.log('❌ Text extraction completely failed - attempting filename-based processing');
@@ -131,6 +156,8 @@ export class EnhancedDocumentProcessor {
         if (filenameClient && filenameDate && filenameDate.confidence > 80) {
           console.log('✅ Using filename-based data for scanned/image PDF');
           return {
+            rawText: '',
+            cleanedText: '',
             extractedText: `[SCANNED DOCUMENT - TEXT NOT EXTRACTABLE]\n\nFilename: ${fileName}\nClient: ${filenameClient}\nSession Date: ${filenameDate.date.toISOString().split('T')[0]}\n\nThis appears to be a scanned image or password-protected PDF where text extraction is not possible. Clinical data has been extracted from the filename.`,
             extractedData: {
               clientName: filenameClient,
@@ -291,13 +318,18 @@ export class EnhancedDocumentProcessor {
       const needsManualReview = this.shouldRequireManualReview(validation, aiAnalysis);
       
       // Stage 9: Create Progress Note
+      const noteContent = aiAnalysis.documentType === 'progress_note'
+        ? extractionResult.text
+        : (aiAnalysis.content || extractionResult.text);
+
       const progressNote = await this.createEnhancedProgressNote(
         clientMatch.id,
         sessionMatch?.id,
         aiAnalysis,
         parsedDate?.date,
         therapistId,
-        needsManualReview
+        needsManualReview,
+        noteContent
       );
       
       // Stage 10: Document Storage
@@ -308,7 +340,8 @@ export class EnhancedDocumentProcessor {
         therapistId,
         extractionResult.text,
         progressNote.id,
-        aiAnalysis
+        aiAnalysis,
+        documentId
       );
       
       return {
@@ -321,6 +354,8 @@ export class EnhancedDocumentProcessor {
           extractionResult, aiAnalysis, parsedDate, clientMatch, validation
         ),
         needsManualReview,
+        rawText,
+        cleanedText,
         extractedData: {
           clientName: aiAnalysis.clientName,
           sessionDate: parsedDate?.date,
@@ -344,6 +379,8 @@ export class EnhancedDocumentProcessor {
         confidence: 0,
         processingNotes: `Enhanced processing failed: ${error?.message || 'Unknown error'}. Please ensure the document contains readable text and try again.`,
         needsManualReview: true,
+        rawText: '',
+        cleanedText: '',
         extractedData: { content: '' },
         validationDetails: {
           textExtractionScore: 0,
@@ -361,6 +398,7 @@ export class EnhancedDocumentProcessor {
    */
   async extractTextRobustly(file: Buffer, fileName: string): Promise<{
     text: string;
+    rawText?: string;
     quality: number;
     method: string;
     metadata?: any;
@@ -380,6 +418,7 @@ export class EnhancedDocumentProcessor {
       case 'text':
         return {
           text: file.toString('utf-8'),
+          rawText: file.toString('utf-8'),
           quality: 95,
           method: 'direct_text',
           metadata: { encoding: 'utf-8' }
@@ -395,6 +434,7 @@ export class EnhancedDocumentProcessor {
    */
   async extractFromPDFRobustly(file: Buffer): Promise<{
     text: string;
+    rawText?: string;
     quality: number;
     method: string;
     metadata?: any;
@@ -405,11 +445,13 @@ export class EnhancedDocumentProcessor {
     if (hasPdfParse()) {
       try {
         const data = await (globalThis as any).__PDF_PARSE__(file);
-        const cleaned = this.postProcessText(data.text || '');
+        const rawText = data.text || '';
+        const cleaned = this.postProcessText(rawText);
         if (this.isLikelyRealText(cleaned)) {
           console.log('✅ PDF extraction successful via pdf-parse');
           return {
             text: cleaned,
+            rawText,
             quality: 90,
             method: 'pdf-parse',
             metadata: {
@@ -434,6 +476,7 @@ export class EnhancedDocumentProcessor {
       console.log('✅ Fallback extraction successful');
       return {
         text: fallbackText,
+        rawText: fallbackText,
         quality: 65,
         method: 'fallback_robust'
       };
@@ -442,6 +485,7 @@ export class EnhancedDocumentProcessor {
     console.log('❌ All extraction methods failed');
     return {
       text: '',
+      rawText: '',
       quality: 0,
       method: 'failed'
     };
@@ -1670,7 +1714,7 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
     if (!sessionDate) return null;
     
     try {
-      const sessions = await storage.getSessions(therapistId);
+      const sessions = await storage.getSessions(clientId);
       
       // Find sessions on exact date
       const exactMatches = sessions.filter(session => {
@@ -2107,22 +2151,49 @@ Return the same JSON structure but with enhanced clinical content and higher con
     aiAnalysis: ExtractedClinicalData,
     sessionDate: Date | undefined,
     therapistId: string,
-    needsManualReview: boolean
+    needsManualReview: boolean,
+    noteContent: string
   ): Promise<{ id: string }> {
     const progressNote = await storage.createProgressNote({
       clientId,
       sessionId: sessionId || null,
       therapistId,
       sessionDate: sessionDate || new Date(),
-      content: aiAnalysis.content,
+      content: noteContent,
       tags: [...(aiAnalysis.themes || []), ...(aiAnalysis.emotions || [])],
       riskLevel: aiAnalysis.riskLevel,
       progressRating: this.validateProgressRating(aiAnalysis.progressRating),
       processingNotes: aiAnalysis.clinicalNotes,
+      status: needsManualReview ? 'manual_review' : 'processed',
+      isPlaceholder: false,
+      requiresManualReview: needsManualReview,
+      aiConfidenceScore: aiAnalysis.confidence ? aiAnalysis.confidence / 100 : undefined,
       // needsReview: needsManualReview, // Remove if not in schema
       // aiGenerated: true, // Remove if not in schema
       // metadata removed - not in schema
     });
+
+    try {
+      const riskCheck = await checkRiskEscalation(clientId);
+      if (riskCheck?.isEscalating) {
+        await storage.createAiInsight({
+          clientId,
+          therapistId,
+          type: "risk_alert",
+          title: "Risk escalation detected",
+          description: `Recent notes show ${riskCheck.latestRiskLevel} risk with an elevated trend. Review required.`,
+          priority: "high",
+          metadata: {
+            latestRiskLevel: riskCheck.latestRiskLevel,
+            averageRiskScore: riskCheck.averageRiskScore,
+            threshold: riskCheck.threshold,
+            source: "riskMonitor",
+          },
+        });
+      }
+    } catch (error) {
+      console.warn("Risk monitoring failed:", error);
+    }
     
     return progressNote;
   }
@@ -2196,29 +2267,48 @@ Return the same JSON structure but with enhanced clinical content and higher con
     therapistId: string,
     extractedText: string,
     progressNoteId: string,
-    aiAnalysis: ExtractedClinicalData
+    aiAnalysis: ExtractedClinicalData,
+    documentId?: string
   ): Promise<void> {
     // Clean the extracted text before saving
     const cleanedText = this.cleanTextForDatabase(extractedText);
     
-    await storage.createDocument({
+    const uploadDir = path.resolve(process.cwd(), "uploads");
+    await fs.promises.mkdir(uploadDir, { recursive: true });
+
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const storedName = `${Date.now()}-${Math.random().toString(16).slice(2)}-${safeName}`;
+    const storedPath = path.join(uploadDir, storedName);
+    await fs.promises.writeFile(storedPath, file);
+
+    const docPayload = {
       clientId,
       therapistId,
       fileName: fileName,
       fileType: fileName.split('.').pop() || 'unknown',
-      filePath: `/uploads/${fileName}`, // Add required filePath
+      filePath: `/uploads/${storedName}`,
       extractedText: cleanedText,
       fileSize: file.length,
       metadata: {
         aiAnalysis: {
+          documentType: aiAnalysis.documentType,
           themes: aiAnalysis.themes,
           emotions: aiAnalysis.emotions,
           riskLevel: aiAnalysis.riskLevel,
           confidence: aiAnalysis.confidence
         },
-        processingDate: new Date().toISOString()
+        processingDate: new Date().toISOString(),
+        originalName: fileName,
+        storedName
       }
-    });
+    };
+
+    if (documentId) {
+      await storage.updateDocument(documentId, docPayload);
+      return;
+    }
+
+    await storage.createDocument(docPayload);
   }
 
   /**

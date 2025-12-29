@@ -307,6 +307,15 @@ Return your analysis in JSON format with both the extracted data and the compreh
         };
       }
       
+      const progressNoteContent =
+        parsedAnalysis.progressNote ||
+        parsedAnalysis.progress_note ||
+        parsedAnalysis.progressNoteContent ||
+        parsedAnalysis.content ||
+        text;
+
+      parsedAnalysis.content = progressNoteContent;
+
       console.log('AI Analysis Result:', parsedAnalysis);
       return parsedAnalysis;
       

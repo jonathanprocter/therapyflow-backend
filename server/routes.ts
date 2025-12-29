@@ -1,7 +1,7 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { clients } from "@shared/schema";
+import { clients, sessions, progressNotes, documents, sessionPreps, longitudinalRecords, treatmentPlans, allianceScores } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { aiService } from "./services/aiService";
@@ -11,6 +11,12 @@ import { documentProcessor } from "./services/documentProcessor";
 import { enhancedDocumentProcessor } from "./services/enhanced-document-processor";
 import { googleCalendarService } from "./services/googleCalendarService";
 import { sessionSummaryGenerator } from "./services/session-summary-generator";
+import { getJob, listJobs, retryJob } from "./services/jobQueue";
+import { bulkImportProgressNotes } from "./services/bulkNoteImport";
+import { generateSessionPrep } from "./services/sessionPrepGenerator";
+import { generateLongitudinalTracking, formatLongitudinalContext } from "./services/longitudinalTracking";
+import { checkRiskEscalation } from "./services/riskMonitor";
+import { buildGoalSignals } from "./services/goalSignals";
 import { 
   insertClientSchema, 
   insertSessionSchema, 
@@ -26,14 +32,18 @@ import { verifyClientOwnership, SecureClientQueries } from "./middleware/clientA
 import { ClinicalTransactions } from "./utils/transactions";
 import { encryptClientData, decryptClientData, ClinicalEncryption } from "./utils/encryption";
 import { ClinicalAuditLogger, AuditAction } from "./utils/auditLogger";
+import { getAppSetting, setAppSetting } from "./utils/appSettings";
+import { buildRetentionReport, applyRetention } from "./services/retentionService";
+import { reconcileCalendar } from "./services/calendarReconciliation";
 
 // Helper function to safely decrypt content (handles non-encrypted legacy data)
 function safeDecrypt(content: string): string | null {
   if (!content) return null;
-  
+
   try {
-    // Check if content looks encrypted (base64 with specific format)
-    if (content.includes(':') && content.length > 50) {
+    // Check if content looks encrypted (new format with colons or legacy hex)
+    if ((content.includes(':') && content.length > 50) ||
+        (/^[0-9a-fA-F]+$/.test(content) && content.length > 32)) {
       return ClinicalEncryption.decrypt(content);
     }
     // Return as-is if not encrypted (legacy data)
@@ -44,14 +54,55 @@ function safeDecrypt(content: string): string | null {
   }
 }
 
+function extractSection(content: string, label: string): string {
+  const regex = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n\\*\\*|\\n[A-Z]{2,}:|$)`, "i");
+  const match = content.match(regex);
+  return match ? match[1].trim() : "";
+}
+
+function parseSoapSections(content?: string | null) {
+  if (!content) {
+    return { subjective: "", objective: "", assessment: "", plan: "" };
+  }
+  const normalized = content.replace(/\r/g, "\n");
+  return {
+    subjective: extractSection(normalized, "\\*\\*Subjective\\*\\*|Subjective|S"),
+    objective: extractSection(normalized, "\\*\\*Objective\\*\\*|Objective|O"),
+    assessment: extractSection(normalized, "\\*\\*Assessment\\*\\*|Assessment|A"),
+    plan: extractSection(normalized, "\\*\\*Plan\\*\\*|Plan|P"),
+  };
+}
+
+function safeDecryptJson(value: any) {
+  if (!value) return value;
+  try {
+    if (typeof value === "string") {
+      return JSON.parse(ClinicalEncryption.decrypt(value));
+    }
+    if (typeof value === "object" && value.encrypted && typeof value.value === "string") {
+      return JSON.parse(ClinicalEncryption.decrypt(value.value));
+    }
+  } catch (error) {
+    console.warn("[DECRYPTION] Failed to decrypt JSON payload:", error);
+  }
+  return value;
+}
+
 const upload = multer({ storage: multer.memoryStorage() });
+
+// Extend Express Request type for therapist authentication
+interface AuthenticatedRequest extends Request {
+  therapistId: string;
+  therapistName: string;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Mock authentication middleware - Dr. Jonathan Procter
-  const requireAuth = (req: any, res: any, next: any) => {
+  // TODO: Replace with real authentication (session-based or JWT)
+  const requireAuth = (req: Request, _res: Response, next: NextFunction) => {
     // Dr. Jonathan Procter as the authenticated therapist
-    req.therapistId = "dr-jonathan-procter";
-    req.therapistName = "Dr. Jonathan Procter";
+    (req as AuthenticatedRequest).therapistId = "dr-jonathan-procter";
+    (req as AuthenticatedRequest).therapistName = "Dr. Jonathan Procter";
     next();
   };
 
@@ -158,6 +209,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to delete client", 
         details: error instanceof Error ? error.message : "Unknown error" 
       });
+    }
+  });
+
+  app.get("/api/clients/:clientId/export", verifyClientOwnership, async (req: any, res) => {
+    try {
+      const clientId = req.params.clientId;
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      const [sessionsData, notesData, docsData, planData, allianceData, prepData, longitudinalData] = await Promise.all([
+        db.select().from(sessions).where(eq(sessions.clientId, clientId)),
+        db.select().from(progressNotes).where(eq(progressNotes.clientId, clientId)),
+        db.select().from(documents).where(eq(documents.clientId, clientId)),
+        db.select().from(treatmentPlans).where(eq(treatmentPlans.clientId, clientId)),
+        db.select().from(allianceScores).where(eq(allianceScores.clientId, clientId)),
+        db.select().from(sessionPreps).where(eq(sessionPreps.clientId, clientId)),
+        db.select().from(longitudinalRecords).where(eq(longitudinalRecords.clientId, clientId)),
+      ]);
+
+      const exportPayload = {
+        client,
+        sessions: sessionsData,
+        progressNotes: notesData.map((note) => ({
+          ...note,
+          content: note.content ? safeDecrypt(note.content) : null,
+        })),
+        documents: docsData,
+        treatmentPlans: planData,
+        allianceScores: allianceData,
+        sessionPreps: prepData.map((prep) => ({
+          ...prep,
+          prep: safeDecryptJson(prep.prep),
+        })),
+        longitudinalRecords: longitudinalData.map((record) => ({
+          ...record,
+          record: safeDecryptJson(record.record),
+          analysis: safeDecryptJson(record.analysis),
+        })),
+        exportedAt: new Date().toISOString(),
+      };
+
+      await ClinicalAuditLogger.logPHIAccess(
+        req.therapistId,
+        AuditAction.DATA_EXPORT,
+        clientId,
+        req,
+        { exportSize: JSON.stringify(exportPayload).length }
+      );
+
+      res.json(exportPayload);
+    } catch (error) {
+      console.error("Error exporting client data:", error);
+      res.status(500).json({ error: "Failed to export client data" });
+    }
+  });
+
+  app.get("/api/settings/retention", async (req: any, res) => {
+    try {
+      const settings = await getAppSetting("data_retention");
+      res.json(settings || { enabled: false, retentionDays: 365 });
+    } catch (error) {
+      console.error("Error fetching retention settings:", error);
+      res.status(500).json({ error: "Failed to fetch retention settings" });
+    }
+  });
+
+  app.put("/api/settings/retention", async (req: any, res) => {
+    try {
+      const { enabled, retentionDays } = req.body || {};
+      const updated = {
+        enabled: Boolean(enabled),
+        retentionDays: Number(retentionDays || 365),
+      };
+      await setAppSetting("data_retention", updated);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating retention settings:", error);
+      res.status(500).json({ error: "Failed to update retention settings" });
+    }
+  });
+
+  app.get("/api/settings/risk-thresholds", async (req: any, res) => {
+    try {
+      const settings = await getAppSetting("risk_thresholds");
+      res.json(settings || { alertAt: "high", trendWindow: 3 });
+    } catch (error) {
+      console.error("Error fetching risk thresholds:", error);
+      res.status(500).json({ error: "Failed to fetch risk thresholds" });
+    }
+  });
+
+  app.put("/api/settings/risk-thresholds", async (req: any, res) => {
+    try {
+      const { alertAt, trendWindow } = req.body || {};
+      const updated = {
+        alertAt: alertAt || "high",
+        trendWindow: Number(trendWindow || 3),
+      };
+      await setAppSetting("risk_thresholds", updated);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating risk thresholds:", error);
+      res.status(500).json({ error: "Failed to update risk thresholds" });
+    }
+  });
+
+  app.get("/api/settings/retention/report", async (req: any, res) => {
+    try {
+      const retentionDays = Number(req.query.retentionDays || 365);
+      const report = await buildRetentionReport(retentionDays);
+      res.json(report);
+    } catch (error) {
+      console.error("Error generating retention report:", error);
+      res.status(500).json({ error: "Failed to generate retention report" });
+    }
+  });
+
+  app.post("/api/settings/retention/apply", async (req: any, res) => {
+    try {
+      const { retentionDays } = req.body || {};
+      const result = await applyRetention(Number(retentionDays || 365));
+      res.json(result);
+    } catch (error) {
+      console.error("Error applying retention policy:", error);
+      res.status(500).json({ error: "Failed to apply retention policy" });
+    }
+  });
+
+  app.post("/api/clients/:clientId/longitudinal/generate", verifyClientOwnership, async (req: any, res) => {
+    try {
+      const clientId = req.params.clientId;
+      const record = await generateLongitudinalTracking(clientId, req.therapistId);
+      await ClinicalAuditLogger.logAIActivity(
+        req.therapistId,
+        AuditAction.AI_ANALYSIS,
+        { clientId },
+        req
+      );
+      res.json(record);
+    } catch (error) {
+      console.error("Error generating longitudinal analysis:", error);
+      res.status(500).json({ error: "Failed to generate longitudinal analysis" });
+    }
+  });
+
+  app.get("/api/clients/:clientId/longitudinal/latest", verifyClientOwnership, async (req: any, res) => {
+    try {
+      const clientId = req.params.clientId;
+      const record = await storage.getLatestLongitudinalRecord(clientId);
+      if (!record) {
+        return res.status(404).json({ error: "No longitudinal analysis found" });
+      }
+      res.json(record);
+    } catch (error) {
+      console.error("Error fetching latest longitudinal analysis:", error);
+      res.status(500).json({ error: "Failed to fetch longitudinal analysis" });
+    }
+  });
+
+  app.get("/api/clients/:clientId/longitudinal/history", verifyClientOwnership, async (req: any, res) => {
+    try {
+      const clientId = req.params.clientId;
+      const limit = Number(req.query.limit || 10);
+      const history = await storage.getLongitudinalHistory(clientId, limit);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching longitudinal analysis history:", error);
+      res.status(500).json({ error: "Failed to fetch longitudinal analysis history" });
+    }
+  });
+
+  app.get("/api/clients/:clientId/goal-signals", verifyClientOwnership, async (req: any, res) => {
+    try {
+      const clientId = req.params.clientId;
+      const signals = await buildGoalSignals(clientId);
+      res.json({ signals });
+    } catch (error) {
+      console.error("Error fetching goal signals:", error);
+      res.status(500).json({ error: "Failed to fetch goal signals" });
     }
   });
 
@@ -331,6 +563,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/sessions/:id/prep-ai", async (req: any, res) => {
+    try {
+      const sessionId = req.params.id;
+      const session = await storage.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      const client = await storage.getClient(session.clientId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      const treatmentPlan = await storage.getTreatmentPlan(client.id);
+      const notes = await storage.getProgressNotes(client.id);
+      const recentNotes = notes.slice(0, 5).map((note, idx) => {
+        const decrypted = safeDecrypt(note.content || "") || "";
+        const soap = parseSoapSections(decrypted);
+        return {
+          sessionDate: new Date(note.sessionDate).toISOString().split("T")[0],
+          sessionNumber: idx + 1,
+          subjective: soap.subjective,
+          objective: soap.objective,
+          assessment: soap.assessment,
+          plan: soap.plan,
+          themes: note.tags || [],
+          tonalAnalysis: "",
+          significantQuotes: [],
+          keywords: note.aiTags || [],
+          riskLevel: (note.riskLevel || "none") as any,
+          riskNotes: note.processingNotes || "",
+          homeworkAssigned: [],
+          interventionsUsed: note.aiTags || [],
+          followUpItems: [],
+        };
+      });
+
+      const longitudinalRecord = await storage.getLatestLongitudinalRecord(client.id);
+      const longitudinalContext = longitudinalRecord?.analysis
+        ? formatLongitudinalContext(longitudinalRecord.analysis)
+        : null;
+
+      const prep = await generateSessionPrep({
+        client: {
+          firstName: client.name.split(" ")[0],
+          treatmentStartDate: client.createdAt ? new Date(client.createdAt).toISOString().split("T")[0] : null,
+          primaryDiagnosis: treatmentPlan?.diagnosis || null,
+          secondaryDiagnoses: [],
+          treatmentGoals: (treatmentPlan?.goals as any)?.map((goal: any) => goal.description || String(goal)) || [],
+          preferredModalities: (client as any).preferredModalities || [],
+          clinicalConsiderations: (client as any).clinicalConsiderations || [],
+          medications: [],
+        },
+        previousNotes: recentNotes,
+        upcomingSessionDate: new Date(session.scheduledAt).toISOString().split("T")[0],
+        includePatternAnalysis: true,
+        longitudinalContext,
+      });
+
+      await ClinicalAuditLogger.logAIActivity(
+        req.therapistId,
+        AuditAction.AI_ANALYSIS,
+        { clientId: client.id, confidence: prep?.clinical_flags?.risk_level ? 0.8 : undefined },
+        req
+      );
+
+      const savedPrep = await storage.createSessionPrep(session.id, client.id, session.therapistId, prep);
+      res.json({ success: true, prep, prepId: savedPrep.id });
+    } catch (error) {
+      console.error("Error generating AI session prep:", error);
+      res.status(500).json({ error: "Failed to generate AI session prep" });
+    }
+  });
+
+  app.get("/api/sessions/:id/prep-ai/latest", async (req: any, res) => {
+    try {
+      const sessionId = req.params.id;
+      const prep = await storage.getLatestSessionPrep(sessionId);
+      if (!prep) {
+        return res.status(404).json({ error: "No session prep found" });
+      }
+      res.json(prep);
+    } catch (error) {
+      console.error("Error fetching latest AI session prep:", error);
+      res.status(500).json({ error: "Failed to fetch session prep" });
+    }
+  });
+
+  app.get("/api/sessions/:id/prep-ai/history", async (req: any, res) => {
+    try {
+      const sessionId = req.params.id;
+      const limit = Number(req.query.limit || 10);
+      const history = await storage.getSessionPrepHistory(sessionId, limit);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching session prep history:", error);
+      res.status(500).json({ error: "Failed to fetch session prep history" });
+    }
+  });
+
   // Historical session management endpoints
   app.get("/api/sessions/historical", async (req: any, res) => {
     try {
@@ -451,6 +783,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/progress-notes/bulk-paste", async (req: any, res) => {
+    try {
+      const { clientId, rawText, dryRun, createPlaceholdersForMissing, dateToleranceDays, includeIndices } = req.body;
+      if (!clientId || !rawText) {
+        return res.status(400).json({ error: "clientId and rawText are required" });
+      }
+
+      const therapistId = req.therapistId;
+      const result = await bulkImportProgressNotes(clientId, therapistId, rawText, {
+        dryRun: !!dryRun,
+        createPlaceholdersForMissing: !!createPlaceholdersForMissing,
+        dateToleranceDays: typeof dateToleranceDays === "number" ? dateToleranceDays : 0,
+        includeIndices: Array.isArray(includeIndices) ? includeIndices.map((value: any) => Number(value)) : undefined
+      });
+      await ClinicalAuditLogger.logPHIAccess(
+        req.therapistId,
+        AuditAction.DATA_IMPORT,
+        clientId,
+        req,
+        {
+          dryRun: !!dryRun,
+          createdNotes: result.createdNotes?.length || 0,
+          missingSessions: result.missingSessions?.length || 0,
+        }
+      );
+      res.json({ success: true, ...result });
+    } catch (error) {
+      console.error("Error importing bulk progress notes:", error);
+      res.status(500).json({ error: "Failed to import progress notes" });
+    }
+  });
+
   app.post("/api/progress-notes", async (req: any, res) => {
     try {
       const noteData = insertProgressNoteSchema.parse({
@@ -464,9 +828,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      // Generate AI tags and embedding if content exists
+      // Generate AI tags if content exists (embedding generated inside transaction if needed)
       const aiTags = noteData.content ? await aiService.generateClinicalTags(noteData.content) : [];
-      const embedding = noteData.content ? await aiService.generateEmbedding(noteData.content) : [];
 
       // Use secure transaction for creating progress note
       const result = await ClinicalTransactions.createProgressNoteWithAnalysis(
@@ -494,6 +857,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: result.progressNote.content ? safeDecrypt(result.progressNote.content) : null
       };
 
+      try {
+        const riskCheck = await checkRiskEscalation(noteData.clientId);
+        if (riskCheck?.isEscalating) {
+          await storage.createAiInsight({
+            clientId: noteData.clientId,
+            therapistId: req.therapistId,
+            type: "risk_alert",
+            title: "Risk escalation detected",
+            description: `Recent notes show ${riskCheck.latestRiskLevel} risk with an elevated trend. Review required.`,
+            priority: "high",
+            metadata: {
+              latestRiskLevel: riskCheck.latestRiskLevel,
+              averageRiskScore: riskCheck.averageRiskScore,
+              threshold: riskCheck.threshold,
+              source: "riskMonitor",
+            },
+          });
+        }
+      } catch (riskError) {
+        console.warn("Risk monitoring failed:", riskError);
+      }
+
       res.json(decryptedNote);
     } catch (error) {
       console.error("Error creating progress note:", error);
@@ -512,7 +897,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes.map(async (note) => {
           const client = await storage.getClient(note.clientId);
           const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
-          return { ...note, client, session };
+          return { 
+            ...note, 
+            client, 
+            session,
+            content: note.content ? safeDecrypt(note.content) : null
+          };
         })
       );
       res.json(notesWithClients);
@@ -529,7 +919,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         placeholders.map(async (note) => {
           const client = await storage.getClient(note.clientId);
           const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
-          return { ...note, client, session };
+          return { 
+            ...note, 
+            client, 
+            session,
+            content: note.content ? safeDecrypt(note.content) : null
+          };
         })
       );
       res.json(placeholdersWithClients);
@@ -575,6 +970,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating progress note placeholders:", error);
       res.status(500).json({ error: "Failed to create placeholders" });
+    }
+  });
+
+  app.post("/api/progress-notes/create-placeholders-range", async (req: any, res) => {
+    try {
+      const { startDate, endDate } = req.body || {};
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: "startDate and endDate are required" });
+      }
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const sessionsInRange = await storage.getSessionsInDateRange(req.therapistId, start, end);
+      const notesInRange = await storage.getProgressNotesInDateRange(req.therapistId, start, end);
+      const notesBySession = new Set(notesInRange.map((note) => note.sessionId).filter(Boolean));
+
+      let placeholdersCreated = 0;
+      for (const session of sessionsInRange) {
+        if (!notesBySession.has(session.id)) {
+          await storage.createProgressNotePlaceholder(
+            session.id,
+            session.clientId,
+            req.therapistId,
+            session.scheduledAt
+          );
+          placeholdersCreated += 1;
+          await storage.updateSession(session.id, {
+            hasProgressNotePlaceholder: true,
+            progressNoteStatus: 'placeholder'
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        placeholdersCreated,
+        message: `Created ${placeholdersCreated} progress note placeholders in date range`
+      });
+    } catch (error) {
+      console.error("Error creating range placeholders:", error);
+      res.status(500).json({ error: "Failed to create placeholders in date range" });
     }
   });
 
@@ -890,6 +1326,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/ai/progress-note-draft', async (req: any, res) => {
+    try {
+      const { clientId, sessionId } = req.body;
+      if (!clientId) {
+        return res.status(400).json({ error: "clientId is required" });
+      }
+
+      const session = sessionId ? await storage.getSession(sessionId) : null;
+      const progressNotes = await storage.getProgressNotes(clientId);
+      const latestNote = progressNotes.find(note => note.content);
+      const decryptedNote = latestNote?.content ? safeDecrypt(latestNote.content) : null;
+
+      let sourceText = decryptedNote || "";
+      let source = decryptedNote ? "progress_note" : "none";
+
+      if (!sourceText) {
+        const documents = await storage.getDocuments(clientId);
+        const latestDoc = documents.find(doc => doc.extractedText);
+        if (latestDoc?.extractedText) {
+          sourceText = latestDoc.extractedText;
+          source = "document";
+        }
+      }
+
+      if (!sourceText) {
+        return res.json({
+          success: true,
+          source: "none",
+          draft: { subjective: "", objective: "", assessment: "", plan: "" }
+        });
+      }
+
+      const prompt = `
+You are an expert clinical therapist. Use the source material to draft a progress note in JSON with four sections.
+
+Return JSON only:
+{
+  "subjective": "string",
+  "objective": "string",
+  "assessment": "string",
+  "plan": "string"
+}
+
+Context:
+- Client ID: ${clientId}
+- Session Date: ${session?.scheduledAt ? session.scheduledAt.toISOString().split('T')[0] : "unknown"}
+- Session Type: ${session?.sessionType || "unknown"}
+
+Source material (${source}):
+${sourceText}
+`;
+
+      const aiResponse = await aiService.processTherapyDocument(sourceText, prompt);
+      let parsed: any = null;
+      try {
+        parsed = JSON.parse(aiResponse);
+      } catch (error) {
+        parsed = null;
+      }
+
+      const draft = {
+        subjective: parsed?.subjective || "",
+        objective: parsed?.objective || "",
+        assessment: parsed?.assessment || "",
+        plan: parsed?.plan || ""
+      };
+
+      res.json({ success: true, source, draft });
+    } catch (error) {
+      console.error("Error generating progress note draft:", error);
+      res.status(500).json({ error: "Failed to generate progress note draft" });
+    }
+  });
+
   // Quick interventions endpoint
   app.get('/api/ai/quick-interventions', async (req: any, res) => {
     try {
@@ -987,51 +1497,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         error: error?.message || "Failed to export session summary" 
       });
-    }
-  });
-
-  // Document upload endpoint
-  app.post("/api/documents/upload", upload.single('document'), async (req: any, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
-
-      const { clientId } = req.body;
-      if (!clientId) {
-        return res.status(400).json({ error: "Client ID is required" });
-      }
-
-      // Extract text from PDF
-      const extractedData = await pdfService.extractText(req.file.buffer);
-      const embedding = await aiService.generateEmbedding(extractedData);
-
-      // Basic document processing - sections and type detection would need implementation
-      const sections = {}; // pdfService.extractClinicalSections would need to be implemented
-      const documentType = 'unknown'; // pdfService.identifyDocumentType would need to be implemented
-
-      const document = await storage.createDocument({
-        clientId,
-        therapistId: req.therapistId,
-        fileName: req.file.originalname,
-        fileType: req.file.mimetype,
-        filePath: `/uploads/${req.file.originalname}`, // In production, use actual file storage
-        extractedText: extractedData,
-        embedding,
-        tags: [documentType]
-      });
-
-      res.json({
-        document,
-        extractedData: {
-          text: extractedData,
-          sections,
-          documentType
-        }
-      });
-    } catch (error) {
-      console.error("Error uploading document:", error);
-      res.status(500).json({ error: "Failed to upload document" });
     }
   });
 
@@ -1230,13 +1695,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/calendar/sync", async (req: any, res) => {
     try {
-      const { startDate = '2010-01-01', endDate = '2035-12-31' } = req.body;
+      const { startDate, endDate } = req.body;
+      const lastSync = await getAppSetting<{ value?: string; lastSyncAt?: string }>("calendar_last_sync");
+      const lastSyncDate = lastSync?.lastSyncAt;
+      const fallbackStart = lastSyncDate ? lastSyncDate : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const effectiveStartDate = startDate || fallbackStart;
+      const effectiveEndDate = endDate || new Date().toISOString().split('T')[0];
 
       // Sync calendar events from Google Calendar (2015-2030 range)
       const syncedSessions = await googleCalendarService.syncCalendarEvents(
         req.therapistId,
-        startDate,
-        endDate
+        effectiveStartDate,
+        effectiveEndDate
       );
 
       // Save the synced sessions to the database with proper client matching
@@ -1328,8 +1798,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         syncedCount: syncedSessions.length,
         savedCount: savedSessions.length,
+        imported: savedSessions.length,
         sessions: syncedSessions,
-        dateRange: { startDate, endDate }
+        dateRange: { startDate: effectiveStartDate, endDate: effectiveEndDate }
+      });
+
+      await setAppSetting("calendar_last_sync", {
+        lastSyncAt: new Date().toISOString(),
+        startDate: effectiveStartDate,
+        endDate: effectiveEndDate
       });
     } catch (error) {
       console.error("Error syncing calendar:", error);
@@ -1345,20 +1822,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get basic sync information
       const therapistId = req.therapistId || 'dr-jonathan-procter';
-      const sessions = await storage.getUpcomingSessions(therapistId, new Date('2010-01-01'));
-      const lastSync = sessions.length > 0 
-        ? sessions.reduce((latest, session) => 
-            session.createdAt > latest.createdAt ? session : latest
-          ).createdAt 
-        : null;
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      const monthEnd = new Date(monthStart);
+      monthEnd.setMonth(monthEnd.getMonth() + 1);
+
+      const [allSessions, upcomingSessions, activeClients, placeholders, monthlySessions, lastSync] = await Promise.all([
+        storage.getAllHistoricalSessions(therapistId, true),
+        storage.getUpcomingSessions(therapistId, new Date()),
+        storage.getClients(therapistId),
+        storage.getProgressNotePlaceholders(therapistId),
+        storage.getSessionsInDateRange(therapistId, monthStart, monthEnd),
+        getAppSetting<{ lastSyncAt?: string }>("calendar_last_sync")
+      ]);
+
+      const lastSyncDate = lastSync?.lastSyncAt
+        ? new Date(lastSync.lastSyncAt)
+        : (allSessions.length > 0 
+            ? allSessions.reduce((latest, session) => 
+                session.createdAt > latest.createdAt ? session : latest
+              ).createdAt 
+            : null);
 
       res.json({
         isConnected: hasCredentials && hasRefreshToken,
         hasCredentials,
         hasRefreshToken,
-        lastSync: lastSync?.toISOString() || null,
-        totalSessions: sessions.length,
-        syncedSessions: sessions.filter(s => s.googleEventId).length
+        lastSync: lastSyncDate ? lastSyncDate.toISOString() : null,
+        totalSessions: allSessions.length,
+        syncedSessions: allSessions.filter(s => s.googleEventId).length,
+        totalAppointments: allSessions.length,
+        activeClients: activeClients.filter(client => client.status === "active").length,
+        thisMonth: monthlySessions.length,
+        upcomingSessions: upcomingSessions.length,
+        missingNotes: placeholders.length
       });
     } catch (error) {
       console.error("Error getting sync status:", error);
@@ -1378,6 +1876,325 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching calendars:", error);
       res.status(500).json({ error: "Failed to fetch calendar list" });
+    }
+  });
+
+  app.get("/api/jobs/:id", async (req, res) => {
+    try {
+      const job = await getJob(req.params.id);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+      if (job.therapistId && job.therapistId !== therapistId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      res.json(job);
+    } catch (error) {
+      console.error("Error fetching job status:", error);
+      res.status(500).json({ error: "Failed to fetch job status" });
+    }
+  });
+
+  app.get("/api/jobs", async (req, res) => {
+    try {
+      const limit = Number(req.query.limit || 50);
+      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+      const jobs = await listJobs(limit, therapistId);
+      res.json({ jobs });
+    } catch (error) {
+      console.error("Error fetching job history:", error);
+      res.status(500).json({ error: "Failed to fetch job history" });
+    }
+  });
+
+  app.post("/api/jobs/:id/retry", async (req, res) => {
+    try {
+      const existing = await getJob(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+      if (existing.therapistId && existing.therapistId !== therapistId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      const job = await retryJob(req.params.id);
+      res.json(job);
+    } catch (error) {
+      console.error("Error retrying job:", error);
+      res.status(500).json({ error: "Failed to retry job" });
+    }
+  });
+
+  app.get("/api/calendar/overview", async (req: any, res) => {
+    try {
+      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const { startDate, endDate } = req.query;
+
+      const start = startDate ? new Date(startDate as string) : new Date('2010-01-01');
+      const end = endDate ? new Date(endDate as string) : new Date('2035-12-31');
+
+      const [sessions, notes] = await Promise.all([
+        storage.getSessionsInDateRange(therapistId, start, end),
+        storage.getProgressNotesInDateRange(therapistId, start, end)
+      ]);
+
+      const notesBySession = new Map<string, boolean>();
+      for (const note of notes) {
+        if (note.sessionId) {
+          notesBySession.set(note.sessionId, true);
+        }
+      }
+
+      const sessionsWithClients = await Promise.all(
+        sessions.map(async (session) => {
+          const client = await storage.getClient(session.clientId);
+          return {
+            ...session,
+            client,
+            hasProgressNote: notesBySession.has(session.id),
+            missingNote: !notesBySession.has(session.id)
+          };
+        })
+      );
+
+      res.json({
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        totalSessions: sessionsWithClients.length,
+        missingNotes: sessionsWithClients.filter(session => session.missingNote).length,
+        sessions: sessionsWithClients
+      });
+    } catch (error) {
+      console.error("Error building calendar overview:", error);
+      res.status(500).json({ error: "Failed to build calendar overview" });
+    }
+  });
+
+  app.get("/api/calendar/reconcile", async (req: any, res) => {
+    try {
+      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const { startDate, endDate } = req.query;
+      const start = startDate ? new Date(startDate as string) : new Date(new Date().setMonth(new Date().getMonth() - 3));
+      const end = endDate ? new Date(endDate as string) : new Date(new Date().setMonth(new Date().getMonth() + 3));
+      const report = await reconcileCalendar(therapistId, start, end);
+      res.json(report);
+    } catch (error) {
+      console.error("Error reconciling calendar:", error);
+      res.status(500).json({ error: "Failed to reconcile calendar" });
+    }
+  });
+
+  app.post("/api/progress-notes/placeholders/:sessionId", async (req: any, res) => {
+    try {
+      const { sessionId } = req.params;
+      const therapistId = req.therapistId || 'dr-jonathan-procter';
+
+      const session = await storage.getSession(sessionId);
+      if (!session || session.therapistId !== therapistId) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      const existingNotes = await storage.getProgressNotesBySession(sessionId);
+      if (existingNotes.length > 0) {
+        return res.status(200).json({ message: "Progress note already exists", noteId: existingNotes[0].id });
+      }
+
+      const placeholder = await storage.createProgressNotePlaceholder(
+        session.id,
+        session.clientId,
+        session.therapistId,
+        session.scheduledAt
+      );
+
+      await storage.updateSession(session.id, {
+        hasProgressNotePlaceholder: true,
+        progressNoteStatus: 'placeholder'
+      });
+
+      res.json({ placeholder });
+    } catch (error) {
+      console.error("Error creating progress note placeholder:", error);
+      res.status(500).json({ error: "Failed to create progress note placeholder" });
+    }
+  });
+
+  // Mobile app export endpoint
+  app.get("/api/export", async (req: any, res) => {
+    try {
+      const { scope = 'all', format = 'json' } = req.query;
+      const therapistId = req.therapistId;
+
+      let data: any = {};
+
+      if (scope === 'all' || scope === 'clients') {
+        data.clients = await storage.getClients(therapistId);
+      }
+      if (scope === 'all' || scope === 'sessions') {
+        data.sessions = await storage.getUpcomingSessions(therapistId, new Date('2010-01-01'));
+      }
+      if (scope === 'all' || scope === 'notes') {
+        const notes = await storage.getProgressNotes(therapistId);
+        data.progressNotes = notes.map(note => ({
+          ...note,
+          content: note.content ? safeDecrypt(note.content) : null,
+        }));
+      }
+      if (scope === 'all' || scope === 'treatment-plans') {
+        const clientsList = await storage.getClients(therapistId);
+        const plans = [];
+        for (const client of clientsList) {
+          const plan = await db.select().from(treatmentPlans).where(eq(treatmentPlans.clientId, client.id));
+          if (plan.length > 0) {
+            plans.push(...plan);
+          }
+        }
+        data.treatmentPlans = plans;
+      }
+
+      data.exportedAt = new Date().toISOString();
+
+      await ClinicalAuditLogger.logPHIAccess(
+        therapistId,
+        AuditAction.DATA_EXPORT,
+        'bulk-export',
+        req,
+        { scope, format }
+      );
+
+      if (format === 'csv') {
+        // Simple CSV conversion for primary data type
+        let csvContent = '';
+        const mainData = scope === 'clients' ? data.clients :
+                        scope === 'sessions' ? data.sessions :
+                        scope === 'notes' ? data.progressNotes :
+                        scope === 'treatment-plans' ? data.treatmentPlans : data.clients;
+
+        if (mainData && mainData.length > 0) {
+          const headers = Object.keys(mainData[0]);
+          csvContent = headers.join(',') + '\n';
+          for (const row of mainData) {
+            csvContent += headers.map(h => {
+              const val = row[h];
+              if (val === null || val === undefined) return '';
+              if (typeof val === 'object') return JSON.stringify(val).replace(/"/g, '""');
+              return String(val).replace(/"/g, '""').replace(/,/g, ' ');
+            }).join(',') + '\n';
+          }
+        }
+        res.setHeader('Content-Type', 'text/csv');
+        res.send(csvContent);
+      } else {
+        res.json(data);
+      }
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      res.status(500).json({ error: "Failed to export data" });
+    }
+  });
+
+  // Calendar connect/disconnect/settings endpoints for mobile app
+  app.post("/api/calendar/connect", async (req: any, res) => {
+    try {
+      const { provider } = req.body;
+      const authUrl = await googleCalendarService.getAuthUrl();
+      res.json({ success: true, authUrl, provider });
+    } catch (error) {
+      console.error("Error connecting calendar:", error);
+      res.status(500).json({ error: "Failed to connect calendar" });
+    }
+  });
+
+  app.post("/api/calendar/disconnect", async (req: any, res) => {
+    try {
+      // Clear stored tokens
+      await setAppSetting("google_calendar_tokens", null);
+      await setAppSetting("calendar_last_sync", null);
+      res.json({ success: true, message: "Calendar disconnected" });
+    } catch (error) {
+      console.error("Error disconnecting calendar:", error);
+      res.status(500).json({ error: "Failed to disconnect calendar" });
+    }
+  });
+
+  app.patch("/api/calendar/settings", async (req: any, res) => {
+    try {
+      const settings = req.body;
+      await setAppSetting("calendar_settings", settings);
+      res.json({ success: true, settings });
+    } catch (error) {
+      console.error("Error updating calendar settings:", error);
+      res.status(500).json({ error: "Failed to update calendar settings" });
+    }
+  });
+
+  app.get("/api/calendar/sync-logs", async (req: any, res) => {
+    try {
+      const limit = Number(req.query.limit || 10);
+      // Return sync logs from app settings or empty array
+      const logs = await getAppSetting<any[]>("calendar_sync_logs") || [];
+      res.json(logs.slice(0, limit));
+    } catch (error) {
+      console.error("Error fetching sync logs:", error);
+      res.status(500).json({ error: "Failed to fetch sync logs" });
+    }
+  });
+
+  // Document upload and analyze endpoint for mobile app
+  app.post("/api/documents/upload-analyze", upload.single('document'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const { clientId } = req.body;
+      const therapistId = req.therapistId;
+
+      // Process document using existing enhanced processor
+      const result = await enhancedDocumentProcessor.processDocument(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype,
+        therapistId,
+        clientId
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error processing document:", error);
+      res.status(500).json({ error: "Failed to process document" });
+    }
+  });
+
+  // Bulk transcript import endpoint for mobile app
+  app.post("/api/transcripts/bulk", upload.array('files', 100), async (req: any, res) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "No files uploaded" });
+      }
+
+      const therapistId = req.therapistId;
+
+      // Queue bulk import job
+      const jobId = await bulkImportProgressNotes(
+        files.map(f => ({
+          buffer: f.buffer,
+          originalname: f.originalname,
+          mimetype: f.mimetype,
+        })),
+        therapistId
+      );
+
+      res.json({
+        success: true,
+        jobId,
+        fileCount: files.length,
+        message: `Processing ${files.length} files`
+      });
+    } catch (error) {
+      console.error("Error bulk importing transcripts:", error);
+      res.status(500).json({ error: "Failed to process transcripts" });
     }
   });
 

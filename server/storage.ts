@@ -1,7 +1,8 @@
 import { 
   users, clients, sessions, progressNotes, caseConceptualizations, 
   treatmentPlans, allianceScores, documents, aiInsights, crossReferences,
-  transcriptBatches, transcriptFiles,
+  transcriptBatches, transcriptFiles, sessionPreps, longitudinalRecords,
+  jobRuns, documentTextVersions,
   type User, type InsertUser, type Client, type InsertClient,
   type Session, type InsertSession, type ProgressNote, type InsertProgressNote,
   type CaseConceptualization, type InsertCaseConceptualization,
@@ -10,9 +11,14 @@ import {
   type Document, type InsertDocument,
   type AiInsight, type InsertAiInsight,
   type TranscriptBatch, type InsertTranscriptBatch,
-  type TranscriptFile, type InsertTranscriptFile
+  type TranscriptFile, type InsertTranscriptFile,
+  type LongitudinalRecord, type InsertLongitudinalRecord,
+  type JobRun, type InsertJobRun,
+  type DocumentTextVersion, type InsertDocumentTextVersion
 } from "@shared/schema";
 import { db } from "./db";
+import { calculateNoteQuality } from "./utils/noteQuality";
+import { ClinicalEncryption } from "./utils/encryption";
 import { eq, desc, and, or, like, sql, isNull, ne } from "drizzle-orm";
 
 export interface IStorage {
@@ -55,6 +61,7 @@ export interface IStorage {
   updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote>;
   deleteProgressNote(id: string): Promise<void>;
   searchProgressNotes(therapistId: string, query: string): Promise<ProgressNote[]>;
+  getProgressNotesInDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<ProgressNote[]>;
   getProgressNotesForManualReview(therapistId: string): Promise<ProgressNote[]>;
   getProgressNotePlaceholders(therapistId: string): Promise<ProgressNote[]>;
   createProgressNotePlaceholder(sessionId: string, clientId: string, therapistId: string, sessionDate: Date): Promise<ProgressNote>;
@@ -80,11 +87,31 @@ export interface IStorage {
   createDocument(document: InsertDocument): Promise<Document>;
   updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document>;
   getDocumentsByTherapist(therapistId: string): Promise<Document[]>;
+  deleteDocument(id: string): Promise<Document | undefined>;
 
   // AI Insights
   getAiInsights(therapistId: string, limit?: number): Promise<AiInsight[]>;
   createAiInsight(insight: InsertAiInsight): Promise<AiInsight>;
   markInsightAsRead(id: string): Promise<void>;
+  // Session Preps
+  createSessionPrep(sessionId: string, clientId: string, therapistId: string, prep: any): Promise<any>;
+  getLatestSessionPrep(sessionId: string): Promise<any | undefined>;
+  getSessionPrepHistory(sessionId: string, limit?: number): Promise<any[]>;
+
+  // Longitudinal Tracking
+  createLongitudinalRecord(record: InsertLongitudinalRecord): Promise<LongitudinalRecord>;
+  getLatestLongitudinalRecord(clientId: string): Promise<LongitudinalRecord | undefined>;
+  getLongitudinalHistory(clientId: string, limit?: number): Promise<LongitudinalRecord[]>;
+
+  // Job Runs
+  createJobRun(run: InsertJobRun & { id?: string }): Promise<JobRun>;
+  updateJobRun(id: string, updates: Partial<InsertJobRun>): Promise<JobRun | undefined>;
+  getJobRun(id: string): Promise<JobRun | undefined>;
+  getJobRuns(limit?: number, therapistId?: string): Promise<JobRun[]>;
+
+  // Document Text Versions
+  createDocumentTextVersion(version: InsertDocumentTextVersion): Promise<DocumentTextVersion>;
+  getDocumentTextVersions(documentId: string): Promise<DocumentTextVersion[]>;
 
   // Transcript Batch Processing
   createTranscriptBatch(batch: InsertTranscriptBatch): Promise<TranscriptBatch>;
@@ -112,6 +139,33 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  private encryptJsonPayload(value: any) {
+    if (value === null || value === undefined) return value;
+    const serialized = JSON.stringify(value);
+    return {
+      encrypted: true,
+      value: ClinicalEncryption.encrypt(serialized),
+    };
+  }
+
+  private decryptJsonPayload(value: any) {
+    if (!value) return value;
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(ClinicalEncryption.decrypt(value));
+      } catch {
+        return value;
+      }
+    }
+    if (typeof value === "object" && value.encrypted && typeof value.value === "string") {
+      try {
+        return JSON.parse(ClinicalEncryption.decrypt(value.value));
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -415,17 +469,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProgressNote(note: InsertProgressNote): Promise<ProgressNote> {
+    const quality = calculateNoteQuality(note.content);
     const [newNote] = await db
       .insert(progressNotes)
-      .values(note)
+      .values({
+        ...note,
+        qualityScore: note.content ? quality.score : note.qualityScore,
+        qualityFlags: note.content ? quality.flags : note.qualityFlags,
+      })
       .returning();
     return newNote;
   }
 
   async updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote> {
+    const quality = note.content !== undefined ? calculateNoteQuality(note.content) : null;
     const [updatedNote] = await db
       .update(progressNotes)
-      .set({ ...note, updatedAt: new Date() })
+      .set({ 
+        ...note, 
+        qualityScore: quality ? quality.score : note.qualityScore,
+        qualityFlags: quality ? quality.flags : note.qualityFlags,
+        updatedAt: new Date() 
+      })
       .where(eq(progressNotes.id, id))
       .returning();
     return updatedNote;
@@ -452,6 +517,20 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(progressNotes.createdAt));
+  }
+
+  async getProgressNotesInDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<ProgressNote[]> {
+    return await db
+      .select()
+      .from(progressNotes)
+      .where(
+        and(
+          eq(progressNotes.therapistId, therapistId),
+          sql`${progressNotes.sessionDate} >= ${startDate}`,
+          sql`${progressNotes.sessionDate} <= ${endDate}`
+        )
+      )
+      .orderBy(desc(progressNotes.sessionDate));
   }
 
   async getCaseConceptualization(clientId: string): Promise<CaseConceptualization | undefined> {
@@ -573,6 +652,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(documents.uploadedAt));
   }
 
+  async deleteDocument(id: string): Promise<Document | undefined> {
+    const [doc] = await db.select().from(documents).where(eq(documents.id, id));
+    if (!doc) return undefined;
+
+    await db.delete(documents).where(eq(documents.id, id));
+    return doc;
+  }
+
   async getAiInsights(therapistId: string, limit = 10): Promise<AiInsight[]> {
     return await db
       .select()
@@ -595,6 +682,136 @@ export class DatabaseStorage implements IStorage {
       .update(aiInsights)
       .set({ isRead: true })
       .where(eq(aiInsights.id, id));
+  }
+
+  async createSessionPrep(sessionId: string, clientId: string, therapistId: string, prep: any) {
+    const [record] = await db
+      .insert(sessionPreps)
+      .values({
+        sessionId,
+        clientId,
+        therapistId,
+        prep: this.encryptJsonPayload(prep)
+      })
+      .returning();
+    return record;
+  }
+
+  async getLatestSessionPrep(sessionId: string) {
+    const [record] = await db
+      .select()
+      .from(sessionPreps)
+      .where(eq(sessionPreps.sessionId, sessionId))
+      .orderBy(desc(sessionPreps.createdAt))
+      .limit(1);
+    if (!record) return undefined;
+    return {
+      ...record,
+      prep: this.decryptJsonPayload(record.prep),
+    };
+  }
+
+  async getSessionPrepHistory(sessionId: string, limit = 10) {
+    const records = await db
+      .select()
+      .from(sessionPreps)
+      .where(eq(sessionPreps.sessionId, sessionId))
+      .orderBy(desc(sessionPreps.createdAt))
+      .limit(limit);
+    return records.map((record) => ({
+      ...record,
+      prep: this.decryptJsonPayload(record.prep),
+    }));
+  }
+
+  async createLongitudinalRecord(record: InsertLongitudinalRecord): Promise<LongitudinalRecord> {
+    const [created] = await db
+      .insert(longitudinalRecords)
+      .values({
+        ...record,
+        record: this.encryptJsonPayload(record.record),
+        analysis: this.encryptJsonPayload(record.analysis),
+      })
+      .returning();
+    return created;
+  }
+
+  async getLatestLongitudinalRecord(clientId: string): Promise<LongitudinalRecord | undefined> {
+    const [record] = await db
+      .select()
+      .from(longitudinalRecords)
+      .where(eq(longitudinalRecords.clientId, clientId))
+      .orderBy(desc(longitudinalRecords.createdAt))
+      .limit(1);
+    if (!record) return undefined;
+    return {
+      ...record,
+      record: this.decryptJsonPayload(record.record),
+      analysis: this.decryptJsonPayload(record.analysis),
+    };
+  }
+
+  async getLongitudinalHistory(clientId: string, limit = 10): Promise<LongitudinalRecord[]> {
+    const records = await db
+      .select()
+      .from(longitudinalRecords)
+      .where(eq(longitudinalRecords.clientId, clientId))
+      .orderBy(desc(longitudinalRecords.createdAt))
+      .limit(limit);
+    return records.map((record) => ({
+      ...record,
+      record: this.decryptJsonPayload(record.record),
+      analysis: this.decryptJsonPayload(record.analysis),
+    }));
+  }
+
+  async createJobRun(run: InsertJobRun & { id?: string }): Promise<JobRun> {
+    const [created] = await db
+      .insert(jobRuns)
+      .values({ ...run, updatedAt: new Date() })
+      .returning();
+    return created;
+  }
+
+  async updateJobRun(id: string, updates: Partial<InsertJobRun>): Promise<JobRun | undefined> {
+    const [updated] = await db
+      .update(jobRuns)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(jobRuns.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getJobRun(id: string): Promise<JobRun | undefined> {
+    const [record] = await db
+      .select()
+      .from(jobRuns)
+      .where(eq(jobRuns.id, id));
+    return record || undefined;
+  }
+
+  async getJobRuns(limit = 50, therapistId?: string): Promise<JobRun[]> {
+    const base = db.select().from(jobRuns);
+    const query = therapistId
+      ? base.where(eq(jobRuns.therapistId, therapistId))
+      : base;
+    return await query.orderBy(desc(jobRuns.createdAt)).limit(limit);
+  }
+
+  async createDocumentTextVersion(version: InsertDocumentTextVersion): Promise<DocumentTextVersion> {
+    const [created] = await db
+      .insert(documentTextVersions)
+      .values(version)
+      .returning();
+    return created;
+  }
+
+  async getDocumentTextVersions(documentId: string): Promise<DocumentTextVersion[]> {
+    return await db
+      .select()
+      .from(documentTextVersions)
+      .where(eq(documentTextVersions.documentId, documentId))
+      .orderBy(desc(documentTextVersions.createdAt));
   }
 
   async getTherapistStats(therapistId: string): Promise<{

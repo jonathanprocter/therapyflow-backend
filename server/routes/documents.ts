@@ -1,9 +1,12 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
+import { promises as fs } from "fs";
 import { storage } from "../storage";
 import { parsePDF } from "../services/pdf";
-import { processDocumentWithAI, smartParseDocument } from "../services/ai";
+import { processDocumentWithAI } from "../services/ai";
+import { enhancedDocumentProcessor } from "../services/enhanced-document-processor";
+import { enqueueJob, registerJobHandler } from "../services/jobQueue";
 
 
 const upload = multer({ 
@@ -11,6 +14,63 @@ const upload = multer({
 });
 
 export const documentsRouter = express.Router();
+
+registerJobHandler("smart-process", async (job) => {
+  const documentIds = job.payload?.documentIds || [];
+  const results: any[] = [];
+  for (const id of documentIds) {
+    const doc = await storage.getDocument(id);
+    if (!doc) {
+      results.push({ documentId: id, error: "not found" });
+      continue;
+    }
+
+    let buffer: Buffer | null = null;
+    if (doc.filePath) {
+      const resolvedPath = path.resolve(process.cwd(), doc.filePath.replace(/^\//, ""));
+      buffer = await fs.readFile(resolvedPath);
+    } else if ((doc.metadata as any)?.buffer) {
+      buffer = Buffer.from((doc.metadata as any).buffer as number[]);
+    }
+
+    if (!buffer) {
+      results.push({ documentId: id, error: "missing file data" });
+      continue;
+    }
+
+    const processingResult = await enhancedDocumentProcessor.processDocument(
+      buffer,
+      doc.fileName || "document",
+      doc.therapistId,
+      id
+    );
+
+    const clientName = processingResult.extractedData?.clientName || "Unknown Client";
+    const suggestedClientId = `client-${clientName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`;
+
+    const dateValue = processingResult.extractedData?.sessionDate
+      ? new Date(processingResult.extractedData.sessionDate).toISOString().split("T")[0]
+      : "";
+
+    results.push({
+      documentId: id,
+      status: processingResult.success ? "processed" : "failed",
+      qualityScore: processingResult.validationDetails?.overallQuality || 0,
+      smartParsing: {
+        suggestedClientId,
+        suggestedAppointmentDate: dateValue,
+        clientNameConfidence: Math.round(processingResult.validationDetails?.clientMatchScore || processingResult.confidence || 0),
+        dateConfidence: Math.round(processingResult.validationDetails?.dateValidationScore || processingResult.confidence || 0),
+        sessionType: processingResult.extractedData?.sessionType || "individual"
+      }
+    });
+  }
+
+  return { results };
+});
 
 // Test route without multer
 documentsRouter.post("/test", (req, res) => {
@@ -48,10 +108,12 @@ documentsRouter.post("/smart-upload", (req, res) => {
         return res.status(400).json({ error: "clientId and appointmentDate required" });
       }
 
+      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+
       // For smart-parsing, use the first available client
       let actualClientId = clientId;
       if (clientId === 'smart-parsing') {
-        const clients = await storage.getClients('dr-jonathan-procter');
+        const clients = await storage.getClients(therapistId);
         if (clients.length > 0) {
           actualClientId = clients[0].id;
         } else {
@@ -63,20 +125,28 @@ documentsRouter.post("/smart-upload", (req, res) => {
       const files = (req.files as Express.Multer.File[]) || [];
       const uploaded = [];
 
+      const uploadDir = path.resolve(process.cwd(), "uploads");
+      await fs.mkdir(uploadDir, { recursive: true });
+
       for (const f of files) {
-        // For memory storage, the buffer contains the file data
-        const meta = { 
-          buffer: Array.from(f.buffer), // Convert buffer to array for JSON storage
-          originalName: f.originalname, 
-          size: f.size 
+        const safeName = f.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const storedName = `${Date.now()}-${Math.random().toString(16).slice(2)}-${safeName}`;
+        const storedPath = path.join(uploadDir, storedName);
+
+        await fs.writeFile(storedPath, f.buffer);
+
+        const meta = {
+          originalName: f.originalname,
+          storedName,
+          size: f.size
         };
 
         const doc = await storage.createDocument({
           clientId: actualClientId, 
-          therapistId: 'dr-jonathan-procter', // Mock therapist ID
+          therapistId,
           fileName: f.originalname, 
           fileType: f.mimetype, 
-          filePath: `/uploads/${Date.now()}-${f.originalname}`,
+          filePath: `/uploads/${storedName}`,
           fileSize: f.size,
           metadata: meta
         });
@@ -108,11 +178,11 @@ documentsRouter.post("/parse", async (req, res) => {
       return res.status(404).json({ error: "Document not found" });
     }
 
-    if ((doc as any).status === "parsed" && ((doc as any).text?.length || 0) > 100) {
+    if (doc.extractedText && doc.extractedText.length > 100) {
       return res.json({ 
         documentId, 
         status: "parsed", 
-        charCount: (doc as any).text!.length, 
+        charCount: doc.extractedText.length, 
         skipped: true 
       });
     }
@@ -129,6 +199,17 @@ documentsRouter.post("/parse", async (req, res) => {
   } catch (e: any) {
     console.error("Parse error:", e);
     res.status(500).json({ error: String(e) });
+  }
+});
+
+documentsRouter.get("/:id/text-versions", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const versions = await storage.getDocumentTextVersions(id);
+    res.json({ versions });
+  } catch (error) {
+    console.error("Error fetching text versions:", error);
+    res.status(500).json({ error: "Failed to fetch text versions" });
   }
 });
 
@@ -153,7 +234,7 @@ documentsRouter.post("/process-batch", async (req, res) => {
         }
 
         // Parse if needed
-        if ((doc as any).status !== "parsed" || ((doc as any).text?.length || 0) < 100) {
+        if (!doc.extractedText || doc.extractedText.length < 100) {
           try {
             await parsePDF(id);
             console.log(`📄 Parsed document ${id}`);
@@ -254,41 +335,53 @@ documentsRouter.post("/smart-process", async (req, res) => {
           continue; 
         }
 
-        // Parse if needed
-        if ((doc as any).status !== "parsed" || ((doc as any).text?.length || 0) < 100) {
-          try {
-            const { text, qualityScore } = await parsePDF(id);
-            console.log(`📄 Parsed document ${id}: ${text.length} chars`);
-          } catch (parseError) {
-            results.push({ 
-              documentId: id, 
-              error: `Parse failed: ${parseError}` 
-            });
-            continue;
+        let buffer: Buffer | null = null;
+
+        if (doc.filePath) {
+          const resolvedPath = path.resolve(process.cwd(), doc.filePath.replace(/^\//, ""));
+          buffer = await fs.readFile(resolvedPath);
+        } else if ((doc.metadata as any)?.buffer) {
+          buffer = Buffer.from((doc.metadata as any).buffer as number[]);
+        }
+
+        if (!buffer) {
+          results.push({ documentId: id, error: "missing file data" });
+          continue;
+        }
+
+        const processingResult = await enhancedDocumentProcessor.processDocument(
+          buffer,
+          doc.fileName || "document",
+          doc.therapistId,
+          id
+        );
+
+        const clientName = processingResult.extractedData?.clientName || "Unknown Client";
+        const suggestedClientId = `client-${clientName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")}`;
+
+        const dateValue = processingResult.extractedData?.sessionDate
+          ? new Date(processingResult.extractedData.sessionDate).toISOString().split("T")[0]
+          : "";
+
+        const updatedDoc = await storage.getDocument(id);
+
+        results.push({
+          documentId: id,
+          status: processingResult.success ? "processed" : "failed",
+          charCount: updatedDoc?.extractedText?.length || 0,
+          qualityScore: processingResult.validationDetails?.overallQuality || 0,
+          smartParsing: {
+            suggestedClientId,
+            suggestedAppointmentDate: dateValue,
+            clientNameConfidence: Math.round(processingResult.validationDetails?.clientMatchScore || processingResult.confidence || 0),
+            dateConfidence: Math.round(processingResult.validationDetails?.dateValidationScore || processingResult.confidence || 0),
+            sessionType: processingResult.extractedData?.sessionType || "individual"
           }
-        }
-
-        // Smart parse with AI
-        try {
-          const smartResult = await smartParseDocument(id);
-          const parsed = await storage.getDocument(id); // Get updated document after parsing
-
-          results.push({ 
-            documentId: id, 
-            status: "processed", 
-            charCount: (parsed as any)?.text?.length || 0,
-            qualityScore: 100, // Placeholder quality score
-            smartParsing: smartResult.smartParsing,
-            summary: smartResult.summary,
-            confidence: smartResult.confidence
-          });
-          console.log(`🧠 Smart parsed document ${id}`);
-        } catch (aiError) {
-          results.push({ 
-            documentId: id, 
-            error: `Smart parsing failed: ${aiError}` 
-          });
-        }
+        });
+        console.log(`🧠 Smart processed document ${id}`);
       } catch (e: any) {
         results.push({ 
           documentId: id, 
@@ -301,5 +394,42 @@ documentsRouter.post("/smart-process", async (req, res) => {
   } catch (e: any) {
     console.error("Smart processing error:", e);
     res.status(500).json({ error: String(e) });
+  }
+});
+
+documentsRouter.post("/smart-process-async", async (req, res) => {
+  const { documentIds } = req.body;
+
+  if (!Array.isArray(documentIds) || documentIds.length === 0) {
+    return res.status(400).json({ error: "documentIds array required" });
+  }
+
+  const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+  const job = await enqueueJob("smart-process", { documentIds }, undefined, therapistId, 3);
+
+  res.json({ jobId: job.id, status: job.status });
+});
+
+documentsRouter.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await storage.deleteDocument(id);
+    if (!doc) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    if (doc.filePath) {
+      const resolvedPath = path.resolve(process.cwd(), doc.filePath.replace(/^\//, ""));
+      try {
+        await fs.unlink(resolvedPath);
+      } catch (error) {
+        console.warn(`Failed to delete file ${resolvedPath}:`, error);
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting document:", error);
+    res.status(500).json({ error: "Failed to delete document" });
   }
 });

@@ -1,5 +1,7 @@
 import type { Express } from "express";
 import multer from "multer";
+import path from "path";
+import { promises as fs } from "fs";
 import { storage } from "../storage";
 import { 
   insertTranscriptBatchSchema, 
@@ -60,7 +62,11 @@ async function processTranscriptBatch(batchId: string, fileBuffers?: { [filename
       });
 
       // Get the file buffer if available (from memory during upload)
-      const fileBuffer = fileBuffers?.[file.fileName];
+      let fileBuffer = fileBuffers?.[file.fileName];
+      if (!fileBuffer && file.filePath) {
+        const resolvedPath = path.resolve(process.cwd(), file.filePath.replace(/^\//, ""));
+        fileBuffer = await fs.readFile(resolvedPath);
+      }
       if (!fileBuffer) {
         throw new Error(`File buffer not found for ${file.fileName}`);
       }
@@ -203,17 +209,24 @@ export function registerTranscriptRoutes(app: Express): void {
       // Process each file and store buffers for processing
       const transcriptFiles = [];
       const fileBuffers: { [filename: string]: Buffer } = {};
+      const transcriptsDir = path.resolve(process.cwd(), "uploads", "transcripts", batch.id);
+      await fs.mkdir(transcriptsDir, { recursive: true });
       
       for (const file of files) {
         // Store file buffer in memory for processing
         fileBuffers[file.originalname] = file.buffer;
-        
+
+        const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const storedName = `${Date.now()}-${Math.random().toString(16).slice(2)}-${safeName}`;
+        const storedPath = path.join(transcriptsDir, storedName);
+        await fs.writeFile(storedPath, file.buffer);
+
         const fileData = {
           batchId: batch.id,
           therapistId,
           fileName: file.originalname,
           fileSize: file.size,
-          filePath: `/transcripts/${batch.id}/${file.originalname}`, // Placeholder path
+          filePath: `/uploads/transcripts/${batch.id}/${storedName}`,
           status: 'uploaded' as const,
           processingStatus: 'pending' as const
         };

@@ -21,20 +21,36 @@ export async function parsePDF(documentId: string) {
   const doc = await storage.getDocument(documentId);
   if (!doc) throw new Error(`Document not found: ${documentId}`);
   
-  // Get buffer data from metadata instead of file path
-  const bufferArray = (doc.metadata as any)?.buffer as number[] | undefined;
-  if (!bufferArray) throw new Error(`Missing buffer data for document ${documentId}`);
+  let data: Buffer | null = null;
+
+  if (doc.filePath) {
+    const resolvedPath = path.resolve(process.cwd(), doc.filePath.replace(/^\//, ""));
+    try {
+      data = await fs.readFile(resolvedPath);
+    } catch (error) {
+      console.warn(`⚠️ Failed to read file at ${resolvedPath}:`, error);
+    }
+  }
+
+  if (!data) {
+    // Fallback to buffer data from metadata
+    const bufferArray = (doc.metadata as any)?.buffer as number[] | undefined;
+    if (bufferArray) {
+      data = Buffer.from(bufferArray);
+    }
+  }
+
+  if (!data) {
+    throw new Error(`Missing file data for document ${documentId}`);
+  }
 
   let text = "";
   let meta: any = { method: "enhanced-processor" };
   let qualityScore = 0;
   
   try {
-    // Convert array back to Buffer
-    const data = Buffer.from(bufferArray);
-    
     // Use our enhanced document processor with therapist ID
-    const result = await processor.processDocument(data, doc.fileName || "document.pdf", doc.therapistId);
+    const result = await processor.processDocument(data, doc.fileName || "document.pdf", doc.therapistId, documentId);
     
     text = (result as any).extractedText || "";
     qualityScore = (result as any).overallQuality || 0;

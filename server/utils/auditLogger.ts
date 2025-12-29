@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { eq } from 'drizzle-orm';
+import { auditLogs } from '@shared/schema';
 
 // Audit log entry types
 export enum AuditAction {
@@ -240,8 +240,19 @@ export class ClinicalAuditLogger {
         timestamp: entry.timestamp.toISOString(),
       });
 
-      // TODO: Store in database when audit logs table is implemented
-      // await db.insert(auditLogs).values(entry);
+      await db.insert(auditLogs).values({
+        userId: entry.userId,
+        action: entry.action,
+        resourceType: entry.resourceType,
+        resourceId: entry.resourceId,
+        clientId: entry.clientId,
+        ipAddress: entry.ipAddress,
+        userAgent: entry.userAgent,
+        sessionId: entry.sessionId,
+        details: entry.details,
+        riskLevel: entry.riskLevel,
+        timestamp: entry.timestamp
+      });
       
     } catch (error) {
       console.error('[AUDIT] Failed to write audit log:', error);
