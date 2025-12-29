@@ -199,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", async (req: any, res) => {
     try {
       const clients = await storage.getClients(req.therapistId);
-      res.json(clients);
+      res.json(clients.map(toSnakeCaseClient));
     } catch (error) {
       console.error("Error fetching clients:", error);
       res.status(500).json({ error: "Failed to fetch clients" });
@@ -210,10 +210,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Client ownership already verified by middleware
       const client = req.verifiedClient;
-      
+
       // Decrypt sensitive data before sending to client
       const decryptedClient = decryptClientData(client);
-      res.json(decryptedClient);
+      res.json(toSnakeCaseClient(decryptedClient));
     } catch (error) {
       console.error("Error fetching client:", error);
       res.status(500).json({ error: "Failed to fetch client" });
@@ -226,14 +226,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         therapistId: req.therapistId
       });
-      
+
       // Encrypt sensitive data before storing
       const encryptedClientData = encryptClientData(clientData);
       const client = await storage.createClient(encryptedClientData);
-      
+
       // Decrypt before sending response
       const decryptedClient = decryptClientData(client);
-      res.json(decryptedClient);
+      res.json(toSnakeCaseClient(decryptedClient));
     } catch (error) {
       console.error("Error creating client:", error);
       res.status(400).json({ error: "Failed to create client" });
@@ -244,17 +244,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clientData = insertClientSchema.partial().parse(req.body);
       const therapistId = req.therapistId;
-      
+
       // Use secure transaction for client updates
       const client = await ClinicalTransactions.updateClientSafely(
         req.params.id,
         therapistId,
         clientData
       );
-      
+
       // Decrypt before sending response
       const decryptedClient = decryptClientData(client);
-      res.json(decryptedClient);
+      res.json(toSnakeCaseClient(decryptedClient));
     } catch (error) {
       console.error("Error updating client:", error);
       if (error instanceof Error && error.message === 'Client access denied') {
