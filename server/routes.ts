@@ -899,8 +899,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }));
         res.json(decryptedNotes);
       } else {
-        // No parameters - return all notes for therapist
-        const notes = await storage.getAllProgressNotes(req.therapistId);
+        // No parameters - return all notes for therapist (use large limit)
+        const notes = await storage.getRecentProgressNotes(req.therapistId, 1000);
         // Fetch client data for each note and decrypt
         const notesWithClients = await Promise.all(
           notes.map(async (note) => {
