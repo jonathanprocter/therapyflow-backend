@@ -14,8 +14,7 @@ import { registerFileWatcherRoutes } from "./routes/file-watcher-routes.js";
 import { fileWatcherService } from "./services/fileWatcherService.js";
 import { registerDriveRoutes } from "./routes/drive-routes.js";
 import { googleDriveService } from "./services/googleDriveService.js";
-import { ensureTherapeuticTables, checkCriticalTables, ensurePerformanceIndexes } from "./utils/migration-checker.js";
-import { ensureVoiceNotesTable } from "./utils/voice-notes-migration.js";
+import { initializeDatabase, checkDatabaseHealth } from "./utils/db-init.js";
 import { registerAIAssistantRoutes, setupAIWebSocketServer } from "./routes/ai-assistant-routes.js";
 import { registerVoiceNotesRoutes } from "./routes/voice-notes-routes.js";
 import { validateEnvironmentOnStartup } from "./utils/env-validator.js";
@@ -152,15 +151,18 @@ app.get("/api/health/deep", async (req, res) => {
   // Validate environment variables
   validateEnvironmentOnStartup();
 
-  // Check and ensure database tables exist
+  // Initialize database with all required tables
   try {
-    await checkCriticalTables();
-    await ensureTherapeuticTables();
-    await ensurePerformanceIndexes();
-    await ensureVoiceNotesTable();
+    const dbHealthy = await checkDatabaseHealth();
+    if (!dbHealthy) {
+      console.error('❌ Database connection failed!');
+      process.exit(1);
+    }
+    await initializeDatabase();
   } catch (error) {
-    console.error('⚠️  Database setup failed:', error);
-    console.log('⚠️  Server will continue, but some features may not work');
+    console.error('❌ Database initialization failed:', error);
+    console.error('Server cannot start without database. Exiting...');
+    process.exit(1);
   }
 
   let server = await registerRoutes(app);
