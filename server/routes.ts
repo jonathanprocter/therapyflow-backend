@@ -229,7 +229,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", async (req: any, res) => {
     try {
       const clients = await storage.getClients(req.therapistId);
-      res.json(clients.map(toSnakeCaseClient));
+      
+      // Filter out non-client entries (calendar events, tasks, etc.)
+      const nonClientPatterns = [
+        /^Call with /i,
+        /^Coffee with /i,
+        /^Meeting with /i,
+        /^Lunch with /i,
+        /Deductible/i,
+        /^Reminder:/i,
+        /^Task:/i,
+        /^TODO:/i
+      ];
+      
+      const actualClients = clients.filter(client => {
+        return !nonClientPatterns.some(pattern => pattern.test(client.name));
+      });
+      
+      res.json(actualClients.map(toSnakeCaseClient));
     } catch (error) {
       console.error("Error fetching clients:", error);
       res.status(500).json({ error: "Failed to fetch clients" });
@@ -882,7 +899,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }));
         res.json(decryptedNotes);
       } else {
-        res.status(400).json({ error: "clientId, search, or recent parameter required" });
+        // No parameters - return all notes for therapist
+        const notes = await storage.getAllProgressNotes(req.therapistId);
+        // Fetch client data for each note and decrypt
+        const notesWithClients = await Promise.all(
+          notes.map(async (note) => {
+            const client = await storage.getClient(note.clientId);
+            return toSnakeCaseProgressNote({
+              ...note,
+              client,
+              content: note.content ? safeDecrypt(note.content) : null
+            });
+          })
+        );
+        res.json(notesWithClients);
       }
     } catch (error) {
       console.error("Error fetching progress notes:", error);
