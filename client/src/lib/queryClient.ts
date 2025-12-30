@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { transformApiResponse, transformApiRequest } from "./caseTransform";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -52,13 +53,16 @@ export async function apiRequest(
     
     // For DELETE requests that return JSON, parse it
     if (method === 'DELETE' && res.headers.get('content-type')?.includes('application/json')) {
-      return res.json();
+      const data = await res.json();
+      return transformApiResponse(data);
     }
     
     // For other requests, try to parse JSON if available
     const contentType = res.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
-      return res.json();
+      const data = await res.json();
+      // Transform snake_case to camelCase for frontend consumption
+      return transformApiResponse(data);
     }
     
     return res;
@@ -111,7 +115,9 @@ export const getQueryFn: <T>(options: {
       
       const contentType = res.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        return await res.json();
+        const data = await res.json();
+        // Transform snake_case to camelCase for frontend consumption
+        return transformApiResponse(data);
       } else {
         return null; // Return null for non-JSON responses
       }
