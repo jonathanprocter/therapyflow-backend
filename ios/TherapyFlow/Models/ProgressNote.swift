@@ -210,6 +210,7 @@ enum NoteStatus: String, Codable, CaseIterable {
 }
 
 // MARK: - Quality Flags
+// This can be either an array of strings or a dictionary from the server
 struct QualityFlags: Codable, Equatable {
     var hasSubjectiveData: Bool?
     var hasObjectiveData: Bool?
@@ -233,6 +234,42 @@ struct QualityFlags: Codable, Equatable {
         self.hasGoalProgress = hasGoalProgress
         self.hasInterventions = hasInterventions
         self.issues = issues
+    }
+
+    init(from decoder: Decoder) throws {
+        // Try to decode as array first (legacy format)
+        if let container = try? decoder.singleValueContainer(),
+           let arrayValue = try? container.decode([String].self) {
+            // Convert array to issues list
+            self.issues = arrayValue
+            self.hasSubjectiveData = nil
+            self.hasObjectiveData = nil
+            self.hasAssessment = nil
+            self.hasPlan = nil
+            self.hasGoalProgress = nil
+            self.hasInterventions = nil
+            return
+        }
+
+        // Try to decode as dictionary (new format)
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.hasSubjectiveData = try container.decodeIfPresent(Bool.self, forKey: .hasSubjectiveData)
+        self.hasObjectiveData = try container.decodeIfPresent(Bool.self, forKey: .hasObjectiveData)
+        self.hasAssessment = try container.decodeIfPresent(Bool.self, forKey: .hasAssessment)
+        self.hasPlan = try container.decodeIfPresent(Bool.self, forKey: .hasPlan)
+        self.hasGoalProgress = try container.decodeIfPresent(Bool.self, forKey: .hasGoalProgress)
+        self.hasInterventions = try container.decodeIfPresent(Bool.self, forKey: .hasInterventions)
+        self.issues = try container.decodeIfPresent([String].self, forKey: .issues)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case hasSubjectiveData = "has_subjective_data"
+        case hasObjectiveData = "has_objective_data"
+        case hasAssessment = "has_assessment"
+        case hasPlan = "has_plan"
+        case hasGoalProgress = "has_goal_progress"
+        case hasInterventions = "has_interventions"
+        case issues
     }
 }
 

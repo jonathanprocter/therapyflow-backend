@@ -1275,6 +1275,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all documents for a therapist
+  app.get("/api/documents", async (req: any, res) => {
+    try {
+      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const documents = await storage.getDocumentsByTherapist(therapistId);
+
+      // Return documents with snake_case keys for iOS compatibility
+      const formattedDocs = documents.map((doc: any) => ({
+        id: doc.id,
+        client_id: doc.clientId,
+        therapist_id: doc.therapistId,
+        file_name: doc.fileName,
+        file_type: doc.fileType,
+        file_path: doc.filePath,
+        extracted_text: doc.extractedText,
+        tags: doc.tags || [],
+        file_size: doc.fileSize,
+        metadata: doc.metadata,
+        uploaded_at: doc.uploadedAt,
+        status: doc.status || 'pending',
+        document_type: doc.documentType,
+        mime_type: doc.mimeType,
+        client_name: doc.clientName
+      }));
+
+      res.json(formattedDocs);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+
   // Enhanced Document Upload and Processing endpoints
   // Accept both 'file' (iOS) and 'document' (web) field names
   app.post("/api/documents/upload", upload.single('file'), async (req: any, res) => {
