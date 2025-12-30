@@ -523,7 +523,7 @@ extension APIClient {
     }
 
     func uploadDocument(fileData: Data, fileName: String, mimeType: String, clientId: String?) async throws -> Document {
-        var fields: [String: String] = [:]
+        var fields: [String: String] = ["mobile": "true"]
         if let clientId = clientId {
             fields["clientId"] = clientId
         }
@@ -557,7 +557,7 @@ extension APIClient {
     // Document Upload and Analysis
     func uploadAndAnalyzeDocument(fileData: Data, fileName: String, mimeType: String, clientId: String?) async throws -> Document {
         // This uses the same upload endpoint but triggers AI analysis
-        var fields: [String: String] = ["analyze": "true"]
+        var fields: [String: String] = ["analyze": "true", "mobile": "true"]
         if let clientId = clientId {
             fields["clientId"] = clientId
         }
