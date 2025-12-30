@@ -874,6 +874,24 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  // Get all progress notes for a therapist (for semantic search)
+  async getAllProgressNotes(therapistId: string): Promise<ProgressNote[]> {
+    return await db
+      .select()
+      .from(progressNotes)
+      .where(eq(progressNotes.therapistId, therapistId))
+      .orderBy(desc(progressNotes.sessionDate));
+  }
+
+  // Get all treatment plans for a therapist
+  async getAllTreatmentPlans(therapistId: string): Promise<TreatmentPlan[]> {
+    return await db
+      .select()
+      .from(treatmentPlans)
+      .where(eq(treatmentPlans.therapistId, therapistId))
+      .orderBy(desc(treatmentPlans.createdAt));
+  }
+
   // New Progress Note Management Methods
   async getProgressNotesForManualReview(therapistId: string): Promise<ProgressNote[]> {
     return await db
