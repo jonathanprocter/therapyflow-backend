@@ -123,15 +123,29 @@ app.get("/api/health/deep", async (req, res) => {
     const nowResult = await (storage as any).db.execute(sql`SELECT now() as now`);
     const now = (nowResult as any).rows?.[0]?.now || (nowResult as any)[0]?.now;
     
-    // Count documents and AI results
-    const docsResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
-    const docsCount = (docsResult as any).rows?.[0]?.count || (docsResult as any)[0]?.count || 0;
+    // Count core tables (gracefully handle missing tables)
+    let docsCount = 0, aiCount = 0, edgesCount = 0;
     
-    const aiResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
-    const aiCount = (aiResult as any).rows?.[0]?.count || (aiResult as any)[0]?.count || 0;
+    try {
+      const docsResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
+      docsCount = (docsResult as any).rows?.[0]?.count || (docsResult as any)[0]?.count || 0;
+    } catch (e) {
+      console.log('documents table not found');
+    }
     
-    const edgesResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
-    const edgesCount = (edgesResult as any).rows?.[0]?.count || (edgesResult as any)[0]?.count || 0;
+    try {
+      const aiResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
+      aiCount = (aiResult as any).rows?.[0]?.count || (aiResult as any)[0]?.count || 0;
+    } catch (e) {
+      console.log('ai_document_results table not found');
+    }
+    
+    try {
+      const edgesResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+      edgesCount = (edgesResult as any).rows?.[0]?.count || (edgesResult as any)[0]?.count || 0;
+    } catch (e) {
+      console.log('semantic_edges table not found');
+    }
     
     res.json({
       ok: true,
