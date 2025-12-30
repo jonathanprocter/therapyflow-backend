@@ -77,7 +77,19 @@ async function runMigrationFile(filePath: string, migrationName: string): Promis
 export async function initializeDatabase(): Promise<void> {
   console.log('\n🔧 Initializing Database...\n');
 
-  const migrationsDir = path.join(__dirname, '../migrations');
+  // In production (Render), migrations are in dist/migrations
+  // In development, they're in server/migrations
+  const migrationsDir = process.env.NODE_ENV === 'production'
+    ? path.join(process.cwd(), 'dist', 'migrations')
+    : path.join(__dirname, '../migrations');
+  
+  console.log(`📁 Migrations directory: ${migrationsDir}`);
+  console.log(`📁 Directory exists: ${fs.existsSync(migrationsDir)}`);
+  
+  if (fs.existsSync(migrationsDir)) {
+    const files = fs.readdirSync(migrationsDir);
+    console.log(`📁 Found ${files.length} files in migrations directory`);
+  }
 
   // Define migrations in order
   const migrations = [
