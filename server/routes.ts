@@ -684,7 +684,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/sessions/:id/prep", async (req: any, res) => {
     try {
-      const { clientId } = req.query;
       const sessionId = req.params.id;
 
       // Get session details
@@ -694,41 +693,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get client information
-      const client = await storage.getClient(clientId || session.clientId);
+      const client = await storage.getClient(session.clientId);
       if (!client) {
         return res.status(404).json({ error: "Client not found" });
       }
 
-      // Get recent progress notes for context
-      const recentNotes = await storage.getProgressNotes(client.id);
-      const lastThreeNotes = recentNotes.slice(0, 3);
+      // First check if we already have a generated prep
+      const existingPrep = await storage.getLatestSessionPrep(sessionId);
+      if (existingPrep) {
+        return res.json({
+          id: existingPrep.id,
+          session_id: existingPrep.sessionId,
+          client_id: existingPrep.clientId,
+          therapist_id: existingPrep.therapistId,
+          prep: existingPrep.prep,
+          created_at: existingPrep.createdAt
+        });
+      }
 
-      // Get case conceptualization
-      const caseConceptualization = await storage.getCaseConceptualization(client.id);
-
-      // Get treatment plan
+      // No existing prep - generate one on the fly
       const treatmentPlan = await storage.getTreatmentPlan(client.id);
+      const notes = await storage.getProgressNotes(client.id);
+      const recentNotes = notes.slice(0, 5).map((note, idx) => {
+        const decrypted = safeDecrypt(note.content || "") || "";
+        const soap = parseSoapSections(decrypted);
+        return {
+          sessionDate: new Date(note.sessionDate).toISOString().split("T")[0],
+          sessionNumber: idx + 1,
+          subjective: soap.subjective,
+          objective: soap.objective,
+          assessment: soap.assessment,
+          plan: soap.plan,
+          themes: note.tags || [],
+          tonalAnalysis: "",
+          significantQuotes: [],
+          keywords: note.aiTags || [],
+          riskLevel: (note.riskLevel || "none") as any,
+          riskNotes: note.processingNotes || "",
+        };
+      });
 
-      // Get recent completed sessions
-      const completedSessions = await storage.getCompletedSessions(req.therapistId, client.id);
-      const lastThreeSessions = completedSessions.slice(0, 3);
+      const prep = await generateSessionPrep({
+        therapistId: req.therapistId || 'dr-jonathan-procter',
+        clientId: client.id,
+        clientName: client.name,
+        sessionId,
+        previousNotes: recentNotes,
+        treatmentPlan: treatmentPlan
+          ? {
+              goals: treatmentPlan.goals || [],
+              objectives: treatmentPlan.objectives || [],
+              interventions: treatmentPlan.interventions || [],
+            }
+          : undefined,
+      });
 
+      // Return in snake_case format for iOS
       res.json({
-        session: { ...session, client },
-        client,
-        recentNotes: lastThreeNotes,
-        caseConceptualization,
-        treatmentPlan,
-        recentSessions: lastThreeSessions,
-        prepSuggestions: {
-          focusAreas: [],
-          interventions: treatmentPlan?.interventions || [],
-          riskFactors: []
-        }
+        id: prep.id,
+        session_id: prep.sessionId,
+        client_id: prep.clientId,
+        therapist_id: prep.therapistId,
+        prep: prep.prep,
+        created_at: prep.createdAt
       });
     } catch (error) {
       console.error("Error fetching session prep data:", error);
       res.status(500).json({ error: "Failed to fetch session preparation data" });
+    }
+  });
+
+  // POST endpoint for iOS - generates AI session prep
+  app.post("/api/sessions/:id/prep", async (req: any, res) => {
+    try {
+      const sessionId = req.params.id;
+      const session = await storage.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      const client = await storage.getClient(session.clientId);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      const treatmentPlan = await storage.getTreatmentPlan(client.id);
+      const notes = await storage.getProgressNotes(client.id);
+      const recentNotes = notes.slice(0, 5).map((note, idx) => {
+        const decrypted = safeDecrypt(note.content || "") || "";
+        const soap = parseSoapSections(decrypted);
+        return {
+          sessionDate: new Date(note.sessionDate).toISOString().split("T")[0],
+          sessionNumber: idx + 1,
+          subjective: soap.subjective,
+          objective: soap.objective,
+          assessment: soap.assessment,
+          plan: soap.plan,
+          themes: note.tags || [],
+          tonalAnalysis: "",
+          significantQuotes: [],
+          keywords: note.aiTags || [],
+          riskLevel: (note.riskLevel || "none") as any,
+          riskNotes: note.processingNotes || "",
+        };
+      });
+
+      const prep = await generateSessionPrep({
+        therapistId: req.therapistId || 'dr-jonathan-procter',
+        clientId: client.id,
+        clientName: client.name,
+        sessionId,
+        previousNotes: recentNotes,
+        treatmentPlan: treatmentPlan
+          ? {
+              goals: treatmentPlan.goals || [],
+              objectives: treatmentPlan.objectives || [],
+              interventions: treatmentPlan.interventions || [],
+            }
+          : undefined,
+      });
+
+      // Return in snake_case format for iOS
+      res.json({
+        id: prep.id,
+        session_id: prep.sessionId,
+        therapist_id: prep.therapistId,
+        client_id: prep.clientId,
+        prep: prep.prep,
+        generated_at: prep.generatedAt,
+        created_at: prep.createdAt
+      });
+    } catch (error) {
+      console.error("Error generating AI session prep:", error);
+      res.status(500).json({ error: "Failed to generate session preparation" });
     }
   });
 
