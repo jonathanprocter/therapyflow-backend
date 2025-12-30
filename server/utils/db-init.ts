@@ -33,6 +33,17 @@ async function tableExists(tableName: string): Promise<boolean> {
 }
 
 /**
+ * Remove SQL comments from a string while preserving the actual SQL
+ */
+function stripSqlComments(sqlString: string): string {
+  // Remove single-line comments (-- ...)
+  let result = sqlString.replace(/--.*$/gm, '');
+  // Remove multi-line comments (/* ... */)
+  result = result.replace(/\/\*[\s\S]*?\*\//g, '');
+  return result.trim();
+}
+
+/**
  * Run a SQL migration file
  */
 async function runMigrationFile(filePath: string, migrationName: string): Promise<void> {
@@ -45,11 +56,11 @@ async function runMigrationFile(filePath: string, migrationName: string): Promis
     console.log(`🔧 Running migration: ${migrationName}...`);
     const migrationSQL = fs.readFileSync(filePath, 'utf-8');
     
-    // Split by semicolons and execute each statement
+    // Split by semicolons, strip comments, then filter empty statements
     const statements = migrationSQL
       .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+      .map(s => stripSqlComments(s))
+      .filter(s => s.length > 0);
 
     let successCount = 0;
     for (const statement of statements) {
@@ -57,8 +68,9 @@ async function runMigrationFile(filePath: string, migrationName: string): Promis
         await db.execute(sql.raw(statement));
         successCount++;
       } catch (error: any) {
-        // Ignore "already exists" errors
-        if (!error.message?.includes('already exists')) {
+        // Ignore "already exists" errors for idempotent migrations
+        if (!error.message?.includes('already exists') && 
+            !error.message?.includes('duplicate key')) {
           console.error(`Error in ${migrationName}:`, error.message);
         }
       }
