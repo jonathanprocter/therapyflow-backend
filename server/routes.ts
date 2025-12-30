@@ -29,6 +29,7 @@ import multer from "multer";
 import { registerTranscriptRoutes } from "./routes/transcript-routes";
 import { aiRoutes } from "./routes/ai-routes";
 import { verifyClientOwnership, SecureClientQueries } from "./middleware/clientAuth";
+import { filterActualClients, validateClientName, sanitizeClientName } from "./utils/client-filters";
 import { ClinicalTransactions } from "./utils/transactions";
 import { encryptClientData, decryptClientData, ClinicalEncryption } from "./utils/encryption";
 import { ClinicalAuditLogger, AuditAction } from "./utils/auditLogger";
@@ -266,23 +267,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clients = await storage.getClients(req.therapistId);
       
-      // Filter out non-client entries (calendar events, tasks, etc.)
-      const nonClientPatterns = [
-        /^Call with /i,
-        /^Coffee with /i,
-        /^Meeting with /i,
-        /^Lunch with /i,
-        /Deductible/i,
-        /Appointment$/i,
-        /& .* Appointment$/i,
-        /^Reminder:/i,
-        /^Task:/i,
-        /^TODO:/i
-      ];
-      
-      const actualClients = clients.filter(client => {
-        return !nonClientPatterns.some(pattern => pattern.test(client.name));
-      });
+      // Filter out non-client entries (calendar events, tasks, etc.) using utility
+      const actualClients = filterActualClients(clients);
       
       res.json(actualClients.map(toSnakeCaseClient));
     } catch (error) {
@@ -307,8 +293,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/clients", async (req: any, res) => {
     try {
+      // Validate client name before processing
+      const nameValidation = validateClientName(req.body.name);
+      if (!nameValidation.valid) {
+        return res.status(400).json({ error: nameValidation.error });
+      }
+
+      // Sanitize the client name
+      const sanitizedName = sanitizeClientName(req.body.name);
+
       const clientData = insertClientSchema.parse({
         ...req.body,
+        name: sanitizedName,
         therapistId: req.therapistId
       });
 

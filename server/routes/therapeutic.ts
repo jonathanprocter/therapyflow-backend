@@ -1,6 +1,7 @@
 import { Request, Response, Router } from 'express';
-import { enhancedStorage } from "../storage-extensions";
-import { verifyClientOwnership, SecureClientQueries } from '../middleware/clientAuth';
+import { enhancedStorage } from "../storage-extensions.js";
+import { verifyClientOwnership, SecureClientQueries } from '../middleware/clientAuth.js';
+import { getTherapistIdOrDefault } from '../utils/auth-helpers.js';
 
 const router = Router();
 
@@ -8,7 +9,7 @@ router.post('/synthesize/:clientId', verifyClientOwnership, async (req: Request,
   try {
     const { clientId } = req.params;
     const { startDate, endDate, focusTags } = req.body;
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = getTherapistIdOrDefault(req);
 
     if (!therapistId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -35,7 +36,7 @@ router.post('/recall/:clientId', verifyClientOwnership, async (req: Request, res
   try {
     const { clientId } = req.params;
     const { query } = req.body;
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = getTherapistIdOrDefault(req);
 
     if (!therapistId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -57,16 +58,24 @@ router.post('/recall/:clientId', verifyClientOwnership, async (req: Request, res
 // Get recent insights across all clients for dashboard widget (must come before parameterized route)
 router.get('/insights/recent', async (req: Request, res: Response) => {
   try {
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = getTherapistIdOrDefault(req);
     const { limit = 10 } = req.query;
 
     if (!therapistId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    // For now, return empty array - would need to implement cross-client insights
-    // This would typically aggregate recent insights from all therapist's clients
-    const insights: any[] = [];
+    // Get recent insights across all clients for this therapist
+    const { sessionInsights } = await import('@shared/schema-extensions.js');
+    const { db } = await import('../db.js');
+    const { eq, desc } = await import('drizzle-orm');
+
+    const insights = await db
+      .select()
+      .from(sessionInsights)
+      .where(eq(sessionInsights.therapistId, therapistId))
+      .orderBy(desc(sessionInsights.createdAt))
+      .limit(Number(limit));
 
     res.json({ success: true, insights });
   } catch (error) {
@@ -78,7 +87,7 @@ router.get('/insights/recent', async (req: Request, res: Response) => {
 router.get('/insights/:clientId', verifyClientOwnership, async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = getTherapistIdOrDefault(req);
 
     if (!therapistId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -97,7 +106,7 @@ router.get('/tags/:clientId', verifyClientOwnership, async (req: Request, res: R
   try {
     const { clientId } = req.params;
     const { category } = req.query;
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = getTherapistIdOrDefault(req);
 
     if (!therapistId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });

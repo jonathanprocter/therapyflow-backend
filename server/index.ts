@@ -14,6 +14,7 @@ import { registerFileWatcherRoutes } from "./routes/file-watcher-routes.js";
 import { fileWatcherService } from "./services/fileWatcherService.js";
 import { registerDriveRoutes } from "./routes/drive-routes.js";
 import { googleDriveService } from "./services/googleDriveService.js";
+import { ensureTherapeuticTables, checkCriticalTables } from "./utils/migration-checker.js";
 
 // Import middleware
 import { standardRateLimit, aiProcessingRateLimit } from './middleware/rateLimit';
@@ -140,6 +141,15 @@ app.get("/api/health/deep", async (req, res) => {
 });
 
 (async () => {
+  // Check and ensure database tables exist
+  try {
+    await checkCriticalTables();
+    await ensureTherapeuticTables();
+  } catch (error) {
+    console.error('⚠️  Database table check failed:', error);
+    console.log('⚠️  Server will continue, but some features may not work');
+  }
+
   const server = await registerRoutes(app);
 
   // Register CareNotesAI pipeline routes
