@@ -253,7 +253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/clients/:id", verifyClientOwnership, async (req: any, res) => {
+  app.get("/api/clients/:clientId", verifyClientOwnership, async (req: any, res) => {
     try {
       // Client ownership already verified by middleware
       const client = req.verifiedClient;
