@@ -2339,6 +2339,69 @@ Return the same JSON structure but with enhanced clinical content and higher con
     
     return notes.join('\n');
   }
+
+  /**
+   * Intelligent document processing - automatically detects document type
+   * and processes accordingly:
+   * - Transcripts -> Comprehensive clinical progress notes
+   * - Progress Notes -> Extract and file by date
+   * - Bulk Notes -> Split and file each by date of service
+   */
+  async processDocumentIntelligently(
+    file: Buffer,
+    fileName: string,
+    therapistId: string,
+    documentId?: string
+  ): Promise<{
+    success: boolean;
+    documentType: string;
+    notes: any[];
+    totalProcessed: number;
+    errors: string[];
+    processingNotes: string;
+  }> {
+    console.log(`🧠 Starting intelligent document processing for: ${fileName}`);
+
+    // First, extract text from the document
+    const extractionResult = await this.extractTextRobustly(file, fileName);
+
+    if (extractionResult.quality < 15) {
+      return {
+        success: false,
+        documentType: 'unknown',
+        notes: [],
+        totalProcessed: 0,
+        errors: ['Could not extract readable text from document'],
+        processingNotes: 'Text extraction failed - document may be scanned image or corrupted'
+      };
+    }
+
+    const cleanedText = this.preprocessText(extractionResult.text);
+
+    // Use the intelligent document classifier
+    const { intelligentDocumentClassifier } = await import('./intelligent-document-classifier');
+    const result = await intelligentDocumentClassifier.processDocument(
+      cleanedText,
+      fileName,
+      therapistId
+    );
+
+    // If successful, save the notes to the database
+    if (result.success && result.notes.length > 0) {
+      const saveResult = await intelligentDocumentClassifier.saveProcessedNotes(
+        result.notes,
+        therapistId,
+        documentId
+      );
+
+      return {
+        ...result,
+        processingNotes: `${result.processingNotes}. Saved ${saveResult.savedIds.length} notes to database.${saveResult.errors.length > 0 ? ` Errors: ${saveResult.errors.join(', ')}` : ''}`
+      };
+    }
+
+    return result;
+  }
 }
 
 // Export singleton instance

@@ -1331,14 +1331,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
 
-        // If analyze flag is set, trigger AI processing asynchronously
+        // If analyze flag is set, trigger intelligent AI processing asynchronously
+        // This will automatically detect if it's a transcript, progress note, or bulk notes
+        // and process accordingly
         if (analyze === "true") {
-          // Fire and forget - process with enhanced AI
-          enhancedDocumentProcessor.processDocument(
+          // Fire and forget - process with intelligent document classification
+          enhancedDocumentProcessor.processDocumentIntelligently(
             req.file.buffer,
             req.file.originalname,
-            therapistId
-          ).catch(err => {
+            therapistId,
+            doc.id
+          ).then(result => {
+            console.log(`📊 Intelligent processing result: ${result.documentType}, ${result.totalProcessed} notes processed`);
+            if (result.errors.length > 0) {
+              console.warn("Processing errors:", result.errors);
+            }
+          }).catch(err => {
             console.error("AI processing error for document", doc.id, err);
           });
         }
@@ -1367,9 +1375,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log(`🚀 Processing ${req.file.originalname} with enhanced AI analysis...`);
+      console.log(`🧠 Processing ${req.file.originalname} with intelligent document analysis...`);
 
-      const result = await enhancedDocumentProcessor.processDocument(
+      // Use intelligent processing that automatically detects document type:
+      // - Transcripts -> Comprehensive clinical progress notes
+      // - Progress Notes -> Extract and file by date
+      // - Bulk Notes -> Split and file each by date of service
+      const result = await enhancedDocumentProcessor.processDocumentIntelligently(
         req.file.buffer,
         req.file.originalname,
         req.therapistId
@@ -1377,10 +1389,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Log success metrics
       if (result.success) {
-        console.log(`✅ Enhanced processing completed: ${result.confidence}% confidence`);
-        console.log(`📊 Validation scores: Text:${result.validationDetails?.textExtractionScore}% AI:${result.validationDetails?.aiAnalysisScore}% Date:${result.validationDetails?.dateValidationScore}% Client:${result.validationDetails?.clientMatchScore}%`);
+        console.log(`✅ Intelligent processing completed: ${result.documentType}`);
+        console.log(`📊 Processed ${result.totalProcessed} notes`);
+        if (result.errors.length > 0) {
+          console.warn(`⚠️ Processing had ${result.errors.length} errors:`, result.errors);
+        }
       } else {
-        console.log(`❌ Enhanced processing failed: ${result.processingNotes}`);
+        console.log(`❌ Intelligent processing failed: ${result.processingNotes}`);
       }
 
       res.json(result);
