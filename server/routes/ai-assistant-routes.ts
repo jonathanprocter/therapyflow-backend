@@ -9,6 +9,7 @@ import { aiConversationService } from '../services/ai-conversation-service.js';
 import { aiContextManager } from '../services/ai-context-manager.js';
 import { getTherapistIdOrDefault } from '../utils/auth-helpers.js';
 import { logger } from '../services/loggerService.js';
+import { smartFormat } from '../utils/markdown-formatter.js';
 import { body, query, validationResult } from 'express-validator';
 
 const router = Router();
@@ -45,7 +46,10 @@ router.post(
 
       res.json({
         success: true,
-        ...response
+        response: response.response, // Already formatted as HTML
+        responseText: response.responseText, // Plain text version
+        conversationId: response.conversationId,
+        context: response.context
       });
     } catch (error: any) {
       logger.error('AI chat endpoint failed', error, 'AIRoutes', {

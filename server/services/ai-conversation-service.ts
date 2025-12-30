@@ -6,6 +6,7 @@
 import { ElevenLabsClient } from 'elevenlabs';
 import { aiContextManager, type ConversationContext } from './ai-context-manager.js';
 import { logger } from './loggerService.js';
+import { smartFormat, formatAIResponse } from '../utils/markdown-formatter.js';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ChatMessage {
@@ -138,8 +139,12 @@ export class AIConversationService {
         responseLength: response.length
       });
 
+      // Format response to remove markdown syntax
+      const formatted = formatAIResponse(response, 'html');
+
       return {
-        response,
+        response: formatted.html,
+        responseText: formatted.plainText,
         conversationId,
         context: contextData ? { summary: contextData.summary } : undefined
       };
