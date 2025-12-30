@@ -892,6 +892,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(treatmentPlans.createdAt));
   }
 
+  // Get single treatment plan by ID
+  async getTreatmentPlanById(id: string): Promise<TreatmentPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(treatmentPlans)
+      .where(eq(treatmentPlans.id, id));
+    return plan;
+  }
+
   // New Progress Note Management Methods
   async getProgressNotesForManualReview(therapistId: string): Promise<ProgressNote[]> {
     return await db

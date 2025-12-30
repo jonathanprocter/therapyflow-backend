@@ -2748,7 +2748,7 @@ ${sourceText}
     try {
       const plans = await storage.getAllTreatmentPlans(req.therapistId);
 
-      // Convert to snake_case for iOS
+      // Convert to snake_case for iOS - include all fields
       const formattedPlans = plans.map(plan => ({
         id: plan.id,
         client_id: plan.clientId,
@@ -2756,7 +2756,9 @@ ${sourceText}
         diagnosis: plan.diagnosis,
         goals: plan.goals,
         interventions: plan.interventions,
-        status: plan.status,
+        frequency: plan.frequency,
+        estimated_duration: plan.estimatedDuration,
+        is_active: plan.isActive,
         created_at: plan.createdAt,
         updated_at: plan.updatedAt,
       }));
@@ -2765,6 +2767,83 @@ ${sourceText}
     } catch (error) {
       console.error("Error fetching treatment plans:", error);
       res.status(500).json({ error: "Failed to fetch treatment plans" });
+    }
+  });
+
+  // Single treatment plan by ID for iOS
+  app.get("/api/treatment-plans/:id", async (req: any, res) => {
+    try {
+      const plan = await storage.getTreatmentPlanById(req.params.id);
+      if (!plan) {
+        return res.status(404).json({ error: "Treatment plan not found" });
+      }
+
+      // Verify ownership
+      if (plan.therapistId !== req.therapistId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json({
+        id: plan.id,
+        client_id: plan.clientId,
+        therapist_id: plan.therapistId,
+        diagnosis: plan.diagnosis,
+        goals: plan.goals,
+        interventions: plan.interventions,
+        frequency: plan.frequency,
+        estimated_duration: plan.estimatedDuration,
+        is_active: plan.isActive,
+        created_at: plan.createdAt,
+        updated_at: plan.updatedAt,
+      });
+    } catch (error) {
+      console.error("Error fetching treatment plan:", error);
+      res.status(500).json({ error: "Failed to fetch treatment plan" });
+    }
+  });
+
+  // Create treatment plan for iOS
+  app.post("/api/treatment-plans", async (req: any, res) => {
+    try {
+      const { client_id, diagnosis, goals, interventions, frequency, estimated_duration } = req.body;
+
+      if (!client_id || !goals) {
+        return res.status(400).json({ error: "client_id and goals are required" });
+      }
+
+      // Verify client ownership
+      const clientCheck = await SecureClientQueries.getClient(client_id, req.therapistId);
+      if (clientCheck.length === 0) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const plan = await storage.createTreatmentPlan({
+        clientId: client_id,
+        therapistId: req.therapistId,
+        diagnosis,
+        goals,
+        interventions: interventions || [],
+        frequency,
+        estimatedDuration: estimated_duration,
+        isActive: true,
+      });
+
+      res.status(201).json({
+        id: plan.id,
+        client_id: plan.clientId,
+        therapist_id: plan.therapistId,
+        diagnosis: plan.diagnosis,
+        goals: plan.goals,
+        interventions: plan.interventions,
+        frequency: plan.frequency,
+        estimated_duration: plan.estimatedDuration,
+        is_active: plan.isActive,
+        created_at: plan.createdAt,
+        updated_at: plan.updatedAt,
+      });
+    } catch (error) {
+      console.error("Error creating treatment plan:", error);
+      res.status(500).json({ error: "Failed to create treatment plan" });
     }
   });
 
