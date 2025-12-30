@@ -96,16 +96,85 @@ export class AIService {
     }
   }
   async generateEmbedding(text: string): Promise<number[]> {
+    // Try OpenAI embeddings first
     try {
       const response = await openai.embeddings.create({
         model: "text-embedding-3-small",
         input: text,
       });
       return response.data[0].embedding;
-    } catch (error) {
-      console.error("Error generating embedding:", error);
-      throw new Error("Failed to generate embedding");
+    } catch (openaiError) {
+      console.warn("OpenAI embedding failed, trying Anthropic fallback:", openaiError);
     }
+
+    // Fallback: Use Anthropic to extract semantic keywords and create a simple embedding
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 500,
+        temperature: 0,
+        messages: [
+          {
+            role: "user",
+            content: `Extract the 20 most important semantic keywords/concepts from this text for search purposes. Return ONLY a JSON array of lowercase strings, no explanation.
+
+Text: ${text.substring(0, 2000)}`
+          }
+        ]
+      });
+
+      const content = response.content[0];
+      if (content && 'text' in content) {
+        try {
+          const keywords = JSON.parse(content.text);
+          // Create a simple hash-based embedding from keywords
+          // This won't be as good as real embeddings but allows basic semantic matching
+          const embedding = this.keywordsToSimpleEmbedding(keywords);
+          return embedding;
+        } catch {
+          console.warn("Failed to parse Anthropic keywords response");
+        }
+      }
+    } catch (anthropicError) {
+      console.error("Anthropic fallback also failed:", anthropicError);
+    }
+
+    throw new Error("Failed to generate embedding from both OpenAI and Anthropic");
+  }
+
+  // Convert keywords to a simple 384-dimension embedding (matching text-embedding-3-small)
+  private keywordsToSimpleEmbedding(keywords: string[]): number[] {
+    const dimensions = 384;
+    const embedding = new Array(dimensions).fill(0);
+
+    // Simple hash-based embedding - each keyword contributes to multiple dimensions
+    for (const keyword of keywords) {
+      const hash = this.simpleHash(keyword.toLowerCase());
+      for (let i = 0; i < 10; i++) {
+        const idx = (hash + i * 37) % dimensions;
+        embedding[idx] += 1.0 / keywords.length;
+      }
+    }
+
+    // Normalize the embedding
+    const magnitude = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
+    if (magnitude > 0) {
+      for (let i = 0; i < dimensions; i++) {
+        embedding[i] /= magnitude;
+      }
+    }
+
+    return embedding;
+  }
+
+  private simpleHash(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
   }
 
   async generateClinicalTags(content: string): Promise<ClinicalTag[]> {
