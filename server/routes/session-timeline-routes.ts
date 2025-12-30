@@ -69,22 +69,22 @@ router.get("/timeline", async (req, res) => {
       );
     }
 
-    // Transform the data to match the frontend interface
+    // Transform the data to match the frontend interface (snake_case for iOS)
     const timelineData = results.map(result => ({
       id: result.id,
-      clientId: result.clientId,
-      clientName: result.clientName || 'Unknown Client',
-      sessionDate: result.sessionDate,
-      sessionType: result.sessionType || 'individual',
+      client_id: result.clientId,
+      client_name: result.clientName || 'Unknown Client',
+      session_date: result.sessionDate,
+      session_type: result.sessionType || 'individual',
       status: result.status || 'completed',
       duration: result.duration,
-      progressNoteId: result.progressNoteId,
+      progress_note_id: result.progressNoteId,
       themes: result.themes || [],
       mood: result.mood,
-      progressRating: result.progressRating,
-      riskLevel: result.riskLevel || 'low',
+      progress_rating: result.progressRating,
+      risk_level: result.riskLevel || 'low',
       interventions: result.interventions || [],
-      nextSteps: result.nextSteps || [],
+      next_steps: result.nextSteps || [],
     }));
 
     res.json(timelineData);
@@ -157,11 +157,23 @@ router.get("/stats", async (req, res) => {
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
       .groupBy(progressNotes.riskLevel);
 
+    // Transform to snake_case for iOS
     res.json({
-      sessionStats: sessionStats[0] || { totalSessions: 0, completedSessions: 0, avgDuration: 0 },
-      clientStats,
-      sessionTypeStats,
-      progressStats,
+      session_stats: sessionStats[0] || { total_sessions: 0, completed_sessions: 0, avg_duration: 0 },
+      client_stats: clientStats.map(c => ({
+        client_id: c.clientId,
+        client_name: c.clientName,
+        session_count: c.sessionCount,
+      })),
+      session_type_stats: sessionTypeStats.map(s => ({
+        session_type: s.sessionType,
+        count: s.count,
+      })),
+      progress_stats: progressStats.map(p => ({
+        avg_progress_rating: p.avgProgressRating,
+        risk_level: p.riskLevel,
+        risk_count: p.riskCount,
+      })),
     });
   } catch (error) {
     console.error("Error fetching session statistics:", error);
@@ -205,7 +217,28 @@ router.get("/:sessionId/details", async (req, res) => {
       return res.status(404).json({ error: "Session not found" });
     }
 
-    res.json(sessionDetails[0]);
+    // Transform to snake_case for iOS
+    const detail = sessionDetails[0];
+    res.json({
+      id: detail.id,
+      client_id: detail.clientId,
+      client_name: detail.clientName,
+      session_date: detail.sessionDate,
+      session_type: detail.sessionType,
+      status: detail.status,
+      duration: detail.duration,
+      notes: detail.notes,
+      progress_note_id: detail.progressNoteId,
+      progress_note_content: detail.progressNoteContent,
+      themes: detail.themes,
+      mood: detail.mood,
+      progress_rating: detail.progressRating,
+      risk_level: detail.riskLevel,
+      interventions: detail.interventions,
+      next_steps: detail.nextSteps,
+      key_points: detail.keyPoints,
+      clinical_observations: detail.clinicalObservations,
+    });
   } catch (error) {
     console.error("Error fetching session details:", error);
     res.status(500).json({ error: "Failed to fetch session details" });

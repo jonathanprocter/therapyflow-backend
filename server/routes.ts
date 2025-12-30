@@ -80,6 +80,36 @@ function toSnakeCaseClient(client: any): any {
   };
 }
 
+// Helper function to convert progress note to snake_case for iOS compatibility
+function toSnakeCaseProgressNote(note: any): any {
+  if (!note) return note;
+  return {
+    id: note.id,
+    client_id: note.clientId,
+    session_id: note.sessionId,
+    therapist_id: note.therapistId,
+    content: note.content,
+    session_date: note.sessionDate,
+    tags: note.tags,
+    ai_tags: note.aiTags,
+    embedding: note.embedding,
+    risk_level: note.riskLevel,
+    progress_rating: note.progressRating,
+    quality_score: note.qualityScore,
+    quality_flags: note.qualityFlags,
+    status: note.status,
+    is_placeholder: note.isPlaceholder,
+    requires_manual_review: note.requiresManualReview,
+    ai_confidence_score: note.aiConfidenceScore,
+    processing_notes: note.processingNotes,
+    original_document_id: note.originalDocumentId,
+    created_at: note.createdAt,
+    updated_at: note.updatedAt,
+    client: note.client ? toSnakeCaseClient(note.client) : undefined,
+    session: note.session ? toSnakeCaseSession(note.session) : undefined,
+  };
+}
+
 // Helper function to safely decrypt content (handles non-encrypted legacy data)
 function safeDecrypt(content: string): string | null {
   if (!content) return null;
@@ -819,19 +849,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const notesWithClients = await Promise.all(
           notes.map(async (note) => {
             const client = await storage.getClient(note.clientId);
-            return { 
-              ...note, 
+            return toSnakeCaseProgressNote({
+              ...note,
               client,
               // Decrypt progress note content (gracefully handle non-encrypted data)
               content: note.content ? safeDecrypt(note.content) : null
-            };
+            });
           })
         );
         res.json(notesWithClients);
       } else if (search) {
         const notes = await storage.searchProgressNotes(req.therapistId, search);
         // Decrypt content before returning (gracefully handle non-encrypted data)
-        const decryptedNotes = notes.map(note => ({
+        const decryptedNotes = notes.map(note => toSnakeCaseProgressNote({
           ...note,
           content: note.content ? safeDecrypt(note.content) : null
         }));
@@ -842,10 +872,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (clientCheck.length === 0) {
           return res.status(403).json({ error: "Access denied" });
         }
-        
+
         const notes = await storage.getProgressNotes(clientId);
         // Decrypt content before returning (gracefully handle non-encrypted data)
-        const decryptedNotes = notes.map(note => ({
+        const decryptedNotes = notes.map(note => toSnakeCaseProgressNote({
           ...note,
           content: note.content ? safeDecrypt(note.content) : null
         }));
@@ -928,10 +958,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Decrypt content before returning (gracefully handle non-encrypted data)
-      const decryptedNote = {
+      const decryptedNote = toSnakeCaseProgressNote({
         ...result.progressNote,
         content: result.progressNote.content ? safeDecrypt(result.progressNote.content) : null
-      };
+      });
 
       try {
         const riskCheck = await checkRiskEscalation(noteData.clientId);
@@ -973,12 +1003,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes.map(async (note) => {
           const client = await storage.getClient(note.clientId);
           const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
-          return { 
-            ...note, 
-            client, 
+          return toSnakeCaseProgressNote({
+            ...note,
+            client,
             session,
             content: note.content ? safeDecrypt(note.content) : null
-          };
+          });
         })
       );
       res.json(notesWithClients);
@@ -995,12 +1025,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         placeholders.map(async (note) => {
           const client = await storage.getClient(note.clientId);
           const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
-          return { 
-            ...note, 
-            client, 
+          return toSnakeCaseProgressNote({
+            ...note,
+            client,
             session,
             content: note.content ? safeDecrypt(note.content) : null
-          };
+          });
         })
       );
       res.json(placeholdersWithClients);
