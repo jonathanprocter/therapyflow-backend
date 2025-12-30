@@ -302,11 +302,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Sanitize the client name
       const sanitizedName = sanitizeClientName(req.body.name);
 
-      const clientData = insertClientSchema.parse({
+      // Convert date strings to Date objects for timestamp fields
+      const bodyWithDates = {
         ...req.body,
         name: sanitizedName,
-        therapistId: req.therapistId
-      });
+        therapistId: req.therapistId,
+        dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
+      };
+
+      const clientData = insertClientSchema.parse(bodyWithDates);
 
       // Encrypt sensitive data before storing
       const encryptedClientData = encryptClientData(clientData);
@@ -323,7 +327,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/clients/:id", async (req: any, res) => {
     try {
-      const clientData = insertClientSchema.partial().parse(req.body);
+      // Convert date strings to Date objects for timestamp fields
+      const bodyWithDates = {
+        ...req.body,
+        dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
+      };
+      const clientData = insertClientSchema.partial().parse(bodyWithDates);
       const therapistId = req.therapistId;
 
       // Use secure transaction for client updates
