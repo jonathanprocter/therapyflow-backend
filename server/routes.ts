@@ -2645,8 +2645,8 @@ ${sourceText}
         return res.status(400).json({ error: "Query parameter is required" });
       }
 
-      // Generate embedding for search query
-      const queryEmbedding = await aiService.generateEmbedding(query as string);
+      const searchQuery = (query as string).toLowerCase();
+      const maxResults = parseInt(limit as string) || 10;
 
       // Get all progress notes for this therapist
       const allNotes = await storage.getAllProgressNotes(req.therapistId);
@@ -2656,19 +2656,68 @@ ${sourceText}
         ? allNotes.filter(n => n.clientId === clientId)
         : allNotes;
 
-      // Calculate similarity scores for notes with embeddings
-      const scoredNotes = notes
-        .filter(note => note.embedding && note.content)
-        .map(note => {
-          const similarity = cosineSimilarity(queryEmbedding, note.embedding as number[]);
-          return {
-            ...note,
-            content: note.content ? safeDecrypt(note.content) : null,
-            similarity
-          };
-        })
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, parseInt(limit as string) || 10);
+      let scoredNotes: any[] = [];
+      let searchMethod = "keyword";
+
+      // Try embedding-based search first
+      try {
+        const queryEmbedding = await aiService.generateEmbedding(query as string);
+
+        // Calculate similarity scores for notes with embeddings
+        const notesWithEmbeddings = notes.filter(note => note.embedding && Array.isArray(note.embedding) && note.embedding.length > 0);
+
+        if (notesWithEmbeddings.length > 0) {
+          scoredNotes = notesWithEmbeddings
+            .map(note => {
+              const similarity = cosineSimilarity(queryEmbedding, note.embedding as number[]);
+              return {
+                ...note,
+                content: note.content ? safeDecrypt(note.content) : null,
+                similarity
+              };
+            })
+            .filter(note => note.similarity > 0.3) // Only include somewhat relevant results
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, maxResults);
+
+          searchMethod = "semantic";
+        }
+      } catch (embeddingError) {
+        console.log("Embedding search failed, falling back to keyword search:", embeddingError);
+      }
+
+      // Fallback to keyword search if embedding search didn't produce results
+      if (scoredNotes.length === 0) {
+        const keywords = searchQuery.split(/\s+/).filter(w => w.length > 2);
+
+        scoredNotes = notes
+          .filter(note => note.content)
+          .map(note => {
+            const decryptedContent = note.content ? safeDecrypt(note.content) : "";
+            const contentLower = (decryptedContent || "").toLowerCase();
+            const tagsLower = [...(note.tags || []), ...(note.aiTags || [])].join(" ").toLowerCase();
+
+            // Calculate keyword match score
+            let matchCount = 0;
+            for (const keyword of keywords) {
+              if (contentLower.includes(keyword)) matchCount++;
+              if (tagsLower.includes(keyword)) matchCount += 0.5;
+            }
+
+            const similarity = keywords.length > 0 ? matchCount / keywords.length : 0;
+
+            return {
+              ...note,
+              content: decryptedContent,
+              similarity
+            };
+          })
+          .filter(note => note.similarity > 0)
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, maxResults);
+
+        searchMethod = "keyword";
+      }
 
       // Format results for iOS with snake_case
       const results = scoredNotes.map(note => ({
@@ -2685,7 +2734,8 @@ ${sourceText}
       res.json({
         query,
         results,
-        total: results.length
+        total: results.length,
+        search_method: searchMethod
       });
     } catch (error) {
       console.error("Error performing semantic search:", error);
