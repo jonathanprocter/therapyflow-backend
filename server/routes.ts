@@ -110,6 +110,28 @@ function toSnakeCaseProgressNote(note: any): any {
   };
 }
 
+// Helper function to convert document to snake_case for iOS compatibility
+function toSnakeCaseDocument(doc: any): any {
+  if (!doc) return doc;
+  return {
+    id: doc.id,
+    client_id: doc.clientId,
+    therapist_id: doc.therapistId,
+    file_name: doc.fileName,
+    file_type: doc.fileType,
+    file_path: doc.filePath,
+    extracted_text: doc.extractedText,
+    tags: doc.tags || [],
+    file_size: doc.fileSize,
+    metadata: doc.metadata,
+    uploaded_at: doc.uploadedAt,
+    status: doc.status || "pending",
+    document_type: doc.documentType,
+    mime_type: doc.mimeType || doc.fileType,
+    client_name: doc.clientName,
+  };
+}
+
 // Helper function to safely decrypt content (handles non-encrypted legacy data)
 function safeDecrypt(content: string): string | null {
   if (!content) return null;
@@ -1254,12 +1276,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced Document Upload and Processing endpoints
-  app.post("/api/documents/upload", upload.single('document'), async (req: any, res) => {
+  // Accept both 'file' (iOS) and 'document' (web) field names
+  app.post("/api/documents/upload", upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
+      // Check if this is an iOS request (has clientId field or mobile=true)
+      const isMobileRequest = req.body.clientId !== undefined || req.body.mobile === 'true';
+
+      if (isMobileRequest) {
+        // iOS/Mobile flow: Save file, create Document record, return Document object
+        console.log(`📱 iOS upload request for ${req.file.originalname}`);
+
+        const { clientId, analyze } = req.body;
+        const therapistId = req.therapistId || 'dr-jonathan-procter';
+
+        // Get or create a default client if none provided
+        let actualClientId = clientId;
+        if (!actualClientId) {
+          const clients = await storage.getClients(therapistId);
+          if (clients.length > 0) {
+            actualClientId = clients[0].id;
+          } else {
+            actualClientId = "unassigned";
+          }
+        }
+
+        // Save file to disk
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        const uploadDir = path.resolve(process.cwd(), "uploads");
+        await fs.mkdir(uploadDir, { recursive: true });
+
+        const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const storedName = `${Date.now()}-${Math.random().toString(16).slice(2)}-${safeName}`;
+        const storedPath = path.join(uploadDir, storedName);
+
+        await fs.writeFile(storedPath, req.file.buffer);
+
+        // Create document record
+        const doc = await storage.createDocument({
+          clientId: actualClientId,
+          therapistId,
+          fileName: req.file.originalname,
+          fileType: req.file.mimetype,
+          filePath: `/uploads/${storedName}`,
+          fileSize: req.file.size,
+          metadata: {
+            originalName: req.file.originalname,
+            storedName,
+            size: req.file.size
+          }
+        });
+
+        // If analyze flag is set, trigger AI processing asynchronously
+        if (analyze === "true") {
+          // Fire and forget - process with enhanced AI
+          enhancedDocumentProcessor.processDocument(
+            req.file.buffer,
+            req.file.originalname,
+            therapistId
+          ).catch(err => {
+            console.error("AI processing error for document", doc.id, err);
+          });
+        }
+
+        // Return document in snake_case format for iOS
+        return res.status(201).json(toSnakeCaseDocument({
+          ...doc,
+          status: analyze === "true" ? "processing" : "pending"
+        }));
+      }
+
+      // Web flow: Enhanced processing
       // Support multiple file types with enhanced processing
       const supportedMimeTypes = [
         'text/plain',                    // TXT - optimal for AI analysis
@@ -1271,8 +1362,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       if (!supportedMimeTypes.includes(req.file.mimetype)) {
-        return res.status(400).json({ 
-          error: 'Supported file types: TXT, PDF, DOCX, DOC, RTF. Enhanced AI analysis now supports all formats.' 
+        return res.status(400).json({
+          error: 'Supported file types: TXT, PDF, DOCX, DOC, RTF. Enhanced AI analysis now supports all formats.'
         });
       }
 
