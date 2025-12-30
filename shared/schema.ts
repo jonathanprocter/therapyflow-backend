@@ -477,6 +477,35 @@ export const noteEmbeddings = pgTable("note_embeddings", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
+// Calendar Events (synced from Google Calendar, SimplePractice, etc.)
+export const calendarEvents = pgTable("calendar_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  externalId: text("external_id").notNull(), // Google Calendar event ID or other external ID
+  source: text("source").notNull(), // 'google', 'simplepractice', 'therapyflow'
+  title: text("title").notNull(),
+  description: text("description"),
+  location: text("location"),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  isAllDay: boolean("is_all_day").default(false),
+  attendees: text("attendees").array().default([]),
+  // Link to TherapyFlow entities
+  linkedClientId: varchar("linked_client_id").references(() => clients.id),
+  linkedSessionId: varchar("linked_session_id").references(() => sessions.id),
+  // Sync metadata
+  syncStatus: text("sync_status").default("synced"), // synced, pending_create, pending_update, pending_delete, error
+  lastSyncedAt: timestamp("last_synced_at"),
+  syncError: text("sync_error"),
+  // Recurrence info
+  recurringEventId: text("recurring_event_id"), // Parent event ID for recurring events
+  isRecurring: boolean("is_recurring").default(false),
+  // Metadata
+  rawData: jsonb("raw_data"), // Store original event data for debugging
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -554,6 +583,12 @@ export const insertDocumentTextVersionSchema = createInsertSchema(documentTextVe
   createdAt: true,
 });
 
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -596,3 +631,6 @@ export type JobRun = typeof jobRuns.$inferSelect;
 
 export type InsertDocumentTextVersion = z.infer<typeof insertDocumentTextVersionSchema>;
 export type DocumentTextVersion = typeof documentTextVersions.$inferSelect;
+
+export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
+export type CalendarEvent = typeof calendarEvents.$inferSelect;

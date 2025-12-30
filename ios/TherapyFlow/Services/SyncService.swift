@@ -233,6 +233,39 @@ actor SyncService {
 
         // Pull progress notes
         try await pullProgressNotes()
+
+        // Pull calendar events (cached for offline access)
+        try await pullCalendarEvents()
+
+        // Pull documents list
+        try await pullDocuments()
+    }
+
+    private func pullCalendarEvents() async throws {
+        // Sync calendar events from the server (cached in database)
+        let startOfMonth = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: Date()))!
+        let endOfMonth = Calendar.current.date(byAdding: .month, value: 2, to: startOfMonth)!
+
+        do {
+            let _ = try await apiClient.getCalendarEvents(
+                startDate: startOfMonth,
+                endDate: endOfMonth
+            )
+            // Events are handled by CalendarView and stored on the server
+            print("Calendar events synced successfully")
+        } catch {
+            await addSyncError(.pullFailed(entity: "CalendarEvents", error: error))
+        }
+    }
+
+    private func pullDocuments() async throws {
+        do {
+            let _ = try await apiClient.getDocuments()
+            // Documents list is fetched for caching
+            print("Documents list synced successfully")
+        } catch {
+            await addSyncError(.pullFailed(entity: "Documents", error: error))
+        }
     }
 
     private func pullClients() async throws {

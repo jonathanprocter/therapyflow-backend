@@ -71,22 +71,57 @@ struct SessionDetailView: View {
     // MARK: - Header Section
     private var headerSection: some View {
         HStack(spacing: 16) {
-            AvatarView(name: session.client?.name ?? "C", size: 56)
+            // Client info - tappable to view client details
+            if let clientId = session.clientId as String? {
+                NavigationLink(destination: ClientDetailView(clientId: clientId)) {
+                    HStack(spacing: 12) {
+                        AvatarView(name: session.client?.name ?? "C", size: 56)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(session.client?.name ?? "Client")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(Color.theme.primaryText)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 4) {
+                                Text(session.client?.name ?? "Client")
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(Color.theme.primaryText)
 
-                Text(session.scheduledAt.smartDateTimeString)
-                    .font(.subheadline)
-                    .foregroundColor(Color.theme.secondaryText)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(Color.theme.tertiaryText)
+                            }
+
+                            Text("Tap to view client profile")
+                                .font(.caption)
+                                .foregroundColor(Color.theme.primary)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+            } else {
+                HStack(spacing: 12) {
+                    AvatarView(name: session.client?.name ?? "C", size: 56)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(session.client?.name ?? "Client")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(Color.theme.primaryText)
+
+                        Text(session.scheduledAt.smartDateTimeString)
+                            .font(.subheadline)
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+                }
             }
 
             Spacer()
 
-            SessionStatusBadge(status: session.status)
+            VStack(alignment: .trailing, spacing: 4) {
+                SessionStatusBadge(status: session.status)
+
+                Text(session.scheduledAt.smartDateTimeString)
+                    .font(.caption)
+                    .foregroundColor(Color.theme.secondaryText)
+            }
         }
         .padding()
         .background(Color.theme.surface)

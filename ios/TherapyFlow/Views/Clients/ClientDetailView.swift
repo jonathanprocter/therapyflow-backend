@@ -9,8 +9,11 @@ struct ClientDetailView: View {
     @State private var isLoading = true
     @State private var error: Error?
     @State private var showingEditSheet = false
+    @State private var showingDeleteConfirmation = false
+    @State private var isDeleting = false
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
@@ -71,11 +74,39 @@ struct ClientDetailView: View {
 
                     Divider()
 
-                    Button(role: .destructive, action: {}) {
-                        Label("Archive Client", systemImage: "archivebox")
+                    Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
+                        Label("Delete Client", systemImage: "trash")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                }
+                .disabled(isDeleting)
+            }
+        }
+        .alert("Delete Client", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deleteClient()
+            }
+        } message: {
+            Text("Are you sure you want to delete \(client?.name ?? "this client")? This action cannot be undone and will also delete all associated sessions and notes.")
+        }
+        .overlay {
+            if isDeleting {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Deleting...")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                    .padding(32)
+                    .background(Color.theme.surface)
+                    .cornerRadius(16)
                 }
             }
         }
@@ -348,6 +379,30 @@ struct ClientDetailView: View {
             await MainActor.run {
                 self.error = error
                 isLoading = false
+            }
+        }
+    }
+
+    // MARK: - Delete Client
+    private func deleteClient() {
+        Task {
+            await deleteClientAsync()
+        }
+    }
+
+    private func deleteClientAsync() async {
+        isDeleting = true
+
+        do {
+            try await APIClient.shared.deleteClient(id: clientId)
+            await MainActor.run {
+                isDeleting = false
+                dismiss()
+            }
+        } catch {
+            await MainActor.run {
+                isDeleting = false
+                self.error = error
             }
         }
     }

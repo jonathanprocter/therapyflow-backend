@@ -2375,6 +2375,14 @@ ${sourceText}
   // Register session timeline routes
   app.use('/api/sessions', (await import('./routes/session-timeline-routes')).default);
 
+  // Register calendar events routes
+  app.use('/api/calendar-events', (await import('./routes/calendar-events')).default);
+  console.log("📅 Calendar Events API available at:");
+  console.log("   GET  /api/calendar-events");
+  console.log("   POST /api/calendar-events");
+  console.log("   POST /api/calendar-events/sync");
+  console.log("   GET  /api/calendar-events/pending/sync");
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -156,7 +156,8 @@ actor APIClient {
     ) throws -> URLRequest {
         var urlComponents = URLComponents(url: baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: true)!
 
-        if let queryParameters = queryParameters {
+        // Only set queryItems if we have non-empty parameters to avoid trailing '?'
+        if let queryParameters = queryParameters, !queryParameters.isEmpty {
             urlComponents.queryItems = queryParameters.map { URLQueryItem(name: $0.key, value: $0.value) }
         }
 
@@ -217,9 +218,24 @@ actor APIClient {
 
         switch httpResponse.statusCode {
         case 200...299:
+            // Check if the response is actually JSON before trying to decode
+            if let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type"),
+               !contentType.contains("application/json") {
+                // Server returned non-JSON response (e.g., HTML error page)
+                let responsePreview = String(data: data.prefix(100), encoding: .utf8) ?? "unknown"
+                print("Unexpected content type: \(contentType), response: \(responsePreview)")
+                throw APIError.unexpectedContentType(contentType)
+            }
+
             do {
                 return try decoder.decode(T.self, from: data)
             } catch {
+                // Check if it looks like HTML (common error page indicator)
+                if let responseString = String(data: data.prefix(50), encoding: .utf8),
+                   responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
+                    print("Server returned HTML instead of JSON")
+                    throw APIError.htmlResponseReceived
+                }
                 print("Decoding error: \(error)")
                 throw APIError.decodingError(error)
             }
@@ -237,6 +253,10 @@ actor APIClient {
             throw APIError.rateLimited
 
         case 500...599:
+            // Try to extract error message from response
+            if let errorMessage = String(data: data, encoding: .utf8) {
+                print("Server error \(httpResponse.statusCode): \(errorMessage.prefix(200))")
+            }
             throw APIError.serverError(httpResponse.statusCode)
 
         default:
@@ -345,6 +365,9 @@ enum APIError: LocalizedError {
     case uploadFailed
     case networkError(Error)
     case noData
+    case unexpectedContentType(String)
+    case htmlResponseReceived
+    case requestCancelled
 
     var errorDescription: String? {
         switch self {
@@ -374,6 +397,12 @@ enum APIError: LocalizedError {
             return "Network error: \(error.localizedDescription)"
         case .noData:
             return "No data received"
+        case .unexpectedContentType(let contentType):
+            return "Unexpected response type: \(contentType)"
+        case .htmlResponseReceived:
+            return "Server returned an error page. Please try again."
+        case .requestCancelled:
+            return "Request was cancelled"
         }
     }
 }
@@ -580,5 +609,187 @@ extension APIClient {
         }
 
         return data
+    }
+
+    // MARK: - Calendar Events API
+
+    /// Get calendar events with optional date filtering
+    func getCalendarEvents(startDate: Date? = nil, endDate: Date? = nil, source: String? = nil) async throws -> [SyncedCalendarEvent] {
+        var params: [String: String] = [:]
+        if let startDate = startDate {
+            params["startDate"] = ISO8601DateFormatter().string(from: startDate)
+        }
+        if let endDate = endDate {
+            params["endDate"] = ISO8601DateFormatter().string(from: endDate)
+        }
+        if let source = source {
+            params["source"] = source
+        }
+        return try await request(endpoint: "/api/calendar-events", method: .get, queryParameters: params)
+    }
+
+    /// Create a new calendar event
+    func createCalendarEvent(_ event: CreateCalendarEventInput) async throws -> SyncedCalendarEvent {
+        try await request(endpoint: "/api/calendar-events", method: .post, body: event)
+    }
+
+    /// Update a calendar event
+    func updateCalendarEvent(id: String, _ event: UpdateCalendarEventInput) async throws -> SyncedCalendarEvent {
+        try await request(endpoint: "/api/calendar-events/\(id)", method: .put, body: event)
+    }
+
+    /// Delete a calendar event
+    func deleteCalendarEvent(id: String) async throws {
+        try await requestVoid(endpoint: "/api/calendar-events/\(id)", method: .delete)
+    }
+
+    /// Sync calendar events from external source
+    func syncCalendarEvents(_ sync: CalendarEventSyncRequest) async throws -> CalendarEventSyncResponse {
+        try await request(endpoint: "/api/calendar-events/sync", method: .post, body: sync)
+    }
+
+    /// Get pending sync events
+    func getPendingCalendarEvents() async throws -> [SyncedCalendarEvent] {
+        try await request(endpoint: "/api/calendar-events/pending/sync", method: .get)
+    }
+
+    /// Mark event as synced
+    func markCalendarEventSynced(id: String, externalId: String?) async throws -> SyncedCalendarEvent {
+        struct MarkSyncedRequest: Encodable {
+            let externalId: String?
+        }
+        return try await request(
+            endpoint: "/api/calendar-events/\(id)/mark-synced",
+            method: .post,
+            body: MarkSyncedRequest(externalId: externalId)
+        )
+    }
+}
+
+// MARK: - Calendar Event Models
+
+struct SyncedCalendarEvent: Codable, Identifiable {
+    let id: String
+    let therapistId: String
+    let externalId: String
+    let source: String
+    let title: String
+    let description: String?
+    let location: String?
+    let startTime: Date
+    let endTime: Date
+    let isAllDay: Bool
+    let attendees: [String]?
+    let linkedClientId: String?
+    let linkedSessionId: String?
+    let syncStatus: String
+    let lastSyncedAt: Date?
+    let syncError: String?
+    let recurringEventId: String?
+    let isRecurring: Bool
+    let createdAt: Date
+    let updatedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case therapistId = "therapist_id"
+        case externalId = "external_id"
+        case source
+        case title
+        case description
+        case location
+        case startTime = "start_time"
+        case endTime = "end_time"
+        case isAllDay = "is_all_day"
+        case attendees
+        case linkedClientId = "linked_client_id"
+        case linkedSessionId = "linked_session_id"
+        case syncStatus = "sync_status"
+        case lastSyncedAt = "last_synced_at"
+        case syncError = "sync_error"
+        case recurringEventId = "recurring_event_id"
+        case isRecurring = "is_recurring"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+
+    /// Convert to CalendarEvent for UI display
+    func toCalendarEvent() -> CalendarEvent {
+        CalendarEvent(
+            id: id,
+            title: title,
+            startTime: startTime,
+            endTime: endTime,
+            location: location,
+            description: description,
+            attendees: attendees,
+            source: CalendarEvent.CalendarSource(rawValue: source) ?? .therapyFlow
+        )
+    }
+}
+
+struct CreateCalendarEventInput: Encodable {
+    let externalId: String
+    let source: String
+    let title: String
+    let description: String?
+    let location: String?
+    let startTime: Date
+    let endTime: Date
+    let isAllDay: Bool
+    let attendees: [String]?
+    let linkedClientId: String?
+    let linkedSessionId: String?
+    let rawData: [String: Any]?
+
+    enum CodingKeys: String, CodingKey {
+        case externalId, source, title, description, location
+        case startTime, endTime, isAllDay, attendees
+        case linkedClientId, linkedSessionId, rawData
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(externalId, forKey: .externalId)
+        try container.encode(source, forKey: .source)
+        try container.encode(title, forKey: .title)
+        try container.encodeIfPresent(description, forKey: .description)
+        try container.encodeIfPresent(location, forKey: .location)
+        try container.encode(ISO8601DateFormatter().string(from: startTime), forKey: .startTime)
+        try container.encode(ISO8601DateFormatter().string(from: endTime), forKey: .endTime)
+        try container.encode(isAllDay, forKey: .isAllDay)
+        try container.encodeIfPresent(attendees, forKey: .attendees)
+        try container.encodeIfPresent(linkedClientId, forKey: .linkedClientId)
+        try container.encodeIfPresent(linkedSessionId, forKey: .linkedSessionId)
+        // rawData is not encoded as it's complex - handle separately if needed
+    }
+}
+
+struct UpdateCalendarEventInput: Encodable {
+    var title: String?
+    var description: String?
+    var location: String?
+    var startTime: Date?
+    var endTime: Date?
+    var isAllDay: Bool?
+    var linkedClientId: String?
+    var linkedSessionId: String?
+}
+
+struct CalendarEventSyncRequest: Encodable {
+    let events: [CreateCalendarEventInput]
+    let source: String
+}
+
+struct CalendarEventSyncResponse: Decodable {
+    let success: Bool
+    let results: SyncResults
+    let message: String
+
+    struct SyncResults: Decodable {
+        let created: Int
+        let updated: Int
+        let deleted: Int
+        let errors: [String]
     }
 }

@@ -9,6 +9,7 @@ struct DashboardView: View {
     @State private var recentNotes: [ProgressNote] = []
     @State private var isLoading = true
     @State private var error: Error?
+    @State private var loadTask: Task<Void, Never>?
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -57,8 +58,17 @@ struct DashboardView: View {
         .refreshable {
             await loadDataAsync()
         }
-        .task {
-            await loadDataAsync()
+        .onAppear {
+            // Cancel any existing task to prevent duplicates
+            loadTask?.cancel()
+            loadTask = Task {
+                await loadDataAsync()
+            }
+        }
+        .onDisappear {
+            // Cancel the task when view disappears to prevent -999 errors
+            loadTask?.cancel()
+            loadTask = nil
         }
     }
 
@@ -165,7 +175,10 @@ struct DashboardView: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(upcomingSessions.prefix(3)) { session in
-                        SessionRowCard(session: session)
+                        NavigationLink(destination: SessionDetailView(session: session)) {
+                            SessionRowCard(session: session)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -326,6 +339,9 @@ struct DashboardView: View {
     }
 
     private func loadDataAsync() async {
+        // Check if cancelled before starting
+        guard !Task.isCancelled else { return }
+
         isLoading = true
         error = nil
 
@@ -333,6 +349,11 @@ struct DashboardView: View {
         async let statsResult: DashboardStats? = {
             do {
                 return try await APIClient.shared.getDashboardStats()
+            } catch is CancellationError {
+                return nil
+            } catch let urlError as URLError where urlError.code == .cancelled {
+                // Silently handle cancelled requests
+                return nil
             } catch {
                 print("Failed to load stats: \(error)")
                 return nil
@@ -342,6 +363,11 @@ struct DashboardView: View {
         async let sessionsResult: [Session] = {
             do {
                 return try await APIClient.shared.getSessions(upcoming: true, limit: 5)
+            } catch is CancellationError {
+                return []
+            } catch let urlError as URLError where urlError.code == .cancelled {
+                // Silently handle cancelled requests
+                return []
             } catch {
                 print("Failed to load sessions: \(error)")
                 return []
@@ -351,6 +377,11 @@ struct DashboardView: View {
         async let notesResult: [ProgressNote] = {
             do {
                 return try await APIClient.shared.getProgressNotes(recent: true, limit: 5)
+            } catch is CancellationError {
+                return []
+            } catch let urlError as URLError where urlError.code == .cancelled {
+                // Silently handle cancelled requests
+                return []
             } catch {
                 print("Failed to load notes: \(error)")
                 return []
@@ -358,6 +389,9 @@ struct DashboardView: View {
         }()
 
         let (fetchedStats, fetchedSessions, fetchedNotes) = await (statsResult, sessionsResult, notesResult)
+
+        // Check if cancelled before updating UI
+        guard !Task.isCancelled else { return }
 
         await MainActor.run {
             stats = fetchedStats ?? DashboardStats(activeClients: 0, weeklySchedule: 0, totalNotes: 0, aiInsights: 0)

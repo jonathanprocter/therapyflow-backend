@@ -7,6 +7,8 @@ struct ClientsListView: View {
     @State private var isLoading = true
     @State private var error: Error?
     @State private var showingAddClient = false
+    @State private var clientToDelete: Client?
+    @State private var showingDeleteConfirmation = false
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -111,21 +113,43 @@ struct ClientsListView: View {
         .task {
             await loadClientsAsync()
         }
+        .alert("Delete Client", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {
+                clientToDelete = nil
+            }
+            Button("Delete", role: .destructive) {
+                if let client = clientToDelete {
+                    deleteClient(client)
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete \(clientToDelete?.name ?? "this client")? This action cannot be undone.")
+        }
     }
 
     // MARK: - Client List
     private var clientList: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(filteredClients) { client in
-                    NavigationLink(destination: ClientDetailView(clientId: client.id)) {
-                        ClientRowView(client: client)
+        List {
+            ForEach(filteredClients) { client in
+                NavigationLink(destination: ClientDetailView(clientId: client.id)) {
+                    ClientRowView(client: client)
+                }
+                .listRowBackground(Color.theme.background)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        clientToDelete = client
+                        showingDeleteConfirmation = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
-                    .buttonStyle(.plain)
                 }
             }
-            .padding()
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.theme.background)
     }
 
     // MARK: - Data Loading
@@ -149,6 +173,27 @@ struct ClientsListView: View {
             await MainActor.run {
                 self.error = error
                 isLoading = false
+            }
+        }
+    }
+
+    // MARK: - Delete Client
+    private func deleteClient(_ client: Client) {
+        Task {
+            do {
+                try await APIClient.shared.deleteClient(id: client.id)
+                await MainActor.run {
+                    // Remove client from local list with animation
+                    withAnimation {
+                        clients.removeAll { $0.id == client.id }
+                    }
+                    clientToDelete = nil
+                }
+            } catch {
+                await MainActor.run {
+                    self.error = error
+                    clientToDelete = nil
+                }
             }
         }
     }

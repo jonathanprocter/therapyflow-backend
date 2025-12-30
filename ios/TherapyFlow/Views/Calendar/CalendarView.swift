@@ -5,10 +5,14 @@ struct CalendarView: View {
     @State private var currentMonth = Date()
     @State private var sessions: [Session] = []
     @State private var calendarEvents: [CalendarEvent] = []
+    @State private var syncedEvents: [SyncedCalendarEvent] = [] // Database-synced events
     @State private var isLoading = true
+    @State private var isSyncing = false
     @State private var error: Error?
     @State private var showingCreateSession = false
     @State private var googleCalendarStatus: String = ""
+    @State private var lastSyncTime: Date?
+    @State private var loadTask: Task<Void, Never>?
 
     @StateObject private var integrationsService = IntegrationsService.shared
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -97,8 +101,17 @@ struct CalendarView: View {
         .refreshable {
             await loadSessionsAsync()
         }
-        .task {
-            await loadSessionsAsync()
+        .onAppear {
+            // Cancel any existing task to prevent duplicates
+            loadTask?.cancel()
+            loadTask = Task {
+                await loadSessionsAsync()
+            }
+        }
+        .onDisappear {
+            // Cancel the task when view disappears to prevent -999 errors
+            loadTask?.cancel()
+            loadTask = nil
         }
     }
 
@@ -143,24 +156,21 @@ struct CalendarView: View {
 
             // Calendar grid
             let weeks = Date.weeksInMonth(for: currentMonth)
-            VStack(spacing: 8) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 8) {
                 ForEach(0..<weeks.count, id: \.self) { weekIndex in
-                    HStack(spacing: 0) {
-                        ForEach(0..<7, id: \.self) { dayIndex in
-                            if let date = weeks[weekIndex][dayIndex] {
-                                CalendarDayCell(
-                                    date: date,
-                                    isSelected: date.isSameDay(as: selectedDate),
-                                    hasSession: hasEventsForDate(date),
-                                    sessionCount: eventCountForDate(date)
-                                ) {
-                                    selectedDate = date
-                                }
-                            } else {
-                                Color.clear
-                                    .frame(maxWidth: .infinity)
-                                    .aspectRatio(1, contentMode: .fit)
+                    ForEach(0..<7, id: \.self) { dayIndex in
+                        if let date = weeks[weekIndex][dayIndex] {
+                            CalendarDayCell(
+                                date: date,
+                                isSelected: date.isSameDay(as: selectedDate),
+                                hasSession: hasEventsForDate(date),
+                                sessionCount: eventCountForDate(date)
+                            ) {
+                                selectedDate = date
                             }
+                        } else {
+                            Color.clear
+                                .frame(height: 44)
                         }
                     }
                 }
@@ -168,18 +178,40 @@ struct CalendarView: View {
 
             // Google Calendar connection status
             if integrationsService.googleCalendarConnected {
-                HStack(spacing: 4) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.caption2)
-                        .foregroundColor(Color.theme.success)
-                    Text("Google Calendar connected")
-                        .font(.caption2)
-                        .foregroundColor(Color.theme.secondaryText)
-                    if !googleCalendarStatus.isEmpty {
-                        Text("• \(googleCalendarStatus)")
+                HStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        if isSyncing {
+                            ProgressView()
+                                .scaleEffect(0.6)
+                        } else {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption2)
+                                .foregroundColor(Color.theme.success)
+                        }
+                        Text("Google Calendar")
                             .font(.caption2)
                             .foregroundColor(Color.theme.secondaryText)
+                        if !googleCalendarStatus.isEmpty {
+                            Text("• \(googleCalendarStatus)")
+                                .font(.caption2)
+                                .foregroundColor(Color.theme.secondaryText)
+                        }
                     }
+
+                    Spacer()
+
+                    // Sync button
+                    Button(action: forceSync) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.caption2)
+                            Text("Sync")
+                                .font(.caption2)
+                        }
+                        .foregroundColor(Color.theme.primary)
+                    }
+                    .disabled(isSyncing)
+                    .opacity(isSyncing ? 0.5 : 1)
                 }
                 .padding(.top, 8)
             } else {
@@ -353,58 +385,174 @@ struct CalendarView: View {
 
     // MARK: - Data Loading
     private func loadSessionsAsync() async {
+        // Check if cancelled before starting
+        guard !Task.isCancelled else { return }
+
         isLoading = true
         error = nil
         googleCalendarStatus = "Loading..."
 
-        // Load local sessions and Google Calendar events concurrently
+        // First, load from database for instant display
         async let localSessionsTask = loadLocalSessions()
-        async let googleEventsTask = loadGoogleCalendarEvents()
+        async let cachedEventsTask = loadCachedCalendarEvents()
 
         let fetchedSessions = await localSessionsTask
-        let fetchedEvents = await googleEventsTask
+        let cachedEvents = await cachedEventsTask
+
+        // Check if cancelled before updating UI
+        guard !Task.isCancelled else { return }
 
         await MainActor.run {
             sessions = fetchedSessions
-            calendarEvents = fetchedEvents
+            // Convert cached synced events to CalendarEvent for display
+            calendarEvents = cachedEvents.map { $0.toCalendarEvent() }
+            syncedEvents = cachedEvents
 
-            if integrationsService.googleCalendarConnected {
-                if fetchedEvents.isEmpty {
-                    googleCalendarStatus = "No events found"
-                } else {
-                    googleCalendarStatus = "\(fetchedEvents.count) events"
-                }
-            } else {
-                googleCalendarStatus = ""
+            if !cachedEvents.isEmpty {
+                googleCalendarStatus = "\(cachedEvents.count) events (cached)"
             }
 
             isLoading = false
+        }
+
+        // Then sync with Google Calendar in the background
+        if integrationsService.googleCalendarConnected {
+            await syncWithGoogleCalendar()
         }
     }
 
     private func loadLocalSessions() async -> [Session] {
         do {
             return try await APIClient.shared.getSessions()
+        } catch is CancellationError {
+            return []
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            // Silently handle cancelled requests
+            return []
         } catch {
             print("Failed to load local sessions: \(error)")
             return []
         }
     }
 
-    private func loadGoogleCalendarEvents() async -> [CalendarEvent] {
-        guard integrationsService.googleCalendarConnected else {
+    /// Load calendar events from the database (cached from previous syncs)
+    private func loadCachedCalendarEvents() async -> [SyncedCalendarEvent] {
+        do {
+            let startDate = currentMonth.startOfMonth.adding(days: -7)
+            let endDate = currentMonth.endOfMonth.adding(days: 7)
+            let events = try await APIClient.shared.getCalendarEvents(startDate: startDate, endDate: endDate)
+            print("Loaded \(events.count) cached calendar events from database")
+            return events
+        } catch is CancellationError {
             return []
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            return []
+        } catch {
+            print("Failed to load cached calendar events: \(error)")
+            return []
+        }
+    }
+
+    /// Sync calendar events with Google Calendar and update the database
+    private func syncWithGoogleCalendar() async {
+        guard integrationsService.googleCalendarConnected else {
+            print("Google Calendar not connected")
+            return
+        }
+
+        // Check if cancelled
+        guard !Task.isCancelled else { return }
+
+        await MainActor.run {
+            isSyncing = true
+            googleCalendarStatus = "Syncing..."
         }
 
         do {
             // Get events for current month and surrounding weeks
             let startDate = currentMonth.startOfMonth.adding(days: -7)
             let endDate = currentMonth.endOfMonth.adding(days: 7)
-            let events = try await integrationsService.getGoogleCalendarEvents(startDate: startDate, endDate: endDate)
-            return events
+            print("Fetching Google Calendar events from \(startDate) to \(endDate)")
+            let googleEvents = try await integrationsService.getGoogleCalendarEvents(startDate: startDate, endDate: endDate)
+            print("Fetched \(googleEvents.count) Google Calendar events")
+
+            // Convert to sync request format
+            let syncEvents = googleEvents.map { event in
+                CreateCalendarEventInput(
+                    externalId: event.id,
+                    source: event.source.rawValue,
+                    title: event.title,
+                    description: event.description,
+                    location: event.location,
+                    startTime: event.startTime,
+                    endTime: event.endTime,
+                    isAllDay: false,
+                    attendees: event.attendees,
+                    linkedClientId: nil,
+                    linkedSessionId: nil,
+                    rawData: nil
+                )
+            }
+
+            // Sync to database
+            let syncRequest = CalendarEventSyncRequest(events: syncEvents, source: "google")
+            let syncResponse = try await APIClient.shared.syncCalendarEvents(syncRequest)
+            print("Sync result: \(syncResponse.message)")
+
+            // Reload from database to get the synced data
+            let updatedEvents = try await APIClient.shared.getCalendarEvents(startDate: startDate, endDate: endDate)
+
+            // Check if cancelled before updating UI
+            guard !Task.isCancelled else { return }
+
+            await MainActor.run {
+                syncedEvents = updatedEvents
+                calendarEvents = updatedEvents.map { $0.toCalendarEvent() }
+                lastSyncTime = Date()
+                isSyncing = false
+
+                if updatedEvents.isEmpty {
+                    googleCalendarStatus = "No events found"
+                } else {
+                    googleCalendarStatus = "\(updatedEvents.count) events"
+                }
+            }
+        } catch is CancellationError {
+            print("Google Calendar sync cancelled")
+            await MainActor.run {
+                isSyncing = false
+            }
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            // Silently handle cancelled requests
+            await MainActor.run {
+                isSyncing = false
+            }
+        } catch let error as IntegrationError {
+            print("Integration error syncing Google Calendar: \(error.localizedDescription)")
+            await MainActor.run {
+                isSyncing = false
+                // Keep cached data, just update status
+                if case .tokenExpired = error {
+                    googleCalendarStatus = "Token expired - reconnect"
+                } else if case .notConnected = error {
+                    googleCalendarStatus = "Not connected"
+                } else {
+                    googleCalendarStatus = "Sync error (using cached)"
+                }
+            }
         } catch {
-            print("Failed to load Google Calendar events: \(error)")
-            return []
+            print("Failed to sync Google Calendar: \(error)")
+            await MainActor.run {
+                isSyncing = false
+                googleCalendarStatus = "Sync error (using cached)"
+            }
+        }
+    }
+
+    /// Force a full sync with Google Calendar
+    private func forceSync() {
+        Task {
+            await syncWithGoogleCalendar()
         }
     }
 }
@@ -526,9 +674,9 @@ struct CalendarDayCell: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Text("\(date.day)")
-                    .font(.body)
+                    .font(.system(size: 16))
                     .fontWeight(date.isToday ? .bold : .regular)
                     .foregroundColor(textColor)
 
@@ -536,19 +684,21 @@ struct CalendarDayCell: View {
                     HStack(spacing: 2) {
                         ForEach(0..<min(sessionCount, 3), id: \.self) { _ in
                             Circle()
-                                .fill(Color.theme.primary)
+                                .fill(isSelected ? .white : Color.theme.primary)
                                 .frame(width: 4, height: 4)
                         }
                     }
+                    .frame(height: 6)
                 } else {
-                    Color.clear.frame(height: 4)
+                    Color.clear.frame(height: 6)
                 }
             }
             .frame(maxWidth: .infinity)
-            .aspectRatio(1, contentMode: .fit)
+            .frame(height: 44)
             .background(backgroundColor)
             .cornerRadius(8)
         }
+        .buttonStyle(.plain)
     }
 
     private var textColor: Color {

@@ -72,6 +72,122 @@ registerJobHandler("smart-process", async (job) => {
   return { results };
 });
 
+// GET all documents for the therapist (iOS compatible)
+documentsRouter.get("/", async (req, res) => {
+  try {
+    const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+    const documents = await storage.getDocumentsByTherapist(therapistId);
+    res.json(documents.map(toSnakeCaseDocument));
+  } catch (error) {
+    console.error("Error fetching documents:", error);
+    res.status(500).json({ error: "Failed to fetch documents" });
+  }
+});
+
+// Helper to convert document to snake_case for iOS compatibility
+function toSnakeCaseDocument(doc: any): any {
+  if (!doc) return doc;
+  return {
+    id: doc.id,
+    client_id: doc.clientId,
+    therapist_id: doc.therapistId,
+    file_name: doc.fileName,
+    file_type: doc.fileType,
+    file_path: doc.filePath,
+    extracted_text: doc.extractedText,
+    tags: doc.tags || [],
+    file_size: doc.fileSize,
+    metadata: doc.metadata,
+    uploaded_at: doc.uploadedAt,
+    status: doc.status || "pending",
+    document_type: doc.documentType,
+    mime_type: doc.mimeType || doc.fileType,
+    client_name: doc.clientName,
+  };
+}
+
+// iOS document upload endpoint - returns a single Document for iOS compatibility
+documentsRouter.post("/upload", (req, res) => {
+  const uploadHandler = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 }
+  });
+
+  uploadHandler.single("file")(req, res, async (err) => {
+    if (err) {
+      console.error("Multer error:", err);
+      return res.status(500).json({ error: `Upload failed: ${err.message}` });
+    }
+
+    try {
+      console.log("iOS Upload request received:");
+      console.log("Body:", req.body);
+      console.log("File:", req.file ? { name: req.file.originalname, size: req.file.size, type: req.file.mimetype } : "No file");
+
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: "No file provided" });
+      }
+
+      const { clientId, analyze } = req.body;
+      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+
+      // Get or create a default client if none provided
+      let actualClientId = clientId;
+      if (!actualClientId) {
+        const clients = await storage.getClients(therapistId);
+        if (clients.length > 0) {
+          actualClientId = clients[0].id;
+        } else {
+          // Create a placeholder document without client assignment
+          actualClientId = null;
+        }
+      }
+
+      const uploadDir = path.resolve(process.cwd(), "uploads");
+      await fs.mkdir(uploadDir, { recursive: true });
+
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const storedName = `${Date.now()}-${Math.random().toString(16).slice(2)}-${safeName}`;
+      const storedPath = path.join(uploadDir, storedName);
+
+      await fs.writeFile(storedPath, file.buffer);
+
+      const doc = await storage.createDocument({
+        clientId: actualClientId || "unassigned",
+        therapistId,
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        filePath: `/uploads/${storedName}`,
+        fileSize: file.size,
+        metadata: {
+          originalName: file.originalname,
+          storedName,
+          size: file.size
+        }
+      });
+
+      // If analyze flag is set, trigger AI processing asynchronously
+      if (analyze === "true") {
+        // Fire and forget - don't wait for analysis to complete
+        processDocumentWithAI(doc.id).catch(err => {
+          console.error("AI processing error for document", doc.id, err);
+        });
+
+        // Update status to processing
+        await storage.updateDocument(doc.id, { status: "processing" });
+        doc.status = "processing";
+      }
+
+      // Return document in snake_case format for iOS
+      res.status(201).json(toSnakeCaseDocument(doc));
+    } catch (e: any) {
+      console.error("Upload error:", e);
+      res.status(500).json({ error: String(e) });
+    }
+  });
+});
+
 // Test route without multer
 documentsRouter.post("/test", (req, res) => {
   res.json({ message: "Test route working", body: req.body });
@@ -408,6 +524,23 @@ documentsRouter.post("/smart-process-async", async (req, res) => {
   const job = await enqueueJob("smart-process", { documentIds }, undefined, therapistId, 3);
 
   res.json({ jobId: job.id, status: job.status });
+});
+
+// GET a single document by ID (must be after all specific routes to avoid conflicts)
+documentsRouter.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const doc = await storage.getDocument(id);
+
+    if (!doc) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    res.json(toSnakeCaseDocument(doc));
+  } catch (error) {
+    console.error("Error fetching document:", error);
+    res.status(500).json({ error: "Failed to fetch document" });
+  }
 });
 
 documentsRouter.delete("/:id", async (req, res) => {
