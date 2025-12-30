@@ -14,7 +14,7 @@ import { registerFileWatcherRoutes } from "./routes/file-watcher-routes.js";
 import { fileWatcherService } from "./services/fileWatcherService.js";
 import { registerDriveRoutes } from "./routes/drive-routes.js";
 import { googleDriveService } from "./services/googleDriveService.js";
-import { ensureTherapeuticTables, checkCriticalTables } from "./utils/migration-checker.js";
+import { ensureTherapeuticTables, checkCriticalTables, ensurePerformanceIndexes } from "./utils/migration-checker.js";
 import { validateEnvironmentOnStartup } from "./utils/env-validator.js";
 
 // Import middleware
@@ -153,8 +153,9 @@ app.get("/api/health/deep", async (req, res) => {
   try {
     await checkCriticalTables();
     await ensureTherapeuticTables();
+    await ensurePerformanceIndexes();
   } catch (error) {
-    console.error('⚠️  Database table check failed:', error);
+    console.error('⚠️  Database setup failed:', error);
     console.log('⚠️  Server will continue, but some features may not work');
   }
 

@@ -50,6 +50,53 @@ export async function checkTherapeuticTables(): Promise<MigrationStatus[]> {
 }
 
 /**
+ * Run performance indexes migration
+ */
+export async function ensurePerformanceIndexes(): Promise<void> {
+  console.log('🔧 Checking performance indexes...');
+
+  try {
+    const migrationPath = path.join(__dirname, '../migrations/add-performance-indexes.sql');
+    
+    if (!fs.existsSync(migrationPath)) {
+      console.warn(`⚠️  Performance indexes migration file not found: ${migrationPath}`);
+      return;
+    }
+
+    const migrationSQL = fs.readFileSync(migrationPath, 'utf-8');
+    
+    // Split by semicolons and execute each statement
+    const statements = migrationSQL
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.startsWith('--'));
+
+    let indexesCreated = 0;
+    for (const statement of statements) {
+      try {
+        await db.execute(sql.raw(statement));
+        if (statement.toLowerCase().includes('create index')) {
+          indexesCreated++;
+        }
+      } catch (error: any) {
+        // Ignore "already exists" errors
+        if (!error.message?.includes('already exists')) {
+          console.error('Error executing index statement:', error.message);
+        }
+      }
+    }
+
+    if (indexesCreated > 0) {
+      console.log(`✅ Created ${indexesCreated} performance indexes`);
+    } else {
+      console.log('✅ Performance indexes already exist');
+    }
+  } catch (error) {
+    console.error('❌ Error ensuring performance indexes:', error);
+  }
+}
+
+/**
  * Run therapeutic journey migration if tables don't exist
  */
 export async function ensureTherapeuticTables(): Promise<void> {
