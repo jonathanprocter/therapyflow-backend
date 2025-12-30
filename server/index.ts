@@ -120,12 +120,18 @@ app.get("/api/health/deep", async (req, res) => {
   const start = Date.now();
   try {
     // Minimal DB check: run a simple NOW()
-    const [{ now }] = await (storage as any).db.execute(sql`SELECT now() as now`);
+    const nowResult = await (storage as any).db.execute(sql`SELECT now() as now`);
+    const now = (nowResult as any).rows?.[0]?.now || (nowResult as any)[0]?.now;
     
     // Count documents and AI results
-    const [{ count: docsCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
-    const [{ count: aiCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
-    const [{ count: edgesCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+    const docsResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
+    const docsCount = (docsResult as any).rows?.[0]?.count || (docsResult as any)[0]?.count || 0;
+    
+    const aiResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
+    const aiCount = (aiResult as any).rows?.[0]?.count || (aiResult as any)[0]?.count || 0;
+    
+    const edgesResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+    const edgesCount = (edgesResult as any).rows?.[0]?.count || (edgesResult as any)[0]?.count || 0;
     
     res.json({
       ok: true,
