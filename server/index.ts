@@ -15,9 +15,11 @@ import { fileWatcherService } from "./services/fileWatcherService.js";
 import { registerDriveRoutes } from "./routes/drive-routes.js";
 import { googleDriveService } from "./services/googleDriveService.js";
 import { ensureTherapeuticTables, checkCriticalTables } from "./utils/migration-checker.js";
+import { validateEnvironmentOnStartup } from "./utils/env-validator.js";
 
 // Import middleware
 import { standardRateLimit, aiProcessingRateLimit } from './middleware/rateLimit';
+import { applySecurity } from './middleware/security.js';
 
 // Import services
 import { pdfService, getPdfServiceStatus } from './services/pdfService';
@@ -53,6 +55,9 @@ process.on('uncaughtException', (error) => {
 });
 
 const app = express();
+
+// Apply security middleware (Helmet, CORS, etc.)
+applySecurity(app);
 
 // Security: Limit request body size to prevent DoS attacks
 // 10MB for JSON (allows large document content)
@@ -141,6 +146,9 @@ app.get("/api/health/deep", async (req, res) => {
 });
 
 (async () => {
+  // Validate environment variables
+  validateEnvironmentOnStartup();
+
   // Check and ensure database tables exist
   try {
     await checkCriticalTables();
