@@ -15,6 +15,7 @@ import { fileWatcherService } from "./services/fileWatcherService.js";
 import { registerDriveRoutes } from "./routes/drive-routes.js";
 import { googleDriveService } from "./services/googleDriveService.js";
 import { ensureTherapeuticTables, checkCriticalTables, ensurePerformanceIndexes } from "./utils/migration-checker.js";
+import { registerAIAssistantRoutes, setupAIWebSocketServer } from "./routes/ai-assistant-routes.js";
 import { validateEnvironmentOnStartup } from "./utils/env-validator.js";
 
 // Import middleware
@@ -159,7 +160,7 @@ app.get("/api/health/deep", async (req, res) => {
     console.log('⚠️  Server will continue, but some features may not work');
   }
 
-  const server = await registerRoutes(app);
+  let server = await registerRoutes(app);
 
   // Register CareNotesAI pipeline routes
   app.use("/api/documents", documentsRouter);
@@ -169,8 +170,11 @@ app.get("/api/health/deep", async (req, res) => {
   log("✅ CareNotesAI document processing pipeline routes registered");
   log("🧠 Clinical Second Brain knowledge graph routes registered");
 
-  // Integrate therapeutic journey features
-  integrateTherapeuticFeatures(app);
+    // Register therapeutic journey routes
+  integrateTherapeuticJourney(app);
+
+  // Register AI assistant routes
+  registerAIAssistantRoutes(app);
   log("✅ Therapeutic journey features integrated");
 
   // Register ElevenLabs voice routes
@@ -179,6 +183,9 @@ app.get("/api/health/deep", async (req, res) => {
 
   // Register file watcher routes
   registerFileWatcherRoutes(app);
+
+  // Setup AI WebSocket server
+  setupAIWebSocketServer(server);
   log("📂 Document watch folder routes registered");
 
   // Register Google Drive integration routes
