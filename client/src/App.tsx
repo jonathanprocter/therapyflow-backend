@@ -20,21 +20,31 @@ import SemanticSearch from './pages/semantic-search';
 import TreatmentPlans from './pages/treatment-plans';
 import BulkTranscripts from './pages/bulk-transcripts';
 import AIDashboard from './pages/AIDashboard';
+import DropZone from './pages/DropZone';
 import Sidebar from './components/layout/sidebar';
 import TopBar from './components/layout/topbar';
 import HomePage from './pages/HomePage';
+import { AIContextualHelper } from './components/ai/AIContextualHelper';
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <div className="min-h-screen flex" style={{backgroundColor: '#F2F3F1'}}>
-          <Sidebar />
-          <div className="flex-1 flex flex-col">
-            <TopBar />
-            <main className="flex-1 overflow-auto px-6 pt-8 pb-6" style={{backgroundColor: '#F2F3F1', color: '#738A6E'}}>
-              <Switch>
-              <Route path="/dashboard" component={Dashboard} />
+        {/* Drop Zone - standalone page without sidebar for mobile access */}
+        <Switch>
+          <Route path="/drop-zone">
+            <DropZone />
+            <Toaster />
+          </Route>
+          <Route>
+            {/* Main app layout with sidebar */}
+            <div className="min-h-screen flex" style={{backgroundColor: '#F2F3F1'}}>
+              <Sidebar />
+              <div className="flex-1 flex flex-col">
+                <TopBar />
+                <main className="flex-1 overflow-auto px-6 pt-8 pb-6" style={{backgroundColor: '#F2F3F1', color: '#738A6E'}}>
+                  <Switch>
+                  <Route path="/dashboard" component={Dashboard} />
               <Route path="/calendar" component={Calendar} />
               <Route path="/client" component={Clients} />
               <Route path="/clients" component={Clients} />
@@ -58,11 +68,14 @@ export default function App() {
                   <p className="text-muted-foreground">The page you requested does not exist.</p>
                 </div>
               </Route>
-              </Switch>
-            </main>
-          </div>
-        </div>
-        <Toaster />
+                  </Switch>
+                </main>
+              </div>
+            </div>
+            <Toaster />
+            <AIContextualHelper defaultExpanded={false} />
+          </Route>
+        </Switch>
       </ErrorBoundary>
     </QueryClientProvider>
   );

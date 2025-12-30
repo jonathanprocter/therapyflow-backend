@@ -9,6 +9,11 @@ import { semanticRouter } from "./routes/semantic.js";
 import { knowledgeGraphRoutes } from "./routes/knowledge-graph-routes-fixed.js";
 import { storage } from "./storage.js";
 import { sql, eq } from "drizzle-orm";
+import { registerVoiceRoutes } from "./routes/voice-routes.js";
+import { registerFileWatcherRoutes } from "./routes/file-watcher-routes.js";
+import { fileWatcherService } from "./services/fileWatcherService.js";
+import { registerDriveRoutes } from "./routes/drive-routes.js";
+import { googleDriveService } from "./services/googleDriveService.js";
 
 // Import middleware
 import { standardRateLimit, aiProcessingRateLimit } from './middleware/rateLimit';
@@ -148,6 +153,35 @@ app.get("/api/health/deep", async (req, res) => {
   // Integrate therapeutic journey features
   integrateTherapeuticFeatures(app);
   log("✅ Therapeutic journey features integrated");
+
+  // Register ElevenLabs voice routes
+  registerVoiceRoutes(app);
+  log("🎙️ ElevenLabs voice API routes registered");
+
+  // Register file watcher routes
+  registerFileWatcherRoutes(app);
+  log("📂 Document watch folder routes registered");
+
+  // Register Google Drive integration routes
+  registerDriveRoutes(app);
+  log("☁️ Google Drive integration routes registered");
+
+  // Auto-start file watcher if enabled
+  const enableFileWatcher = process.env.ENABLE_FILE_WATCHER !== 'false';
+  if (enableFileWatcher) {
+    fileWatcherService.startWatching().then(() => {
+      log(`📁 File watcher started: ${fileWatcherService.getWatchPath()}`);
+    }).catch(err => {
+      console.warn('File watcher failed to start:', err.message);
+    });
+  }
+
+  // Auto-start Google Drive polling if configured
+  const enableDrivePolling = process.env.ENABLE_DRIVE_POLLING === 'true';
+  if (enableDrivePolling && googleDriveService.isEnabled()) {
+    googleDriveService.startPolling();
+    log("☁️ Google Drive polling started");
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

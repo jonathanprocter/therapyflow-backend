@@ -188,6 +188,162 @@ documentsRouter.post("/upload", (req, res) => {
   });
 });
 
+// Drop Zone upload endpoint - processes documents through AI pipeline like file watcher
+documentsRouter.post("/drop-zone-upload", (req, res) => {
+  const uploadHandler = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 }
+  });
+
+  uploadHandler.single("file")(req, res, async (err) => {
+    if (err) {
+      console.error("Drop zone upload error:", err);
+      return res.status(500).json({ error: `Upload failed: ${err.message}` });
+    }
+
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: "No file provided" });
+      }
+
+      console.log(`[Drop Zone] Processing: ${file.originalname} (${file.size} bytes)`);
+
+      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+      const buffer = file.buffer;
+      const fileName = file.originalname;
+
+      // Classify document type based on content
+      const ext = path.extname(fileName).toLowerCase();
+      let textContent = '';
+
+      if (ext === '.txt') {
+        textContent = buffer.toString('utf-8');
+      } else if (ext === '.docx') {
+        const mammoth = await import('mammoth');
+        const result = await mammoth.extractRawText({ buffer });
+        textContent = result.value;
+      }
+
+      // Determine document type
+      const lowerContent = textContent.toLowerCase();
+      const lowerFileName = fileName.toLowerCase();
+      let documentType = 'generic';
+
+      if (lowerFileName.includes('transcript') ||
+          lowerContent.includes('therapist:') ||
+          lowerContent.includes('client:') ||
+          lowerContent.includes('session transcript')) {
+        documentType = 'transcript';
+      } else if (lowerFileName.includes('progress note') ||
+                 lowerContent.includes('subjective:') ||
+                 lowerContent.includes('objective:')) {
+        documentType = 'progress_note';
+      } else if (lowerFileName.includes('treatment plan') ||
+                 lowerContent.includes('treatment goals')) {
+        documentType = 'treatment_plan';
+      }
+
+      // Extract client name from filename
+      let clientName = 'Unknown Client';
+      let nameWithoutExt = fileName.replace(/\.[^.]+$/, '');
+      nameWithoutExt = nameWithoutExt
+        .replace(/transcript/gi, '')
+        .replace(/progress\s*note/gi, '')
+        .replace(/session/gi, '')
+        .replace(/\d{4}[-/]\d{2}[-/]\d{2}/g, '')
+        .replace(/[-_]/g, ' ')
+        .trim();
+
+      const nameMatch = nameWithoutExt.match(/([A-Z][a-z]+\s+[A-Z][a-z]+(\s+[A-Z][a-z]+)?)/);
+      if (nameMatch) {
+        clientName = nameMatch[1];
+      }
+
+      // Find or create client
+      let clientId = null;
+      const clients = await storage.getClients(therapistId);
+      let client = clients.find(c => c.name.toLowerCase() === clientName.toLowerCase());
+
+      if (!client) {
+        client = clients.find(c =>
+          c.name.toLowerCase().includes(clientName.toLowerCase()) ||
+          clientName.toLowerCase().includes(c.name.toLowerCase())
+        );
+      }
+
+      if (!client && clientName !== 'Unknown Client') {
+        client = await storage.createClient({
+          therapistId,
+          name: clientName,
+          status: 'active',
+          email: null,
+          phone: null,
+          dateOfBirth: null,
+          emergencyContact: null,
+          insurance: null,
+          tags: ['Auto-imported from drop zone']
+        });
+        console.log(`[Drop Zone] Created new client: ${clientName}`);
+      }
+
+      clientId = client?.id || null;
+
+      // Save document
+      const uploadDir = path.resolve(process.cwd(), "uploads");
+      await fs.mkdir(uploadDir, { recursive: true });
+
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const storedName = `${Date.now()}-${Math.random().toString(16).slice(2)}-${safeName}`;
+      const storedPath = path.join(uploadDir, storedName);
+
+      await fs.writeFile(storedPath, buffer);
+
+      const doc = await storage.createDocument({
+        clientId: clientId || "unassigned",
+        therapistId,
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        filePath: `/uploads/${storedName}`,
+        fileSize: file.size,
+        extractedText: textContent || undefined,
+        tags: ['drop-zone', documentType],
+        metadata: {
+          source: 'drop-zone',
+          documentType,
+          clientNameExtracted: clientName,
+          uploadedAt: new Date().toISOString()
+        }
+      });
+
+      // Process through enhanced processor for AI analysis
+      enhancedDocumentProcessor.processDocument(
+        buffer,
+        fileName,
+        therapistId,
+        doc.id
+      ).catch(err => {
+        console.error('[Drop Zone] Background processing error:', err);
+      });
+
+      console.log(`[Drop Zone] Uploaded: ${fileName} -> ${documentType} for ${clientName}`);
+
+      res.status(201).json({
+        success: true,
+        documentId: doc.id,
+        clientId: clientId,
+        documentType,
+        clientName,
+        message: `Document uploaded and processing (${documentType})`,
+        ...toSnakeCaseDocument(doc)
+      });
+    } catch (e: any) {
+      console.error("[Drop Zone] Error:", e);
+      res.status(500).json({ error: String(e) });
+    }
+  });
+});
+
 // Test route without multer
 documentsRouter.post("/test", (req, res) => {
   res.json({ message: "Test route working", body: req.body });

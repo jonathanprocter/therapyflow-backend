@@ -1,10 +1,10 @@
 import { Link, useLocation } from "wouter";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  Calendar, 
-  History, 
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  Calendar,
+  History,
   TrendingUp,
   Bot,
   RefreshCw,
@@ -12,7 +12,8 @@ import {
   Clipboard,
   Sparkles,
   FileUp,
-  Brain
+  Brain,
+  CloudUpload
 } from "lucide-react";
 
 const navigation = [
@@ -30,6 +31,7 @@ const navigation = [
 ];
 
 const aiProcessing = [
+  { name: "Drop Zone", href: "/drop-zone", icon: CloudUpload, badge: "NEW", isSpecial: true },
   { name: "Bulk Transcripts", href: "/bulk-transcripts", icon: FileUp, badge: "NEW", isSpecial: true },
   { name: "Smart Upload", href: "/smart", icon: Sparkles, badge: "AI", isSpecial: true },
   { name: "Documents Upload", href: "/documents", icon: FileUp },
