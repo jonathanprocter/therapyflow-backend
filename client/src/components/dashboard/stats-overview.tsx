@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock } from "lucide-react";
@@ -14,7 +15,8 @@ const statsConfig = [
     iconColor: { color: '#88A5BC' },
     suffix: "Currently enrolled in therapy",
     suffixColor: { color: '#738A6E' },
-    suffixIcon: ""
+    suffixIcon: "",
+    href: "/clients"
   },
   {
     key: "weeklySchedule" as keyof DashboardStats,
@@ -24,7 +26,8 @@ const statsConfig = [
     iconColor: { color: '#8EA58C' },
     suffix: "Scheduled appointments",
     suffixColor: { color: '#738A6E' },
-    suffixIcon: ""
+    suffixIcon: "",
+    href: "/calendar"
   },
   {
     key: "totalNotes" as keyof DashboardStats,
@@ -34,7 +37,8 @@ const statsConfig = [
     iconColor: { color: '#738A6E' },
     suffix: "Documented sessions",
     suffixColor: { color: '#738A6E' },
-    suffixIcon: ""
+    suffixIcon: "",
+    href: "/progress-notes"
   },
   {
     key: "aiInsights" as keyof DashboardStats,
@@ -44,11 +48,13 @@ const statsConfig = [
     iconColor: { color: '#344C3D' },
     suffix: "New AI-generated insights",
     suffixColor: { color: '#738A6E' },
-    suffixIcon: ""
+    suffixIcon: "",
+    href: "/ai-dashboard"
   }
 ];
 
 export default function StatsOverview() {
+  const [, setLocation] = useLocation();
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
@@ -142,37 +148,46 @@ export default function StatsOverview() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statsConfig.map((config) => (
-          <Card 
-            key={config.key} 
-            className="transition-shadow hover:shadow-md"
+          <Card
+            key={config.key}
+            className="transition-all hover:shadow-md cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
             style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}
+            onClick={() => setLocation(config.href)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setLocation(config.href);
+              }
+            }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p 
-                    className="text-base font-semibold" 
+                  <p
+                    className="text-base font-semibold"
                     style={{ color: '#344C3D' }}
                     data-testid={`stat-label-${config.key}`}
                   >
                     {config.title}
                   </p>
-                  <p 
-                    className="text-xs mt-2" 
-                    style={config.suffixColor} 
+                  <p
+                    className="text-xs mt-2"
+                    style={config.suffixColor}
                     data-testid={`stat-suffix-${config.key}`}
                   >
                     <i className={`${config.suffixIcon} mr-1`}></i>
                     {config.suffix}
                   </p>
                 </div>
-                <div 
-                  className="w-16 h-16 rounded-lg flex items-center justify-center" 
+                <div
+                  className="w-16 h-16 rounded-lg flex items-center justify-center"
                   style={config.iconBg}
                 >
-                  <span 
-                    className="text-2xl font-bold" 
-                    style={config.iconColor} 
+                  <span
+                    className="text-2xl font-bold"
+                    style={config.iconColor}
                     data-testid={`stat-box-value-${config.key}`}
                   >
                     {stats[config.key]}
