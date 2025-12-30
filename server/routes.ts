@@ -44,17 +44,17 @@ function toSnakeCaseSession(session: any): any {
     client_id: session.clientId,
     therapist_id: session.therapistId,
     scheduled_at: session.scheduledAt,
-    duration: session.duration,
-    session_type: session.sessionType,
-    status: session.status,
-    google_event_id: session.googleEventId,
-    notes: session.notes,
-    has_progress_note_placeholder: session.hasProgressNotePlaceholder,
-    progress_note_status: session.progressNoteStatus,
-    is_simple_practice_event: session.isSimplePracticeEvent,
-    created_at: session.createdAt,
-    updated_at: session.updatedAt,
-    client: session.client ? toSnakeCaseClient(session.client) : undefined,
+    duration: session.duration ?? 50,
+    session_type: session.sessionType ?? 'individual',
+    status: session.status ?? 'scheduled',
+    google_event_id: session.googleEventId ?? null,
+    notes: session.notes ?? null,
+    has_progress_note_placeholder: session.hasProgressNotePlaceholder ?? false,
+    progress_note_status: session.progressNoteStatus ?? 'pending',
+    is_simple_practice_event: session.isSimplePracticeEvent ?? false,
+    created_at: session.createdAt ?? new Date().toISOString(),
+    updated_at: session.updatedAt ?? new Date().toISOString(),
+    client: session.client ? toSnakeCaseClient(session.client) : null,
   };
 }
 
@@ -65,18 +65,52 @@ function toSnakeCaseClient(client: any): any {
     id: client.id,
     therapist_id: client.therapistId,
     name: client.name,
-    email: client.email,
-    phone: client.phone,
-    date_of_birth: client.dateOfBirth,
-    diagnosis: client.diagnosis,
-    risk_level: client.riskLevel,
-    status: client.status,
-    intake_date: client.intakeDate,
-    emergency_contact: client.emergencyContact,
-    insurance_info: client.insuranceInfo,
-    notes: client.notes,
-    created_at: client.createdAt,
-    updated_at: client.updatedAt,
+    email: client.email ?? null,
+    phone: client.phone ?? null,
+    date_of_birth: client.dateOfBirth ?? null,
+    diagnosis: client.diagnosis ?? null,
+    risk_level: client.riskLevel ?? null,
+    status: client.status ?? 'active',
+    intake_date: client.intakeDate ?? null,
+    emergency_contact: client.emergencyContact ?? null,
+    insurance_info: client.insuranceInfo ?? null,
+    insurance: client.insurance ?? null,
+    notes: client.notes ?? null,
+    tags: client.tags ?? [],
+    clinical_considerations: client.clinicalConsiderations ?? [],
+    preferred_modalities: client.preferredModalities ?? [],
+    deleted_at: client.deletedAt ?? null,
+    created_at: client.createdAt ?? new Date().toISOString(),
+    updated_at: client.updatedAt ?? new Date().toISOString(),
+  };
+}
+
+// Helper function to convert progress note to snake_case for iOS compatibility
+function toSnakeCaseProgressNote(note: any): any {
+  if (!note) return note;
+  return {
+    id: note.id,
+    client_id: note.clientId,
+    session_id: note.sessionId ?? null,
+    therapist_id: note.therapistId,
+    content: note.content ?? null,
+    session_date: note.sessionDate ?? null,
+    tags: note.tags ?? [],
+    ai_tags: note.aiTags ?? [],
+    risk_level: note.riskLevel ?? null,
+    progress_rating: note.progressRating ?? null,
+    quality_score: note.qualityScore ?? null,
+    quality_flags: note.qualityFlags ?? [],
+    status: note.status ?? 'pending',
+    is_placeholder: note.isPlaceholder ?? false,
+    requires_manual_review: note.requiresManualReview ?? false,
+    ai_confidence_score: note.aiConfidenceScore ?? null,
+    processing_notes: note.processingNotes ?? null,
+    original_document_id: note.originalDocumentId ?? null,
+    created_at: note.createdAt ?? new Date().toISOString(),
+    updated_at: note.updatedAt ?? new Date().toISOString(),
+    client: note.client ? toSnakeCaseClient(note.client) : null,
+    session: note.session ? toSnakeCaseSession(note.session) : null,
   };
 }
 
@@ -819,19 +853,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const notesWithClients = await Promise.all(
           notes.map(async (note) => {
             const client = await storage.getClient(note.clientId);
-            return { 
-              ...note, 
+            return toSnakeCaseProgressNote({
+              ...note,
               client,
               // Decrypt progress note content (gracefully handle non-encrypted data)
               content: note.content ? safeDecrypt(note.content) : null
-            };
+            });
           })
         );
         res.json(notesWithClients);
       } else if (search) {
         const notes = await storage.searchProgressNotes(req.therapistId, search);
         // Decrypt content before returning (gracefully handle non-encrypted data)
-        const decryptedNotes = notes.map(note => ({
+        const decryptedNotes = notes.map(note => toSnakeCaseProgressNote({
           ...note,
           content: note.content ? safeDecrypt(note.content) : null
         }));
@@ -842,10 +876,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (clientCheck.length === 0) {
           return res.status(403).json({ error: "Access denied" });
         }
-        
+
         const notes = await storage.getProgressNotes(clientId);
         // Decrypt content before returning (gracefully handle non-encrypted data)
-        const decryptedNotes = notes.map(note => ({
+        const decryptedNotes = notes.map(note => toSnakeCaseProgressNote({
           ...note,
           content: note.content ? safeDecrypt(note.content) : null
         }));
@@ -928,10 +962,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Decrypt content before returning (gracefully handle non-encrypted data)
-      const decryptedNote = {
+      const decryptedNote = toSnakeCaseProgressNote({
         ...result.progressNote,
         content: result.progressNote.content ? safeDecrypt(result.progressNote.content) : null
-      };
+      });
 
       try {
         const riskCheck = await checkRiskEscalation(noteData.clientId);
@@ -973,12 +1007,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes.map(async (note) => {
           const client = await storage.getClient(note.clientId);
           const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
-          return { 
-            ...note, 
-            client, 
+          return toSnakeCaseProgressNote({
+            ...note,
+            client,
             session,
             content: note.content ? safeDecrypt(note.content) : null
-          };
+          });
         })
       );
       res.json(notesWithClients);
@@ -995,12 +1029,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         placeholders.map(async (note) => {
           const client = await storage.getClient(note.clientId);
           const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
-          return { 
-            ...note, 
-            client, 
+          return toSnakeCaseProgressNote({
+            ...note,
+            client,
             session,
             content: note.content ? safeDecrypt(note.content) : null
-          };
+          });
         })
       );
       res.json(placeholdersWithClients);
@@ -1126,13 +1160,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const note = await storage.updateProgressNote(noteId, updates);
-      
+
       // Decrypt content before returning (gracefully handle non-encrypted data)
-      const decryptedNote = {
+      const decryptedNote = toSnakeCaseProgressNote({
         ...note,
         content: note.content ? safeDecrypt(note.content) : null
-      };
-      
+      });
+
       res.json(decryptedNote);
     } catch (error) {
       console.error("Error updating progress note:", error);
@@ -1496,6 +1530,117 @@ ${sourceText}
     }
   });
 
+  // Contextual AI Assistant endpoint
+  app.post('/api/ai/assistant', async (req: any, res) => {
+    try {
+      const {
+        question,
+        screen_context,
+        client_id,
+        client_name,
+        session_id,
+        note_id,
+        conversation_history
+      } = req.body;
+
+      if (!question) {
+        return res.status(400).json({ error: 'Question is required' });
+      }
+
+      // Build context for the AI
+      let contextInfo = `Screen Context: ${screen_context || 'unknown'}\n`;
+
+      // Add client context if available
+      if (client_id) {
+        try {
+          const client = await storage.getClient(client_id);
+          if (client) {
+            contextInfo += `\nClient: ${client.name}\n`;
+            contextInfo += `Status: ${client.status}\n`;
+            if (client.diagnosis) contextInfo += `Diagnosis: ${client.diagnosis}\n`;
+
+            // Get recent notes for context
+            const notes = await storage.getProgressNotes(client_id);
+            if (notes.length > 0) {
+              contextInfo += `\nRecent Sessions: ${notes.length} documented sessions\n`;
+              const recentNote = notes[0];
+              if (recentNote.sessionDate) {
+                contextInfo += `Last Session: ${new Date(recentNote.sessionDate).toLocaleDateString()}\n`;
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error fetching client context:', e);
+        }
+      }
+
+      // Add session context if available
+      if (session_id) {
+        try {
+          const session = await storage.getSession(session_id);
+          if (session) {
+            contextInfo += `\nSession Date: ${new Date(session.scheduledAt).toLocaleDateString()}\n`;
+            contextInfo += `Session Type: ${session.sessionType}\n`;
+            contextInfo += `Status: ${session.status}\n`;
+          }
+        } catch (e) {
+          console.error('Error fetching session context:', e);
+        }
+      }
+
+      // Add conversation history if provided
+      let historyContext = '';
+      if (conversation_history && Array.isArray(conversation_history)) {
+        historyContext = '\nPrevious conversation:\n' + conversation_history.join('\n') + '\n';
+      }
+
+      // Build the prompt
+      const systemPrompt = `You are a clinical AI assistant for TherapyFlow, helping a licensed mental health counselor (Ph.D., LMHC) with their practice management and clinical work.
+
+You have access to the following context:
+${contextInfo}
+${historyContext}
+
+Guidelines:
+1. Be concise but clinically thorough
+2. Maintain HIPAA awareness - don't ask for unnecessary PHI
+3. Offer actionable suggestions when appropriate
+4. Reference the therapeutic modalities the clinician uses: ACT, DBT, Narrative Therapy, Existentialism
+5. If asked about a specific client, use the context provided
+6. Suggest follow-up questions when relevant
+
+CRITICAL: Your response must contain NO markdown syntax. NO # headers, NO **bold**, NO - bullets. Use plain text only.`;
+
+      const userPrompt = question;
+
+      // Call the AI service
+      const response = await aiService.processTherapyDocument('', `${systemPrompt}\n\nUser Question: ${userPrompt}\n\nProvide a helpful, clinically-informed response. Return JSON with format: {"answer": "your response", "suggestions": ["follow-up question 1", "follow-up question 2"]}`);
+
+      try {
+        const parsed = JSON.parse(response);
+        res.json({
+          answer: parsed.answer || response,
+          suggestions: parsed.suggestions || [],
+          related_clients: parsed.related_clients || null,
+          related_sessions: parsed.related_sessions || null
+        });
+      } catch {
+        // If not valid JSON, return the raw response
+        res.json({
+          answer: response,
+          suggestions: [],
+          related_clients: null,
+          related_sessions: null
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in AI assistant:', error);
+      res.status(500).json({
+        error: error?.message || 'Failed to process your question'
+      });
+    }
+  });
+
   // Session Summary Generation endpoints
   app.post('/api/sessions/:sessionId/generate-summary', async (req: any, res) => {
     try {
@@ -1787,6 +1932,7 @@ ${sourceText}
 
       // Save the synced sessions to the database with proper client matching
       const savedSessions = [];
+      let placeholdersCreated = 0;
       for (const session of syncedSessions) {
         try {
           // Check if session already exists (by googleEventId)
@@ -1861,6 +2007,31 @@ ${sourceText}
 
             const savedSession = await storage.createSession(sessionData);
             savedSessions.push(savedSession);
+
+            // Automatically create progress note placeholder for past sessions
+            // This helps therapists track which sessions need documentation
+            const sessionDate = new Date(session.scheduledAt);
+            const isPastSession = sessionDate < new Date();
+
+            if (isPastSession && clientId !== 'calendar-sync-client') {
+              try {
+                // Check if a progress note already exists for this session
+                const existingNotes = await storage.getProgressNotesBySession(savedSession.id);
+                if (existingNotes.length === 0) {
+                  await storage.createProgressNotePlaceholder(
+                    savedSession.id,
+                    clientId,
+                    req.therapistId,
+                    sessionDate
+                  );
+                  placeholdersCreated++;
+                  console.log(`Created progress note placeholder for session: ${savedSession.id} (${extractedClientName || 'Unknown'} on ${sessionDate.toISOString().split('T')[0]})`);
+                }
+              } catch (placeholderError) {
+                console.error(`Error creating progress note placeholder for session ${savedSession.id}:`, placeholderError);
+                // Continue - don't fail the sync just because placeholder creation failed
+              }
+            }
           }
         } catch (sessionError) {
           console.error(`Error saving session ${session.id}:`, sessionError);
@@ -1875,6 +2046,7 @@ ${sourceText}
         syncedCount: syncedSessions.length,
         savedCount: savedSessions.length,
         imported: savedSessions.length,
+        placeholdersCreated: placeholdersCreated,
         sessions: syncedSessions,
         dateRange: { startDate: effectiveStartDate, endDate: effectiveEndDate }
       });
@@ -2025,20 +2197,20 @@ ${sourceText}
       const sessionsWithClients = await Promise.all(
         sessions.map(async (session) => {
           const client = await storage.getClient(session.clientId);
+          const snakeCaseSession = toSnakeCaseSession({ ...session, client });
           return {
-            ...session,
-            client,
-            hasProgressNote: notesBySession.has(session.id),
-            missingNote: !notesBySession.has(session.id)
+            ...snakeCaseSession,
+            has_progress_note: notesBySession.has(session.id),
+            missing_note: !notesBySession.has(session.id)
           };
         })
       );
 
       res.json({
-        startDate: start.toISOString(),
-        endDate: end.toISOString(),
-        totalSessions: sessionsWithClients.length,
-        missingNotes: sessionsWithClients.filter(session => session.missingNote).length,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+        total_sessions: sessionsWithClients.length,
+        missing_notes: sessionsWithClients.filter((session: any) => session.missing_note).length,
         sessions: sessionsWithClients
       });
     } catch (error) {
@@ -2104,14 +2276,16 @@ ${sourceText}
       let data: any = {};
 
       if (scope === 'all' || scope === 'clients') {
-        data.clients = await storage.getClients(therapistId);
+        const clients = await storage.getClients(therapistId);
+        data.clients = clients.map(toSnakeCaseClient);
       }
       if (scope === 'all' || scope === 'sessions') {
-        data.sessions = await storage.getUpcomingSessions(therapistId, new Date('2010-01-01'));
+        const sessions = await storage.getUpcomingSessions(therapistId, new Date('2010-01-01'));
+        data.sessions = sessions.map(toSnakeCaseSession);
       }
       if (scope === 'all' || scope === 'notes') {
         const notes = await storage.getProgressNotes(therapistId);
-        data.progressNotes = notes.map(note => ({
+        data.progressNotes = notes.map(note => toSnakeCaseProgressNote({
           ...note,
           content: note.content ? safeDecrypt(note.content) : null,
         }));

@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import Anthropic from '@anthropic-ai/sdk';
 import { anthropicService } from "./anthropicService";
+import { stripMarkdown, cleanAIResponse, NO_MARKDOWN_INSTRUCTION } from "../utils/textFormatting";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -37,18 +38,40 @@ export class AIService {
   /**
    * Process therapy documents with AI analysis
    */
+  /**
+   * Base system prompt for clinical documentation
+   */
+  private readonly CLINICAL_SYSTEM_PROMPT = `You are an expert clinical therapist with extensive training in psychotherapy, clinical documentation, and therapeutic modalities including ACT, DBT, Narrative Therapy, and Existentialism. Your task is to create comprehensive clinical analysis and documentation that demonstrates the depth, clinical sophistication, and analytical rigor of an experienced mental health professional.
+
+CRITICAL: Your response must contain NO markdown syntax whatsoever. This means:
+- NO # headers - use plain text section labels
+- NO **bold** or *italic* markers
+- NO - or * bullet points - use plain numbered lists or prose
+- NO \`code\` backticks
+- NO [links](url)
+- NO > blockquotes
+
+Format sections with plain text labels on their own lines:
+SUBJECTIVE
+[content here]
+
+OBJECTIVE
+[content here]
+
+Always return valid JSON with both extracted data and comprehensive clinical analysis. All text content within JSON string values must also be free of markdown.`;
+
   async processTherapyDocument(text: string, prompt: string): Promise<string> {
     try {
       console.log('Processing therapy document with AI...');
-      
+
       // Try OpenAI first
       try {
         const response = await openai.chat.completions.create({
           model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
           messages: [
             {
-              role: "system", 
-              content: "You are an expert clinical therapist with extensive training in psychotherapy, clinical documentation, and therapeutic modalities including ACT, DBT, Narrative Therapy, and Existentialism. Your task is to create comprehensive clinical analysis and documentation that demonstrates the depth, clinical sophistication, and analytical rigor of an experienced mental health professional. Always return valid JSON with both extracted data and comprehensive clinical analysis."
+              role: "system",
+              content: this.CLINICAL_SYSTEM_PROMPT
             },
             {
               role: "user",
@@ -63,7 +86,8 @@ export class AIService {
         const result = response.choices[0]?.message?.content;
         if (result) {
           console.log('OpenAI analysis completed successfully');
-          return result;
+          // Clean any markdown that slipped through in string values
+          return this.cleanJsonStringValues(result);
         }
       } catch (openaiError) {
         console.warn('OpenAI failed, falling back to Anthropic:', openaiError);
@@ -74,7 +98,7 @@ export class AIService {
         model: "claude-sonnet-4-20250514", // The newest Anthropic model is "claude-sonnet-4-20250514"
         max_tokens: 4096, // Maximum tokens for comprehensive clinical analysis
         temperature: 0.3,
-        system: "You are an expert clinical therapist with extensive training in psychotherapy, clinical documentation, and therapeutic modalities including ACT, DBT, Narrative Therapy, and Existentialism. Your task is to create comprehensive clinical analysis and documentation that demonstrates the depth, clinical sophistication, and analytical rigor of an experienced mental health professional. Always return valid JSON with both extracted data and comprehensive clinical analysis.",
+        system: this.CLINICAL_SYSTEM_PROMPT,
         messages: [
           {
             role: "user",
@@ -86,7 +110,8 @@ export class AIService {
       const content = anthropicResponse.content[0];
       if (content && 'text' in content) {
         console.log('Anthropic analysis completed successfully');
-        return content.text;
+        // Clean any markdown that slipped through in string values
+        return this.cleanJsonStringValues(content.text);
       }
 
       throw new Error('No valid response from AI providers');
@@ -94,6 +119,40 @@ export class AIService {
       console.error('AI document processing failed:', error);
       throw new Error(`AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  /**
+   * Cleans markdown from all string values in a JSON response
+   */
+  private cleanJsonStringValues(jsonString: string): string {
+    try {
+      const parsed = JSON.parse(jsonString);
+      const cleaned = this.deepCleanMarkdown(parsed);
+      return JSON.stringify(cleaned);
+    } catch {
+      // If not valid JSON, just strip markdown from the whole string
+      return stripMarkdown(jsonString);
+    }
+  }
+
+  /**
+   * Recursively cleans markdown from all string values in an object
+   */
+  private deepCleanMarkdown(obj: any): any {
+    if (typeof obj === 'string') {
+      return stripMarkdown(obj);
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.deepCleanMarkdown(item));
+    }
+    if (obj && typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        cleaned[key] = this.deepCleanMarkdown(value);
+      }
+      return cleaned;
+    }
+    return obj;
   }
   async generateEmbedding(text: string): Promise<number[]> {
     try {

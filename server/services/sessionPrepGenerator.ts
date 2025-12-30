@@ -1,4 +1,5 @@
 import { aiService } from "./aiService";
+import { stripMarkdown } from "../utils/textFormatting";
 
 export type RiskLevel = "none" | "low" | "moderate" | "high" | "acute";
 
@@ -38,23 +39,24 @@ export interface SessionPrepInput {
 
 const SESSION_PREP_SYSTEM_PROMPT = `You are a clinical documentation assistant supporting a licensed mental health counselor (Ph.D., LMHC) in preparing for an upcoming therapy session. Your role is to synthesize previous session notes into an actionable, clinically-informed prep document.
 
-## Your Approach
-- Write from a collegial, clinician-to-clinician perspective
-- Be concise but clinically thorough
-- Flag anything requiring immediate attention
-- Offer suggestions, not prescriptions—the clinician knows their client best
-- Use the client's first name to maintain therapeutic warmth
+Your Approach:
+Write from a collegial, clinician-to-clinician perspective. Be concise but clinically thorough. Flag anything requiring immediate attention. Offer suggestions, not prescriptions - the clinician knows their client best. Use the client's first name to maintain therapeutic warmth.
 
-## Clinical Frameworks to Consider
+Clinical Frameworks to Consider:
 When relevant, reference these modalities the clinician uses:
-- ACT (Acceptance and Commitment Therapy): Values, psychological flexibility, defusion
-- DBT: Distress tolerance, emotion regulation, interpersonal effectiveness
-- Narrative Therapy: Externalization, re-authoring, unique outcomes
-- Existential: Meaning-making, mortality, freedom/responsibility, isolation
-- Sex Therapy: Desire discrepancy, intimacy, sexual functioning
+ACT (Acceptance and Commitment Therapy): Values, psychological flexibility, defusion
+DBT: Distress tolerance, emotion regulation, interpersonal effectiveness
+Narrative Therapy: Externalization, re-authoring, unique outcomes
+Existential: Meaning-making, mortality, freedom/responsibility, isolation
+Sex Therapy: Desire discrepancy, intimacy, sexual functioning
 
-## Output Requirements
-Generate a structured JSON response matching the SessionPrepOutput schema. Ensure all fields are populated with clinically relevant content based on the notes provided.`;
+CRITICAL FORMATTING REQUIREMENT:
+Your response must contain NO markdown syntax. This means:
+NO # headers, NO **bold** or *italic*, NO - bullet points, NO backticks, NO links.
+All text content must be plain text. Use clear section labels and paragraph breaks for structure.
+
+Output Requirements:
+Generate a structured JSON response matching the SessionPrepOutput schema. Ensure all fields are populated with clinically relevant content based on the notes provided. All string values must be plain text without any markdown formatting.`;
 
 export function buildSessionPrepPrompt(request: SessionPrepInput): string {
   const client = request.client;
@@ -65,64 +67,64 @@ export function buildSessionPrepPrompt(request: SessionPrepInput): string {
   const secondaryDx = client.secondaryDiagnoses?.length ? client.secondaryDiagnoses : ["None"];
 
   const notesSection = request.previousNotes.map((note, idx) => {
-    return `### Session ${note.sessionNumber ?? "N/A"} — ${note.sessionDate}${idx === 0 ? " (Most Recent)" : ""}
+    return `Session ${note.sessionNumber ?? "N/A"} - ${note.sessionDate}${idx === 0 ? " (Most Recent)" : ""}
 
-**SUBJECTIVE:**
+SUBJECTIVE:
 ${note.subjective || ""}
 
-**OBJECTIVE:**
+OBJECTIVE:
 ${note.objective || ""}
 
-**ASSESSMENT:**
+ASSESSMENT:
 ${note.assessment || ""}
 
-**PLAN:**
+PLAN:
 ${note.plan || ""}
 
-**Key Themes:** ${(note.themes || []).join(", ") || "Not documented"}
+Key Themes: ${(note.themes || []).join(", ") || "Not documented"}
 
-**Tonal Analysis:**
+Tonal Analysis:
 ${note.tonalAnalysis || "Not documented"}
 
-**Significant Quotes:**
-${(note.significantQuotes || []).map((q) => `- "${q}"`).join("\n") || "None captured"}
+Significant Quotes:
+${(note.significantQuotes || []).map((q) => `"${q}"`).join("; ") || "None captured"}
 
-**Homework Assigned:** ${(note.homeworkAssigned || []).join(", ") || "None"}
+Homework Assigned: ${(note.homeworkAssigned || []).join(", ") || "None"}
 
-**Interventions Used:** ${(note.interventionsUsed || []).join(", ") || "Not documented"}
+Interventions Used: ${(note.interventionsUsed || []).join(", ") || "Not documented"}
 
-**Risk Level:** ${note.riskLevel || "none"}
-${note.riskNotes ? `**Risk Notes:** ${note.riskNotes}` : ""}
+Risk Level: ${note.riskLevel || "none"}
+${note.riskNotes ? `Risk Notes: ${note.riskNotes}` : ""}
 
-**Follow-Up Items for Next Session:**
-${(note.followUpItems || []).map((item) => `- ${item}`).join("\n") || "None specified"}
+Follow-Up Items for Next Session:
+${(note.followUpItems || []).map((item, i) => `${i + 1}. ${item}`).join("\n") || "None specified"}
 
-**Keywords/Tags:** ${(note.keywords || []).join(", ") || "None"}
+Keywords/Tags: ${(note.keywords || []).join(", ") || "None"}
 `;
   }).join("\n---\n");
 
   return `
-## Client Context
-- **Name**: ${client.firstName}
-- **Treatment Start**: ${client.treatmentStartDate || "Not specified"}
-- **Primary Diagnosis**: ${client.primaryDiagnosis || "Not specified"}
-- **Secondary Diagnoses**: ${secondaryDx.join(", ")}
-- **Treatment Goals**:
-${goals.map((goal, idx) => `  ${idx + 1}. ${goal}`).join("\n")}
-- **Preferred Modalities**: ${modalities.join(", ")}
-- **Standing Clinical Considerations**:
-${considerations.map((note) => `  - ${note}`).join("\n")}
-- **Medications**: ${meds.join(", ")}
+CLIENT CONTEXT
+Name: ${client.firstName}
+Treatment Start: ${client.treatmentStartDate || "Not specified"}
+Primary Diagnosis: ${client.primaryDiagnosis || "Not specified"}
+Secondary Diagnoses: ${secondaryDx.join(", ")}
+Treatment Goals:
+${goals.map((goal, idx) => `${idx + 1}. ${goal}`).join("\n")}
+Preferred Modalities: ${modalities.join(", ")}
+Standing Clinical Considerations:
+${considerations.map((note, i) => `${i + 1}. ${note}`).join("\n")}
+Medications: ${meds.join(", ")}
 
-${request.longitudinalContext ? `## Longitudinal Context (Treatment Arc)\n${request.longitudinalContext}\n` : ""}
+${request.longitudinalContext ? `LONGITUDINAL CONTEXT (Treatment Arc)\n${request.longitudinalContext}\n` : ""}
 
-## Previous Session Notes
+PREVIOUS SESSION NOTES
 ${notesSection || "No prior notes available."}
 
-## Generation Request
-- **Upcoming Session Date**: ${request.upcomingSessionDate}
-- **Include Pattern Analysis**: ${request.includePatternAnalysis ? "true" : "false"}
-${request.prepFocus ? `- **Specific Prep Focus**: ${request.prepFocus}` : ""}
+GENERATION REQUEST
+Upcoming Session Date: ${request.upcomingSessionDate}
+Include Pattern Analysis: ${request.includePatternAnalysis ? "true" : "false"}
+${request.prepFocus ? `Specific Prep Focus: ${request.prepFocus}` : ""}
 
 Return valid JSON matching this schema:
 {

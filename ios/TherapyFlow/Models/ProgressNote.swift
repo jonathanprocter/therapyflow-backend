@@ -52,29 +52,159 @@ struct ProgressNote: Identifiable, Codable, Equatable, Hashable {
         return formatter.string(from: sessionDate)
     }
 
+    // Support both snake_case (from backend) and camelCase (legacy) keys
     enum CodingKeys: String, CodingKey {
         case id
         case clientId = "client_id"
+        case clientIdCamel = "clientId"
         case sessionId = "session_id"
+        case sessionIdCamel = "sessionId"
         case therapistId = "therapist_id"
+        case therapistIdCamel = "therapistId"
         case content
         case sessionDate = "session_date"
+        case sessionDateCamel = "sessionDate"
         case tags
         case aiTags = "ai_tags"
+        case aiTagsCamel = "aiTags"
         case riskLevel = "risk_level"
+        case riskLevelCamel = "riskLevel"
         case progressRating = "progress_rating"
+        case progressRatingCamel = "progressRating"
         case qualityScore = "quality_score"
+        case qualityScoreCamel = "qualityScore"
         case qualityFlags = "quality_flags"
+        case qualityFlagsCamel = "qualityFlags"
         case status
         case isPlaceholder = "is_placeholder"
+        case isPlaceholderCamel = "isPlaceholder"
         case requiresManualReview = "requires_manual_review"
+        case requiresManualReviewCamel = "requiresManualReview"
         case aiConfidenceScore = "ai_confidence_score"
+        case aiConfidenceScoreCamel = "aiConfidenceScore"
         case processingNotes = "processing_notes"
+        case processingNotesCamel = "processingNotes"
         case originalDocumentId = "original_document_id"
+        case originalDocumentIdCamel = "originalDocumentId"
         case createdAt = "created_at"
+        case createdAtCamel = "createdAt"
         case updatedAt = "updated_at"
+        case updatedAtCamel = "updatedAt"
         case client
         case session
+    }
+
+    // Custom decoder to handle missing optional fields with defaults and both key formats
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        id = try container.decode(String.self, forKey: .id)
+
+        // Try snake_case first, then camelCase for backward compatibility
+        if let value = try? container.decode(String.self, forKey: .clientId) {
+            clientId = value
+        } else {
+            clientId = try container.decode(String.self, forKey: .clientIdCamel)
+        }
+
+        if let value = try? container.decodeIfPresent(String.self, forKey: .sessionId) {
+            sessionId = value
+        } else {
+            sessionId = try container.decodeIfPresent(String.self, forKey: .sessionIdCamel)
+        }
+
+        if let value = try? container.decode(String.self, forKey: .therapistId) {
+            therapistId = value
+        } else {
+            therapistId = try container.decode(String.self, forKey: .therapistIdCamel)
+        }
+
+        content = try container.decodeIfPresent(String.self, forKey: .content)
+
+        if let value = try? container.decodeIfPresent(Date.self, forKey: .sessionDate) {
+            sessionDate = value ?? Date()
+        } else {
+            sessionDate = try container.decodeIfPresent(Date.self, forKey: .sessionDateCamel) ?? Date()
+        }
+
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
+
+        if let value = try? container.decodeIfPresent([String].self, forKey: .aiTags) {
+            aiTags = value ?? []
+        } else {
+            aiTags = try container.decodeIfPresent([String].self, forKey: .aiTagsCamel) ?? []
+        }
+
+        if let value = try? container.decodeIfPresent(RiskLevel.self, forKey: .riskLevel) {
+            riskLevel = value ?? .low
+        } else {
+            riskLevel = try container.decodeIfPresent(RiskLevel.self, forKey: .riskLevelCamel) ?? .low
+        }
+
+        if let value = try? container.decodeIfPresent(Int.self, forKey: .progressRating) {
+            progressRating = value
+        } else {
+            progressRating = try container.decodeIfPresent(Int.self, forKey: .progressRatingCamel)
+        }
+
+        if let value = try? container.decodeIfPresent(Double.self, forKey: .qualityScore) {
+            qualityScore = value
+        } else {
+            qualityScore = try container.decodeIfPresent(Double.self, forKey: .qualityScoreCamel)
+        }
+
+        if let value = try? container.decodeIfPresent(QualityFlags.self, forKey: .qualityFlags) {
+            qualityFlags = value
+        } else {
+            qualityFlags = try container.decodeIfPresent(QualityFlags.self, forKey: .qualityFlagsCamel)
+        }
+
+        status = try container.decodeIfPresent(NoteStatus.self, forKey: .status) ?? .placeholder
+
+        if let value = try? container.decodeIfPresent(Bool.self, forKey: .isPlaceholder) {
+            isPlaceholder = value ?? true
+        } else {
+            isPlaceholder = try container.decodeIfPresent(Bool.self, forKey: .isPlaceholderCamel) ?? true
+        }
+
+        if let value = try? container.decodeIfPresent(Bool.self, forKey: .requiresManualReview) {
+            requiresManualReview = value ?? false
+        } else {
+            requiresManualReview = try container.decodeIfPresent(Bool.self, forKey: .requiresManualReviewCamel) ?? false
+        }
+
+        if let value = try? container.decodeIfPresent(Double.self, forKey: .aiConfidenceScore) {
+            aiConfidenceScore = value
+        } else {
+            aiConfidenceScore = try container.decodeIfPresent(Double.self, forKey: .aiConfidenceScoreCamel)
+        }
+
+        if let value = try? container.decodeIfPresent(String.self, forKey: .processingNotes) {
+            processingNotes = value
+        } else {
+            processingNotes = try container.decodeIfPresent(String.self, forKey: .processingNotesCamel)
+        }
+
+        if let value = try? container.decodeIfPresent(String.self, forKey: .originalDocumentId) {
+            originalDocumentId = value
+        } else {
+            originalDocumentId = try container.decodeIfPresent(String.self, forKey: .originalDocumentIdCamel)
+        }
+
+        if let value = try? container.decodeIfPresent(Date.self, forKey: .createdAt) {
+            createdAt = value ?? Date()
+        } else {
+            createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAtCamel) ?? Date()
+        }
+
+        if let value = try? container.decodeIfPresent(Date.self, forKey: .updatedAt) {
+            updatedAt = value ?? Date()
+        } else {
+            updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAtCamel) ?? Date()
+        }
+
+        client = try container.decodeIfPresent(Client.self, forKey: .client)
+        session = try container.decodeIfPresent(Session.self, forKey: .session)
     }
 
     init(id: String = UUID().uuidString,
