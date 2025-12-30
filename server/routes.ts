@@ -237,6 +237,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         /^Meeting with /i,
         /^Lunch with /i,
         /Deductible/i,
+        /Appointment$/i,
+        /& .* Appointment$/i,
         /^Reminder:/i,
         /^Task:/i,
         /^TODO:/i
@@ -332,6 +334,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to delete client", 
         details: error instanceof Error ? error.message : "Unknown error" 
       });
+    }
+  });
+
+  // Get all sessions for a specific client
+  app.get("/api/clients/:clientId/sessions", verifyClientOwnership, async (req: any, res) => {
+    try {
+      const clientId = req.params.clientId;
+      const sessions = await storage.getSessions(clientId);
+      
+      // Fetch client data for each session
+      const sessionsWithClients = await Promise.all(
+        sessions.map(async (session) => {
+          const client = await storage.getClient(session.clientId);
+          return toSnakeCaseSession({ ...session, client });
+        })
+      );
+      
+      res.json(sessionsWithClients);
+    } catch (error) {
+      console.error("Error fetching client sessions:", error);
+      res.status(500).json({ error: "Failed to fetch client sessions" });
     }
   });
 
