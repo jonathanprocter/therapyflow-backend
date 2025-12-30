@@ -175,8 +175,8 @@ app.get("/api/health/deep", async (req, res) => {
   log("✅ CareNotesAI document processing pipeline routes registered");
   log("🧠 Clinical Second Brain knowledge graph routes registered");
 
-    // Register therapeutic journey routes
-  integrateTherapeuticJourney(app);
+  // Register therapeutic journey routes
+  integrateTherapeuticFeatures(app);
 
   // Register AI assistant routes
   registerAIAssistantRoutes(app);
