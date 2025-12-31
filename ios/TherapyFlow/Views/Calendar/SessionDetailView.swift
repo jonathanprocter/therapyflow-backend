@@ -155,6 +155,9 @@ struct SessionDetailView: View {
                     SessionTypeBadge(type: session.sessionType)
                 }
 
+                // Progress Note Status
+                progressNoteStatusRow
+
                 if let notes = session.notes, !notes.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Notes")
@@ -172,6 +175,50 @@ struct SessionDetailView: View {
         .padding()
         .background(Color.theme.surface)
         .cornerRadius(12)
+    }
+
+    // MARK: - Progress Note Status Row
+    private var progressNoteStatusRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: progressNoteIcon)
+                .font(.body)
+                .foregroundColor(progressNoteColor)
+                .frame(width: 20)
+
+            Text("Progress Note")
+                .font(.subheadline)
+                .foregroundColor(Color.theme.secondaryText)
+
+            Spacer()
+
+            ProgressNoteStatusBadge(status: session.progressNoteStatus, hasPlaceholder: session.hasProgressNotePlaceholder)
+        }
+    }
+
+    private var progressNoteIcon: String {
+        switch session.progressNoteStatus {
+        case .processed:
+            return "checkmark.circle.fill"
+        case .uploaded:
+            return "arrow.up.circle.fill"
+        case .needsReview:
+            return "exclamationmark.circle.fill"
+        case .pending:
+            return session.hasProgressNotePlaceholder ? "doc.badge.clock" : "doc"
+        }
+    }
+
+    private var progressNoteColor: Color {
+        switch session.progressNoteStatus {
+        case .processed:
+            return Color.theme.success
+        case .uploaded:
+            return Color.theme.accent
+        case .needsReview:
+            return Color.theme.warning
+        case .pending:
+            return session.hasProgressNotePlaceholder ? Color.theme.primary : Color.theme.tertiaryText
+        }
     }
 
     // MARK: - Prep Section

@@ -93,6 +93,67 @@ struct SessionTypeBadge: View {
     }
 }
 
+// MARK: - Progress Note Status Badge
+struct ProgressNoteStatusBadge: View {
+    let status: ProgressNoteStatusType
+    var hasPlaceholder: Bool = false
+
+    private var displayText: String {
+        switch status {
+        case .processed:
+            return "Completed"
+        case .uploaded:
+            return "Processing"
+        case .needsReview:
+            return "Needs Review"
+        case .pending:
+            return hasPlaceholder ? "Awaiting Note" : "No Note"
+        }
+    }
+
+    private var icon: String {
+        switch status {
+        case .processed:
+            return "checkmark.circle.fill"
+        case .uploaded:
+            return "arrow.triangle.2.circlepath"
+        case .needsReview:
+            return "exclamationmark.circle.fill"
+        case .pending:
+            return hasPlaceholder ? "clock.fill" : "doc"
+        }
+    }
+
+    private var color: Color {
+        switch status {
+        case .processed:
+            return Color.theme.success
+        case .uploaded:
+            return Color.theme.accent
+        case .needsReview:
+            return Color.theme.warning
+        case .pending:
+            return hasPlaceholder ? Color.theme.primary : Color.theme.tertiaryText
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption2)
+
+            Text(displayText)
+                .font(.caption)
+                .fontWeight(.medium)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.15))
+        .foregroundColor(color)
+        .cornerRadius(6)
+    }
+}
+
 // MARK: - Priority Badge
 struct PriorityBadge: View {
     let priority: InsightPriority
@@ -182,6 +243,12 @@ struct TagList: View {
         HStack(spacing: 12) {
             NoteStatusBadge(status: .placeholder)
             NoteStatusBadge(status: .completed)
+        }
+
+        HStack(spacing: 12) {
+            ProgressNoteStatusBadge(status: .pending, hasPlaceholder: false)
+            ProgressNoteStatusBadge(status: .pending, hasPlaceholder: true)
+            ProgressNoteStatusBadge(status: .processed)
         }
 
         HStack(spacing: 12) {
