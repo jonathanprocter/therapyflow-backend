@@ -1,6 +1,7 @@
 -- Performance Optimization Indexes
 -- Created: 2025-12-30
 -- Purpose: Add indexes for frequently queried columns to improve performance
+-- NOTE: Only includes indexes for tables/columns that exist in current schema
 
 -- ============================================
 -- CLIENTS TABLE INDEXES
@@ -111,77 +112,15 @@ ON documents(client_id);
 CREATE INDEX IF NOT EXISTS idx_documents_therapist 
 ON documents(therapist_id);
 
--- Index for document status
-CREATE INDEX IF NOT EXISTS idx_documents_status 
-ON documents(status);
-
--- Index for document type
-CREATE INDEX IF NOT EXISTS idx_documents_type 
-ON documents(document_type);
-
 -- Composite index for client + upload date
 CREATE INDEX IF NOT EXISTS idx_documents_client_uploaded 
 ON documents(client_id, uploaded_at DESC);
 
--- Full-text search for document text
+-- Full-text search for document text (if extracted_text column exists)
 CREATE INDEX IF NOT EXISTS idx_documents_text_fts 
 ON documents 
 USING GIN(to_tsvector('english', extracted_text))
 WHERE extracted_text IS NOT NULL;
-
--- ============================================
--- AI INSIGHTS TABLE INDEXES
--- ============================================
-
--- Index for therapist insights
-CREATE INDEX IF NOT EXISTS idx_ai_insights_therapist 
-ON ai_insights(therapist_id);
-
--- Index for read status
-CREATE INDEX IF NOT EXISTS idx_ai_insights_read 
-ON ai_insights(read) 
-WHERE read = false;
-
--- Composite index for therapist + unread
-CREATE INDEX IF NOT EXISTS idx_ai_insights_therapist_unread 
-ON ai_insights(therapist_id, created_at DESC) 
-WHERE read = false;
-
--- ============================================
--- CASE CONCEPTUALIZATIONS TABLE INDEXES
--- ============================================
-
--- Index for client conceptualizations
-CREATE INDEX IF NOT EXISTS idx_case_conceptualizations_client 
-ON case_conceptualizations(client_id);
-
--- Index for therapist conceptualizations
-CREATE INDEX IF NOT EXISTS idx_case_conceptualizations_therapist 
-ON case_conceptualizations(therapist_id);
-
--- ============================================
--- TREATMENT PLANS TABLE INDEXES
--- ============================================
-
--- Index for client treatment plans
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_client 
-ON treatment_plans(client_id);
-
--- Index for therapist treatment plans
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_therapist 
-ON treatment_plans(therapist_id);
-
--- ============================================
--- ALLIANCE SCORES TABLE INDEXES
--- ============================================
-
--- Composite index for client + date
-CREATE INDEX IF NOT EXISTS idx_alliance_scores_client_date 
-ON alliance_scores(client_id, session_date DESC);
-
--- Index for therapist scores
-CREATE INDEX IF NOT EXISTS idx_alliance_scores_therapist 
-ON alliance_scores(therapist_id);
 
 -- ============================================
 -- SESSION PREPS TABLE INDEXES
@@ -208,54 +147,44 @@ CREATE INDEX IF NOT EXISTS idx_longitudinal_records_therapist
 ON longitudinal_records(therapist_id);
 
 -- ============================================
--- JOB RUNS TABLE INDEXES
+-- DISABLED INDEXES (tables/columns don't exist yet)
 -- ============================================
 
--- Index for job status
-CREATE INDEX IF NOT EXISTS idx_job_runs_status 
-ON job_runs(status);
+-- AI INSIGHTS TABLE - Table doesn't exist yet
+-- CREATE INDEX IF NOT EXISTS idx_ai_insights_therapist ON ai_insights(therapist_id);
+-- CREATE INDEX IF NOT EXISTS idx_ai_insights_read ON ai_insights(read) WHERE read = false;
+-- CREATE INDEX IF NOT EXISTS idx_ai_insights_therapist_unread ON ai_insights(therapist_id, created_at DESC) WHERE read = false;
 
--- Composite index for therapist + status
-CREATE INDEX IF NOT EXISTS idx_job_runs_therapist_status 
-ON job_runs(therapist_id, status) 
-WHERE therapist_id IS NOT NULL;
+-- CASE CONCEPTUALIZATIONS TABLE - Table doesn't exist yet
+-- CREATE INDEX IF NOT EXISTS idx_case_conceptualizations_client ON case_conceptualizations(client_id);
+-- CREATE INDEX IF NOT EXISTS idx_case_conceptualizations_therapist ON case_conceptualizations(therapist_id);
 
--- Index for job start time
-CREATE INDEX IF NOT EXISTS idx_job_runs_started 
-ON job_runs(started_at DESC);
+-- TREATMENT PLANS TABLE - Table doesn't exist yet
+-- CREATE INDEX IF NOT EXISTS idx_treatment_plans_client ON treatment_plans(client_id);
+-- CREATE INDEX IF NOT EXISTS idx_treatment_plans_therapist ON treatment_plans(therapist_id);
 
--- ============================================
--- TRANSCRIPT BATCHES TABLE INDEXES
--- ============================================
+-- ALLIANCE SCORES TABLE - Table doesn't exist yet
+-- CREATE INDEX IF NOT EXISTS idx_alliance_scores_client_date ON alliance_scores(client_id, session_date DESC);
+-- CREATE INDEX IF NOT EXISTS idx_alliance_scores_therapist ON alliance_scores(therapist_id);
 
--- Index for therapist batches
-CREATE INDEX IF NOT EXISTS idx_transcript_batches_therapist 
-ON transcript_batches(therapist_id);
+-- JOB RUNS TABLE - Table doesn't exist yet
+-- CREATE INDEX IF NOT EXISTS idx_job_runs_status ON job_runs(status);
+-- CREATE INDEX IF NOT EXISTS idx_job_runs_therapist_status ON job_runs(therapist_id, status) WHERE therapist_id IS NOT NULL;
+-- CREATE INDEX IF NOT EXISTS idx_job_runs_started ON job_runs(started_at DESC);
 
--- Index for batch status
-CREATE INDEX IF NOT EXISTS idx_transcript_batches_status 
-ON transcript_batches(status);
+-- TRANSCRIPT BATCHES TABLE - Table doesn't exist yet
+-- CREATE INDEX IF NOT EXISTS idx_transcript_batches_therapist ON transcript_batches(therapist_id);
+-- CREATE INDEX IF NOT EXISTS idx_transcript_batches_status ON transcript_batches(status);
 
--- ============================================
--- TRANSCRIPT FILES TABLE INDEXES
--- ============================================
+-- TRANSCRIPT FILES TABLE - Table doesn't exist yet
+-- CREATE INDEX IF NOT EXISTS idx_transcript_files_batch ON transcript_files(batch_id);
+-- CREATE INDEX IF NOT EXISTS idx_transcript_files_status ON transcript_files(status);
+-- CREATE INDEX IF NOT EXISTS idx_transcript_files_therapist_status ON transcript_files(therapist_id, status);
+-- CREATE INDEX IF NOT EXISTS idx_transcript_files_client ON transcript_files(client_id) WHERE client_id IS NOT NULL;
 
--- Index for batch files
-CREATE INDEX IF NOT EXISTS idx_transcript_files_batch 
-ON transcript_files(batch_id);
-
--- Index for file status
-CREATE INDEX IF NOT EXISTS idx_transcript_files_status 
-ON transcript_files(status);
-
--- Composite index for therapist + status (for review queue)
-CREATE INDEX IF NOT EXISTS idx_transcript_files_therapist_status 
-ON transcript_files(therapist_id, status);
-
--- Index for client assignment
-CREATE INDEX IF NOT EXISTS idx_transcript_files_client 
-ON transcript_files(client_id) 
-WHERE client_id IS NOT NULL;
+-- DOCUMENTS TABLE - status column doesn't exist
+-- CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);
+-- CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(document_type);
 
 -- ============================================
 -- PERFORMANCE NOTES
