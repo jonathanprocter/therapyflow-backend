@@ -105,6 +105,7 @@ export async function initializeDatabase(): Promise<void> {
 
   // Define migrations in order
   const migrations = [
+    { file: '000-reset-schema.sql', name: 'Schema Reset (Drop Old Tables)' },
     { file: '000-init-core-tables.sql', name: 'Core Tables' },
     { file: 'add-therapeutic-journey.sql', name: 'Therapeutic Journey' },
     { file: 'add-voice-notes.sql', name: 'Voice Notes' },
