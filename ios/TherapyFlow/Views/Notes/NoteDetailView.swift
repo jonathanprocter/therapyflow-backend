@@ -275,31 +275,7 @@ struct NoteDetailView: View {
     }
 }
 
-// MARK: - Metadata Row
-struct MetadataRow: View {
-    let icon: String
-    let title: String
-    let value: String
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.body)
-                .foregroundColor(Color.theme.primary)
-                .frame(width: 20)
-
-            Text(title)
-                .font(.subheadline)
-                .foregroundColor(Color.theme.secondaryText)
-
-            Spacer()
-
-            Text(value)
-                .font(.subheadline)
-                .foregroundColor(Color.theme.primaryText)
-        }
-    }
-}
+// MetadataRow is now defined in /Views/Components/MetadataRow.swift
 
 #Preview {
     NavigationStack {
