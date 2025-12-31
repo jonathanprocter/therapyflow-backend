@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   notes TEXT,
   has_progress_note_placeholder BOOLEAN DEFAULT false,
   progress_note_status TEXT DEFAULT 'pending',
-  is_simplepractice_event BOOLEAN DEFAULT false,
+  is_simple_practice_event BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
