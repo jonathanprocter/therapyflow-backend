@@ -3,7 +3,7 @@
  * Ensures all required tables and migrations are applied
  */
 
-import { db } from '../db.js';
+import { db, pool } from '../db.js';
 import { sql } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
@@ -17,15 +17,17 @@ const __dirname = path.dirname(__filename);
  */
 async function tableExists(tableName: string): Promise<boolean> {
   try {
-    const result = await db.execute(sql`
-      SELECT EXISTS (
+    // Use raw pool query to avoid Drizzle schema validation
+    const result = await pool.query(
+      `SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
-        AND table_name = ${tableName}
-      ) as exists
-    `);
+        AND table_name = $1
+      ) as exists`,
+      [tableName]
+    );
     
-    return (result as any)[0]?.exists || false;
+    return result.rows[0]?.exists || false;
   } catch (error) {
     console.error(`Error checking table ${tableName}:`, error);
     return false;
