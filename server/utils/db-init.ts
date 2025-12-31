@@ -106,8 +106,9 @@ export async function initializeDatabase(): Promise<void> {
   }
 
   // Define migrations in order
+  // NOTE: Schema Reset is DISABLED to preserve data between deployments
   const migrations = [
-    { file: '000-reset-schema.sql', name: 'Schema Reset (Drop Old Tables)' },
+    // { file: '000-reset-schema.sql', name: 'Schema Reset (Drop Old Tables)' }, // DISABLED - preserves data
     { file: '000-init-core-tables.sql', name: 'Core Tables' },
     { file: 'add-progress-note-status-column.sql', name: 'Add Progress Note Status Column' },
     { file: 'fix-simplepractice-column-name.sql', name: 'Fix SimplePractice Column Name' },
