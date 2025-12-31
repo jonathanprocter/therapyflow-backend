@@ -139,6 +139,9 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Expose db instance for direct queries when needed
+  public db = db;
+
   private encryptJsonPayload(value: any) {
     if (value === null || value === undefined) return value;
     const serialized = JSON.stringify(value);

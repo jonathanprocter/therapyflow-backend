@@ -14,9 +14,14 @@ import { registerFileWatcherRoutes } from "./routes/file-watcher-routes.js";
 import { fileWatcherService } from "./services/fileWatcherService.js";
 import { registerDriveRoutes } from "./routes/drive-routes.js";
 import { googleDriveService } from "./services/googleDriveService.js";
+import { initializeDatabase, checkDatabaseHealth } from "./utils/db-init.js";
+import { registerAIAssistantRoutes, setupAIWebSocketServer } from "./routes/ai-assistant-routes.js";
+import { registerVoiceNotesRoutes } from "./routes/voice-notes-routes.js";
+import { validateEnvironmentOnStartup } from "./utils/env-validator.js";
 
 // Import middleware
 import { standardRateLimit, aiProcessingRateLimit } from './middleware/rateLimit';
+import { applySecurity } from './middleware/security.js';
 
 // Import services
 import { pdfService, getPdfServiceStatus } from './services/pdfService';
@@ -52,6 +57,9 @@ process.on('uncaughtException', (error) => {
 });
 
 const app = express();
+
+// Apply security middleware (Helmet, CORS, etc.)
+applySecurity(app);
 
 // Security: Limit request body size to prevent DoS attacks
 // 10MB for JSON (allows large document content)
@@ -112,12 +120,32 @@ app.get("/api/health/deep", async (req, res) => {
   const start = Date.now();
   try {
     // Minimal DB check: run a simple NOW()
-    const [{ now }] = await (storage as any).db.execute(sql`SELECT now() as now`);
+    const nowResult = await (storage as any).db.execute(sql`SELECT now() as now`);
+    const now = (nowResult as any).rows?.[0]?.now || (nowResult as any)[0]?.now;
     
-    // Count documents and AI results
-    const [{ count: docsCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
-    const [{ count: aiCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
-    const [{ count: edgesCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+    // Count core tables (gracefully handle missing tables)
+    let docsCount = 0, aiCount = 0, edgesCount = 0;
+    
+    try {
+      const docsResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
+      docsCount = (docsResult as any).rows?.[0]?.count || (docsResult as any)[0]?.count || 0;
+    } catch (e) {
+      console.log('documents table not found');
+    }
+    
+    try {
+      const aiResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
+      aiCount = (aiResult as any).rows?.[0]?.count || (aiResult as any)[0]?.count || 0;
+    } catch (e) {
+      console.log('ai_document_results table not found');
+    }
+    
+    try {
+      const edgesResult = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+      edgesCount = (edgesResult as any).rows?.[0]?.count || (edgesResult as any)[0]?.count || 0;
+    } catch (e) {
+      console.log('semantic_edges table not found');
+    }
     
     res.json({
       ok: true,
@@ -140,7 +168,24 @@ app.get("/api/health/deep", async (req, res) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  // Validate environment variables
+  validateEnvironmentOnStartup();
+
+  // Initialize database with all required tables
+  try {
+    const dbHealthy = await checkDatabaseHealth();
+    if (!dbHealthy) {
+      console.error('❌ Database connection failed!');
+      process.exit(1);
+    }
+    await initializeDatabase();
+  } catch (error) {
+    console.error('❌ Database initialization failed:', error);
+    console.error('Server cannot start without database. Exiting...');
+    process.exit(1);
+  }
+
+  let server = await registerRoutes(app);
 
   // Register CareNotesAI pipeline routes
   app.use("/api/documents", documentsRouter);
@@ -150,8 +195,14 @@ app.get("/api/health/deep", async (req, res) => {
   log("✅ CareNotesAI document processing pipeline routes registered");
   log("🧠 Clinical Second Brain knowledge graph routes registered");
 
-  // Integrate therapeutic journey features
+  // Register therapeutic journey routes
   integrateTherapeuticFeatures(app);
+
+  // Register AI assistant routes
+  registerAIAssistantRoutes(app);
+
+  // Register voice notes routes
+  registerVoiceNotesRoutes(app);
   log("✅ Therapeutic journey features integrated");
 
   // Register ElevenLabs voice routes
@@ -160,6 +211,9 @@ app.get("/api/health/deep", async (req, res) => {
 
   // Register file watcher routes
   registerFileWatcherRoutes(app);
+
+  // Setup AI WebSocket server
+  setupAIWebSocketServer(server);
   log("📂 Document watch folder routes registered");
 
   // Register Google Drive integration routes

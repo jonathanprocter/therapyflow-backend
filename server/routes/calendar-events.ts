@@ -304,10 +304,16 @@ router.post("/sync", async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error syncing calendar events:", error);
+    console.error("Error details:", {
+      name: error instanceof Error ? error.name : 'unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid sync data", details: error.errors });
     }
-    res.status(500).json({ error: "Failed to sync calendar events" });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: "Failed to sync calendar events", details: errorMessage });
   }
 });
 

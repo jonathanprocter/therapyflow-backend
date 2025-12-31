@@ -100,9 +100,14 @@ export class EnhancedDatabaseStorage extends DatabaseStorage {
         .limit(limit);
 
       return insights;
-    } catch (error) {
+    } catch (error: any) {
+      // Check if error is due to missing table
+      if (error.message?.includes('relation') && error.message?.includes('does not exist')) {
+        console.error('⚠️  Table session_insights does not exist. Run migrations: npm run migrate:therapeutic');
+        return [];
+      }
       console.error('Error getting therapeutic insights:', error);
-      return [];
+      throw error; // Re-throw non-table errors so caller knows something went wrong
     }
   }
 
@@ -128,9 +133,14 @@ export class EnhancedDatabaseStorage extends DatabaseStorage {
         .where(and(...conditions));
 
       return tags;
-    } catch (error) {
+    } catch (error: any) {
+      // Check if error is due to missing table
+      if (error.message?.includes('relation') && error.message?.includes('does not exist')) {
+        console.error('⚠️  Table session_tags does not exist. Run migrations: npm run migrate:therapeutic');
+        return [];
+      }
       console.error('Error getting session tags:', error);
-      return [];
+      throw error; // Re-throw non-table errors
     }
   }
 }
