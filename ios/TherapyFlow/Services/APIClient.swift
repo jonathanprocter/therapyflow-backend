@@ -39,7 +39,7 @@ actor APIClient {
     // - Railway: https://your-app.up.railway.app
     // - Fly.io: https://your-app.fly.dev
     //
-    private static let productionURL = "https://therapyflow-backend-1.onrender.com"  // Production Render backend
+    private static let productionURL = "https://therapyflow-backend.onrender.com"  // Production Render backend
 
     // Base URL configuration
     private static var configuredBaseURL: URL {
