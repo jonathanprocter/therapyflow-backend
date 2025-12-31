@@ -106,22 +106,20 @@ export async function initializeDatabase(): Promise<void> {
   }
 
   // Define migrations in order
-  // NOTE: Only including migrations for core tables that match the current schema
-  // Advanced features (therapeutic journey, performance indexes, etc.) are disabled
-  // until the schema is updated to support them
   const migrations = [
     { file: '000-reset-schema.sql', name: 'Schema Reset (Drop Old Tables)' },
     { file: '000-init-core-tables.sql', name: 'Core Tables' },
     { file: 'add-progress-note-status-column.sql', name: 'Add Progress Note Status Column' },
     { file: 'fix-simplepractice-column-name.sql', name: 'Fix SimplePractice Column Name' },
+    { file: 'add-missing-columns-for-indexes.sql', name: 'Add Missing Columns for Indexes' },
     { file: 'add-voice-notes.sql', name: 'Voice Notes' },
     { file: 'add-calendar-events.sql', name: 'Calendar Events' },
-    // DISABLED: Migrations below reference columns/tables that don't exist in current schema
-    // { file: 'add-therapeutic-journey.sql', name: 'Therapeutic Journey' },
-    // { file: 'add-performance-indexes.sql', name: 'Performance Indexes' },
-    // { file: '2025-12-01_session_preps.sql', name: 'Session Preps' },
+    { file: 'add-therapeutic-journey.sql', name: 'Therapeutic Journey' },
+    { file: '2025-12-01_session_preps.sql', name: 'Session Preps' },
+    { file: '2025-12-02_longitudinal_records.sql', name: 'Longitudinal Records' },
+    { file: 'add-performance-indexes.sql', name: 'Performance Indexes' },
+    // DISABLED: Migrations below still need schema work
     // { file: '2025-12-01_audit_settings_indexes.sql', name: 'Audit Settings' },
-    // { file: '2025-12-02_longitudinal_records.sql', name: 'Longitudinal Records' },
     // { file: '2025-12-02_job_note_quality_documents.sql', name: 'Job Note Quality' }
   ];
 
