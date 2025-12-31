@@ -21,8 +21,8 @@ export async function reconcileCalendar(therapistId: string, start: Date, end: D
   }
 
   const eventIds = new Set(events.map((event) => event.id));
-  const sessionsMissingCalendar = sessions.filter((session) => !session.googleEventId || !eventIds.has(session.googleEventId));
-  const sessionEventIds = new Set(sessions.map((session) => session.googleEventId).filter(Boolean));
+  const sessionsMissingCalendar = sessions.filter((session) => !session.googleCalendarEventId || !eventIds.has(session.googleCalendarEventId));
+  const sessionEventIds = new Set(sessions.map((session) => session.googleCalendarEventId).filter(Boolean));
   const calendarMissingSession = events.filter((event) => !sessionEventIds.has(event.id));
 
   const sessionsMissingNotes = sessions.filter((session) => !notesBySession.has(session.id));
