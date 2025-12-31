@@ -112,6 +112,7 @@ export async function initializeDatabase(): Promise<void> {
     { file: 'add-progress-note-status-column.sql', name: 'Add Progress Note Status Column' },
     { file: 'fix-simplepractice-column-name.sql', name: 'Fix SimplePractice Column Name' },
     { file: 'add-missing-columns-for-indexes.sql', name: 'Add Missing Columns for Indexes' },
+    { file: 'add-preferred-modalities-column.sql', name: 'Add Preferred Modalities Column' },
     { file: 'add-voice-notes.sql', name: 'Voice Notes' },
     { file: 'add-calendar-events.sql', name: 'Calendar Events' },
     { file: 'add-therapeutic-journey.sql', name: 'Therapeutic Journey' },

@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS clients (
   insurance JSONB,
   tags TEXT[] DEFAULT '{}',
   clinical_considerations TEXT[] DEFAULT '{}',
+  preferred_modalities TEXT[] DEFAULT '{}',
   status TEXT NOT NULL DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
