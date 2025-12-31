@@ -5,6 +5,7 @@ struct ContentView: View {
     @EnvironmentObject private var networkMonitor: NetworkMonitor
 
     @State private var selectedTab: Tab = .dashboard
+    @State private var showMoreMenu = false
 
     // iPad detection for adaptive layout
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -45,14 +46,22 @@ struct ContentView: View {
         NavigationSplitView {
             // Sidebar
             List {
-                ForEach(Tab.padTabs, id: \.self) { tab in
-                    Button {
-                        selectedTab = tab
-                    } label: {
-                        Label(tab.title, systemImage: tab.icon)
+                Section("Clinical") {
+                    ForEach(Tab.clinicalTabs, id: \.self) { tab in
+                        sidebarButton(for: tab)
                     }
-                    .listRowBackground(selectedTab == tab ? Color.theme.primary.opacity(0.15) : Color.clear)
-                    .foregroundColor(selectedTab == tab ? Color.theme.primary : Color.primary)
+                }
+                
+                Section("AI Features") {
+                    ForEach(Tab.aiTabs, id: \.self) { tab in
+                        sidebarButton(for: tab)
+                    }
+                }
+                
+                Section("Documents") {
+                    ForEach(Tab.documentTabs, id: \.self) { tab in
+                        sidebarButton(for: tab)
+                    }
                 }
             }
             .listStyle(.sidebar)
@@ -84,13 +93,45 @@ struct ContentView: View {
             }
         }
     }
+    
+    private func sidebarButton(for tab: Tab) -> some View {
+        Button {
+            selectedTab = tab
+        } label: {
+            Label {
+                HStack {
+                    Text(tab.title)
+                    Spacer()
+                    if let badge = tab.badge {
+                        Text(badge)
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.blue.opacity(0.2))
+                            .foregroundColor(.blue)
+                            .cornerRadius(4)
+                    }
+                }
+            } icon: {
+                Image(systemName: tab.icon)
+                    .foregroundColor(tab.isAI ? .purple : .primary)
+            }
+        }
+        .listRowBackground(selectedTab == tab ? Color.theme.primary.opacity(0.15) : Color.clear)
+        .foregroundColor(selectedTab == tab ? Color.theme.primary : Color.primary)
+    }
 
     // MARK: - iPhone Layout (Tab View)
     private var iPhoneLayout: some View {
         TabView(selection: $selectedTab) {
             ForEach(Tab.phoneTabs, id: \.self) { tab in
                 NavigationStack {
-                    selectedTabContent(for: tab)
+                    if tab == .more {
+                        moreMenuView
+                    } else {
+                        selectedTabContent(for: tab)
+                    }
                 }
                 .tabItem {
                     Label(tab.title, systemImage: tab.icon)
@@ -104,6 +145,64 @@ struct ContentView: View {
                 offlineBanner
             }
         }
+    }
+    
+    // MARK: - More Menu View (for additional features on iPhone)
+    private var moreMenuView: some View {
+        List {
+            Section("AI Features") {
+                ForEach(Tab.aiTabs, id: \.self) { tab in
+                    NavigationLink {
+                        selectedTabContent(for: tab)
+                    } label: {
+                        Label {
+                            HStack {
+                                Text(tab.title)
+                                Spacer()
+                                if let badge = tab.badge {
+                                    Text(badge)
+                                        .font(.caption2)
+                                        .fontWeight(.semibold)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.purple.opacity(0.2))
+                                        .foregroundColor(.purple)
+                                        .cornerRadius(4)
+                                }
+                            }
+                        } icon: {
+                            Image(systemName: tab.icon)
+                                .foregroundColor(.purple)
+                        }
+                    }
+                }
+            }
+            
+            Section("Documents & Search") {
+                ForEach(Tab.documentTabs, id: \.self) { tab in
+                    NavigationLink {
+                        selectedTabContent(for: tab)
+                    } label: {
+                        Label(tab.title, systemImage: tab.icon)
+                    }
+                }
+            }
+            
+            Section("Settings") {
+                NavigationLink {
+                    SettingsView()
+                } label: {
+                    Label("Settings", systemImage: "gear")
+                }
+                
+                NavigationLink {
+                    CalendarSyncView()
+                } label: {
+                    Label("Calendar Sync", systemImage: "arrow.triangle.2.circlepath")
+                }
+            }
+        }
+        .navigationTitle("More")
     }
 
     @ViewBuilder
@@ -128,8 +227,16 @@ struct ContentView: View {
             DocumentsListView()
         case .treatmentPlans:
             TreatmentPlansListView()
+        case .aiDashboard:
+            AIDashboardView()
+        case .sessionTimeline:
+            SessionTimelineView()
+        case .aiNoteAssistant:
+            AINotesAssistantView()
         case .settings:
             SettingsView()
+        case .more:
+            moreMenuView
         }
     }
 
@@ -158,7 +265,11 @@ enum Tab: String, CaseIterable {
     case search
     case documents
     case treatmentPlans
+    case aiDashboard
+    case sessionTimeline
+    case aiNoteAssistant
     case settings
+    case more
 
     var title: String {
         switch self {
@@ -169,7 +280,11 @@ enum Tab: String, CaseIterable {
         case .search: return "Search"
         case .documents: return "Documents"
         case .treatmentPlans: return "Treatment Plans"
+        case .aiDashboard: return "AI Dashboard"
+        case .sessionTimeline: return "Session Timeline"
+        case .aiNoteAssistant: return "AI Note Assistant"
         case .settings: return "Settings"
+        case .more: return "More"
         }
     }
 
@@ -182,18 +297,52 @@ enum Tab: String, CaseIterable {
         case .search: return "magnifyingglass"
         case .documents: return "folder"
         case .treatmentPlans: return "list.clipboard"
+        case .aiDashboard: return "brain"
+        case .sessionTimeline: return "chart.line.uptrend.xyaxis"
+        case .aiNoteAssistant: return "sparkles"
         case .settings: return "gear"
+        case .more: return "ellipsis.circle"
+        }
+    }
+    
+    var badge: String? {
+        switch self {
+        case .aiDashboard, .aiNoteAssistant: return "AI"
+        case .sessionTimeline: return "NEW"
+        default: return nil
+        }
+    }
+    
+    var isAI: Bool {
+        switch self {
+        case .aiDashboard, .aiNoteAssistant, .search: return true
+        default: return false
         }
     }
 
-    // Tabs shown in iPhone TabView (limit to 5 for better UX)
+    // Tabs shown in iPhone TabView (5 tabs max for good UX)
     static var phoneTabs: [Tab] {
-        [.dashboard, .clients, .notes, .calendar, .settings]
+        [.dashboard, .clients, .calendar, .notes, .more]
+    }
+
+    // Clinical tabs for iPad sidebar
+    static var clinicalTabs: [Tab] {
+        [.dashboard, .clients, .notes, .calendar, .treatmentPlans]
+    }
+    
+    // AI feature tabs
+    static var aiTabs: [Tab] {
+        [.aiDashboard, .aiNoteAssistant, .sessionTimeline, .search]
+    }
+    
+    // Document tabs
+    static var documentTabs: [Tab] {
+        [.documents, .search]
     }
 
     // All tabs shown in iPad sidebar
     static var padTabs: [Tab] {
-        allCases.filter { $0 != .settings } // Settings accessed separately on iPad
+        allCases.filter { $0 != .settings && $0 != .more }
     }
 }
 
