@@ -108,6 +108,7 @@ export async function initializeDatabase(): Promise<void> {
     { file: '000-init-core-tables.sql', name: 'Core Tables' },
     { file: 'add-therapeutic-journey.sql', name: 'Therapeutic Journey' },
     { file: 'add-voice-notes.sql', name: 'Voice Notes' },
+    { file: 'add-calendar-events.sql', name: 'Calendar Events' },
     { file: 'add-performance-indexes.sql', name: 'Performance Indexes' },
     { file: '2025-12-01_session_preps.sql', name: 'Session Preps' },
     { file: '2025-12-01_audit_settings_indexes.sql', name: 'Audit Settings' },
@@ -133,7 +134,8 @@ export async function initializeDatabase(): Promise<void> {
     'session_tags',
     'session_insights',
     'journey_synthesis',
-    'voice_notes'
+    'voice_notes',
+    'calendar_events'
   ];
 
   let allTablesExist = true;

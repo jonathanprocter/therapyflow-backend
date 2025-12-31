@@ -38,10 +38,9 @@ function initializeConnection() {
     console.log('📊 Initializing database connection...');
   }
 
-  // Render PostgreSQL requires SSL in production
-  const sslConfig = process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false;
+  // FIXED: Always use SSL for Render PostgreSQL (matches drizzle.config.ts)
+  // This ensures consistency between Drizzle migrations and runtime connections
+  const sslConfig = { rejectUnauthorized: false };
 
   poolInstance = new Pool({
     connectionString: process.env.DATABASE_URL,
