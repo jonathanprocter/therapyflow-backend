@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Calendar } from "lucide-react";
+import { Bell, Calendar, Menu, X } from "lucide-react";
 import { useLocation } from "wouter";
 
 const pageNames: Record<string, string> = {
@@ -8,14 +8,18 @@ const pageNames: Record<string, string> = {
   '/clients': 'Clients',
   '/progress-notes': 'Progress Notes',
   '/session-history': 'Session History',
+  '/session-timeline': 'Session Timeline',
   '/interactive-notes': 'AI Note Assistant',
   '/calendar-sync': 'Calendar Sync',
   '/search': 'Semantic Search',
   '/treatment-plans': 'Treatment Plans',
+  '/ai-dashboard': 'AI Dashboard',
   '/smart': 'Smart Upload',
   '/documents': 'Documents Upload',
   '/results': 'AI Results',
   '/client': 'Client Analysis',
+  '/bulk-transcripts': 'Bulk Transcripts',
+  '/drop-zone': 'Drop Zone',
   '/': 'Home',
 };
 
@@ -27,14 +31,13 @@ function useApiHealth(pollMs = 10000) {
     try {
       const r = await fetch("/api/health", { 
         method: "GET",
-        signal: AbortSignal.timeout(5000) // 5 second timeout
+        signal: AbortSignal.timeout(5000)
       });
       if (!r.ok) throw new Error(`health ${r.status}`);
       const j = await r.json();
       setHealthy(!!j.ok);
       setVersion(j.version || "dev");
     } catch (error) {
-      // Silently fail for health checks to avoid runtime overlays
       setHealthy(false);
       setVersion("offline");
     }
@@ -49,14 +52,18 @@ function useApiHealth(pollMs = 10000) {
   return { healthy, version, check };
 }
 
-export default function TopBar() {
+interface TopBarProps {
+  onMenuToggle?: () => void;
+  isMenuOpen?: boolean;
+}
+
+export default function TopBar({ onMenuToggle, isMenuOpen }: TopBarProps) {
   const [location] = useLocation();
-  const { healthy, version } = useApiHealth();
+  const { healthy } = useApiHealth();
 
   const currentDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
+    weekday: 'short',
+    month: 'short',
     day: 'numeric'
   });
 
@@ -64,36 +71,41 @@ export default function TopBar() {
 
   return (
     <div 
-      className="h-16 px-6 flex items-center justify-between"
+      className="h-14 md:h-16 px-4 md:px-6 flex items-center justify-between sticky top-0 z-40"
       style={{
         backgroundColor: '#FFFFFF',
         borderBottom: '1px solid rgba(115, 138, 110, 0.15)'
       }}
-      data-testid="topbar"
     >
-      <div className="flex items-center space-x-4">
-        <h1 
-          className="text-xl font-semibold"
+      <div className="flex items-center space-x-3">
+        {/* Hamburger Menu - Mobile Only */}
+        <button 
+          onClick={onMenuToggle}
+          className="md:hidden p-2 -ml-2 rounded-lg"
           style={{ color: '#344C3D' }}
-          data-testid="page-title"
+        >
+          {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+
+        <h1 
+          className="text-lg md:text-xl font-semibold truncate max-w-[150px] md:max-w-none"
+          style={{ color: '#344C3D' }}
         >
           {pageTitle}
         </h1>
+        
+        {/* Date - Hidden on very small screens */}
         <div 
-          className="flex items-center text-sm"
+          className="hidden sm:flex items-center text-sm"
           style={{ color: '#738A6E' }}
-          data-testid="current-date"
         >
-          <Calendar 
-            className="w-4 h-4 mr-2" 
-            style={{ color: '#88A5BC' }} 
-          />
+          <Calendar className="w-4 h-4 mr-2" style={{ color: '#88A5BC' }} />
           {currentDate}
         </div>
       </div>
 
-      <div className="flex items-center space-x-3">
-        {/* API Health Indicator */}
+      <div className="flex items-center space-x-2">
+        {/* API Health */}
         <div className="flex items-center gap-2 text-xs">
           <div 
             className="w-2 h-2 rounded-full"
@@ -106,29 +118,16 @@ export default function TopBar() {
           />
         </div>
 
-        {/* Notifications Button */}
+        {/* Notifications */}
         <button 
-          className="relative p-2 rounded-md transition-all"
-          style={{
-            color: '#738A6E',
-            backgroundColor: 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(136, 165, 188, 0.1)';
-            e.currentTarget.style.color = '#88A5BC';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = '#738A6E';
-          }}
-          data-testid="notifications-button"
-          title="Notifications"
+          className="relative p-2 rounded-md"
+          style={{ color: '#738A6E' }}
         >
-          <Bell className="w-4 h-4" />
+          <Bell className="w-5 h-5" />
           <span 
-            className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+            className="absolute top-1 right-1 w-2 h-2 rounded-full"
             style={{ backgroundColor: '#88A5BC' }}
-          ></span>
+          />
         </button>
       </div>
     </div>

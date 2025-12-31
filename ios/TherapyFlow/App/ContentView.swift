@@ -10,7 +10,23 @@ struct ContentView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
-        mainContent
+        ZStack {
+            mainContent
+
+            // AI Contextual Helper - floating overlay
+            AIContextualHelperView(context: currentAIContext)
+        }
+    }
+
+    /// Get the current AI context based on selected tab
+    private var currentAIContext: AIAssistantService.AppContext {
+        switch selectedTab {
+        case .dashboard: return .dashboard
+        case .clients: return .clients
+        case .calendar: return .calendar
+        case .notes: return .notes
+        default: return .dashboard
+        }
     }
 
     @ViewBuilder

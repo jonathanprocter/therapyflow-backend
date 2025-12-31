@@ -1,0 +1,7 @@
+** BUILD FAILED **
+
+
+The following build commands failed:
+	PhaseScriptExecution [CP-User]\ Generate\ Specs /Users/jonathanprocter/Library/Developer/Xcode/DerivedData/TherapyFlow-cdjvnhqyqebdrddayyjbqniwibla/Build/Intermediates.noindex/Pods.build/Debug-iphoneos/ReactCodegen.build/Script-46EB2E00020E00.sh (in target 'ReactCodegen' from project 'Pods')
+	Building workspace TherapyFlow with scheme TherapyFlow and configuration Debug
+(2 failures)

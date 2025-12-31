@@ -185,12 +185,21 @@ struct ClientDetailView: View {
                     )
                 }
                 
+                NavigationLink(destination: ClientTimelineView(clientId: client.id, clientName: client.name)) {
+                    ClinicalToolRow(
+                        icon: "timeline.selection",
+                        title: "Appointment Timeline",
+                        subtitle: "Longitudinal session history with notes",
+                        color: .orange
+                    )
+                }
+
                 NavigationLink(destination: SessionHistoryView(clientId: client.id)) {
                     ClinicalToolRow(
                         icon: "clock.arrow.circlepath",
                         title: "Session History",
                         subtitle: "View all past sessions",
-                        color: .orange
+                        color: .teal
                     )
                 }
             }

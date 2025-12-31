@@ -29,12 +29,14 @@ import multer from "multer";
 import { registerTranscriptRoutes } from "./routes/transcript-routes";
 import { aiRoutes } from "./routes/ai-routes";
 import { verifyClientOwnership, SecureClientQueries } from "./middleware/clientAuth";
+import { filterActualClients, validateClientName, sanitizeClientName } from "./utils/client-filters";
 import { ClinicalTransactions } from "./utils/transactions";
 import { encryptClientData, decryptClientData, ClinicalEncryption } from "./utils/encryption";
 import { ClinicalAuditLogger, AuditAction } from "./utils/auditLogger";
 import { getAppSetting, setAppSetting } from "./utils/appSettings";
 import { buildRetentionReport, applyRetention } from "./services/retentionService";
 import { reconcileCalendar } from "./services/calendarReconciliation";
+import { smartDocumentParser, DocumentType } from "./services/smartDocumentParser";
 
 // Cosine similarity function for semantic search
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -266,23 +268,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clients = await storage.getClients(req.therapistId);
       
-      // Filter out non-client entries (calendar events, tasks, etc.)
-      const nonClientPatterns = [
-        /^Call with /i,
-        /^Coffee with /i,
-        /^Meeting with /i,
-        /^Lunch with /i,
-        /Deductible/i,
-        /Appointment$/i,
-        /& .* Appointment$/i,
-        /^Reminder:/i,
-        /^Task:/i,
-        /^TODO:/i
-      ];
-      
-      const actualClients = clients.filter(client => {
-        return !nonClientPatterns.some(pattern => pattern.test(client.name));
-      });
+      // Filter out non-client entries (calendar events, tasks, etc.) using utility
+      const actualClients = filterActualClients(clients);
       
       res.json(actualClients.map(toSnakeCaseClient));
     } catch (error) {
@@ -307,10 +294,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/clients", async (req: any, res) => {
     try {
-      const clientData = insertClientSchema.parse({
+      // Validate client name before processing
+      const nameValidation = validateClientName(req.body.name);
+      if (!nameValidation.valid) {
+        return res.status(400).json({ error: nameValidation.error });
+      }
+
+      // Sanitize the client name
+      const sanitizedName = sanitizeClientName(req.body.name);
+
+      // Convert date strings to Date objects for timestamp fields
+      const bodyWithDates = {
         ...req.body,
-        therapistId: req.therapistId
-      });
+        name: sanitizedName,
+        therapistId: req.therapistId,
+        dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
+      };
+
+      const clientData = insertClientSchema.parse(bodyWithDates);
 
       // Encrypt sensitive data before storing
       const encryptedClientData = encryptClientData(clientData);
@@ -327,7 +328,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/clients/:id", async (req: any, res) => {
     try {
-      const clientData = insertClientSchema.partial().parse(req.body);
+      // Convert date strings to Date objects for timestamp fields
+      const bodyWithDates = {
+        ...req.body,
+        dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
+      };
+      const clientData = insertClientSchema.partial().parse(bodyWithDates);
       const therapistId = req.therapistId;
 
       // Use secure transaction for client updates
@@ -2600,6 +2606,121 @@ ${sourceText}
       res.json(result);
     } catch (error) {
       console.error("Error processing document:", error);
+      res.status(500).json({ error: "Failed to process document" });
+    }
+  });
+
+  // Smart Document Upload - intelligently parses documents by type
+  app.post("/api/documents/smart-upload", upload.single('document'), async (req: any, res) => {
+    try {
+      const therapistId = req.therapistId;
+      let content = '';
+
+      // Get content from either file upload or request body
+      if (req.file) {
+        // Handle file upload
+        const fileBuffer = req.file.buffer;
+        const mimeType = req.file.mimetype;
+
+        if (mimeType === 'application/pdf') {
+          // Extract text from PDF
+          const pdfResult = await pdfService.extractText(fileBuffer);
+          content = pdfResult.text || '';
+        } else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
+          content = fileBuffer.toString('utf-8');
+        } else {
+          // Try to decode as text
+          content = fileBuffer.toString('utf-8');
+        }
+      } else if (req.body.content) {
+        // Handle pasted text content
+        content = req.body.content;
+      } else if (req.body.text) {
+        content = req.body.text;
+      } else {
+        return res.status(400).json({ error: "No document or content provided" });
+      }
+
+      if (!content.trim()) {
+        return res.status(400).json({ error: "Document is empty or could not be parsed" });
+      }
+
+      // Parse the document using smart parser
+      const parseResult = await smartDocumentParser.parseDocument(content, therapistId);
+
+      // If it's a transcript, save the generated progress note(s)
+      if (parseResult.documentType === DocumentType.TRANSCRIPT && parseResult.generatedNotes) {
+        for (const note of parseResult.generatedNotes) {
+          if (note.clientId) {
+            // Create progress note in database
+            const noteData = {
+              clientId: note.clientId,
+              sessionId: note.sessionId,
+              therapistId,
+              type: 'session_note' as const,
+              content: note.fullNote,
+              soapNote: {
+                subjective: note.subjective,
+                objective: note.objective,
+                assessment: note.assessment,
+                plan: note.plan,
+              },
+              tonalAnalysis: note.tonalAnalysis,
+              thematicAnalysis: note.thematicAnalysis,
+              sentimentAnalysis: note.sentimentAnalysis,
+              keyPoints: note.keyPoints,
+              significantQuotes: note.significantQuotes,
+              narrativeSummary: note.narrativeSummary,
+              metadata: {
+                source: 'smart_parser',
+                documentType: 'transcript',
+                parseConfidence: parseResult.confidence
+              },
+              createdAt: new Date(),
+            };
+
+            await storage.createProgressNote(noteData);
+          }
+        }
+      }
+
+      // If it's an EHR note with reconciliation, update the session
+      if (parseResult.reconciliationResults) {
+        for (const result of parseResult.reconciliationResults) {
+          if (result.status === 'matched' && result.matchedSession && parseResult.ehrData) {
+            // Update session with the EHR note
+            const existingSession = await storage.getSession(result.matchedSession.id);
+            if (existingSession) {
+              await storage.updateSession(result.matchedSession.id, {
+                notes: parseResult.ehrData.preservedFormatting
+              });
+            }
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        documentType: parseResult.documentType,
+        confidence: parseResult.confidence,
+        clientsFound: parseResult.clients.length,
+        clients: parseResult.clients.map(c => ({
+          name: c.name,
+          dateOfService: c.dateOfService,
+          hasMatchedClient: !!c.matchedClientId,
+          hasMatchedSession: !!c.matchedSessionId
+        })),
+        reconciliation: parseResult.reconciliationResults,
+        generatedNotesCount: parseResult.generatedNotes?.length || 0,
+        ehrData: parseResult.ehrData ? {
+          clientName: parseResult.ehrData.clientName,
+          dateOfService: parseResult.ehrData.dateOfService,
+          providerName: parseResult.ehrData.providerName,
+          diagnosis: parseResult.ehrData.diagnosis
+        } : undefined
+      });
+    } catch (error) {
+      console.error("Error in smart document upload:", error);
       res.status(500).json({ error: "Failed to process document" });
     }
   });

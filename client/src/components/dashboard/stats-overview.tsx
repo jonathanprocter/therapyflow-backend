@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -5,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Clock } from "lucide-react";
 import { getCurrentTimeEDT, formatToEDT } from "../../../../shared/utils/timezone";
 import type { DashboardStats } from "@/types/clinical";
+import { WeeklySessionsModal } from "./WeeklySessionsModal";
 
 const statsConfig = [
   {
@@ -55,6 +57,7 @@ const statsConfig = [
 
 export default function StatsOverview() {
   const [, setLocation] = useLocation();
+  const [weeklyModalOpen, setWeeklyModalOpen] = useState(false);
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
@@ -147,57 +150,74 @@ export default function StatsOverview() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statsConfig.map((config) => (
-          <Card
-            key={config.key}
-            className="transition-all hover:shadow-md cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-            style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}
-            onClick={() => setLocation(config.href)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setLocation(config.href);
-              }
-            }}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p
-                    className="text-base font-semibold"
-                    style={{ color: '#344C3D' }}
-                    data-testid={`stat-label-${config.key}`}
+        {statsConfig.map((config) => {
+          // Special handling for weekly schedule - show modal
+          const handleClick = () => {
+            if (config.key === 'weeklySchedule') {
+              setWeeklyModalOpen(true);
+            } else {
+              setLocation(config.href);
+            }
+          };
+
+          const handleKeyDown = (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleClick();
+            }
+          };
+
+          return (
+            <Card
+              key={config.key}
+              className="transition-all hover:shadow-md cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+              style={{ backgroundColor: '#FFFFFF', border: '1px solid rgba(115, 138, 110, 0.15)' }}
+              onClick={handleClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={handleKeyDown}
+              data-testid={`stat-card-${config.key}`}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p
+                      className="text-base font-semibold"
+                      style={{ color: '#344C3D' }}
+                      data-testid={`stat-label-${config.key}`}
+                    >
+                      {config.title}
+                    </p>
+                    <p
+                      className="text-xs mt-2"
+                      style={config.suffixColor}
+                      data-testid={`stat-suffix-${config.key}`}
+                    >
+                      <i className={`${config.suffixIcon} mr-1`}></i>
+                      {config.suffix}
+                    </p>
+                  </div>
+                  <div
+                    className="w-16 h-16 rounded-lg flex items-center justify-center"
+                    style={config.iconBg}
                   >
-                    {config.title}
-                  </p>
-                  <p
-                    className="text-xs mt-2"
-                    style={config.suffixColor}
-                    data-testid={`stat-suffix-${config.key}`}
-                  >
-                    <i className={`${config.suffixIcon} mr-1`}></i>
-                    {config.suffix}
-                  </p>
+                    <span
+                      className="text-2xl font-bold"
+                      style={config.iconColor}
+                      data-testid={`stat-box-value-${config.key}`}
+                    >
+                      {stats[config.key]}
+                    </span>
+                  </div>
                 </div>
-                <div
-                  className="w-16 h-16 rounded-lg flex items-center justify-center"
-                  style={config.iconBg}
-                >
-                  <span
-                    className="text-2xl font-bold"
-                    style={config.iconColor}
-                    data-testid={`stat-box-value-${config.key}`}
-                  >
-                    {stats[config.key]}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
+      {/* Weekly Sessions Modal */}
+      <WeeklySessionsModal open={weeklyModalOpen} onOpenChange={setWeeklyModalOpen} />
     </div>
   );
 }

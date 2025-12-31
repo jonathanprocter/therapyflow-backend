@@ -2,6 +2,7 @@ import { aiService } from "./aiService";
 
 export type RiskLevel = "none" | "low" | "moderate" | "high" | "acute";
 
+// Full interface for AI-enhanced prep (used by /api/sessions/:id/prep-ai)
 export interface SessionPrepInput {
   client: {
     firstName: string;
@@ -36,6 +37,36 @@ export interface SessionPrepInput {
   longitudinalContext?: string | null;
 }
 
+// Simplified interface for basic prep (used by GET/POST /api/sessions/:id/prep)
+export interface SimplifiedSessionPrepInput {
+  therapistId: string;
+  clientId: string;
+  clientName: string;
+  sessionId: string;
+  previousNotes: Array<{
+    sessionDate: string;
+    sessionNumber?: number | null;
+    subjective?: string;
+    objective?: string;
+    assessment?: string;
+    plan?: string;
+    themes?: string[];
+    tonalAnalysis?: string;
+    significantQuotes?: string[];
+    keywords?: string[];
+    riskLevel?: RiskLevel;
+    riskNotes?: string;
+  }>;
+  treatmentPlan?: {
+    goals?: string[];
+    objectives?: string[];
+    interventions?: string[];
+  };
+}
+
+// Union type to accept both input formats
+export type SessionPrepInputUnion = SessionPrepInput | SimplifiedSessionPrepInput;
+
 const SESSION_PREP_SYSTEM_PROMPT = `You are a clinical documentation assistant supporting a licensed mental health counselor (Ph.D., LMHC) in preparing for an upcoming therapy session. Your role is to synthesize previous session notes into an actionable, clinically-informed prep document.
 
 ## Your Approach
@@ -56,15 +87,53 @@ When relevant, reference these modalities the clinician uses:
 ## Output Requirements
 Generate a structured JSON response matching the SessionPrepOutput schema. Ensure all fields are populated with clinically relevant content based on the notes provided.`;
 
-export function buildSessionPrepPrompt(request: SessionPrepInput): string {
-  const client = request.client;
+// Type guard to check if input is simplified format
+function isSimplifiedInput(request: SessionPrepInputUnion): request is SimplifiedSessionPrepInput {
+  return 'clientName' in request && !('client' in request);
+}
+
+// Normalize simplified input to full SessionPrepInput format
+function normalizeInput(request: SessionPrepInputUnion): SessionPrepInput {
+  if (isSimplifiedInput(request)) {
+    // Convert simplified input to full format
+    const firstName = request.clientName?.split(' ')[0] || 'Client';
+    return {
+      client: {
+        firstName,
+        treatmentStartDate: null,
+        primaryDiagnosis: null,
+        secondaryDiagnoses: [],
+        treatmentGoals: request.treatmentPlan?.goals || [],
+        preferredModalities: [],
+        clinicalConsiderations: [],
+        medications: [],
+      },
+      previousNotes: request.previousNotes.map(note => ({
+        ...note,
+        homeworkAssigned: [],
+        interventionsUsed: [],
+        followUpItems: [],
+      })),
+      upcomingSessionDate: new Date().toISOString().split('T')[0],
+      prepFocus: null,
+      includePatternAnalysis: true,
+      longitudinalContext: null,
+    };
+  }
+  return request;
+}
+
+export function buildSessionPrepPrompt(request: SessionPrepInputUnion): string {
+  // Normalize input to full format
+  const normalizedRequest = normalizeInput(request);
+  const client = normalizedRequest.client;
   const goals = client.treatmentGoals?.length ? client.treatmentGoals : ["Not specified"];
   const modalities = client.preferredModalities?.length ? client.preferredModalities : ["Not specified"];
   const considerations = client.clinicalConsiderations?.length ? client.clinicalConsiderations : ["None noted"];
   const meds = client.medications?.length ? client.medications : ["None listed"];
   const secondaryDx = client.secondaryDiagnoses?.length ? client.secondaryDiagnoses : ["None"];
 
-  const notesSection = request.previousNotes.map((note, idx) => {
+  const notesSection = normalizedRequest.previousNotes.map((note, idx) => {
     return `### Session ${note.sessionNumber ?? "N/A"} — ${note.sessionDate}${idx === 0 ? " (Most Recent)" : ""}
 
 **SUBJECTIVE:**
@@ -114,15 +183,15 @@ ${goals.map((goal, idx) => `  ${idx + 1}. ${goal}`).join("\n")}
 ${considerations.map((note) => `  - ${note}`).join("\n")}
 - **Medications**: ${meds.join(", ")}
 
-${request.longitudinalContext ? `## Longitudinal Context (Treatment Arc)\n${request.longitudinalContext}\n` : ""}
+${normalizedRequest.longitudinalContext ? `## Longitudinal Context (Treatment Arc)\n${normalizedRequest.longitudinalContext}\n` : ""}
 
 ## Previous Session Notes
 ${notesSection || "No prior notes available."}
 
 ## Generation Request
-- **Upcoming Session Date**: ${request.upcomingSessionDate}
-- **Include Pattern Analysis**: ${request.includePatternAnalysis ? "true" : "false"}
-${request.prepFocus ? `- **Specific Prep Focus**: ${request.prepFocus}` : ""}
+- **Upcoming Session Date**: ${normalizedRequest.upcomingSessionDate}
+- **Include Pattern Analysis**: ${normalizedRequest.includePatternAnalysis ? "true" : "false"}
+${normalizedRequest.prepFocus ? `- **Specific Prep Focus**: ${normalizedRequest.prepFocus}` : ""}
 
 Return valid JSON matching this schema:
 {
@@ -170,8 +239,65 @@ Return valid JSON matching this schema:
 `;
 }
 
-export async function generateSessionPrep(request: SessionPrepInput) {
-  const prompt = buildSessionPrepPrompt(request);
-  const response = await aiService.processTherapyDocument("", `${SESSION_PREP_SYSTEM_PROMPT}\n\n${prompt}`);
-  return JSON.parse(response);
+export async function generateSessionPrep(request: SessionPrepInputUnion) {
+  try {
+    const prompt = buildSessionPrepPrompt(request);
+    const response = await aiService.processTherapyDocument("", `${SESSION_PREP_SYSTEM_PROMPT}\n\n${prompt}`);
+
+    // Safely parse JSON response
+    try {
+      return JSON.parse(response);
+    } catch (parseError) {
+      console.error('Failed to parse AI response as JSON:', parseError);
+      console.error('Raw AI response:', response?.substring(0, 500));
+
+      // Return a fallback structure with error info
+      return {
+        client_name: isSimplifiedInput(request) ? request.clientName : request.client.firstName,
+        prep_generated: new Date().toISOString(),
+        upcoming_session: isSimplifiedInput(request) ? new Date().toISOString().split('T')[0] : request.upcomingSessionDate,
+        error: 'Failed to parse AI response',
+        where_we_left_off: {
+          key_themes: ['Unable to generate - please try again'],
+          emotional_tone: 'Unknown',
+          unresolved_threads: [],
+          session_ending_note: ''
+        },
+        homework_follow_up: {
+          assignments: [],
+          follow_up_questions: [],
+          days_since_assignment: 0
+        },
+        treatment_plan_status: {
+          goals_addressed_recently: [],
+          goals_needing_attention: [],
+          progress_indicators: [],
+          setback_indicators: []
+        },
+        clinical_flags: {
+          risk_level: 'none',
+          risk_factors: [],
+          somatic_complaints: [],
+          sleep_appetite_changes: '',
+          requires_assessment: []
+        },
+        pattern_analysis: {
+          recurring_themes: [],
+          emotional_trajectory: '',
+          therapeutic_alliance_notes: '',
+          modality_effectiveness: {}
+        },
+        suggested_openers: {
+          warm_openers: ['How have you been since our last session?'],
+          content_openers: [],
+          homework_openers: []
+        },
+        session_focus_suggestions: ['Review previous session notes manually'],
+        clinician_reminders: ['AI prep generation encountered an error - use clinical judgment']
+      };
+    }
+  } catch (error) {
+    console.error('Session prep generation failed:', error);
+    throw error;
+  }
 }

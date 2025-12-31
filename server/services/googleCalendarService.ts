@@ -241,7 +241,7 @@ export class GoogleCalendarService {
 
       console.log(`Total events fetched from Google Calendar: ${allEvents.length}`);
       
-      // Filter ONLY for SimplePractice events
+      // Filter for SimplePractice events with improved detection
       const relevantEvents = allEvents.filter((event: any) => {
         if (!event.start || !(event.start.dateTime || event.start.date)) {
           return false;
@@ -249,12 +249,12 @@ export class GoogleCalendarService {
 
         const summary = (event.summary || '').toLowerCase();
         const description = (event.description || '').toLowerCase();
-        const organizerEmail = event.organizer?.email || '';
-        const calendarName = event.organizer?.displayName || '';
+        const organizerEmail = (event.organizer?.email || '').toLowerCase();
+        const calendarName = (event.organizer?.displayName || '').toLowerCase();
         const sourceCalendar = (event.sourceCalendarName || '').toLowerCase();
-        
-        // ONLY include SimplePractice events - check source calendar name first
-        const isSimplePracticeEvent = 
+
+        // Check if event is from SimplePractice calendar
+        const isSimplePracticeEvent =
           sourceCalendar.includes('simple practice') ||
           sourceCalendar.includes('simplepractice') ||
           organizerEmail.includes('simplepractice') ||
@@ -264,32 +264,36 @@ export class GoogleCalendarService {
           summary.includes('simplepractice') ||
           description.includes('simplepractice') ||
           description.includes('simple practice');
-        
-        // Additional filter: Only include events that look like appointments
-        // Exclude birthdays, holidays, and other non-appointment events
-        // Include events with 🔒 emoji (completed progress notes) and standard appointment formats
-        const isActualAppointment = isSimplePracticeEvent && 
-          !summary.toLowerCase().includes('birthday') &&
-          !summary.toLowerCase().includes('holiday') &&
-          !summary.toLowerCase().includes('vacation') &&
-          !summary.toLowerCase().includes('break') &&
-          !summary.toLowerCase().includes('lunch') &&
-          !summary.toLowerCase().includes('meeting') &&
-          (summary.includes('🔒') || // Completed progress note indicator
-           summary.toLowerCase().includes('appointment') || 
-           summary.toLowerCase().includes('session') || 
-           /^[A-Z][a-z]+ [A-Z][a-z]+( [A-Z][a-z]+)?\s*(appointment|session)?$/i.test(summary.trim()));
-        
-        if (isActualAppointment) {
-          console.log(`Found SimplePractice appointment: "${event.summary}" from ${organizerEmail || calendarName}`);
+
+        // Exclusion list - definitely not appointments
+        const excludePatterns = ['birthday', 'holiday', 'vacation', 'break', 'lunch',
+          'staff meeting', 'team meeting', 'office closed', 'pto', 'out of office'];
+        const isExcluded = excludePatterns.some(pattern => summary.includes(pattern));
+
+        // For SimplePractice events, include ANY event that looks like a client appointment
+        // SimplePractice typically formats as: "Client Name Appointment" or "🔒 Client Name Appointment"
+        if (isSimplePracticeEvent && !isExcluded) {
+          console.log(`Found SimplePractice appointment: "${event.summary}" from calendar "${event.sourceCalendarName}"`);
           return true;
         }
-        
-        // Debug: Log some sample events to see what's being filtered out
-        if (Math.random() < 0.01) { // Log 1% of events for debugging
-          console.log(`Sample filtered out event: "${event.summary}" | Organizer: ${organizerEmail} | Calendar: ${calendarName} | Source: ${event.sourceCalendarName}`);
+
+        // Also check for common SimplePractice appointment formats even if source isn't detected
+        // This catches cases where SimplePractice calendar might have different naming
+        const hasLockEmoji = event.summary?.includes('🔒');
+        const hasAppointmentKeyword = summary.includes('appointment');
+        const looksLikeClientName = /^(🔒\s*)?[a-z]+ [a-z]+(\s+[a-z]+)?\s*(appointment)?$/i.test((event.summary || '').trim());
+
+        if ((hasLockEmoji || hasAppointmentKeyword || looksLikeClientName) && !isExcluded) {
+          // Log potential SimplePractice appointment found by format
+          console.log(`Potential client appointment by format: "${event.summary}" from "${event.sourceCalendarName || 'unknown'}"`);
+          return true;
         }
-        
+
+        // Debug: Log some sample filtered out events
+        if (Math.random() < 0.05) { // Log 5% of filtered events for debugging
+          console.log(`Filtered out: "${event.summary}" | Source: ${event.sourceCalendarName || 'unknown'} | Organizer: ${organizerEmail || 'unknown'}`);
+        }
+
         return false;
       });
 
