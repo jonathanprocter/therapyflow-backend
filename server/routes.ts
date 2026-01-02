@@ -29,28 +29,12 @@ import multer from "multer";
 import { registerTranscriptRoutes } from "./routes/transcript-routes";
 import { aiRoutes } from "./routes/ai-routes";
 import { verifyClientOwnership, SecureClientQueries } from "./middleware/clientAuth";
-import { filterActualClients, validateClientName, sanitizeClientName } from "./utils/client-filters";
 import { ClinicalTransactions } from "./utils/transactions";
 import { encryptClientData, decryptClientData, ClinicalEncryption } from "./utils/encryption";
 import { ClinicalAuditLogger, AuditAction } from "./utils/auditLogger";
 import { getAppSetting, setAppSetting } from "./utils/appSettings";
 import { buildRetentionReport, applyRetention } from "./services/retentionService";
 import { reconcileCalendar } from "./services/calendarReconciliation";
-import { smartDocumentParser, DocumentType } from "./services/smartDocumentParser";
-
-// Cosine similarity function for semantic search
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (!a || !b || a.length !== b.length) return 0;
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
 
 // Helper function to convert session to snake_case for iOS compatibility
 function toSnakeCaseSession(session: any): any {
@@ -60,17 +44,17 @@ function toSnakeCaseSession(session: any): any {
     client_id: session.clientId,
     therapist_id: session.therapistId,
     scheduled_at: session.scheduledAt,
-    duration: session.duration,
-    session_type: session.sessionType,
-    status: session.status,
-    google_event_id: session.googleEventId,
-    notes: session.notes,
-    has_progress_note_placeholder: session.hasProgressNotePlaceholder,
-    progress_note_status: session.progressNoteStatus,
-    is_simple_practice_event: session.isSimplePracticeEvent,
-    created_at: session.createdAt,
-    updated_at: session.updatedAt,
-    client: session.client ? toSnakeCaseClient(session.client) : undefined,
+    duration: session.duration ?? 50,
+    session_type: session.sessionType ?? 'individual',
+    status: session.status ?? 'scheduled',
+    google_event_id: session.googleEventId ?? null,
+    notes: session.notes ?? null,
+    has_progress_note_placeholder: session.hasProgressNotePlaceholder ?? false,
+    progress_note_status: session.progressNoteStatus ?? 'pending',
+    is_simple_practice_event: session.isSimplePracticeEvent ?? false,
+    created_at: session.createdAt ?? new Date().toISOString(),
+    updated_at: session.updatedAt ?? new Date().toISOString(),
+    client: session.client ? toSnakeCaseClient(session.client) : null,
   };
 }
 
@@ -81,18 +65,23 @@ function toSnakeCaseClient(client: any): any {
     id: client.id,
     therapist_id: client.therapistId,
     name: client.name,
-    email: client.email,
-    phone: client.phone,
-    date_of_birth: client.dateOfBirth,
-    emergency_contact: client.emergencyContact,
-    insurance: client.insurance,
-    tags: client.tags || [],
-    clinical_considerations: client.clinicalConsiderations || [],
-    preferred_modalities: client.preferredModalities || [],
-    status: client.status,
-    deleted_at: client.deletedAt,
-    created_at: client.createdAt,
-    updated_at: client.updatedAt,
+    email: client.email ?? null,
+    phone: client.phone ?? null,
+    date_of_birth: client.dateOfBirth ?? null,
+    diagnosis: client.diagnosis ?? null,
+    risk_level: client.riskLevel ?? null,
+    status: client.status ?? 'active',
+    intake_date: client.intakeDate ?? null,
+    emergency_contact: client.emergencyContact ?? null,
+    insurance_info: client.insuranceInfo ?? null,
+    insurance: client.insurance ?? null,
+    notes: client.notes ?? null,
+    tags: client.tags ?? [],
+    clinical_considerations: client.clinicalConsiderations ?? [],
+    preferred_modalities: client.preferredModalities ?? [],
+    deleted_at: client.deletedAt ?? null,
+    created_at: client.createdAt ?? new Date().toISOString(),
+    updated_at: client.updatedAt ?? new Date().toISOString(),
   };
 }
 
@@ -102,49 +91,26 @@ function toSnakeCaseProgressNote(note: any): any {
   return {
     id: note.id,
     client_id: note.clientId,
-    session_id: note.sessionId,
+    session_id: note.sessionId ?? null,
     therapist_id: note.therapistId,
-    content: note.content,
-    session_date: note.sessionDate,
-    tags: note.tags,
-    ai_tags: note.aiTags,
-    embedding: note.embedding,
-    risk_level: note.riskLevel,
-    progress_rating: note.progressRating,
-    quality_score: note.qualityScore,
-    quality_flags: note.qualityFlags,
-    status: note.status,
-    is_placeholder: note.isPlaceholder,
-    requires_manual_review: note.requiresManualReview,
-    ai_confidence_score: note.aiConfidenceScore,
-    processing_notes: note.processingNotes,
-    original_document_id: note.originalDocumentId,
-    created_at: note.createdAt,
-    updated_at: note.updatedAt,
-    client: note.client ? toSnakeCaseClient(note.client) : undefined,
-    session: note.session ? toSnakeCaseSession(note.session) : undefined,
-  };
-}
-
-// Helper function to convert document to snake_case for iOS compatibility
-function toSnakeCaseDocument(doc: any): any {
-  if (!doc) return doc;
-  return {
-    id: doc.id,
-    client_id: doc.clientId,
-    therapist_id: doc.therapistId,
-    file_name: doc.fileName,
-    file_type: doc.fileType,
-    file_path: doc.filePath,
-    extracted_text: doc.extractedText,
-    tags: doc.tags || [],
-    file_size: doc.fileSize,
-    metadata: doc.metadata,
-    uploaded_at: doc.uploadedAt,
-    status: doc.status || "pending",
-    document_type: doc.documentType,
-    mime_type: doc.mimeType || doc.fileType,
-    client_name: doc.clientName,
+    content: note.content ?? null,
+    session_date: note.sessionDate ?? null,
+    tags: note.tags ?? [],
+    ai_tags: note.aiTags ?? [],
+    risk_level: note.riskLevel ?? null,
+    progress_rating: note.progressRating ?? null,
+    quality_score: note.qualityScore ?? null,
+    quality_flags: note.qualityFlags ?? [],
+    status: note.status ?? 'pending',
+    is_placeholder: note.isPlaceholder ?? false,
+    requires_manual_review: note.requiresManualReview ?? false,
+    ai_confidence_score: note.aiConfidenceScore ?? null,
+    processing_notes: note.processingNotes ?? null,
+    original_document_id: note.originalDocumentId ?? null,
+    created_at: note.createdAt ?? new Date().toISOString(),
+    updated_at: note.updatedAt ?? new Date().toISOString(),
+    client: note.client ? toSnakeCaseClient(note.client) : null,
+    session: note.session ? toSnakeCaseSession(note.session) : null,
   };
 }
 
@@ -267,18 +233,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", async (req: any, res) => {
     try {
       const clients = await storage.getClients(req.therapistId);
-      
-      // Filter out non-client entries (calendar events, tasks, etc.) using utility
-      const actualClients = filterActualClients(clients);
-      
-      res.json(actualClients.map(toSnakeCaseClient));
+      res.json(clients.map(toSnakeCaseClient));
     } catch (error) {
       console.error("Error fetching clients:", error);
       res.status(500).json({ error: "Failed to fetch clients" });
     }
   });
 
-  app.get("/api/clients/:clientId", verifyClientOwnership, async (req: any, res) => {
+  app.get("/api/clients/:id", verifyClientOwnership, async (req: any, res) => {
     try {
       // Client ownership already verified by middleware
       const client = req.verifiedClient;
@@ -294,24 +256,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/clients", async (req: any, res) => {
     try {
-      // Validate client name before processing
-      const nameValidation = validateClientName(req.body.name);
-      if (!nameValidation.valid) {
-        return res.status(400).json({ error: nameValidation.error });
-      }
-
-      // Sanitize the client name
-      const sanitizedName = sanitizeClientName(req.body.name);
-
-      // Convert date strings to Date objects for timestamp fields
-      const bodyWithDates = {
+      const clientData = insertClientSchema.parse({
         ...req.body,
-        name: sanitizedName,
-        therapistId: req.therapistId,
-        dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
-      };
-
-      const clientData = insertClientSchema.parse(bodyWithDates);
+        therapistId: req.therapistId
+      });
 
       // Encrypt sensitive data before storing
       const encryptedClientData = encryptClientData(clientData);
@@ -328,12 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/clients/:id", async (req: any, res) => {
     try {
-      // Convert date strings to Date objects for timestamp fields
-      const bodyWithDates = {
-        ...req.body,
-        dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
-      };
-      const clientData = insertClientSchema.partial().parse(bodyWithDates);
+      const clientData = insertClientSchema.partial().parse(req.body);
       const therapistId = req.therapistId;
 
       // Use secure transaction for client updates
@@ -376,27 +319,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to delete client", 
         details: error instanceof Error ? error.message : "Unknown error" 
       });
-    }
-  });
-
-  // Get all sessions for a specific client
-  app.get("/api/clients/:clientId/sessions", verifyClientOwnership, async (req: any, res) => {
-    try {
-      const clientId = req.params.clientId;
-      const sessions = await storage.getSessions(clientId);
-      
-      // Fetch client data for each session
-      const sessionsWithClients = await Promise.all(
-        sessions.map(async (session) => {
-          const client = await storage.getClient(session.clientId);
-          return toSnakeCaseSession({ ...session, client });
-        })
-      );
-      
-      res.json(sessionsWithClients);
-    } catch (error) {
-      console.error("Error fetching client sessions:", error);
-      res.status(500).json({ error: "Failed to fetch client sessions" });
     }
   });
 
@@ -597,8 +519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         res.json(sessionsWithClients);
       } else if (upcoming === "true") {
-        // Get upcoming sessions starting from now
-        const sessions = await storage.getUpcomingSessions(req.therapistId, new Date());
+        const sessions = await storage.getTodaysSessions(req.therapistId);
         // Fetch client data for each session
         const sessionsWithClients = await Promise.all(
           sessions.map(async (session) => {
@@ -704,6 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/sessions/:id/prep", async (req: any, res) => {
     try {
+      const { clientId } = req.query;
       const sessionId = req.params.id;
 
       // Get session details
@@ -713,139 +635,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get client information
-      const client = await storage.getClient(session.clientId);
+      const client = await storage.getClient(clientId || session.clientId);
       if (!client) {
         return res.status(404).json({ error: "Client not found" });
       }
 
-      // First check if we already have a generated prep
-      const existingPrep = await storage.getLatestSessionPrep(sessionId);
-      if (existingPrep) {
-        return res.json({
-          id: existingPrep.id,
-          session_id: existingPrep.sessionId,
-          client_id: existingPrep.clientId,
-          therapist_id: existingPrep.therapistId,
-          prep: existingPrep.prep,
-          created_at: existingPrep.createdAt
-        });
-      }
+      // Get recent progress notes for context
+      const recentNotes = await storage.getProgressNotes(client.id);
+      const lastThreeNotes = recentNotes.slice(0, 3);
 
-      // No existing prep - generate one on the fly
+      // Get case conceptualization
+      const caseConceptualization = await storage.getCaseConceptualization(client.id);
+
+      // Get treatment plan
       const treatmentPlan = await storage.getTreatmentPlan(client.id);
-      const notes = await storage.getProgressNotes(client.id);
-      const recentNotes = notes.slice(0, 5).map((note, idx) => {
-        const decrypted = safeDecrypt(note.content || "") || "";
-        const soap = parseSoapSections(decrypted);
-        return {
-          sessionDate: new Date(note.sessionDate).toISOString().split("T")[0],
-          sessionNumber: idx + 1,
-          subjective: soap.subjective,
-          objective: soap.objective,
-          assessment: soap.assessment,
-          plan: soap.plan,
-          themes: note.tags || [],
-          tonalAnalysis: "",
-          significantQuotes: [],
-          keywords: note.aiTags || [],
-          riskLevel: (note.riskLevel || "none") as any,
-          riskNotes: note.processingNotes || "",
-        };
-      });
 
-      const prep = await generateSessionPrep({
-        therapistId: req.therapistId || 'dr-jonathan-procter',
-        clientId: client.id,
-        clientName: client.name,
-        sessionId,
-        previousNotes: recentNotes,
-        treatmentPlan: treatmentPlan
-          ? {
-              goals: treatmentPlan.goals || [],
-              objectives: treatmentPlan.objectives || [],
-              interventions: treatmentPlan.interventions || [],
-            }
-          : undefined,
-      });
+      // Get recent completed sessions
+      const completedSessions = await storage.getCompletedSessions(req.therapistId, client.id);
+      const lastThreeSessions = completedSessions.slice(0, 3);
 
-      // Return in snake_case format for iOS
       res.json({
-        id: prep.id,
-        session_id: prep.sessionId,
-        client_id: prep.clientId,
-        therapist_id: prep.therapistId,
-        prep: prep.prep,
-        created_at: prep.createdAt
+        session: { ...session, client },
+        client,
+        recentNotes: lastThreeNotes,
+        caseConceptualization,
+        treatmentPlan,
+        recentSessions: lastThreeSessions,
+        prepSuggestions: {
+          focusAreas: [],
+          interventions: treatmentPlan?.interventions || [],
+          riskFactors: []
+        }
       });
     } catch (error) {
       console.error("Error fetching session prep data:", error);
       res.status(500).json({ error: "Failed to fetch session preparation data" });
-    }
-  });
-
-  // POST endpoint for iOS - generates AI session prep
-  app.post("/api/sessions/:id/prep", async (req: any, res) => {
-    try {
-      const sessionId = req.params.id;
-      const session = await storage.getSession(sessionId);
-      if (!session) {
-        return res.status(404).json({ error: "Session not found" });
-      }
-
-      const client = await storage.getClient(session.clientId);
-      if (!client) {
-        return res.status(404).json({ error: "Client not found" });
-      }
-
-      const treatmentPlan = await storage.getTreatmentPlan(client.id);
-      const notes = await storage.getProgressNotes(client.id);
-      const recentNotes = notes.slice(0, 5).map((note, idx) => {
-        const decrypted = safeDecrypt(note.content || "") || "";
-        const soap = parseSoapSections(decrypted);
-        return {
-          sessionDate: new Date(note.sessionDate).toISOString().split("T")[0],
-          sessionNumber: idx + 1,
-          subjective: soap.subjective,
-          objective: soap.objective,
-          assessment: soap.assessment,
-          plan: soap.plan,
-          themes: note.tags || [],
-          tonalAnalysis: "",
-          significantQuotes: [],
-          keywords: note.aiTags || [],
-          riskLevel: (note.riskLevel || "none") as any,
-          riskNotes: note.processingNotes || "",
-        };
-      });
-
-      const prep = await generateSessionPrep({
-        therapistId: req.therapistId || 'dr-jonathan-procter',
-        clientId: client.id,
-        clientName: client.name,
-        sessionId,
-        previousNotes: recentNotes,
-        treatmentPlan: treatmentPlan
-          ? {
-              goals: treatmentPlan.goals || [],
-              objectives: treatmentPlan.objectives || [],
-              interventions: treatmentPlan.interventions || [],
-            }
-          : undefined,
-      });
-
-      // Return in snake_case format for iOS
-      res.json({
-        id: prep.id,
-        session_id: prep.sessionId,
-        therapist_id: prep.therapistId,
-        client_id: prep.clientId,
-        prep: prep.prep,
-        generated_at: prep.generatedAt,
-        created_at: prep.createdAt
-      });
-    } catch (error) {
-      console.error("Error generating AI session prep:", error);
-      res.status(500).json({ error: "Failed to generate session preparation" });
     }
   });
 
@@ -1061,20 +885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }));
         res.json(decryptedNotes);
       } else {
-        // No parameters - return all notes for therapist (use large limit)
-        const notes = await storage.getRecentProgressNotes(req.therapistId, 1000);
-        // Fetch client data for each note and decrypt
-        const notesWithClients = await Promise.all(
-          notes.map(async (note) => {
-            const client = await storage.getClient(note.clientId);
-            return toSnakeCaseProgressNote({
-              ...note,
-              client,
-              content: note.content ? safeDecrypt(note.content) : null
-            });
-          })
-        );
-        res.json(notesWithClients);
+        res.status(400).json({ error: "clientId, search, or recent parameter required" });
       }
     } catch (error) {
       console.error("Error fetching progress notes:", error);
@@ -1313,35 +1124,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET single progress note by ID
-  app.get("/api/progress-notes/:id", async (req: any, res) => {
-    try {
-      const noteId = req.params.id;
-      const note = await storage.getProgressNote(noteId);
-
-      if (!note) {
-        return res.status(404).json({ error: "Progress note not found" });
-      }
-
-      // Verify client ownership
-      const clientCheck = await SecureClientQueries.getClient(note.clientId, req.therapistId);
-      if (clientCheck.length === 0) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      // Decrypt content before returning
-      const decryptedNote = {
-        ...note,
-        content: note.content ? safeDecrypt(note.content) : null
-      };
-
-      res.json(toSnakeCaseProgressNote(decryptedNote));
-    } catch (error) {
-      console.error("Error fetching progress note:", error);
-      res.status(500).json({ error: "Failed to fetch progress note" });
-    }
-  });
-
   app.patch("/api/progress-notes/:id", async (req: any, res) => {
     try {
       const noteId = req.params.id;
@@ -1378,13 +1160,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const note = await storage.updateProgressNote(noteId, updates);
-      
+
       // Decrypt content before returning (gracefully handle non-encrypted data)
-      const decryptedNote = {
+      const decryptedNote = toSnakeCaseProgressNote({
         ...note,
         content: note.content ? safeDecrypt(note.content) : null
-      };
-      
+      });
+
       res.json(decryptedNote);
     } catch (error) {
       console.error("Error updating progress note:", error);
@@ -1421,122 +1203,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all documents for a therapist
-  app.get("/api/documents", async (req: any, res) => {
-    try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
-      const documents = await storage.getDocumentsByTherapist(therapistId);
-
-      // Return documents with snake_case keys for iOS compatibility
-      const formattedDocs = documents.map((doc: any) => ({
-        id: doc.id,
-        client_id: doc.clientId,
-        therapist_id: doc.therapistId,
-        file_name: doc.fileName,
-        file_type: doc.fileType,
-        file_path: doc.filePath,
-        extracted_text: doc.extractedText,
-        tags: doc.tags || [],
-        file_size: doc.fileSize,
-        metadata: doc.metadata,
-        uploaded_at: doc.uploadedAt,
-        status: doc.status || 'pending',
-        document_type: doc.documentType,
-        mime_type: doc.mimeType,
-        client_name: doc.clientName
-      }));
-
-      res.json(formattedDocs);
-    } catch (error) {
-      console.error("Error fetching documents:", error);
-      res.status(500).json({ error: "Failed to fetch documents" });
-    }
-  });
-
   // Enhanced Document Upload and Processing endpoints
-  // Accept both 'file' (iOS) and 'document' (web) field names
-  app.post("/api/documents/upload", upload.single('file'), async (req: any, res) => {
+  app.post("/api/documents/upload", upload.single('document'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      // Check if this is an iOS request (has clientId field or mobile=true)
-      const isMobileRequest = req.body.clientId !== undefined || req.body.mobile === 'true';
-
-      if (isMobileRequest) {
-        // iOS/Mobile flow: Save file, create Document record, return Document object
-        console.log(`📱 iOS upload request for ${req.file.originalname}`);
-
-        const { clientId, analyze } = req.body;
-        const therapistId = req.therapistId || 'dr-jonathan-procter';
-
-        // Get or create a default client if none provided
-        let actualClientId = clientId;
-        if (!actualClientId) {
-          const clients = await storage.getClients(therapistId);
-          if (clients.length > 0) {
-            actualClientId = clients[0].id;
-          } else {
-            actualClientId = "unassigned";
-          }
-        }
-
-        // Save file to disk
-        const fs = await import('fs/promises');
-        const path = await import('path');
-        const uploadDir = path.resolve(process.cwd(), "uploads");
-        await fs.mkdir(uploadDir, { recursive: true });
-
-        const safeName = req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const storedName = `${Date.now()}-${Math.random().toString(16).slice(2)}-${safeName}`;
-        const storedPath = path.join(uploadDir, storedName);
-
-        await fs.writeFile(storedPath, req.file.buffer);
-
-        // Create document record
-        const doc = await storage.createDocument({
-          clientId: actualClientId,
-          therapistId,
-          fileName: req.file.originalname,
-          fileType: req.file.mimetype,
-          filePath: `/uploads/${storedName}`,
-          fileSize: req.file.size,
-          metadata: {
-            originalName: req.file.originalname,
-            storedName,
-            size: req.file.size
-          }
-        });
-
-        // If analyze flag is set, trigger intelligent AI processing asynchronously
-        // This will automatically detect if it's a transcript, progress note, or bulk notes
-        // and process accordingly
-        if (analyze === "true") {
-          // Fire and forget - process with intelligent document classification
-          enhancedDocumentProcessor.processDocumentIntelligently(
-            req.file.buffer,
-            req.file.originalname,
-            therapistId,
-            doc.id
-          ).then(result => {
-            console.log(`📊 Intelligent processing result: ${result.documentType}, ${result.totalProcessed} notes processed`);
-            if (result.errors.length > 0) {
-              console.warn("Processing errors:", result.errors);
-            }
-          }).catch(err => {
-            console.error("AI processing error for document", doc.id, err);
-          });
-        }
-
-        // Return document in snake_case format for iOS
-        return res.status(201).json(toSnakeCaseDocument({
-          ...doc,
-          status: analyze === "true" ? "processing" : "pending"
-        }));
-      }
-
-      // Web flow: Enhanced processing
       // Support multiple file types with enhanced processing
       const supportedMimeTypes = [
         'text/plain',                    // TXT - optimal for AI analysis
@@ -1548,18 +1221,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       if (!supportedMimeTypes.includes(req.file.mimetype)) {
-        return res.status(400).json({
-          error: 'Supported file types: TXT, PDF, DOCX, DOC, RTF. Enhanced AI analysis now supports all formats.'
+        return res.status(400).json({ 
+          error: 'Supported file types: TXT, PDF, DOCX, DOC, RTF. Enhanced AI analysis now supports all formats.' 
         });
       }
 
-      console.log(`🧠 Processing ${req.file.originalname} with intelligent document analysis...`);
+      console.log(`🚀 Processing ${req.file.originalname} with enhanced AI analysis...`);
 
-      // Use intelligent processing that automatically detects document type:
-      // - Transcripts -> Comprehensive clinical progress notes
-      // - Progress Notes -> Extract and file by date
-      // - Bulk Notes -> Split and file each by date of service
-      const result = await enhancedDocumentProcessor.processDocumentIntelligently(
+      const result = await enhancedDocumentProcessor.processDocument(
         req.file.buffer,
         req.file.originalname,
         req.therapistId
@@ -1567,13 +1236,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Log success metrics
       if (result.success) {
-        console.log(`✅ Intelligent processing completed: ${result.documentType}`);
-        console.log(`📊 Processed ${result.totalProcessed} notes`);
-        if (result.errors.length > 0) {
-          console.warn(`⚠️ Processing had ${result.errors.length} errors:`, result.errors);
-        }
+        console.log(`✅ Enhanced processing completed: ${result.confidence}% confidence`);
+        console.log(`📊 Validation scores: Text:${result.validationDetails?.textExtractionScore}% AI:${result.validationDetails?.aiAnalysisScore}% Date:${result.validationDetails?.dateValidationScore}% Client:${result.validationDetails?.clientMatchScore}%`);
       } else {
-        console.log(`❌ Intelligent processing failed: ${result.processingNotes}`);
+        console.log(`❌ Enhanced processing failed: ${result.processingNotes}`);
       }
 
       res.json(result);
@@ -1860,6 +1526,117 @@ ${sourceText}
       res.status(500).json({
         success: false,
         error: error?.message || 'Failed to generate interventions'
+      });
+    }
+  });
+
+  // Contextual AI Assistant endpoint
+  app.post('/api/ai/assistant', async (req: any, res) => {
+    try {
+      const {
+        question,
+        screen_context,
+        client_id,
+        client_name,
+        session_id,
+        note_id,
+        conversation_history
+      } = req.body;
+
+      if (!question) {
+        return res.status(400).json({ error: 'Question is required' });
+      }
+
+      // Build context for the AI
+      let contextInfo = `Screen Context: ${screen_context || 'unknown'}\n`;
+
+      // Add client context if available
+      if (client_id) {
+        try {
+          const client = await storage.getClient(client_id);
+          if (client) {
+            contextInfo += `\nClient: ${client.name}\n`;
+            contextInfo += `Status: ${client.status}\n`;
+            if (client.diagnosis) contextInfo += `Diagnosis: ${client.diagnosis}\n`;
+
+            // Get recent notes for context
+            const notes = await storage.getProgressNotes(client_id);
+            if (notes.length > 0) {
+              contextInfo += `\nRecent Sessions: ${notes.length} documented sessions\n`;
+              const recentNote = notes[0];
+              if (recentNote.sessionDate) {
+                contextInfo += `Last Session: ${new Date(recentNote.sessionDate).toLocaleDateString()}\n`;
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error fetching client context:', e);
+        }
+      }
+
+      // Add session context if available
+      if (session_id) {
+        try {
+          const session = await storage.getSession(session_id);
+          if (session) {
+            contextInfo += `\nSession Date: ${new Date(session.scheduledAt).toLocaleDateString()}\n`;
+            contextInfo += `Session Type: ${session.sessionType}\n`;
+            contextInfo += `Status: ${session.status}\n`;
+          }
+        } catch (e) {
+          console.error('Error fetching session context:', e);
+        }
+      }
+
+      // Add conversation history if provided
+      let historyContext = '';
+      if (conversation_history && Array.isArray(conversation_history)) {
+        historyContext = '\nPrevious conversation:\n' + conversation_history.join('\n') + '\n';
+      }
+
+      // Build the prompt
+      const systemPrompt = `You are a clinical AI assistant for TherapyFlow, helping a licensed mental health counselor (Ph.D., LMHC) with their practice management and clinical work.
+
+You have access to the following context:
+${contextInfo}
+${historyContext}
+
+Guidelines:
+1. Be concise but clinically thorough
+2. Maintain HIPAA awareness - don't ask for unnecessary PHI
+3. Offer actionable suggestions when appropriate
+4. Reference the therapeutic modalities the clinician uses: ACT, DBT, Narrative Therapy, Existentialism
+5. If asked about a specific client, use the context provided
+6. Suggest follow-up questions when relevant
+
+CRITICAL: Your response must contain NO markdown syntax. NO # headers, NO **bold**, NO - bullets. Use plain text only.`;
+
+      const userPrompt = question;
+
+      // Call the AI service
+      const response = await aiService.processTherapyDocument('', `${systemPrompt}\n\nUser Question: ${userPrompt}\n\nProvide a helpful, clinically-informed response. Return JSON with format: {"answer": "your response", "suggestions": ["follow-up question 1", "follow-up question 2"]}`);
+
+      try {
+        const parsed = JSON.parse(response);
+        res.json({
+          answer: parsed.answer || response,
+          suggestions: parsed.suggestions || [],
+          related_clients: parsed.related_clients || null,
+          related_sessions: parsed.related_sessions || null
+        });
+      } catch {
+        // If not valid JSON, return the raw response
+        res.json({
+          answer: response,
+          suggestions: [],
+          related_clients: null,
+          related_sessions: null
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in AI assistant:', error);
+      res.status(500).json({
+        error: error?.message || 'Failed to process your question'
       });
     }
   });
@@ -2155,6 +1932,7 @@ ${sourceText}
 
       // Save the synced sessions to the database with proper client matching
       const savedSessions = [];
+      let placeholdersCreated = 0;
       for (const session of syncedSessions) {
         try {
           // Check if session already exists (by googleEventId)
@@ -2229,6 +2007,31 @@ ${sourceText}
 
             const savedSession = await storage.createSession(sessionData);
             savedSessions.push(savedSession);
+
+            // Automatically create progress note placeholder for past sessions
+            // This helps therapists track which sessions need documentation
+            const sessionDate = new Date(session.scheduledAt);
+            const isPastSession = sessionDate < new Date();
+
+            if (isPastSession && clientId !== 'calendar-sync-client') {
+              try {
+                // Check if a progress note already exists for this session
+                const existingNotes = await storage.getProgressNotesBySession(savedSession.id);
+                if (existingNotes.length === 0) {
+                  await storage.createProgressNotePlaceholder(
+                    savedSession.id,
+                    clientId,
+                    req.therapistId,
+                    sessionDate
+                  );
+                  placeholdersCreated++;
+                  console.log(`Created progress note placeholder for session: ${savedSession.id} (${extractedClientName || 'Unknown'} on ${sessionDate.toISOString().split('T')[0]})`);
+                }
+              } catch (placeholderError) {
+                console.error(`Error creating progress note placeholder for session ${savedSession.id}:`, placeholderError);
+                // Continue - don't fail the sync just because placeholder creation failed
+              }
+            }
           }
         } catch (sessionError) {
           console.error(`Error saving session ${session.id}:`, sessionError);
@@ -2243,6 +2046,7 @@ ${sourceText}
         syncedCount: syncedSessions.length,
         savedCount: savedSessions.length,
         imported: savedSessions.length,
+        placeholdersCreated: placeholdersCreated,
         sessions: syncedSessions,
         dateRange: { startDate: effectiveStartDate, endDate: effectiveEndDate }
       });
@@ -2393,20 +2197,20 @@ ${sourceText}
       const sessionsWithClients = await Promise.all(
         sessions.map(async (session) => {
           const client = await storage.getClient(session.clientId);
+          const snakeCaseSession = toSnakeCaseSession({ ...session, client });
           return {
-            ...session,
-            client,
-            hasProgressNote: notesBySession.has(session.id),
-            missingNote: !notesBySession.has(session.id)
+            ...snakeCaseSession,
+            has_progress_note: notesBySession.has(session.id),
+            missing_note: !notesBySession.has(session.id)
           };
         })
       );
 
       res.json({
-        startDate: start.toISOString(),
-        endDate: end.toISOString(),
-        totalSessions: sessionsWithClients.length,
-        missingNotes: sessionsWithClients.filter(session => session.missingNote).length,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+        total_sessions: sessionsWithClients.length,
+        missing_notes: sessionsWithClients.filter((session: any) => session.missing_note).length,
         sessions: sessionsWithClients
       });
     } catch (error) {
@@ -2472,14 +2276,16 @@ ${sourceText}
       let data: any = {};
 
       if (scope === 'all' || scope === 'clients') {
-        data.clients = await storage.getClients(therapistId);
+        const clients = await storage.getClients(therapistId);
+        data.clients = clients.map(toSnakeCaseClient);
       }
       if (scope === 'all' || scope === 'sessions') {
-        data.sessions = await storage.getUpcomingSessions(therapistId, new Date('2010-01-01'));
+        const sessions = await storage.getUpcomingSessions(therapistId, new Date('2010-01-01'));
+        data.sessions = sessions.map(toSnakeCaseSession);
       }
       if (scope === 'all' || scope === 'notes') {
         const notes = await storage.getProgressNotes(therapistId);
-        data.progressNotes = notes.map(note => ({
+        data.progressNotes = notes.map(note => toSnakeCaseProgressNote({
           ...note,
           content: note.content ? safeDecrypt(note.content) : null,
         }));
@@ -2610,121 +2416,6 @@ ${sourceText}
     }
   });
 
-  // Smart Document Upload - intelligently parses documents by type
-  app.post("/api/documents/smart-upload", upload.single('document'), async (req: any, res) => {
-    try {
-      const therapistId = req.therapistId;
-      let content = '';
-
-      // Get content from either file upload or request body
-      if (req.file) {
-        // Handle file upload
-        const fileBuffer = req.file.buffer;
-        const mimeType = req.file.mimetype;
-
-        if (mimeType === 'application/pdf') {
-          // Extract text from PDF
-          const pdfResult = await pdfService.extractText(fileBuffer);
-          content = pdfResult.text || '';
-        } else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
-          content = fileBuffer.toString('utf-8');
-        } else {
-          // Try to decode as text
-          content = fileBuffer.toString('utf-8');
-        }
-      } else if (req.body.content) {
-        // Handle pasted text content
-        content = req.body.content;
-      } else if (req.body.text) {
-        content = req.body.text;
-      } else {
-        return res.status(400).json({ error: "No document or content provided" });
-      }
-
-      if (!content.trim()) {
-        return res.status(400).json({ error: "Document is empty or could not be parsed" });
-      }
-
-      // Parse the document using smart parser
-      const parseResult = await smartDocumentParser.parseDocument(content, therapistId);
-
-      // If it's a transcript, save the generated progress note(s)
-      if (parseResult.documentType === DocumentType.TRANSCRIPT && parseResult.generatedNotes) {
-        for (const note of parseResult.generatedNotes) {
-          if (note.clientId) {
-            // Create progress note in database
-            const noteData = {
-              clientId: note.clientId,
-              sessionId: note.sessionId,
-              therapistId,
-              type: 'session_note' as const,
-              content: note.fullNote,
-              soapNote: {
-                subjective: note.subjective,
-                objective: note.objective,
-                assessment: note.assessment,
-                plan: note.plan,
-              },
-              tonalAnalysis: note.tonalAnalysis,
-              thematicAnalysis: note.thematicAnalysis,
-              sentimentAnalysis: note.sentimentAnalysis,
-              keyPoints: note.keyPoints,
-              significantQuotes: note.significantQuotes,
-              narrativeSummary: note.narrativeSummary,
-              metadata: {
-                source: 'smart_parser',
-                documentType: 'transcript',
-                parseConfidence: parseResult.confidence
-              },
-              createdAt: new Date(),
-            };
-
-            await storage.createProgressNote(noteData);
-          }
-        }
-      }
-
-      // If it's an EHR note with reconciliation, update the session
-      if (parseResult.reconciliationResults) {
-        for (const result of parseResult.reconciliationResults) {
-          if (result.status === 'matched' && result.matchedSession && parseResult.ehrData) {
-            // Update session with the EHR note
-            const existingSession = await storage.getSession(result.matchedSession.id);
-            if (existingSession) {
-              await storage.updateSession(result.matchedSession.id, {
-                notes: parseResult.ehrData.preservedFormatting
-              });
-            }
-          }
-        }
-      }
-
-      res.json({
-        success: true,
-        documentType: parseResult.documentType,
-        confidence: parseResult.confidence,
-        clientsFound: parseResult.clients.length,
-        clients: parseResult.clients.map(c => ({
-          name: c.name,
-          dateOfService: c.dateOfService,
-          hasMatchedClient: !!c.matchedClientId,
-          hasMatchedSession: !!c.matchedSessionId
-        })),
-        reconciliation: parseResult.reconciliationResults,
-        generatedNotesCount: parseResult.generatedNotes?.length || 0,
-        ehrData: parseResult.ehrData ? {
-          clientName: parseResult.ehrData.clientName,
-          dateOfService: parseResult.ehrData.dateOfService,
-          providerName: parseResult.ehrData.providerName,
-          diagnosis: parseResult.ehrData.diagnosis
-        } : undefined
-      });
-    } catch (error) {
-      console.error("Error in smart document upload:", error);
-      res.status(500).json({ error: "Failed to process document" });
-    }
-  });
-
   // Bulk transcript import endpoint for mobile app
   app.post("/api/transcripts/bulk", upload.array('files', 100), async (req: any, res) => {
     try {
@@ -2757,388 +2448,6 @@ ${sourceText}
     }
   });
 
-  // Semantic search endpoint for iOS
-  app.get("/api/semantic/search", async (req: any, res) => {
-    try {
-      const { query, clientId, limit = 10 } = req.query;
-
-      if (!query) {
-        return res.status(400).json({ error: "Query parameter is required" });
-      }
-
-      const searchQuery = (query as string).toLowerCase();
-      const maxResults = parseInt(limit as string) || 10;
-
-      // Get all progress notes for this therapist
-      const allNotes = await storage.getAllProgressNotes(req.therapistId);
-
-      // Filter by clientId if provided
-      const notes = clientId
-        ? allNotes.filter(n => n.clientId === clientId)
-        : allNotes;
-
-      let scoredNotes: any[] = [];
-      let searchMethod = "keyword";
-
-      // Try embedding-based search first
-      try {
-        const queryEmbedding = await aiService.generateEmbedding(query as string);
-
-        // Calculate similarity scores for notes with embeddings
-        const notesWithEmbeddings = notes.filter(note => note.embedding && Array.isArray(note.embedding) && note.embedding.length > 0);
-
-        if (notesWithEmbeddings.length > 0) {
-          scoredNotes = notesWithEmbeddings
-            .map(note => {
-              const similarity = cosineSimilarity(queryEmbedding, note.embedding as number[]);
-              return {
-                ...note,
-                content: note.content ? safeDecrypt(note.content) : null,
-                similarity
-              };
-            })
-            .filter(note => note.similarity > 0.3) // Only include somewhat relevant results
-            .sort((a, b) => b.similarity - a.similarity)
-            .slice(0, maxResults);
-
-          searchMethod = "semantic";
-        }
-      } catch (embeddingError) {
-        console.log("Embedding search failed, falling back to keyword search:", embeddingError);
-      }
-
-      // Fallback to keyword search if embedding search didn't produce results
-      if (scoredNotes.length === 0) {
-        const keywords = searchQuery.split(/\s+/).filter(w => w.length > 2);
-
-        scoredNotes = notes
-          .filter(note => note.content)
-          .map(note => {
-            const decryptedContent = note.content ? safeDecrypt(note.content) : "";
-            const contentLower = (decryptedContent || "").toLowerCase();
-            const tagsLower = [...(note.tags || []), ...(note.aiTags || [])].join(" ").toLowerCase();
-
-            // Calculate keyword match score
-            let matchCount = 0;
-            for (const keyword of keywords) {
-              if (contentLower.includes(keyword)) matchCount++;
-              if (tagsLower.includes(keyword)) matchCount += 0.5;
-            }
-
-            const similarity = keywords.length > 0 ? matchCount / keywords.length : 0;
-
-            return {
-              ...note,
-              content: decryptedContent,
-              similarity
-            };
-          })
-          .filter(note => note.similarity > 0)
-          .sort((a, b) => b.similarity - a.similarity)
-          .slice(0, maxResults);
-
-        searchMethod = "keyword";
-      }
-
-      // Format results for iOS with snake_case
-      const results = scoredNotes.map(note => ({
-        id: note.id,
-        client_id: note.clientId,
-        content: note.content,
-        session_date: note.sessionDate,
-        similarity_score: note.similarity,
-        tags: note.tags,
-        ai_tags: note.aiTags,
-        risk_level: note.riskLevel,
-      }));
-
-      res.json({
-        query,
-        results,
-        total: results.length,
-        search_method: searchMethod
-      });
-    } catch (error) {
-      console.error("Error performing semantic search:", error);
-      res.status(500).json({ error: "Failed to perform semantic search" });
-    }
-  });
-
-  // Treatment plans list endpoint for iOS
-  app.get("/api/treatment-plans", async (req: any, res) => {
-    try {
-      const plans = await storage.getAllTreatmentPlans(req.therapistId);
-
-      // Convert to snake_case for iOS - include all fields
-      const formattedPlans = plans.map(plan => ({
-        id: plan.id,
-        client_id: plan.clientId,
-        therapist_id: plan.therapistId,
-        diagnosis: plan.diagnosis,
-        goals: plan.goals,
-        interventions: plan.interventions,
-        frequency: plan.frequency,
-        estimated_duration: plan.estimatedDuration,
-        is_active: plan.isActive,
-        created_at: plan.createdAt,
-        updated_at: plan.updatedAt,
-      }));
-
-      res.json(formattedPlans);
-    } catch (error) {
-      console.error("Error fetching treatment plans:", error);
-      res.status(500).json({ error: "Failed to fetch treatment plans" });
-    }
-  });
-
-  // Single treatment plan by ID for iOS
-  app.get("/api/treatment-plans/:id", async (req: any, res) => {
-    try {
-      const plan = await storage.getTreatmentPlanById(req.params.id);
-      if (!plan) {
-        return res.status(404).json({ error: "Treatment plan not found" });
-      }
-
-      // Verify ownership
-      if (plan.therapistId !== req.therapistId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      res.json({
-        id: plan.id,
-        client_id: plan.clientId,
-        therapist_id: plan.therapistId,
-        diagnosis: plan.diagnosis,
-        goals: plan.goals,
-        interventions: plan.interventions,
-        frequency: plan.frequency,
-        estimated_duration: plan.estimatedDuration,
-        is_active: plan.isActive,
-        created_at: plan.createdAt,
-        updated_at: plan.updatedAt,
-      });
-    } catch (error) {
-      console.error("Error fetching treatment plan:", error);
-      res.status(500).json({ error: "Failed to fetch treatment plan" });
-    }
-  });
-
-  // Create treatment plan for iOS
-  app.post("/api/treatment-plans", async (req: any, res) => {
-    try {
-      const { client_id, diagnosis, goals, interventions, frequency, estimated_duration } = req.body;
-
-      if (!client_id || !goals) {
-        return res.status(400).json({ error: "client_id and goals are required" });
-      }
-
-      // Verify client ownership
-      const clientCheck = await SecureClientQueries.getClient(client_id, req.therapistId);
-      if (clientCheck.length === 0) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const plan = await storage.createTreatmentPlan({
-        clientId: client_id,
-        therapistId: req.therapistId,
-        diagnosis,
-        goals,
-        interventions: interventions || [],
-        frequency,
-        estimatedDuration: estimated_duration,
-        isActive: true,
-      });
-
-      res.status(201).json({
-        id: plan.id,
-        client_id: plan.clientId,
-        therapist_id: plan.therapistId,
-        diagnosis: plan.diagnosis,
-        goals: plan.goals,
-        interventions: plan.interventions,
-        frequency: plan.frequency,
-        estimated_duration: plan.estimatedDuration,
-        is_active: plan.isActive,
-        created_at: plan.createdAt,
-        updated_at: plan.updatedAt,
-      });
-    } catch (error) {
-      console.error("Error creating treatment plan:", error);
-      res.status(500).json({ error: "Failed to create treatment plan" });
-    }
-  });
-
-  // User profile endpoints for iOS
-  app.get("/api/user/profile", async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.therapistId);
-      if (!user) {
-        // Return a default profile for the known therapist
-        return res.json({
-          id: req.therapistId,
-          email: "dr.procter@therapyflow.com",
-          name: req.therapistName || "Dr. Jonathan Procter",
-          role: "therapist",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-      }
-
-      res.json({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        created_at: user.createdAt,
-        updated_at: user.updatedAt,
-      });
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      res.status(500).json({ error: "Failed to fetch user profile" });
-    }
-  });
-
-  app.put("/api/user/profile", async (req: any, res) => {
-    try {
-      const { name, email } = req.body;
-
-      // For now, just return a success response with the updated data
-      // Full user management would require a proper auth system
-      res.json({
-        id: req.therapistId,
-        email: email || "dr.procter@therapyflow.com",
-        name: name || req.therapistName || "Dr. Jonathan Procter",
-        role: "therapist",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("Error updating user profile:", error);
-      res.status(500).json({ error: "Failed to update user profile" });
-    }
-  });
-
-  // AI note draft endpoint for iOS (shorter path)
-  app.post("/api/ai/note-draft", async (req: any, res) => {
-    try {
-      const { notes, clientId, sessionId } = req.body;
-
-      // If notes provided, just clean them up
-      if (notes) {
-        const prompt = `You are an expert clinical therapist. Based on the following session notes, draft a professional clinical progress note. Focus on clinical observations, interventions used, and treatment progress.
-
-Session notes:
-${notes}
-
-Please provide the draft in professional clinical language suitable for a medical record.`;
-
-        const draft = await aiService.processTherapyDocument(notes, prompt);
-        return res.json({ draft });
-      }
-
-      // Otherwise, try to generate from client history
-      if (clientId) {
-        const progressNotes = await storage.getProgressNotes(clientId);
-        const latestNote = progressNotes.find(note => note.content);
-        const sourceText = latestNote?.content ? safeDecrypt(latestNote.content) : "";
-
-        if (!sourceText) {
-          return res.json({ draft: "" });
-        }
-
-        const prompt = `Based on this previous session note, create a template for the next progress note:
-
-${sourceText}`;
-
-        const draft = await aiService.processTherapyDocument(sourceText, prompt);
-        return res.json({ draft });
-      }
-
-      res.json({ draft: "" });
-    } catch (error) {
-      console.error("Error generating note draft:", error);
-      res.status(500).json({ error: "Failed to generate note draft" });
-    }
-  });
-
-  // AI note suggestions endpoint for iOS (shorter path)
-  app.post("/api/ai/note-suggestions", async (req: any, res) => {
-    try {
-      const { context, clientId } = req.body;
-
-      let contextText = context || "";
-
-      // If clientId provided, get client history for context
-      if (clientId && !context) {
-        const progressNotes = await storage.getProgressNotes(clientId);
-        const recentNotes = progressNotes.slice(0, 3);
-        contextText = recentNotes.map(n => n.content ? safeDecrypt(n.content) : "").join("\n\n");
-      }
-
-      if (!contextText) {
-        return res.json({
-          suggestions: [
-            "Document client's presenting concerns for this session",
-            "Note any changes in symptoms since last session",
-            "Record interventions used and client response",
-            "Describe progress toward treatment goals",
-            "Document homework assigned for next session"
-          ]
-        });
-      }
-
-      const prompt = `Based on this clinical context, provide 5 brief suggestions for what to include in the progress note. Keep each suggestion to one sentence.
-
-Context:
-${contextText}
-
-Provide suggestions as a JSON array of strings.`;
-
-      const response = await aiService.processTherapyDocument(contextText, prompt);
-
-      // Try to parse JSON, fallback to generic suggestions
-      let suggestions: string[];
-      try {
-        suggestions = JSON.parse(response);
-      } catch {
-        suggestions = [
-          "Document client's presenting concerns for this session",
-          "Note any changes in symptoms since last session",
-          "Record interventions used and client response",
-          "Describe progress toward treatment goals",
-          "Document homework assigned for next session"
-        ];
-      }
-
-      res.json({ suggestions });
-    } catch (error) {
-      console.error("Error generating note suggestions:", error);
-      res.status(500).json({ error: "Failed to generate note suggestions" });
-    }
-  });
-
-  // GET single document by ID for iOS
-  app.get("/api/documents/:id", async (req: any, res) => {
-    try {
-      const documentId = req.params.id;
-      const document = await storage.getDocument(documentId);
-
-      if (!document) {
-        return res.status(404).json({ error: "Document not found" });
-      }
-
-      // Verify ownership
-      if (document.therapistId !== req.therapistId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      res.json(toSnakeCaseDocument(document));
-    } catch (error) {
-      console.error("Error fetching document:", error);
-      res.status(500).json({ error: "Failed to fetch document" });
-    }
-  });
-
   // Register transcript processing routes
   registerTranscriptRoutes(app);
 
@@ -3155,14 +2464,6 @@ Provide suggestions as a JSON array of strings.`;
 
   // Register session timeline routes
   app.use('/api/sessions', (await import('./routes/session-timeline-routes')).default);
-
-  // Register calendar events routes
-  app.use('/api/calendar-events', (await import('./routes/calendar-events')).default);
-  console.log("📅 Calendar Events API available at:");
-  console.log("   GET  /api/calendar-events");
-  console.log("   POST /api/calendar-events");
-  console.log("   POST /api/calendar-events/sync");
-  console.log("   GET  /api/calendar-events/pending/sync");
 
   const httpServer = createServer(app);
   return httpServer;

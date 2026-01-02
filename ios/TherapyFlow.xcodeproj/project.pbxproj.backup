@@ -1,0 +1,819 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1000000000000001 /* TherapyFlowApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000001 /* TherapyFlowApp.swift */; };
+		1000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000002 /* ContentView.swift */; };
+		1000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2000000000000003 /* Assets.xcassets */; };
+		1000000000000010 /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000010 /* Client.swift */; };
+		1000000000000011 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000011 /* Session.swift */; };
+		1000000000000012 /* ProgressNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000012 /* ProgressNote.swift */; };
+		1000000000000013 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000013 /* User.swift */; };
+		1000000000000014 /* TreatmentPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000014 /* TreatmentPlan.swift */; };
+		1000000000000015 /* AIInsight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000015 /* AIInsight.swift */; };
+		1000000000000016 /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000016 /* Document.swift */; };
+		1000000000000017 /* SearchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000017 /* SearchResult.swift */; };
+		1000000000000020 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000020 /* APIClient.swift */; };
+		1000000000000021 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000021 /* AuthService.swift */; };
+		1000000000000022 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000022 /* KeychainService.swift */; };
+		1000000000000023 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000023 /* SyncService.swift */; };
+		1000000000000024 /* BiometricService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000024 /* BiometricService.swift */; };
+		1000000000000025 /* IntegrationsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000025 /* IntegrationsService.swift */; };
+		1000000000000026 /* AIDocumentProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000026 /* AIDocumentProcessor.swift */; };
+		1000000000000030 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000030 /* PersistenceController.swift */; };
+		1000000000000031 /* TherapyFlow.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000031 /* TherapyFlow.xcdatamodeld */; };
+		1000000000000040 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000040 /* DashboardView.swift */; };
+		1000000000000041 /* StatsGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000041 /* StatsGridView.swift */; };
+		1000000000000042 /* QuickActionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000042 /* QuickActionsView.swift */; };
+		1000000000000050 /* ClientsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000050 /* ClientsListView.swift */; };
+		1000000000000051 /* ClientDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000051 /* ClientDetailView.swift */; };
+		1000000000000052 /* ClientFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000052 /* ClientFormView.swift */; };
+		1000000000000053 /* ClientRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000053 /* ClientRowView.swift */; };
+		1000000000000060 /* NotesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000060 /* NotesListView.swift */; };
+		1000000000000061 /* NoteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000061 /* NoteDetailView.swift */; };
+		1000000000000062 /* NoteFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000062 /* NoteFormView.swift */; };
+		1000000000000063 /* NoteRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000063 /* NoteRowView.swift */; };
+		1000000000000070 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000070 /* CalendarView.swift */; };
+		1000000000000071 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000071 /* SessionDetailView.swift */; };
+		1000000000000072 /* SessionFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000072 /* SessionFormView.swift */; };
+		1000000000000080 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000080 /* SettingsView.swift */; };
+		1000000000000081 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000081 /* ProfileView.swift */; };
+		1000000000000090 /* SemanticSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000090 /* SemanticSearchView.swift */; };
+		1000000000000091 /* SearchResultRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000091 /* SearchResultRow.swift */; };
+		1000000000000100 /* StatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000100 /* StatCard.swift */; };
+		1000000000000101 /* RiskBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000101 /* RiskBadge.swift */; };
+		1000000000000102 /* StatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000102 /* StatusBadge.swift */; };
+		1000000000000103 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000103 /* AvatarView.swift */; };
+		1000000000000104 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000104 /* LoadingView.swift */; };
+		1000000000000105 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000105 /* EmptyStateView.swift */; };
+		1000000000000106 /* AdaptiveNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000106 /* AdaptiveNavigationView.swift */; };
+		1000000000000110 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000110 /* LoginView.swift */; };
+		1000000000000120 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000120 /* Color+Theme.swift */; };
+		1000000000000121 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000121 /* Date+Extensions.swift */; };
+		1000000000000122 /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000122 /* View+Extensions.swift */; };
+		1000000000000130 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000130 /* AppState.swift */; };
+		1000000000000131 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000131 /* NetworkMonitor.swift */; };
+		1000000000000140 /* DocumentsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000140 /* DocumentsListView.swift */; };
+		1000000000000141 /* TreatmentPlansListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000141 /* TreatmentPlansListView.swift */; };
+		1000000000000142 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000142 /* FlowLayout.swift */; };
+		2000000000000054 /* TherapeuticJourneyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000151 /* TherapeuticJourneyView.swift */; };
+		2000000000000073 /* SessionPrepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000154 /* SessionPrepView.swift */; };
+		2000000000000074 /* SessionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000155 /* SessionHistoryView.swift */; };
+		2000000000000082 /* BulkImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000152 /* BulkImportView.swift */; };
+		2000000000000083 /* DataExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000153 /* DataExportView.swift */; };
+		2000000000000143 /* DocumentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000156 /* DocumentDetailView.swift */; };
+		C20F76302F04B45E000EB310 /* AIContextualHelperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F762F2F04B45E000EB310 /* AIContextualHelperView.swift */; };
+		C20F76322F04B45E000EB310 /* AIAssistantService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76312F04B45E000EB310 /* AIAssistantService.swift */; };
+		C20F76342F04B488000EB310 /* ClientTimelineView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76332F04B488000EB310 /* ClientTimelineView 2.swift */; };
+		C20F76362F059F1A000EB310 /* AIDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76352F059F1A000EB310 /* AIDashboardView.swift */; };
+		C20F76382F059F1A000EB310 /* AINotesAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76372F059F1A000EB310 /* AINotesAssistantView.swift */; };
+		C20F763A2F059F1C000EB310 /* SessionTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76392F059F1C000EB310 /* SessionTimelineView.swift */; };
+		C20F763C2F059F1E000EB310 /* CalendarSyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F763B2F059F1E000EB310 /* CalendarSyncView.swift */; };
+		C20F76412F05A17B000EB310 /* AIContextualHelperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F763D2F05A17B000EB310 /* AIContextualHelperView.swift */; };
+		C20F76422F05A17B000EB310 /* SessionTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76402F05A17B000EB310 /* SessionTimelineView.swift */; };
+		C20F76432F05A17B000EB310 /* AINotesAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F763F2F05A17B000EB310 /* AINotesAssistantView.swift */; };
+		C20F76442F05A17B000EB310 /* AIDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F763E2F05A17B000EB310 /* AIDashboardView.swift */; };
+		C20F76522F05A19E000EB310 /* AIContextualHelperView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76462F05A19E000EB310 /* AIContextualHelperView 2.swift */; };
+		C20F76532F05A19E000EB310 /* AIDashboardView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76472F05A19E000EB310 /* AIDashboardView 2.swift */; };
+		C20F76542F05A19E000EB310 /* AINotesAssistantView 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76482F05A19E000EB310 /* AINotesAssistantView 2.swift */; };
+		C20F76552F05A19E000EB310 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F764A2F05A19E000EB310 /* ContentView.swift */; };
+		C20F76572F05A19E000EB310 /* AIAssistantService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76452F05A19E000EB310 /* AIAssistantService.swift */; };
+		C20F76582F05A19E000EB310 /* CalendarSyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F76492F05A19E000EB310 /* CalendarSyncView.swift */; };
+		C251DB362F00B73900E620AB /* IntegrationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C251DB352F00B73900E620AB /* IntegrationsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2000000000000001 /* TherapyFlowApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TherapyFlowApp.swift; sourceTree = "<group>"; };
+		2000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		2000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2000000000000005 /* TherapyFlow.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TherapyFlow.entitlements; sourceTree = "<group>"; };
+		2000000000000010 /* Client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Client.swift; sourceTree = "<group>"; };
+		2000000000000011 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		2000000000000012 /* ProgressNote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressNote.swift; sourceTree = "<group>"; };
+		2000000000000013 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		2000000000000014 /* TreatmentPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreatmentPlan.swift; sourceTree = "<group>"; };
+		2000000000000015 /* AIInsight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIInsight.swift; sourceTree = "<group>"; };
+		2000000000000016 /* Document.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
+		2000000000000017 /* SearchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResult.swift; sourceTree = "<group>"; };
+		2000000000000020 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		2000000000000021 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		2000000000000022 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		2000000000000023 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
+		2000000000000024 /* BiometricService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricService.swift; sourceTree = "<group>"; };
+		2000000000000025 /* IntegrationsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationsService.swift; sourceTree = "<group>"; };
+		2000000000000026 /* AIDocumentProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDocumentProcessor.swift; sourceTree = "<group>"; };
+		2000000000000030 /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		2000000000000031 /* TherapyFlow.xcdatamodeld */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodeld; path = TherapyFlow.xcdatamodeld; sourceTree = "<group>"; };
+		2000000000000040 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		2000000000000041 /* StatsGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsGridView.swift; sourceTree = "<group>"; };
+		2000000000000042 /* QuickActionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionsView.swift; sourceTree = "<group>"; };
+		2000000000000050 /* ClientsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientsListView.swift; sourceTree = "<group>"; };
+		2000000000000051 /* ClientDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientDetailView.swift; sourceTree = "<group>"; };
+		2000000000000052 /* ClientFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientFormView.swift; sourceTree = "<group>"; };
+		2000000000000053 /* ClientRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientRowView.swift; sourceTree = "<group>"; };
+		2000000000000060 /* NotesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesListView.swift; sourceTree = "<group>"; };
+		2000000000000061 /* NoteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteDetailView.swift; sourceTree = "<group>"; };
+		2000000000000062 /* NoteFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteFormView.swift; sourceTree = "<group>"; };
+		2000000000000063 /* NoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteRowView.swift; sourceTree = "<group>"; };
+		2000000000000070 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
+		2000000000000071 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
+		2000000000000072 /* SessionFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFormView.swift; sourceTree = "<group>"; };
+		2000000000000080 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		2000000000000081 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		2000000000000090 /* SemanticSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticSearchView.swift; sourceTree = "<group>"; };
+		2000000000000091 /* SearchResultRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchResultRow.swift; sourceTree = "<group>"; };
+		2000000000000100 /* StatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatCard.swift; sourceTree = "<group>"; };
+		2000000000000101 /* RiskBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiskBadge.swift; sourceTree = "<group>"; };
+		2000000000000102 /* StatusBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadge.swift; sourceTree = "<group>"; };
+		2000000000000103 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
+		2000000000000104 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
+		2000000000000105 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
+		2000000000000106 /* AdaptiveNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveNavigationView.swift; sourceTree = "<group>"; };
+		2000000000000110 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		2000000000000120 /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Theme.swift"; sourceTree = "<group>"; };
+		2000000000000121 /* Date+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
+		2000000000000122 /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
+		2000000000000130 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		2000000000000131 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		2000000000000140 /* DocumentsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentsListView.swift; sourceTree = "<group>"; };
+		2000000000000141 /* TreatmentPlansListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreatmentPlansListView.swift; sourceTree = "<group>"; };
+		2000000000000142 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
+		2000000000000151 /* TherapeuticJourneyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TherapeuticJourneyView.swift; sourceTree = "<group>"; };
+		2000000000000152 /* BulkImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BulkImportView.swift; sourceTree = "<group>"; };
+		2000000000000153 /* DataExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportView.swift; sourceTree = "<group>"; };
+		2000000000000154 /* SessionPrepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPrepView.swift; sourceTree = "<group>"; };
+		2000000000000155 /* SessionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionHistoryView.swift; sourceTree = "<group>"; };
+		2000000000000156 /* DocumentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentDetailView.swift; sourceTree = "<group>"; };
+		3000000000000001 /* TherapyFlow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TherapyFlow.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C20F762F2F04B45E000EB310 /* AIContextualHelperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIContextualHelperView.swift; sourceTree = "<group>"; };
+		C20F76312F04B45E000EB310 /* AIAssistantService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistantService.swift; sourceTree = "<group>"; };
+		C20F76332F04B488000EB310 /* ClientTimelineView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ClientTimelineView 2.swift"; sourceTree = "<group>"; };
+		C20F76352F059F1A000EB310 /* AIDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDashboardView.swift; sourceTree = "<group>"; };
+		C20F76372F059F1A000EB310 /* AINotesAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotesAssistantView.swift; sourceTree = "<group>"; };
+		C20F76392F059F1C000EB310 /* SessionTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTimelineView.swift; sourceTree = "<group>"; };
+		C20F763B2F059F1E000EB310 /* CalendarSyncView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSyncView.swift; sourceTree = "<group>"; };
+		C20F763D2F05A17B000EB310 /* AIContextualHelperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIContextualHelperView.swift; sourceTree = "<group>"; };
+		C20F763E2F05A17B000EB310 /* AIDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDashboardView.swift; sourceTree = "<group>"; };
+		C20F763F2F05A17B000EB310 /* AINotesAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotesAssistantView.swift; sourceTree = "<group>"; };
+		C20F76402F05A17B000EB310 /* SessionTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTimelineView.swift; sourceTree = "<group>"; };
+		C20F76452F05A19E000EB310 /* AIAssistantService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAssistantService.swift; sourceTree = "<group>"; };
+		C20F76462F05A19E000EB310 /* AIContextualHelperView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AIContextualHelperView 2.swift"; sourceTree = "<group>"; };
+		C20F76472F05A19E000EB310 /* AIDashboardView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AIDashboardView 2.swift"; sourceTree = "<group>"; };
+		C20F76482F05A19E000EB310 /* AINotesAssistantView 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AINotesAssistantView 2.swift"; sourceTree = "<group>"; };
+		C20F76492F05A19E000EB310 /* CalendarSyncView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSyncView.swift; sourceTree = "<group>"; };
+		C20F764A2F05A19E000EB310 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C251DB352F00B73900E620AB /* IntegrationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationsView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				5000000000000002 /* TherapyFlow */,
+				5000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5000000000000002 /* TherapyFlow */ = {
+			isa = PBXGroup;
+			children = (
+				5000000000000010 /* App */,
+				5000000000000011 /* Models */,
+				5000000000000012 /* Views */,
+				5000000000000013 /* Services */,
+				5000000000000014 /* Persistence */,
+				5000000000000015 /* Extensions */,
+				5000000000000016 /* Utilities */,
+				5000000000000017 /* Resources */,
+				5000000000000030 /* Components */,
+			);
+			path = TherapyFlow;
+			sourceTree = "<group>";
+		};
+		5000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3000000000000001 /* TherapyFlow.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5000000000000010 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000001 /* TherapyFlowApp.swift */,
+				2000000000000002 /* ContentView.swift */,
+				2000000000000004 /* Info.plist */,
+				2000000000000005 /* TherapyFlow.entitlements */,
+				C20F762F2F04B45E000EB310 /* AIContextualHelperView.swift */,
+				C20F76312F04B45E000EB310 /* AIAssistantService.swift */,
+				C20F76352F059F1A000EB310 /* AIDashboardView.swift */,
+				C20F76372F059F1A000EB310 /* AINotesAssistantView.swift */,
+				C20F76392F059F1C000EB310 /* SessionTimelineView.swift */,
+				C20F763B2F059F1E000EB310 /* CalendarSyncView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		5000000000000011 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000010 /* Client.swift */,
+				2000000000000011 /* Session.swift */,
+				2000000000000012 /* ProgressNote.swift */,
+				2000000000000013 /* User.swift */,
+				2000000000000014 /* TreatmentPlan.swift */,
+				2000000000000015 /* AIInsight.swift */,
+				2000000000000016 /* Document.swift */,
+				2000000000000017 /* SearchResult.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		5000000000000012 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				5000000000000020 /* Dashboard */,
+				5000000000000021 /* Clients */,
+				5000000000000022 /* Notes */,
+				5000000000000023 /* Calendar */,
+				5000000000000024 /* Settings */,
+				5000000000000025 /* Search */,
+				5000000000000026 /* Components */,
+				5000000000000027 /* Auth */,
+				5000000000000028 /* Documents */,
+				5000000000000029 /* TreatmentPlans */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		5000000000000013 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000020 /* APIClient.swift */,
+				2000000000000021 /* AuthService.swift */,
+				2000000000000022 /* KeychainService.swift */,
+				2000000000000023 /* SyncService.swift */,
+				2000000000000024 /* BiometricService.swift */,
+				2000000000000025 /* IntegrationsService.swift */,
+				2000000000000026 /* AIDocumentProcessor.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		5000000000000014 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000030 /* PersistenceController.swift */,
+				2000000000000031 /* TherapyFlow.xcdatamodeld */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		5000000000000015 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000120 /* Color+Theme.swift */,
+				2000000000000121 /* Date+Extensions.swift */,
+				2000000000000122 /* View+Extensions.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		5000000000000016 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000130 /* AppState.swift */,
+				2000000000000131 /* NetworkMonitor.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		5000000000000017 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000003 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		5000000000000020 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000040 /* DashboardView.swift */,
+				2000000000000041 /* StatsGridView.swift */,
+				2000000000000042 /* QuickActionsView.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		5000000000000021 /* Clients */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000050 /* ClientsListView.swift */,
+				2000000000000051 /* ClientDetailView.swift */,
+				2000000000000052 /* ClientFormView.swift */,
+				2000000000000053 /* ClientRowView.swift */,
+				2000000000000151 /* TherapeuticJourneyView.swift */,
+				C20F76332F04B488000EB310 /* ClientTimelineView 2.swift */,
+			);
+			path = Clients;
+			sourceTree = "<group>";
+		};
+		5000000000000022 /* Notes */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000060 /* NotesListView.swift */,
+				2000000000000061 /* NoteDetailView.swift */,
+				2000000000000062 /* NoteFormView.swift */,
+				2000000000000063 /* NoteRowView.swift */,
+			);
+			path = Notes;
+			sourceTree = "<group>";
+		};
+		5000000000000023 /* Calendar */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000070 /* CalendarView.swift */,
+				2000000000000071 /* SessionDetailView.swift */,
+				2000000000000072 /* SessionFormView.swift */,
+				2000000000000154 /* SessionPrepView.swift */,
+				2000000000000155 /* SessionHistoryView.swift */,
+			);
+			path = Calendar;
+			sourceTree = "<group>";
+		};
+		5000000000000024 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000080 /* SettingsView.swift */,
+				2000000000000081 /* ProfileView.swift */,
+				C251DB352F00B73900E620AB /* IntegrationsView.swift */,
+				2000000000000152 /* BulkImportView.swift */,
+				2000000000000153 /* DataExportView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		5000000000000025 /* Search */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000090 /* SemanticSearchView.swift */,
+				2000000000000091 /* SearchResultRow.swift */,
+			);
+			path = Search;
+			sourceTree = "<group>";
+		};
+		5000000000000026 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000100 /* StatCard.swift */,
+				2000000000000101 /* RiskBadge.swift */,
+				2000000000000102 /* StatusBadge.swift */,
+				2000000000000103 /* AvatarView.swift */,
+				2000000000000104 /* LoadingView.swift */,
+				2000000000000105 /* EmptyStateView.swift */,
+				2000000000000106 /* AdaptiveNavigationView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		5000000000000027 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000110 /* LoginView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		5000000000000028 /* Documents */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000140 /* DocumentsListView.swift */,
+				2000000000000156 /* DocumentDetailView.swift */,
+			);
+			path = Documents;
+			sourceTree = "<group>";
+		};
+		5000000000000029 /* TreatmentPlans */ = {
+			isa = PBXGroup;
+			children = (
+				2000000000000141 /* TreatmentPlansListView.swift */,
+			);
+			path = TreatmentPlans;
+			sourceTree = "<group>";
+		};
+		5000000000000030 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				C20F763D2F05A17B000EB310 /* AIContextualHelperView.swift */,
+				C20F763E2F05A17B000EB310 /* AIDashboardView.swift */,
+				C20F763F2F05A17B000EB310 /* AINotesAssistantView.swift */,
+				C20F76402F05A17B000EB310 /* SessionTimelineView.swift */,
+				2000000000000142 /* FlowLayout.swift */,
+				C20F76452F05A19E000EB310 /* AIAssistantService.swift */,
+				C20F76462F05A19E000EB310 /* AIContextualHelperView 2.swift */,
+				C20F76472F05A19E000EB310 /* AIDashboardView 2.swift */,
+				C20F76482F05A19E000EB310 /* AINotesAssistantView 2.swift */,
+				C20F76492F05A19E000EB310 /* CalendarSyncView.swift */,
+				C20F764A2F05A19E000EB310 /* ContentView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6000000000000001 /* TherapyFlow */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7000000000000001 /* Build configuration list for PBXNativeTarget "TherapyFlow" */;
+			buildPhases = (
+				6000000000000010 /* Sources */,
+				4000000000000001 /* Frameworks */,
+				6000000000000020 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TherapyFlow;
+			productName = TherapyFlow;
+			productReference = 3000000000000001 /* TherapyFlow.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					6000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 7000000000000002 /* Build configuration list for PBXProject "TherapyFlow" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5000000000000001;
+			productRefGroup = 5000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6000000000000001 /* TherapyFlow */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6000000000000020 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1000000000000003 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6000000000000010 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1000000000000001 /* TherapyFlowApp.swift in Sources */,
+				1000000000000002 /* ContentView.swift in Sources */,
+				1000000000000010 /* Client.swift in Sources */,
+				1000000000000011 /* Session.swift in Sources */,
+				1000000000000012 /* ProgressNote.swift in Sources */,
+				1000000000000013 /* User.swift in Sources */,
+				1000000000000014 /* TreatmentPlan.swift in Sources */,
+				1000000000000015 /* AIInsight.swift in Sources */,
+				1000000000000016 /* Document.swift in Sources */,
+				1000000000000017 /* SearchResult.swift in Sources */,
+				1000000000000020 /* APIClient.swift in Sources */,
+				C20F76302F04B45E000EB310 /* AIContextualHelperView.swift in Sources */,
+				1000000000000021 /* AuthService.swift in Sources */,
+				1000000000000022 /* KeychainService.swift in Sources */,
+				1000000000000023 /* SyncService.swift in Sources */,
+				1000000000000024 /* BiometricService.swift in Sources */,
+				1000000000000025 /* IntegrationsService.swift in Sources */,
+				1000000000000026 /* AIDocumentProcessor.swift in Sources */,
+				1000000000000030 /* PersistenceController.swift in Sources */,
+				1000000000000031 /* TherapyFlow.xcdatamodeld in Sources */,
+				C20F76322F04B45E000EB310 /* AIAssistantService.swift in Sources */,
+				1000000000000040 /* DashboardView.swift in Sources */,
+				C20F76342F04B488000EB310 /* ClientTimelineView 2.swift in Sources */,
+				1000000000000041 /* StatsGridView.swift in Sources */,
+				1000000000000042 /* QuickActionsView.swift in Sources */,
+				1000000000000050 /* ClientsListView.swift in Sources */,
+				C20F763C2F059F1E000EB310 /* CalendarSyncView.swift in Sources */,
+				1000000000000051 /* ClientDetailView.swift in Sources */,
+				1000000000000052 /* ClientFormView.swift in Sources */,
+				1000000000000053 /* ClientRowView.swift in Sources */,
+				C20F76362F059F1A000EB310 /* AIDashboardView.swift in Sources */,
+				1000000000000060 /* NotesListView.swift in Sources */,
+				1000000000000061 /* NoteDetailView.swift in Sources */,
+				1000000000000062 /* NoteFormView.swift in Sources */,
+				1000000000000063 /* NoteRowView.swift in Sources */,
+				1000000000000070 /* CalendarView.swift in Sources */,
+				1000000000000071 /* SessionDetailView.swift in Sources */,
+				1000000000000072 /* SessionFormView.swift in Sources */,
+				C20F76382F059F1A000EB310 /* AINotesAssistantView.swift in Sources */,
+				1000000000000080 /* SettingsView.swift in Sources */,
+				1000000000000081 /* ProfileView.swift in Sources */,
+				C251DB362F00B73900E620AB /* IntegrationsView.swift in Sources */,
+				1000000000000090 /* SemanticSearchView.swift in Sources */,
+				C20F763A2F059F1C000EB310 /* SessionTimelineView.swift in Sources */,
+				1000000000000091 /* SearchResultRow.swift in Sources */,
+				1000000000000100 /* StatCard.swift in Sources */,
+				1000000000000101 /* RiskBadge.swift in Sources */,
+				1000000000000102 /* StatusBadge.swift in Sources */,
+				1000000000000103 /* AvatarView.swift in Sources */,
+				1000000000000104 /* LoadingView.swift in Sources */,
+				1000000000000105 /* EmptyStateView.swift in Sources */,
+				C20F76412F05A17B000EB310 /* AIContextualHelperView.swift in Sources */,
+				C20F76422F05A17B000EB310 /* SessionTimelineView.swift in Sources */,
+				C20F76432F05A17B000EB310 /* AINotesAssistantView.swift in Sources */,
+				C20F76442F05A17B000EB310 /* AIDashboardView.swift in Sources */,
+				1000000000000106 /* AdaptiveNavigationView.swift in Sources */,
+				1000000000000110 /* LoginView.swift in Sources */,
+				1000000000000120 /* Color+Theme.swift in Sources */,
+				1000000000000121 /* Date+Extensions.swift in Sources */,
+				1000000000000122 /* View+Extensions.swift in Sources */,
+				1000000000000130 /* AppState.swift in Sources */,
+				1000000000000131 /* NetworkMonitor.swift in Sources */,
+				1000000000000140 /* DocumentsListView.swift in Sources */,
+				1000000000000141 /* TreatmentPlansListView.swift in Sources */,
+				1000000000000142 /* FlowLayout.swift in Sources */,
+				C20F76522F05A19E000EB310 /* AIContextualHelperView 2.swift in Sources */,
+				C20F76532F05A19E000EB310 /* AIDashboardView 2.swift in Sources */,
+				C20F76542F05A19E000EB310 /* AINotesAssistantView 2.swift in Sources */,
+				C20F76552F05A19E000EB310 /* ContentView.swift in Sources */,
+				C20F76572F05A19E000EB310 /* AIAssistantService.swift in Sources */,
+				C20F76582F05A19E000EB310 /* CalendarSyncView.swift in Sources */,
+				2000000000000054 /* TherapeuticJourneyView.swift in Sources */,
+				2000000000000082 /* BulkImportView.swift in Sources */,
+				2000000000000083 /* DataExportView.swift in Sources */,
+				2000000000000073 /* SessionPrepView.swift in Sources */,
+				2000000000000074 /* SessionHistoryView.swift in Sources */,
+				2000000000000143 /* DocumentDetailView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		9000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		9000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TherapyFlow/App/TherapyFlow.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N866QDJBQX;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TherapyFlow/App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TherapyFlow;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "TherapyFlow needs full calendar access to create and manage therapy sessions";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "TherapyFlow needs calendar access to sync your sessions with your device calendar";
+				INFOPLIST_KEY_NSCameraUsageDescription = "TherapyFlow needs camera access to scan and import clinical documents";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to securely unlock TherapyFlow and protect sensitive clinical data";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "TherapyFlow needs photo library access to import documents and images";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportsDocumentBrowser = YES;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.therapyflow.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TherapyFlow/App/TherapyFlow.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N866QDJBQX;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TherapyFlow/App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TherapyFlow;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "TherapyFlow needs full calendar access to create and manage therapy sessions";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "TherapyFlow needs calendar access to sync your sessions with your device calendar";
+				INFOPLIST_KEY_NSCameraUsageDescription = "TherapyFlow needs camera access to scan and import clinical documents";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to securely unlock TherapyFlow and protect sensitive clinical data";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "TherapyFlow needs photo library access to import documents and images";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportsDocumentBrowser = YES;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.therapyflow.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7000000000000001 /* Build configuration list for PBXNativeTarget "TherapyFlow" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9000000000000003 /* Debug */,
+				9000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7000000000000002 /* Build configuration list for PBXProject "TherapyFlow" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9000000000000001 /* Debug */,
+				9000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8000000000000001 /* Project object */;
+}

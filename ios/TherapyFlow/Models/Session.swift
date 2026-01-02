@@ -55,22 +55,109 @@ struct Session: Identifiable, Codable, Equatable, Hashable {
         return formatter.string(from: scheduledAt)
     }
 
+    // Support both snake_case (from backend) and camelCase (legacy) keys
     enum CodingKeys: String, CodingKey {
         case id
         case clientId = "client_id"
+        case clientIdCamel = "clientId"
         case therapistId = "therapist_id"
+        case therapistIdCamel = "therapistId"
         case scheduledAt = "scheduled_at"
+        case scheduledAtCamel = "scheduledAt"
         case duration
         case sessionType = "session_type"
+        case sessionTypeCamel = "sessionType"
         case status
         case googleEventId = "google_event_id"
+        case googleEventIdCamel = "googleEventId"
         case notes
         case hasProgressNotePlaceholder = "has_progress_note_placeholder"
+        case hasProgressNotePlaceholderCamel = "hasProgressNotePlaceholder"
         case progressNoteStatus = "progress_note_status"
+        case progressNoteStatusCamel = "progressNoteStatus"
         case isSimplePracticeEvent = "is_simple_practice_event"
+        case isSimplePracticeEventCamel = "isSimplePracticeEvent"
         case createdAt = "created_at"
+        case createdAtCamel = "createdAt"
         case updatedAt = "updated_at"
+        case updatedAtCamel = "updatedAt"
         case client
+    }
+
+    // Custom decoder to handle missing optional fields with defaults and both key formats
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        id = try container.decode(String.self, forKey: .id)
+
+        // Try snake_case first, then camelCase for backward compatibility
+        if let value = try? container.decode(String.self, forKey: .clientId) {
+            clientId = value
+        } else {
+            clientId = try container.decode(String.self, forKey: .clientIdCamel)
+        }
+
+        if let value = try? container.decode(String.self, forKey: .therapistId) {
+            therapistId = value
+        } else {
+            therapistId = try container.decode(String.self, forKey: .therapistIdCamel)
+        }
+
+        if let value = try? container.decode(Date.self, forKey: .scheduledAt) {
+            scheduledAt = value
+        } else {
+            scheduledAt = try container.decode(Date.self, forKey: .scheduledAtCamel)
+        }
+
+        duration = try container.decodeIfPresent(Int.self, forKey: .duration) ?? 50
+
+        if let value = try? container.decodeIfPresent(SessionType.self, forKey: .sessionType) {
+            sessionType = value ?? .individual
+        } else {
+            sessionType = try container.decodeIfPresent(SessionType.self, forKey: .sessionTypeCamel) ?? .individual
+        }
+
+        status = try container.decodeIfPresent(SessionStatus.self, forKey: .status) ?? .scheduled
+
+        if let value = try? container.decodeIfPresent(String.self, forKey: .googleEventId) {
+            googleEventId = value
+        } else {
+            googleEventId = try container.decodeIfPresent(String.self, forKey: .googleEventIdCamel)
+        }
+
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+
+        if let value = try? container.decodeIfPresent(Bool.self, forKey: .hasProgressNotePlaceholder) {
+            hasProgressNotePlaceholder = value ?? false
+        } else {
+            hasProgressNotePlaceholder = try container.decodeIfPresent(Bool.self, forKey: .hasProgressNotePlaceholderCamel) ?? false
+        }
+
+        if let value = try? container.decodeIfPresent(ProgressNoteStatusType.self, forKey: .progressNoteStatus) {
+            progressNoteStatus = value ?? .pending
+        } else {
+            progressNoteStatus = try container.decodeIfPresent(ProgressNoteStatusType.self, forKey: .progressNoteStatusCamel) ?? .pending
+        }
+
+        if let value = try? container.decodeIfPresent(Bool.self, forKey: .isSimplePracticeEvent) {
+            isSimplePracticeEvent = value ?? false
+        } else {
+            isSimplePracticeEvent = try container.decodeIfPresent(Bool.self, forKey: .isSimplePracticeEventCamel) ?? false
+        }
+
+        if let value = try? container.decodeIfPresent(Date.self, forKey: .createdAt) {
+            createdAt = value ?? Date()
+        } else {
+            createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAtCamel) ?? Date()
+        }
+
+        if let value = try? container.decodeIfPresent(Date.self, forKey: .updatedAt) {
+            updatedAt = value ?? Date()
+        } else {
+            updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAtCamel) ?? Date()
+        }
+
+        client = try container.decodeIfPresent(Client.self, forKey: .client)
     }
 
     init(id: String = UUID().uuidString,

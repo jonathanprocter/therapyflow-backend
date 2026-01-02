@@ -36,22 +36,96 @@ struct Client: Identifiable, Codable, Equatable, Hashable {
         return Calendar.current.dateComponents([.year], from: dob, to: Date()).year
     }
 
+    // Support both snake_case (from backend) and camelCase (legacy) keys
     enum CodingKeys: String, CodingKey {
         case id
         case therapistId = "therapist_id"
+        case therapistIdCamel = "therapistId"
         case name
         case email
         case phone
         case dateOfBirth = "date_of_birth"
+        case dateOfBirthCamel = "dateOfBirth"
         case emergencyContact = "emergency_contact"
+        case emergencyContactCamel = "emergencyContact"
         case insurance
         case tags
         case clinicalConsiderations = "clinical_considerations"
+        case clinicalConsiderationsCamel = "clinicalConsiderations"
         case preferredModalities = "preferred_modalities"
+        case preferredModalitiesCamel = "preferredModalities"
         case status
         case deletedAt = "deleted_at"
+        case deletedAtCamel = "deletedAt"
         case createdAt = "created_at"
+        case createdAtCamel = "createdAt"
         case updatedAt = "updated_at"
+        case updatedAtCamel = "updatedAt"
+    }
+
+    // Custom decoder to handle missing optional fields with defaults and both key formats
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        id = try container.decode(String.self, forKey: .id)
+
+        // Try snake_case first, then camelCase for backward compatibility
+        if let value = try? container.decode(String.self, forKey: .therapistId) {
+            therapistId = value
+        } else {
+            therapistId = try container.decode(String.self, forKey: .therapistIdCamel)
+        }
+
+        name = try container.decode(String.self, forKey: .name)
+        email = try container.decodeIfPresent(String.self, forKey: .email)
+        phone = try container.decodeIfPresent(String.self, forKey: .phone)
+
+        if let value = try? container.decodeIfPresent(Date.self, forKey: .dateOfBirth) {
+            dateOfBirth = value
+        } else {
+            dateOfBirth = try container.decodeIfPresent(Date.self, forKey: .dateOfBirthCamel)
+        }
+
+        if let value = try? container.decodeIfPresent(EmergencyContact.self, forKey: .emergencyContact) {
+            emergencyContact = value
+        } else {
+            emergencyContact = try container.decodeIfPresent(EmergencyContact.self, forKey: .emergencyContactCamel)
+        }
+
+        insurance = try container.decodeIfPresent(Insurance.self, forKey: .insurance)
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
+
+        if let value = try? container.decodeIfPresent([String].self, forKey: .clinicalConsiderations) {
+            clinicalConsiderations = value ?? []
+        } else {
+            clinicalConsiderations = try container.decodeIfPresent([String].self, forKey: .clinicalConsiderationsCamel) ?? []
+        }
+
+        if let value = try? container.decodeIfPresent([String].self, forKey: .preferredModalities) {
+            preferredModalities = value ?? []
+        } else {
+            preferredModalities = try container.decodeIfPresent([String].self, forKey: .preferredModalitiesCamel) ?? []
+        }
+
+        status = try container.decodeIfPresent(ClientStatus.self, forKey: .status) ?? .active
+
+        if let value = try? container.decodeIfPresent(Date.self, forKey: .deletedAt) {
+            deletedAt = value
+        } else {
+            deletedAt = try container.decodeIfPresent(Date.self, forKey: .deletedAtCamel)
+        }
+
+        if let value = try? container.decodeIfPresent(Date.self, forKey: .createdAt) {
+            createdAt = value ?? Date()
+        } else {
+            createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAtCamel) ?? Date()
+        }
+
+        if let value = try? container.decodeIfPresent(Date.self, forKey: .updatedAt) {
+            updatedAt = value ?? Date()
+        } else {
+            updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAtCamel) ?? Date()
+        }
     }
 
     init(id: String = UUID().uuidString,
