@@ -23,9 +23,9 @@ struct StatCard: View {
 
         var color: Color {
             switch self {
-            case .up: return .green
-            case .down: return .red
-            case .neutral: return .gray
+            case .up: return Color.theme.success
+            case .down: return Color.theme.error
+            case .neutral: return Color.theme.tertiaryText
             }
         }
 

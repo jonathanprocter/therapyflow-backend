@@ -91,10 +91,10 @@ struct DashboardView: View {
             if !networkMonitor.isConnected {
                 Label("Offline", systemImage: "wifi.slash")
                     .font(.caption)
-                    .foregroundColor(.orange)
+                    .foregroundColor(Color.theme.warning)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.orange.opacity(0.15))
+                    .background(Color.theme.warning.opacity(0.15))
                     .cornerRadius(8)
             }
         }
@@ -261,16 +261,16 @@ struct DashboardView: View {
                         icon: "doc.text.viewfinder",
                         title: "Upload & Analyze",
                         subtitle: "Extract insights from documents",
-                        color: .blue
+                        color: Color.theme.primary
                     )
                 }
-                
+
                 NavigationLink(destination: SemanticSearchView()) {
                     AIActionCard(
                         icon: "magnifyingglass.circle.fill",
                         title: "Semantic Search",
                         subtitle: "Search by meaning, not just keywords",
-                        color: .purple
+                        color: Color.theme.accent
                     )
                 }
             }

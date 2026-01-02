@@ -3,24 +3,25 @@ import SwiftUI
 struct AIDashboardView: View {
     @State private var isLoading = false
     @State private var aiInsights: [AIInsight] = []
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 // Header Card
                 headerCard
-                
+
                 // Quick Actions
                 quickActionsSection
-                
+
                 // AI Insights
                 insightsSection
-                
+
                 // Recent AI Activity
                 recentActivitySection
             }
             .padding()
         }
+        .background(Color.theme.background)
         .navigationTitle("AI Dashboard")
         .refreshable {
             await loadInsights()
@@ -29,54 +30,57 @@ struct AIDashboardView: View {
             await loadInsights()
         }
     }
-    
+
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "brain")
                     .font(.title)
-                    .foregroundColor(.purple)
+                    .foregroundColor(Color.theme.accent)
                 Text("AI Assistant")
                     .font(.title2)
                     .fontWeight(.bold)
+                    .foregroundColor(Color.theme.primaryText)
                 Spacer()
                 Circle()
-                    .fill(Color.green)
+                    .fill(Color.theme.success)
                     .frame(width: 10, height: 10)
                 Text("Active")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.theme.secondaryText)
             }
-            
+
             Text("Your AI assistant is ready to help with clinical documentation, session analysis, and treatment planning.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.theme.secondaryText)
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.theme.surface)
         .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+        .shadow(color: Color.theme.shadow, radius: 5, y: 2)
     }
-    
+
     private var quickActionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Quick Actions")
                 .font(.headline)
-            
+                .foregroundColor(Color.theme.primaryText)
+
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                QuickActionCard(icon: "doc.text.magnifyingglass", title: "Analyze Note", color: .blue)
-                QuickActionCard(icon: "waveform", title: "Voice Note", color: .green)
-                QuickActionCard(icon: "chart.line.uptrend.xyaxis", title: "Progress Report", color: .orange)
-                QuickActionCard(icon: "lightbulb", title: "Get Suggestions", color: .purple)
+                QuickActionCard(icon: "doc.text.magnifyingglass", title: "Analyze Note", color: Color.theme.primary)
+                QuickActionCard(icon: "waveform", title: "Voice Note", color: Color.theme.teal)
+                QuickActionCard(icon: "chart.line.uptrend.xyaxis", title: "Progress Report", color: Color.theme.accent)
+                QuickActionCard(icon: "lightbulb", title: "Get Suggestions", color: Color.theme.info)
             }
         }
     }
-    
+
     private var insightsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("AI Insights")
                 .font(.headline)
-            
+                .foregroundColor(Color.theme.primaryText)
+
             if isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity, minHeight: 100)
@@ -89,20 +93,21 @@ struct AIDashboardView: View {
             }
         }
     }
-    
+
     private var recentActivitySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent AI Activity")
                 .font(.headline)
-            
+                .foregroundColor(Color.theme.primaryText)
+
             VStack(spacing: 8) {
-                ActivityRow(icon: "doc.text", title: "Progress note analyzed", time: "2 hours ago", color: .blue)
-                ActivityRow(icon: "person.2", title: "Client patterns identified", time: "Yesterday", color: .green)
-                ActivityRow(icon: "exclamationmark.triangle", title: "Risk assessment completed", time: "2 days ago", color: .orange)
+                ActivityRow(icon: "doc.text", title: "Progress note analyzed", time: "2 hours ago", color: Color.theme.primary)
+                ActivityRow(icon: "person.2", title: "Client patterns identified", time: "Yesterday", color: Color.theme.teal)
+                ActivityRow(icon: "exclamationmark.triangle", title: "Risk assessment completed", time: "2 days ago", color: Color.theme.accent)
             }
         }
     }
-    
+
     private func loadInsights() async {
         isLoading = true
         // Simulate API call
@@ -120,7 +125,7 @@ struct QuickActionCard: View {
     let icon: String
     let title: String
     let color: Color
-    
+
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
@@ -129,6 +134,7 @@ struct QuickActionCard: View {
             Text(title)
                 .font(.caption)
                 .fontWeight(.medium)
+                .foregroundColor(Color.theme.primaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -143,19 +149,19 @@ struct AIInsight: Identifiable {
     let title: String
     let description: String
     let type: InsightType
-    
+
     enum InsightType {
         case pattern, reminder, suggestion, alert
-        
+
         var color: Color {
             switch self {
-            case .pattern: return .blue
-            case .reminder: return .orange
-            case .suggestion: return .purple
-            case .alert: return .red
+            case .pattern: return Color.theme.primary
+            case .reminder: return Color.theme.accent
+            case .suggestion: return Color.theme.info
+            case .alert: return Color.theme.error
             }
         }
-        
+
         var icon: String {
             switch self {
             case .pattern: return "chart.bar"
@@ -169,32 +175,33 @@ struct AIInsight: Identifiable {
 
 struct InsightCard: View {
     let insight: AIInsight
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: insight.type.icon)
                 .foregroundColor(insight.type.color)
                 .frame(width: 32)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(insight.title)
                     .font(.subheadline)
                     .fontWeight(.medium)
+                    .foregroundColor(Color.theme.primaryText)
                 Text(insight.description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.theme.secondaryText)
             }
-            
+
             Spacer()
-            
+
             Image(systemName: "chevron.right")
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.theme.tertiaryText)
                 .font(.caption)
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.theme.surface)
         .cornerRadius(10)
-        .shadow(color: .black.opacity(0.03), radius: 3, y: 1)
+        .shadow(color: Color.theme.shadow, radius: 3, y: 1)
     }
 }
 
@@ -203,13 +210,13 @@ struct EmptyInsightsView: View {
         VStack(spacing: 12) {
             Image(systemName: "sparkles")
                 .font(.largeTitle)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.theme.tertiaryText)
             Text("No insights yet")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.theme.secondaryText)
             Text("AI insights will appear as you add more session data")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.theme.tertiaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -222,7 +229,7 @@ struct ActivityRow: View {
     let title: String
     let time: String
     let color: Color
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
@@ -230,10 +237,11 @@ struct ActivityRow: View {
                 .frame(width: 24)
             Text(title)
                 .font(.subheadline)
+                .foregroundColor(Color.theme.primaryText)
             Spacer()
             Text(time)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.theme.secondaryText)
         }
         .padding(.vertical, 8)
     }
