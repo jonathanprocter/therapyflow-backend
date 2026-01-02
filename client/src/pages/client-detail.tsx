@@ -178,7 +178,10 @@ interface IntegrationStatus {
 
 // Utility functions
 const formatRelativeTime = (date: string) => {
-  const diff = Date.now() - new Date(date).getTime();
+  if (!date) return 'N/A';
+  const parsed = new Date(date);
+  if (isNaN(parsed.getTime())) return 'N/A';
+  const diff = Date.now() - parsed.getTime();
   const minutes = Math.floor(diff / 60000);
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
@@ -195,9 +198,11 @@ const calculateNoShowRisk = (sessions: Session[]) => {
 
 const calculateConsistencyScore = (sessions: Session[]) => {
   if (sessions.length < 2) return 100;
-  const intervals = sessions.slice(1).map((s, i) => 
-    new Date(s.scheduledAt).getTime() - new Date(sessions[i].scheduledAt).getTime()
-  );
+  const intervals = sessions.slice(1).map((s, i) => {
+    const dateA = s.scheduledAt ? new Date(s.scheduledAt).getTime() : 0;
+    const dateB = sessions[i]?.scheduledAt ? new Date(sessions[i].scheduledAt).getTime() : 0;
+    return dateA - dateB;
+  }).filter(interval => interval !== 0);
   const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
   const variance = intervals.reduce((sum, i) => sum + Math.pow(i - avgInterval, 2), 0) / intervals.length;
   return Math.max(0, 100 - (Math.sqrt(variance) / avgInterval * 100));
@@ -341,9 +346,11 @@ export default function ClientDetail() {
       );
     }
 
-    return filtered.sort((a, b) => 
-      new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
-    );
+    return filtered.sort((a, b) => {
+      const dateA = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+      const dateB = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+      return dateB - dateA;
+    });
   }, [clientSessions, sessionFilter, searchTerm, dateRange]);
 
   // Calculate session statistics

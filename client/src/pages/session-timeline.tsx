@@ -115,7 +115,11 @@ export default function SessionTimeline() {
       const cutoffDate = new Date(now.setMonth(now.getMonth() - months));
       
       return sessionDate >= cutoffDate;
-    }).sort((a, b) => new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime());
+    }).sort((a, b) => {
+      const dateA = a.sessionDate ? new Date(a.sessionDate).getTime() : 0;
+      const dateB = b.sessionDate ? new Date(b.sessionDate).getTime() : 0;
+      return dateB - dateA;
+    });
   }, [sessions, filters]);
 
   // Group sessions by time period

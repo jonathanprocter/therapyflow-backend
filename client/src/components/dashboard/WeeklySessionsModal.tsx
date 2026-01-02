@@ -58,7 +58,11 @@ export function WeeklySessionsModal({ open, onOpenChange }: WeeklySessionsModalP
   }, {} as Record<string, { dayName: string; date: Date; sessions: Session[] }>) || {};
 
   const sortedDays = Object.entries(groupedSessions).sort(
-    ([a], [b]) => new Date(a).getTime() - new Date(b).getTime()
+    ([a], [b]) => {
+      const dateA = a ? new Date(a).getTime() : 0;
+      const dateB = b ? new Date(b).getTime() : 0;
+      return dateA - dateB;
+    }
   );
 
   const getSessionTypeIcon = (type: string) => {
@@ -163,7 +167,11 @@ export function WeeklySessionsModal({ open, onOpenChange }: WeeklySessionsModalP
 
                     <div className="space-y-2">
                       {daySessions
-                        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+                        .sort((a, b) => {
+                          const dateA = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+                          const dateB = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+                          return dateA - dateB;
+                        })
                         .map((session) => (
                           <Card
                             key={session.id}

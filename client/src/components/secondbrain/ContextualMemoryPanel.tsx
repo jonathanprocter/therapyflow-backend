@@ -83,7 +83,9 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
   };
 
   const formatRelativeDate = (dateString: string) => {
+    if (!dateString) return 'Unknown';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Unknown';
     const now = new Date();
     const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     
