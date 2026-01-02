@@ -6,54 +6,65 @@ extension Color {
 }
 
 struct ThemeColors {
-    // Brand Color Palette (from design spec)
-    // #f9f9f9 - Very light gray (background)
-    // #e7e3da - Warm beige/cream (surface)
-    // #d4d5d8 - Light gray (secondary/borders)
-    // #979c9f - Medium gray (secondary text)
-    // #54585b - Dark charcoal (primary text/accents)
+    // Brand Color Palette - Modern Minimalist
+    // Based on logo: Deep Blue (#2B5A7C) + Warm Coral (#E86B4A)
+    // Following 60-30-10 rule: 60% neutrals, 30% primary, 10% accent
 
-    // Primary Brand Colors
-    let primary = Color(hex: "54585B")       // Dark charcoal - main accent
-    let primaryDark = Color(hex: "3D4043")   // Darker charcoal
-    let primaryMedium = Color(hex: "979C9F") // Medium gray
-    let primaryLight = Color(hex: "D4D5D8")  // Light gray
+    // Primary Brand Colors - Deep Blue
+    let primary = Color(hex: "2B5A7C")       // Deep Blue - main brand color
+    let primaryLight = Color(hex: "3D7A9E")  // Lighter blue for hover states
+    let primaryDark = Color(hex: "1E4460")   // Darker blue for active states
 
-    // Accent Colors
-    let accent = Color(hex: "979C9F")        // Medium gray as accent
-    let accentLight = Color(hex: "E7E3DA")   // Warm beige/cream
+    // Accent Colors - Warm Coral
+    let accent = Color(hex: "E86B4A")        // Warm Coral - CTAs, highlights
+    let accentLight = Color(hex: "F08B70")   // Lighter coral
+    let accentDark = Color(hex: "D55A3A")    // Darker coral
+
+    // Teal - Secondary Accent / Success
+    let teal = Color(hex: "0D9488")          // Teal for success states
+    let tealLight = Color(hex: "14B8A6")
+    let tealDark = Color(hex: "0F766E")
 
     // Background Colors
-    let background = Color(hex: "F9F9F9")    // Very light gray
+    let background = Color(hex: "FAFBFC")    // Clean off-white
     let surface = Color(hex: "FFFFFF")       // Pure white for cards
-    let surfaceSecondary = Color(hex: "E7E3DA") // Warm beige/cream
+    let surfaceSecondary = Color(hex: "F1F5F9") // Slate 100 for secondary surfaces
 
     // Text Colors
-    let primaryText = Color(hex: "54585B")   // Dark charcoal for primary text
-    let secondaryText = Color(hex: "979C9F") // Medium gray for secondary text
-    let tertiaryText = Color(hex: "D4D5D8")  // Light gray for tertiary text
+    let primaryText = Color(hex: "1E293B")   // Dark slate - primary text
+    let secondaryText = Color(hex: "64748B") // Medium gray - secondary text
+    let tertiaryText = Color(hex: "94A3B8")  // Light gray - muted text
 
-    // Status Colors (keeping distinct for UX clarity, but muted)
-    let success = Color(hex: "6B8E6B")       // Muted sage green
-    let warning = Color(hex: "C4A35A")       // Muted amber/gold
-    let error = Color(hex: "B85450")         // Muted red
-    let info = Color(hex: "6B8E9F")          // Muted blue-gray
+    // Status Colors
+    let success = Color(hex: "0D9488")       // Teal
+    let warning = Color(hex: "F59E0B")       // Amber
+    let error = Color(hex: "EF4444")         // Red
+    let info = Color(hex: "3B82F6")          // Blue
 
-    // Risk Level Colors (muted versions for clinical appropriateness)
-    let riskLow = Color(hex: "6B8E6B")       // Muted green
-    let riskModerate = Color(hex: "C4A35A")  // Muted amber
-    let riskHigh = Color(hex: "C47A50")      // Muted orange
-    let riskCritical = Color(hex: "B85450")  // Muted red
+    // Risk Level Colors
+    let riskLow = Color(hex: "0D9488")       // Teal
+    let riskModerate = Color(hex: "F59E0B")  // Amber
+    let riskHigh = Color(hex: "F97316")      // Orange
+    let riskCritical = Color(hex: "EF4444")  // Red
 
     // Card and Border Colors
-    let border = Color(hex: "D4D5D8")        // Light gray borders
-    let divider = Color(hex: "E7E3DA")       // Warm beige dividers
-    let shadow = Color(hex: "54585B").opacity(0.08)
+    let border = Color(hex: "E2E8F0")        // Light gray borders
+    let borderStrong = Color(hex: "CBD5E1")  // Stronger borders
+    let divider = Color(hex: "E2E8F0")       // Same as border
+    let shadow = Color(hex: "1E293B").opacity(0.08)
 
     // Gradient
     var primaryGradient: LinearGradient {
         LinearGradient(
-            colors: [Color(hex: "54585B"), Color(hex: "979C9F")],
+            colors: [Color(hex: "2B5A7C"), Color(hex: "1E4460")],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    var accentGradient: LinearGradient {
+        LinearGradient(
+            colors: [Color(hex: "E86B4A"), Color(hex: "D55A3A")],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -61,7 +72,7 @@ struct ThemeColors {
 
     var backgroundGradient: LinearGradient {
         LinearGradient(
-            colors: [Color(hex: "F9F9F9"), Color(hex: "E7E3DA")],
+            colors: [Color(hex: "FAFBFC"), Color(hex: "F1F5F9")],
             startPoint: .top,
             endPoint: .bottom
         )
@@ -124,7 +135,7 @@ extension ClientStatus {
 extension SessionStatus {
     var themeColor: Color {
         switch self {
-        case .scheduled: return Color.theme.info
+        case .scheduled: return Color.theme.primary
         case .completed: return Color.theme.success
         case .cancelled: return Color.theme.tertiaryText
         case .noShow: return Color.theme.error
@@ -138,7 +149,7 @@ extension NoteStatus {
         switch self {
         case .placeholder: return Color.theme.tertiaryText
         case .uploaded: return Color.theme.info
-        case .processed: return Color.theme.accent
+        case .processed: return Color.theme.primary
         case .manualReview: return Color.theme.warning
         case .completed: return Color.theme.success
         }
