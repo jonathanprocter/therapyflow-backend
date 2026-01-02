@@ -153,4 +153,4 @@ CREATE INDEX IF NOT EXISTS idx_therapeutic_alliance_client ON therapeutic_allian
 -- Note: You'll need to set a proper password hash
 INSERT INTO users (username, password, name, email, role)
 VALUES ('therapist', 'changeme', 'Default Therapist', 'therapist@therapyflow.com', 'therapist')
-ON CONFLICT (email) DO NOTHING;
+ON CONFLICT (username) DO NOTHING;
