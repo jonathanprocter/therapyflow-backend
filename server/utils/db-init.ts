@@ -120,6 +120,7 @@ export async function initializeDatabase(): Promise<void> {
     { file: '2025-12-01_session_preps.sql', name: 'Session Preps' },
     { file: '2025-12-02_longitudinal_records.sql', name: 'Longitudinal Records' },
     { file: 'add-performance-indexes.sql', name: 'Performance Indexes' },
+    { file: 'add-documents-file-type-column.sql', name: 'Add Documents File Type Column' },
     // DISABLED: Migrations below still need schema work
     // { file: '2025-12-01_audit_settings_indexes.sql', name: 'Audit Settings' },
     // { file: '2025-12-02_job_note_quality_documents.sql', name: 'Job Note Quality' }
