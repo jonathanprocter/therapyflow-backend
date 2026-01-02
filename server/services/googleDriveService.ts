@@ -457,6 +457,64 @@ class GoogleDriveService {
       return null;
     }
   }
+
+  /**
+   * Get diagnostic info about Drive API access
+   */
+  async diagnose(): Promise<{
+    config: any;
+    tests: { about?: any; listFolders?: any };
+    summary: string;
+  }> {
+    const diagnostics: any = {
+      timestamp: new Date().toISOString(),
+      config: {
+        hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+        hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+        hasRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN,
+        isConfigured: this.isConfigured(),
+        isEnabled: this.isEnabled()
+      },
+      tests: {}
+    };
+
+    // Test 1: Try to get about info (tests basic connectivity)
+    try {
+      const aboutResponse = await this.drive.about.get({
+        fields: 'user,storageQuota'
+      });
+      diagnostics.tests.about = {
+        success: true,
+        user: aboutResponse.data.user?.emailAddress
+      };
+    } catch (error: any) {
+      diagnostics.tests.about = {
+        success: false,
+        error: error?.response?.data?.error?.message || error?.message,
+        code: error?.response?.data?.error?.code || error?.code
+      };
+    }
+
+    // Test 2: Try to list folders (tests Drive API access)
+    try {
+      const folders = await this.listFolders();
+      diagnostics.tests.listFolders = {
+        success: true,
+        folderCount: folders.length
+      };
+    } catch (error: any) {
+      diagnostics.tests.listFolders = {
+        success: false,
+        error: error?.response?.data?.error?.message || error?.message,
+        code: error?.response?.data?.error?.code || error?.code
+      };
+    }
+
+    const allPassed = Object.values(diagnostics.tests).every((t: any) => t.success);
+    diagnostics.summary = allPassed ? 'All tests passed' : 'Some tests failed';
+
+    return diagnostics;
+  }
 }
 
 export const googleDriveService = new GoogleDriveService();

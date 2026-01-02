@@ -109,9 +109,17 @@ export function registerDriveRoutes(app: Express) {
 
       const folders = await googleDriveService.listFolders();
       res.json({ folders });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error listing folders:', error);
-      res.status(500).json({ error: 'Failed to list folders' });
+      const errorMessage = error?.response?.data?.error?.message
+        || error?.message
+        || 'Failed to list folders';
+      const errorCode = error?.response?.data?.error?.code || error?.code;
+      res.status(500).json({
+        error: errorMessage,
+        code: errorCode,
+        hint: errorCode === 403 ? 'Google Drive API may not be enabled in Google Cloud Console' : undefined
+      });
     }
   });
 
@@ -137,9 +145,21 @@ Supported file types: .txt, .docx, .pdf, .doc
 Processed files will be moved to the "Processed" subfolder automatically.
         `.trim()
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating folder:', error);
-      res.status(500).json({ error: 'Failed to create folder' });
+      const errorMessage = error?.response?.data?.error?.message
+        || error?.message
+        || 'Failed to create folder';
+      const errorCode = error?.response?.data?.error?.code || error?.code;
+      res.status(500).json({
+        error: errorMessage,
+        code: errorCode,
+        hint: errorCode === 403
+          ? 'Google Drive API may not be enabled in Google Cloud Console, or OAuth token lacks Drive scopes'
+          : errorCode === 401
+          ? 'OAuth token may be expired or invalid. Try re-authorizing at /api/drive/auth-url'
+          : undefined
+      });
     }
   });
 
@@ -235,6 +255,21 @@ Processed files will be moved to the "Processed" subfolder automatically.
     } catch (error) {
       console.error('Error stopping polling:', error);
       res.status(500).json({ error: 'Failed to stop polling' });
+    }
+  });
+
+  /**
+   * Diagnostic endpoint to check Drive connectivity
+   */
+  app.get('/api/drive/diagnose', async (req: Request, res: Response) => {
+    try {
+      const diagnostics = await googleDriveService.diagnose();
+      res.json(diagnostics);
+    } catch (error: any) {
+      res.status(500).json({
+        error: error?.message || 'Failed to run diagnostics',
+        summary: 'Diagnostic failed'
+      });
     }
   });
 
