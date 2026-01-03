@@ -68,6 +68,8 @@
 		2000000000000083 /* DataExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000153 /* DataExportView.swift */; };
 		2000000000000143 /* DocumentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000156 /* DocumentDetailView.swift */; };
 		C251DB362F00B73900E620AB /* IntegrationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C251DB352F00B73900E620AB /* IntegrationsView.swift */; };
+		8DD394037B83472D924E2551 /* AINotesAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A267400692FF42808208E358 /* AINotesAssistantView.swift */; };
+		3863C6EEB086431790C1F0D1 /* AINotesAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60E324F831B40D5AAA97B07 /* AINotesAssistantView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -135,6 +137,8 @@
 		2000000000000156 /* DocumentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentDetailView.swift; sourceTree = "<group>"; };
 		3000000000000001 /* TherapyFlow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TherapyFlow.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C251DB352F00B73900E620AB /* IntegrationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationsView.swift; sourceTree = "<group>"; };
+		A267400692FF42808208E358 /* AINotesAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotesAssistantView.swift; sourceTree = "<group>"; };
+		C60E324F831B40D5AAA97B07 /* AINotesAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotesAssistantView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

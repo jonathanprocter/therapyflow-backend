@@ -148,22 +148,22 @@ struct ProgressNote: Identifiable, Codable, Equatable, Hashable {
 
         content = try container.decodeIfPresent(String.self, forKey: .content)
 
-        if let value = try? container.decodeIfPresent(Date.self, forKey: .sessionDate) {
-            sessionDate = value ?? Date()
+        if let value = try? container.decode(Date.self, forKey: .sessionDate) {
+            sessionDate = value
         } else {
             sessionDate = try container.decodeIfPresent(Date.self, forKey: .sessionDateCamel) ?? Date()
         }
 
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
 
-        if let value = try? container.decodeIfPresent([String].self, forKey: .aiTags) {
-            aiTags = value ?? []
+        if let value = try? container.decode([String].self, forKey: .aiTags) {
+            aiTags = value
         } else {
             aiTags = try container.decodeIfPresent([String].self, forKey: .aiTagsCamel) ?? []
         }
 
-        if let value = try? container.decodeIfPresent(RiskLevel.self, forKey: .riskLevel) {
-            riskLevel = value ?? .low
+        if let value = try? container.decode(RiskLevel.self, forKey: .riskLevel) {
+            riskLevel = value
         } else {
             riskLevel = try container.decodeIfPresent(RiskLevel.self, forKey: .riskLevelCamel) ?? .low
         }
@@ -188,14 +188,14 @@ struct ProgressNote: Identifiable, Codable, Equatable, Hashable {
 
         status = try container.decodeIfPresent(NoteStatus.self, forKey: .status) ?? .placeholder
 
-        if let value = try? container.decodeIfPresent(Bool.self, forKey: .isPlaceholder) {
-            isPlaceholder = value ?? true
+        if let value = try? container.decode(Bool.self, forKey: .isPlaceholder) {
+            isPlaceholder = value
         } else {
             isPlaceholder = try container.decodeIfPresent(Bool.self, forKey: .isPlaceholderCamel) ?? true
         }
 
-        if let value = try? container.decodeIfPresent(Bool.self, forKey: .requiresManualReview) {
-            requiresManualReview = value ?? false
+        if let value = try? container.decode(Bool.self, forKey: .requiresManualReview) {
+            requiresManualReview = value
         } else {
             requiresManualReview = try container.decodeIfPresent(Bool.self, forKey: .requiresManualReviewCamel) ?? false
         }
@@ -218,14 +218,14 @@ struct ProgressNote: Identifiable, Codable, Equatable, Hashable {
             originalDocumentId = try container.decodeIfPresent(String.self, forKey: .originalDocumentIdCamel)
         }
 
-        if let value = try? container.decodeIfPresent(Date.self, forKey: .createdAt) {
-            createdAt = value ?? Date()
+        if let value = try? container.decode(Date.self, forKey: .createdAt) {
+            createdAt = value
         } else {
             createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAtCamel) ?? Date()
         }
 
-        if let value = try? container.decodeIfPresent(Date.self, forKey: .updatedAt) {
-            updatedAt = value ?? Date()
+        if let value = try? container.decode(Date.self, forKey: .updatedAt) {
+            updatedAt = value
         } else {
             updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAtCamel) ?? Date()
         }
