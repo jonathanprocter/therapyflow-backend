@@ -121,9 +121,9 @@ struct SemanticSearchView: View {
                         }
 
                         FilterChip(
-                            title: dateRange.displayName,
-                            isSelected: dateRange != .all,
-                            icon: "calendar"
+                            title: "Filters",
+                            icon: "calendar",
+                            isSelected: dateRange != .all
                         ) {
                             showingFilters = true
                         }

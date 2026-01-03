@@ -121,28 +121,7 @@ struct AIDashboardView: View {
     }
 }
 
-struct QuickActionCard: View {
-    let icon: String
-    let title: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            Text(title)
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(Color.theme.primaryText)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(color.opacity(0.1))
-        .cornerRadius(12)
-    }
-}
+// QuickActionCard is defined in QuickActionsView.swift
 
 // AIInsight model is now imported from Models/AIInsight.swift
 

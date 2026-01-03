@@ -287,33 +287,7 @@ struct TimelineStatCard: View {
 }
 
 // MARK: - Filter Chip
-struct FilterChip: View {
-    let title: String
-    let icon: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.caption)
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isSelected ? Color.theme.primary : Color.theme.surface)
-            .foregroundColor(isSelected ? .white : Color.theme.primaryText)
-            .cornerRadius(16)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(isSelected ? Color.clear : Color.theme.border, lineWidth: 1)
-            )
-        }
-    }
-}
+// FilterChip is defined in SemanticSearchView.swift
 
 // MARK: - Timeline Session Row
 struct TimelineSessionRow: View {
