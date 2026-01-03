@@ -131,8 +131,8 @@ struct Session: Identifiable, Codable, Equatable, Hashable {
 
         duration = try container.decodeIfPresent(Int.self, forKey: .duration) ?? 50
 
-        if let value = try? container.decodeIfPresent(SessionType.self, forKey: .sessionType) {
-            sessionType = value ?? .individual
+        if let value = try? container.decode(SessionType.self, forKey: .sessionType) {
+            sessionType = value
         } else {
             sessionType = try container.decodeIfPresent(SessionType.self, forKey: .sessionTypeCamel) ?? .individual
         }
@@ -147,32 +147,32 @@ struct Session: Identifiable, Codable, Equatable, Hashable {
 
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
 
-        if let value = try? container.decodeIfPresent(Bool.self, forKey: .hasProgressNotePlaceholder) {
-            hasProgressNotePlaceholder = value ?? false
+        if let value = try? container.decode(Bool.self, forKey: .hasProgressNotePlaceholder) {
+            hasProgressNotePlaceholder = value
         } else {
             hasProgressNotePlaceholder = try container.decodeIfPresent(Bool.self, forKey: .hasProgressNotePlaceholderCamel) ?? false
         }
 
-        if let value = try? container.decodeIfPresent(ProgressNoteStatusType.self, forKey: .progressNoteStatus) {
-            progressNoteStatus = value ?? .pending
+        if let value = try? container.decode(ProgressNoteStatusType.self, forKey: .progressNoteStatus) {
+            progressNoteStatus = value
         } else {
             progressNoteStatus = try container.decodeIfPresent(ProgressNoteStatusType.self, forKey: .progressNoteStatusCamel) ?? .pending
         }
 
-        if let value = try? container.decodeIfPresent(Bool.self, forKey: .isSimplePracticeEvent) {
-            isSimplePracticeEvent = value ?? false
+        if let value = try? container.decode(Bool.self, forKey: .isSimplePracticeEvent) {
+            isSimplePracticeEvent = value
         } else {
             isSimplePracticeEvent = try container.decodeIfPresent(Bool.self, forKey: .isSimplePracticeEventCamel) ?? false
         }
 
-        if let value = try? container.decodeIfPresent(Date.self, forKey: .createdAt) {
-            createdAt = value ?? Date()
+        if let value = try? container.decode(Date.self, forKey: .createdAt) {
+            createdAt = value
         } else {
             createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAtCamel) ?? Date()
         }
 
-        if let value = try? container.decodeIfPresent(Date.self, forKey: .updatedAt) {
-            updatedAt = value ?? Date()
+        if let value = try? container.decode(Date.self, forKey: .updatedAt) {
+            updatedAt = value
         } else {
             updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAtCamel) ?? Date()
         }

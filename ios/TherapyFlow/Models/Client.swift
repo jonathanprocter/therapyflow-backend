@@ -115,14 +115,14 @@ struct Client: Identifiable, Codable, Equatable, Hashable {
         insurance = try container.decodeIfPresent(Insurance.self, forKey: .insurance)
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
 
-        if let value = try? container.decodeIfPresent([String].self, forKey: .clinicalConsiderations) {
-            clinicalConsiderations = value ?? []
+        if let value = try? container.decode([String].self, forKey: .clinicalConsiderations) {
+            clinicalConsiderations = value
         } else {
             clinicalConsiderations = try container.decodeIfPresent([String].self, forKey: .clinicalConsiderationsCamel) ?? []
         }
 
-        if let value = try? container.decodeIfPresent([String].self, forKey: .preferredModalities) {
-            preferredModalities = value ?? []
+        if let value = try? container.decode([String].self, forKey: .preferredModalities) {
+            preferredModalities = value
         } else {
             preferredModalities = try container.decodeIfPresent([String].self, forKey: .preferredModalitiesCamel) ?? []
         }
@@ -135,14 +135,14 @@ struct Client: Identifiable, Codable, Equatable, Hashable {
             deletedAt = try container.decodeIfPresent(Date.self, forKey: .deletedAtCamel)
         }
 
-        if let value = try? container.decodeIfPresent(Date.self, forKey: .createdAt) {
-            createdAt = value ?? Date()
+        if let value = try? container.decode(Date.self, forKey: .createdAt) {
+            createdAt = value
         } else {
             createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAtCamel) ?? Date()
         }
 
-        if let value = try? container.decodeIfPresent(Date.self, forKey: .updatedAt) {
-            updatedAt = value ?? Date()
+        if let value = try? container.decode(Date.self, forKey: .updatedAt) {
+            updatedAt = value
         } else {
             updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAtCamel) ?? Date()
         }
