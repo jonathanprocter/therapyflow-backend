@@ -14,6 +14,16 @@ class AIAssistantService: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
 
+    // MARK: - App Context
+    
+    /// Represents the current context/screen in the app for contextual AI assistance
+    enum AppContext: Equatable {
+        case dashboard
+        case clients
+        case calendar
+        case notes
+    }
+
     struct ChatMessage: Identifiable, Codable {
         let id: String
         let role: String // "user" or "assistant"

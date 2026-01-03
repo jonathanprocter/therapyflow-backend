@@ -94,6 +94,33 @@ struct ProgressNote: Identifiable, Codable, Equatable, Hashable {
         case session
     }
 
+    // Custom encoder to encode to snake_case format
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(clientId, forKey: .clientId)
+        try container.encodeIfPresent(sessionId, forKey: .sessionId)
+        try container.encode(therapistId, forKey: .therapistId)
+        try container.encodeIfPresent(content, forKey: .content)
+        try container.encode(sessionDate, forKey: .sessionDate)
+        try container.encode(tags, forKey: .tags)
+        try container.encode(aiTags, forKey: .aiTags)
+        try container.encode(riskLevel, forKey: .riskLevel)
+        try container.encodeIfPresent(progressRating, forKey: .progressRating)
+        try container.encodeIfPresent(qualityScore, forKey: .qualityScore)
+        try container.encodeIfPresent(qualityFlags, forKey: .qualityFlags)
+        try container.encode(status, forKey: .status)
+        try container.encode(isPlaceholder, forKey: .isPlaceholder)
+        try container.encode(requiresManualReview, forKey: .requiresManualReview)
+        try container.encodeIfPresent(aiConfidenceScore, forKey: .aiConfidenceScore)
+        try container.encodeIfPresent(processingNotes, forKey: .processingNotes)
+        try container.encodeIfPresent(originalDocumentId, forKey: .originalDocumentId)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
+        try container.encodeIfPresent(client, forKey: .client)
+        try container.encodeIfPresent(session, forKey: .session)
+    }
+
     // Custom decoder to handle missing optional fields with defaults and both key formats
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

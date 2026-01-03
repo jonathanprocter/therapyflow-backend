@@ -84,6 +84,26 @@ struct Session: Identifiable, Codable, Equatable, Hashable {
         case client
     }
 
+    // Custom encoder to encode to snake_case format
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(clientId, forKey: .clientId)
+        try container.encode(therapistId, forKey: .therapistId)
+        try container.encode(scheduledAt, forKey: .scheduledAt)
+        try container.encode(duration, forKey: .duration)
+        try container.encode(sessionType, forKey: .sessionType)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(googleEventId, forKey: .googleEventId)
+        try container.encodeIfPresent(notes, forKey: .notes)
+        try container.encode(hasProgressNotePlaceholder, forKey: .hasProgressNotePlaceholder)
+        try container.encode(progressNoteStatus, forKey: .progressNoteStatus)
+        try container.encode(isSimplePracticeEvent, forKey: .isSimplePracticeEvent)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
+        try container.encodeIfPresent(client, forKey: .client)
+    }
+
     // Custom decoder to handle missing optional fields with defaults and both key formats
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

@@ -63,6 +63,26 @@ struct Client: Identifiable, Codable, Equatable, Hashable {
         case updatedAtCamel = "updatedAt"
     }
 
+    // Custom encoder to encode to snake_case format
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(therapistId, forKey: .therapistId)
+        try container.encode(name, forKey: .name)
+        try container.encodeIfPresent(email, forKey: .email)
+        try container.encodeIfPresent(phone, forKey: .phone)
+        try container.encodeIfPresent(dateOfBirth, forKey: .dateOfBirth)
+        try container.encodeIfPresent(emergencyContact, forKey: .emergencyContact)
+        try container.encodeIfPresent(insurance, forKey: .insurance)
+        try container.encode(tags, forKey: .tags)
+        try container.encode(clinicalConsiderations, forKey: .clinicalConsiderations)
+        try container.encode(preferredModalities, forKey: .preferredModalities)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(deletedAt, forKey: .deletedAt)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
+    }
+
     // Custom decoder to handle missing optional fields with defaults and both key formats
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
