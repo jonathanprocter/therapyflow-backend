@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - AI Insight Model
 struct AIInsight: Identifiable, Codable, Equatable {
@@ -80,14 +81,14 @@ enum InsightType: String, Codable, CaseIterable {
         }
     }
 
-    var color: String {
+    var color: Color {
         switch self {
-        case .patternRecognition: return "purple"
-        case .progressMilestone: return "green"
-        case .riskAlert: return "red"
-        case .resourceMatch: return "blue"
-        case .treatmentSuggestion: return "orange"
-        case .sessionPrep: return "teal"
+        case .patternRecognition: return .purple
+        case .progressMilestone: return .green
+        case .riskAlert: return .red
+        case .resourceMatch: return .blue
+        case .treatmentSuggestion: return .orange
+        case .sessionPrep: return .teal
         }
     }
 }

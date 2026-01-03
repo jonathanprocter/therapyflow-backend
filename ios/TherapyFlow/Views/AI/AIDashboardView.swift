@@ -67,10 +67,10 @@ struct AIDashboardView: View {
                 .foregroundColor(Color.theme.primaryText)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                QuickActionCard(icon: "doc.text.magnifyingglass", title: "Analyze Note", color: Color.theme.primary)
-                QuickActionCard(icon: "waveform", title: "Voice Note", color: Color.theme.teal)
-                QuickActionCard(icon: "chart.line.uptrend.xyaxis", title: "Progress Report", color: Color.theme.accent)
-                QuickActionCard(icon: "lightbulb", title: "Get Suggestions", color: Color.theme.info)
+                QuickActionCard(icon: "doc.text.magnifyingglass", title: "Analyze Note", color: Color.theme.primary) {}
+                QuickActionCard(icon: "waveform", title: "Voice Note", color: Color.theme.teal) {}
+                QuickActionCard(icon: "chart.line.uptrend.xyaxis", title: "Progress Report", color: Color.theme.accent) {}
+                QuickActionCard(icon: "lightbulb", title: "Get Suggestions", color: Color.theme.info) {}
             }
         }
     }
@@ -113,9 +113,9 @@ struct AIDashboardView: View {
         // Simulate API call
         try? await Task.sleep(nanoseconds: 1_000_000_000)
         aiInsights = [
-            AIInsight(id: "1", title: "Session Pattern Detected", description: "3 clients showing similar anxiety patterns this week", type: .pattern),
-            AIInsight(id: "2", title: "Documentation Reminder", description: "5 sessions need progress notes", type: .reminder),
-            AIInsight(id: "3", title: "Treatment Suggestion", description: "CBT techniques recommended for Client A", type: .suggestion)
+            AIInsight(id: "1", therapistId: "therapist-1", type: .patternRecognition, title: "Session Pattern Detected", description: "3 clients showing similar anxiety patterns this week"),
+            AIInsight(id: "2", therapistId: "therapist-1", type: .sessionPrep, title: "Documentation Reminder", description: "5 sessions need progress notes"),
+            AIInsight(id: "3", therapistId: "therapist-1", type: .treatmentSuggestion, title: "Treatment Suggestion", description: "CBT techniques recommended for Client A")
         ]
         isLoading = false
     }

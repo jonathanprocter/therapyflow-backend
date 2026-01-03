@@ -93,14 +93,17 @@ class AIAssistantService: ObservableObject {
             }
         }
 
-        var body: [String: Any] = [
-            "message": message,
-            "includeContext": true
-        ]
-
-        if let clientId = clientId {
-            body["clientId"] = clientId
+        struct ChatRequest: Encodable {
+            let message: String
+            let includeContext: Bool
+            let clientId: String?
         }
+        
+        let body = ChatRequest(
+            message: message,
+            includeContext: true,
+            clientId: clientId
+        )
 
         let response: ChatResponse = try await APIClient.shared.request(
             endpoint: "/api/ai/chat",
@@ -141,17 +144,17 @@ class AIAssistantService: ObservableObject {
             }
         }
 
-        var body: [String: Any] = [
-            "query": query
-        ]
-
-        if !selectedVoiceId.isEmpty {
-            body["voiceId"] = selectedVoiceId
+        struct VoiceRequest: Encodable {
+            let query: String
+            let voiceId: String?
+            let context: [String: String]?
         }
-
-        if let clientId = clientId {
-            body["context"] = ["clientId": clientId]
-        }
+        
+        let body = VoiceRequest(
+            query: query,
+            voiceId: selectedVoiceId.isEmpty ? nil : selectedVoiceId,
+            context: clientId != nil ? ["clientId": clientId!] : nil
+        )
 
         let response: VoiceAssistantResponse = try await APIClient.shared.request(
             endpoint: "/api/voice/assistant",
@@ -159,7 +162,7 @@ class AIAssistantService: ObservableObject {
             body: body
         )
 
-        guard response.success ?? true, let text = response.text else {
+        guard response.success, let text = response.text else {
             let errorMessage = response.error ?? "Failed to get response"
             await MainActor.run {
                 lastError = errorMessage
@@ -171,12 +174,14 @@ class AIAssistantService: ObservableObject {
         if let base64Audio = response.audio {
             audioData = Data(base64Encoded: base64Audio)
         }
+        
+        let hasAudio = audioData != nil
 
         await MainActor.run {
             conversationHistory.append(ChatMessage(
                 role: "assistant",
                 content: text,
-                hasAudio: audioData != nil
+                hasAudio: hasAudio
             ))
         }
 
@@ -206,10 +211,18 @@ class AIAssistantService: ObservableObject {
     }
 
     func setVoice(_ voiceId: String) async throws {
-        let _: [String: Any] = try await APIClient.shared.request(
+        struct SetVoiceRequest: Encodable {
+            let voiceId: String
+        }
+        
+        struct SetVoiceResponse: Decodable {
+            let success: Bool
+        }
+        
+        let _: SetVoiceResponse = try await APIClient.shared.request(
             endpoint: "/api/voice/set-voice",
             method: .post,
-            body: ["voiceId": voiceId]
+            body: SetVoiceRequest(voiceId: voiceId)
         )
 
         await MainActor.run {

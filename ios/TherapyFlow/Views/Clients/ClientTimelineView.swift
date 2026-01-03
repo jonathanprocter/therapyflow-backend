@@ -128,8 +128,8 @@ struct ClientTimelineView: View {
                     ForEach(TimelineFilter.allCases, id: \.self) { filter in
                         FilterChip(
                             title: filter.rawValue,
-                            icon: filter.icon,
-                            isSelected: selectedFilter == filter
+                            isSelected: selectedFilter == filter,
+                            icon: filter.icon
                         ) {
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 selectedFilter = filter
@@ -333,8 +333,8 @@ struct TimelineSessionRow: View {
                 }
 
                 // Show progress note preview if exists
-                if let note = progressNote, !note.content.isEmpty {
-                    Text(note.content.prefix(100) + (note.content.count > 100 ? "..." : ""))
+                if let note = progressNote, let content = note.content, !content.isEmpty {
+                    Text(content.prefix(100) + (content.count > 100 ? "..." : ""))
                         .font(.caption)
                         .foregroundColor(Color.theme.tertiaryText)
                         .lineLimit(2)
