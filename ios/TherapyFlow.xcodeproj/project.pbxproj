@@ -74,6 +74,7 @@
 		8442C75D1F25491A80D0D842 /* CalendarSyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163F8271B3094D5B86070451 /* CalendarSyncView.swift */; };
 		934B6FE3DEE1437FA5D21245 /* ClientTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 279AED37B2D74F74838FA46F /* ClientTimelineView.swift */; };
 		C7599552A4304856B116F0BE /* AIAssistantService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863FC446C6CD40758ECA3576 /* AIAssistantService.swift */; };
+		211C6354F1A84E91BF7EAEB2 /* AIContextualHelperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3778AAEAAC548159697EBC6 /* AIContextualHelperView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
