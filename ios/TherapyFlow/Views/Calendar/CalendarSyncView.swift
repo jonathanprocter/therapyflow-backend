@@ -3,7 +3,7 @@ import SwiftUI
 struct CalendarSyncView: View {
     @State private var isSyncing = false
     @State private var lastSyncDate: Date? = nil
-    @State private var syncStatus: SyncStatus = .idle
+    @State private var syncStatus: CalendarSyncState = .idle
     @State private var eventsCount = 0
     
     var body: some View {
@@ -138,7 +138,7 @@ struct CalendarSyncView: View {
     }
 }
 
-enum SyncStatus {
+enum CalendarSyncState {
     case idle, syncing, success, error
     
     var title: String {

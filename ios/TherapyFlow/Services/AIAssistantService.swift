@@ -22,6 +22,7 @@ class AIAssistantService: ObservableObject {
         case clients
         case calendar
         case notes
+        case clientDetail(String)
     }
 
     struct ChatMessage: Identifiable, Codable {
@@ -319,14 +320,6 @@ class AIAssistantService: ObservableObject {
                 )
             ]
         }
-    }
-
-    enum AppContext {
-        case dashboard
-        case clients
-        case calendar
-        case notes
-        case clientDetail(String)
     }
 
     enum AIError: LocalizedError {
