@@ -110,7 +110,7 @@ struct AIContextualHelperView: View {
         .padding(.vertical, 12)
         .background(
             LinearGradient(
-                colors: [Color.theme.primary, Color.theme.secondary],
+                colors: [Color.theme.primary, Color.theme.accent],
                 startPoint: .leading,
                 endPoint: .trailing
             )
@@ -186,7 +186,7 @@ struct AIContextualHelperView: View {
 
             Button(action: {
                 withAnimation {
-                    dismissedSuggestions.insert(suggestion.id)
+                    _ = dismissedSuggestions.insert(suggestion.id)
                 }
             }) {
                 Image(systemName: "xmark")
