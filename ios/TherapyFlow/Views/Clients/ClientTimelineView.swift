@@ -143,8 +143,8 @@ struct ClientTimelineView: View {
                     // Pending Notes Toggle
                     FilterChip(
                         title: "Pending Notes Only",
-                        icon: "doc.badge.clock",
-                        isSelected: showOnlyPendingNotes
+                        isSelected: showOnlyPendingNotes,
+                        icon: "doc.badge.clock"
                     ) {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             showOnlyPendingNotes.toggle()
