@@ -225,7 +225,6 @@
 			isa = PBXGroup;
 			children = (
 				E745D371CFF449A88BFCE123 /* AI */,
-				963CFD34105F4EACA02BC84F /* AI */,
 				5000000000000020 /* Dashboard */,
 				5000000000000021 /* Clients */,
 				5000000000000022 /* Notes */,
@@ -251,18 +250,7 @@
 			path = AI;
 			sourceTree = "<group>";
 		};
-		963CFD34105F4EACA02BC84F /* AI */ = {
-			isa = PBXGroup;
-			children = (
-				E3778AAEAAC548159697EBC6 /* AIContextualHelperView.swift */,
-				019EA0F2EE3A4721B3C4A0BC /* AIDashboardView.swift */,
-				A267400692FF42808208E358 /* AINotesAssistantView.swift */,
-				7C2283A7EEE143FA873D6779 /* SessionTimelineView.swift */,
-			);
-			path = AI;
-			sourceTree = "<group>";
-		};
-		5000000000000013 /* Services */ = {
+5000000000000013 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				2000000000000020 /* APIClient.swift */,
