@@ -74,6 +74,8 @@
 		7A49FAE2C5FF4D10833C67B4 /* AIDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019EA0F2EE3A4721B3C4A0BC /* AIDashboardView.swift */; };
 		6F88B2415DDB44EBB7D0CC7F /* SessionTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2283A7EEE143FA873D6779 /* SessionTimelineView.swift */; };
 		8442C75D1F25491A80D0D842 /* CalendarSyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163F8271B3094D5B86070451 /* CalendarSyncView.swift */; };
+		934B6FE3DEE1437FA5D21245 /* ClientTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 279AED37B2D74F74838FA46F /* ClientTimelineView.swift */; };
+		FC5091E2853E44E7976DB2EC /* ClientTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D01F7B436EEB4CC4B4CBF12F /* ClientTimelineView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -147,6 +149,8 @@
 		019EA0F2EE3A4721B3C4A0BC /* AIDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDashboardView.swift; sourceTree = "<group>"; };
 		7C2283A7EEE143FA873D6779 /* SessionTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTimelineView.swift; sourceTree = "<group>"; };
 		163F8271B3094D5B86070451 /* CalendarSyncView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSyncView.swift; sourceTree = "<group>"; };
+		279AED37B2D74F74838FA46F /* ClientTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientTimelineView.swift; sourceTree = "<group>"; };
+		D01F7B436EEB4CC4B4CBF12F /* ClientTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientTimelineView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -327,6 +331,8 @@
 				2000000000000052 /* ClientFormView.swift */,
 				2000000000000053 /* ClientRowView.swift */,
 				2000000000000151 /* TherapeuticJourneyView.swift */,
+				279AED37B2D74F74838FA46F /* ClientTimelineView.swift */,
+				D01F7B436EEB4CC4B4CBF12F /* ClientTimelineView.swift */,
 			);
 			path = Clients;
 			sourceTree = "<group>";
@@ -556,6 +562,8 @@
 				6F88B2415DDB44EBB7D0CC7F /* SessionTimelineView.swift in Sources */,
 				7A49FAE2C5FF4D10833C67B4 /* AIDashboardView.swift in Sources */,
 				211C6354F1A84E91BF7EAEB2 /* AIContextualHelperView.swift in Sources */,
+				934B6FE3DEE1437FA5D21245 /* ClientTimelineView.swift in Sources */,
+				FC5091E2853E44E7976DB2EC /* ClientTimelineView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

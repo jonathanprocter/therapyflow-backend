@@ -144,34 +144,7 @@ struct QuickActionCard: View {
     }
 }
 
-struct AIInsight: Identifiable {
-    let id: String
-    let title: String
-    let description: String
-    let type: InsightType
-
-    enum InsightType {
-        case pattern, reminder, suggestion, alert
-
-        var color: Color {
-            switch self {
-            case .pattern: return Color.theme.primary
-            case .reminder: return Color.theme.accent
-            case .suggestion: return Color.theme.info
-            case .alert: return Color.theme.error
-            }
-        }
-
-        var icon: String {
-            switch self {
-            case .pattern: return "chart.bar"
-            case .reminder: return "bell"
-            case .suggestion: return "lightbulb"
-            case .alert: return "exclamationmark.triangle"
-            }
-        }
-    }
-}
+// AIInsight model is now imported from Models/AIInsight.swift
 
 struct InsightCard: View {
     let insight: AIInsight
