@@ -69,15 +69,11 @@
 		2000000000000143 /* DocumentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2000000000000156 /* DocumentDetailView.swift */; };
 		C251DB362F00B73900E620AB /* IntegrationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C251DB352F00B73900E620AB /* IntegrationsView.swift */; };
 		8DD394037B83472D924E2551 /* AINotesAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A267400692FF42808208E358 /* AINotesAssistantView.swift */; };
-		3863C6EEB086431790C1F0D1 /* AINotesAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60E324F831B40D5AAA97B07 /* AINotesAssistantView.swift */; };
-		211C6354F1A84E91BF7EAEB2 /* AIContextualHelperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3778AAEAAC548159697EBC6 /* AIContextualHelperView.swift */; };
 		7A49FAE2C5FF4D10833C67B4 /* AIDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019EA0F2EE3A4721B3C4A0BC /* AIDashboardView.swift */; };
 		6F88B2415DDB44EBB7D0CC7F /* SessionTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2283A7EEE143FA873D6779 /* SessionTimelineView.swift */; };
 		8442C75D1F25491A80D0D842 /* CalendarSyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163F8271B3094D5B86070451 /* CalendarSyncView.swift */; };
 		934B6FE3DEE1437FA5D21245 /* ClientTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 279AED37B2D74F74838FA46F /* ClientTimelineView.swift */; };
-		FC5091E2853E44E7976DB2EC /* ClientTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D01F7B436EEB4CC4B4CBF12F /* ClientTimelineView.swift */; };
 		C7599552A4304856B116F0BE /* AIAssistantService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863FC446C6CD40758ECA3576 /* AIAssistantService.swift */; };
-		A0F626563E6C44AA96601735 /* AIAssistantService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4CF32EF9BBF4AEEBDBFADCC /* AIAssistantService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -146,7 +142,6 @@
 		3000000000000001 /* TherapyFlow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TherapyFlow.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C251DB352F00B73900E620AB /* IntegrationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationsView.swift; sourceTree = "<group>"; };
 		A267400692FF42808208E358 /* AINotesAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotesAssistantView.swift; sourceTree = "<group>"; };
-		C60E324F831B40D5AAA97B07 /* AINotesAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotesAssistantView.swift; sourceTree = "<group>"; };
 		E3778AAEAAC548159697EBC6 /* AIContextualHelperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIContextualHelperView.swift; sourceTree = "<group>"; };
 		019EA0F2EE3A4721B3C4A0BC /* AIDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDashboardView.swift; sourceTree = "<group>"; };
 		7C2283A7EEE143FA873D6779 /* SessionTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTimelineView.swift; sourceTree = "<group>"; };
@@ -569,9 +564,8 @@
 				7A49FAE2C5FF4D10833C67B4 /* AIDashboardView.swift in Sources */,
 				211C6354F1A84E91BF7EAEB2 /* AIContextualHelperView.swift in Sources */,
 				934B6FE3DEE1437FA5D21245 /* ClientTimelineView.swift in Sources */,
-				FC5091E2853E44E7976DB2EC /* ClientTimelineView.swift in Sources */,
 				C7599552A4304856B116F0BE /* AIAssistantService.swift in Sources */,
-				A0F626563E6C44AA96601735 /* AIAssistantService.swift in Sources */,
+				8DD394037B83472D924E2551 /* AINotesAssistantView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
