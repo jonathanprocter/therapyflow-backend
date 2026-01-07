@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { serveStatic, log } from "./vite";
 import { integrateTherapeuticFeatures } from "./integrate-therapeutic";
 import { documentsRouter } from "./routes/documents.js";
 import { aiRouter } from "./routes/ai.js";
@@ -179,7 +179,9 @@ app.get("/api/health/deep", async (req, res) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
-    await setupVite(app, server);
+    // Dynamic import to avoid bundling vite in production
+    const { setupViteDev } = await import("./vite-dev.js");
+    await setupViteDev(app, server);
   } else {
     serveStatic(app);
   }
