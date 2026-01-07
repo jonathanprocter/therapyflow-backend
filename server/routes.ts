@@ -2760,9 +2760,13 @@ ${sourceText}
   // Store Google OAuth tokens from iOS app
   app.post("/api/integrations/google/store-tokens", async (req: any, res) => {
     try {
-      const { accessToken, refreshToken, expiresIn } = req.body;
+      // Support both camelCase and snake_case from iOS
+      const accessToken = req.body.accessToken || req.body.access_token;
+      const refreshToken = req.body.refreshToken || req.body.refresh_token;
+      const expiresIn = req.body.expiresIn || req.body.expires_in;
 
       if (!accessToken) {
+        console.log("store-tokens received:", JSON.stringify(req.body));
         return res.status(400).json({ error: "Access token is required" });
       }
 
