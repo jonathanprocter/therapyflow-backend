@@ -1,13 +1,8 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import pg from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-// Configure WebSocket for Neon
-neonConfig.webSocketConstructor = ws;
-
-// Disable fetch-based pooling to avoid connection issues
-neonConfig.poolQueryViaFetch = false;
+const { Pool } = pg;
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -15,14 +10,15 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Configure connection pool with timeout and retry settings
+// Configure connection pool for standard PostgreSQL (Render, etc.)
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Pool configuration to prevent timeout issues
+  // Pool configuration
   max: 10,                    // Maximum connections in the pool
   idleTimeoutMillis: 30000,   // Close idle connections after 30 seconds
   connectionTimeoutMillis: 10000, // Timeout after 10 seconds when acquiring connection
-  allowExitOnIdle: true,      // Allow process to exit when pool is idle
+  // SSL configuration for Render PostgreSQL
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
 // Handle pool errors gracefully - don't crash the process
@@ -47,4 +43,4 @@ const testConnection = async () => {
 // Run connection test but don't block startup
 testConnection();
 
-export const db = drizzle({ client: pool, schema });
+export const db = drizzle(pool, { schema });
