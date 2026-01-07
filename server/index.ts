@@ -20,29 +20,47 @@ import { reconcileCalendar } from './services/calendarReconciliation';
 // Global error handlers for unhandled promises and exceptions
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  
-  // Check if it's a Google Calendar API error and handle gracefully
+
+  // Check if it's a recoverable error and handle gracefully
   if (reason && typeof reason === 'object') {
-    const reasonStr = reason.toString();
-    if (reasonStr.includes('Google') || reasonStr.includes('calendar') || reasonStr.includes('oauth')) {
-      console.log('Google Calendar related error - continuing operation');
+    const reasonStr = String(reason);
+    // Don't crash on Google Calendar, database, or network errors
+    if (reasonStr.includes('Google') ||
+        reasonStr.includes('calendar') ||
+        reasonStr.includes('oauth') ||
+        reasonStr.includes('neon') ||
+        reasonStr.includes('database') ||
+        reasonStr.includes('ECONNREFUSED') ||
+        reasonStr.includes('timeout')) {
+      console.log('Recoverable error - continuing operation');
       return;
     }
   }
-  
+
   // Don't crash the process for other errors, just log them
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  
-  // Check if it's a Google Calendar API error
-  if (error.message && (error.message.includes('Google') || error.message.includes('calendar'))) {
-    console.log('Google Calendar related exception - continuing operation');
+  console.error('Uncaught Exception:', error?.message || error);
+
+  // Check if it's a recoverable error - don't crash on these
+  const errorMsg = error?.message || '';
+  const errorStr = String(error);
+
+  if (errorMsg.includes('Google') ||
+      errorMsg.includes('calendar') ||
+      errorMsg.includes('ErrorEvent') ||
+      errorMsg.includes('getter') ||
+      errorMsg.includes('neon') ||
+      errorMsg.includes('WebSocket') ||
+      errorStr.includes('ErrorEvent') ||
+      errorStr.includes('@neondatabase')) {
+    console.log('Database/API connection error - server continuing');
     return;
   }
-  
-  // For other uncaught exceptions, we should exit gracefully
+
+  // Only exit on truly fatal errors
+  console.error('Fatal error - exiting');
   process.exit(1);
 });
 
