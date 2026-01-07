@@ -18,21 +18,41 @@ export type AIAnalysisResult = z.infer<typeof aiAnalysisSchema>;
 /**
  * Robust AI Service with comprehensive error handling and fallbacks
  * Ensures clinical data is never lost due to AI service failures
+ * Prefers Anthropic when OpenAI key is missing or invalid
  */
 export class ClinicalAIService {
-  private openai: OpenAI;
+  private openai: OpenAI | null = null;
   private anthropic: Anthropic;
   private maxRetries = 3;
   private retryDelay = 1000; // Start with 1 second
+  private openaiAvailable = false;
+  private anthropicAvailable = false;
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    // Only initialize OpenAI if we have a valid-looking key
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (openaiKey && openaiKey.startsWith('sk-') && openaiKey.length > 20) {
+      try {
+        this.openai = new OpenAI({ apiKey: openaiKey });
+        this.openaiAvailable = true;
+        console.log('[AI] OpenAI initialized');
+      } catch (e) {
+        console.warn('[AI] OpenAI initialization failed, will use Anthropic only');
+      }
+    } else {
+      console.log('[AI] OpenAI key not configured or invalid, using Anthropic as primary');
+    }
 
-    this.anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+    // Initialize Anthropic (preferred provider)
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    if (anthropicKey && anthropicKey.length > 10) {
+      this.anthropic = new Anthropic({ apiKey: anthropicKey });
+      this.anthropicAvailable = true;
+      console.log('[AI] Anthropic initialized as primary AI provider');
+    } else {
+      this.anthropic = new Anthropic({ apiKey: 'placeholder' }); // Will fail gracefully
+      console.warn('[AI] Anthropic key not configured');
+    }
   }
 
   /**
@@ -64,32 +84,24 @@ export class ClinicalAIService {
     // Sanitize input to prevent prompt injection
     const sanitizedContent = this.sanitizeInput(content);
     
+    // Determine provider order based on availability
+    // Prefer Anthropic when OpenAI is not available
+    const providers: Array<'anthropic' | 'openai'> = [];
+    if (this.anthropicAvailable) providers.push('anthropic');
+    if (this.openaiAvailable) providers.push('openai');
+    if (providers.length === 0) providers.push('anthropic'); // Fallback attempt
+
     while (retryCount < this.maxRetries) {
+      // Alternate between available providers
+      const providerIndex = retryCount % providers.length;
+      const currentProvider = providers[providerIndex];
+
       try {
-        // Try OpenAI first
-        if (retryCount === 0 || retryCount === 2) {
-          console.log(`[AI] Attempting OpenAI analysis (attempt ${retryCount + 1})`);
-          
-          const result = await this.analyzeWithOpenAI(sanitizedContent, clientContext);
-          
-          return {
-            success: true,
-            analysis: result,
-            processingMetadata: {
-              provider: 'openai',
-              retryCount,
-              processingTime: Date.now() - startTime,
-              timestamp: new Date(),
-            },
-          };
-        }
-        
-        // Try Anthropic as fallback
-        if (retryCount === 1) {
+        if (currentProvider === 'anthropic') {
           console.log(`[AI] Attempting Anthropic analysis (attempt ${retryCount + 1})`);
-          
+
           const result = await this.analyzeWithAnthropic(sanitizedContent, clientContext);
-          
+
           return {
             success: true,
             analysis: result,
@@ -102,17 +114,45 @@ export class ClinicalAIService {
           };
         }
 
+        if (currentProvider === 'openai' && this.openai) {
+          console.log(`[AI] Attempting OpenAI analysis (attempt ${retryCount + 1})`);
+
+          const result = await this.analyzeWithOpenAI(sanitizedContent, clientContext);
+
+          return {
+            success: true,
+            analysis: result,
+            processingMetadata: {
+              provider: 'openai',
+              retryCount,
+              processingTime: Date.now() - startTime,
+              timestamp: new Date(),
+            },
+          };
+        }
+
       } catch (error: any) {
         lastError = error;
         retryCount++;
-        
+
+        // Check for API key errors and disable that provider
+        const errorMsg = error?.message || '';
+        if (errorMsg.includes('Invalid API Key') || errorMsg.includes('401')) {
+          if (currentProvider === 'openai') {
+            console.warn('[AI] OpenAI API key invalid, disabling OpenAI');
+            this.openaiAvailable = false;
+            const idx = providers.indexOf('openai');
+            if (idx > -1) providers.splice(idx, 1);
+          }
+        }
+
         console.error(`[AI] Analysis attempt ${retryCount} failed:`, {
           error: error?.message || 'Unknown error',
-          provider: retryCount === 1 ? 'openai' : 'anthropic',
+          provider: currentProvider,
           contentLength: content.length,
         });
 
-        if (retryCount < this.maxRetries) {
+        if (retryCount < this.maxRetries && providers.length > 0) {
           // Exponential backoff
           const delay = this.retryDelay * Math.pow(2, retryCount - 1);
           await this.sleep(delay);
@@ -143,11 +183,14 @@ export class ClinicalAIService {
    * OpenAI analysis implementation
    */
   private async analyzeWithOpenAI(
-    content: string, 
+    content: string,
     context?: any
   ): Promise<AIAnalysisResult> {
+    if (!this.openai) {
+      throw new Error('OpenAI client not initialized');
+    }
     const systemPrompt = this.buildClinicalPrompt(context);
-    
+
     const completion = await this.openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
