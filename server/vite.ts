@@ -27,18 +27,37 @@ export async function setupVite(_app: Express, _server: Server): Promise<void> {
 }
 
 export function serveStatic(app: Express) {
-  // In production, look for public folder relative to the bundled dist/index.js
-  const distPath = path.resolve(__dirname, "public");
+  // Try multiple paths to find the static files
+  const possiblePaths = [
+    path.resolve(process.cwd(), "dist", "public"),  // From project root
+    path.resolve(__dirname, "public"),               // Relative to bundle
+    path.resolve(process.cwd(), "public"),           // Direct public folder
+  ];
 
-  // Debug logging for path resolution
-  console.log(`[vite] __dirname: ${__dirname}`);
-  console.log(`[vite] Looking for static files at: ${distPath}`);
+  console.log(`[vite] Searching for static files...`);
   console.log(`[vite] process.cwd(): ${process.cwd()}`);
-  console.log(`[vite] Directory contents of __dirname:`, fs.existsSync(__dirname) ? fs.readdirSync(__dirname) : 'NOT FOUND');
+  console.log(`[vite] __dirname: ${__dirname}`);
 
-  if (!fs.existsSync(distPath)) {
+  let distPath: string | null = null;
+  for (const p of possiblePaths) {
+    console.log(`[vite] Checking: ${p} - exists: ${fs.existsSync(p)}`);
+    if (fs.existsSync(p)) {
+      distPath = p;
+      break;
+    }
+  }
+
+  // Also list what's in the project root dist folder for debugging
+  const rootDist = path.resolve(process.cwd(), "dist");
+  if (fs.existsSync(rootDist)) {
+    console.log(`[vite] Contents of ${rootDist}:`, fs.readdirSync(rootDist));
+  } else {
+    console.log(`[vite] Root dist folder does not exist: ${rootDist}`);
+  }
+
+  if (!distPath) {
     // In API-only mode (no frontend build), just log and skip static serving
-    console.log(`[vite] Static directory not found: ${distPath} - running in API-only mode`);
+    console.log(`[vite] No static directory found - running in API-only mode`);
 
     // Serve a simple message for root requests
     app.get("/", (_req, res) => {
@@ -50,6 +69,9 @@ export function serveStatic(app: Express) {
     });
     return;
   }
+
+  console.log(`[vite] ✅ Found static files at: ${distPath}`);
+  console.log(`[vite] Contents:`, fs.readdirSync(distPath));
 
   app.use(express.static(distPath));
 
