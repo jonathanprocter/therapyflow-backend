@@ -212,10 +212,13 @@ app.get("/api/health/deep", async (req, res) => {
   const port = parseInt(process.env.PORT || '5000', 10);
   
   // Initialize RealtimeVoiceService with WebSocket support
+  // Supports both OpenAI and ElevenLabs TTS providers
   const realtimeVoice = initializeRealtimeVoice({
     openaiApiKey: process.env.OPENAI_API_KEY || '',
     anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+    elevenlabsApiKey: process.env.ELEVENLABS_API_KEY,
     defaultVoice: 'nova',
+    defaultProvider: process.env.ELEVENLABS_API_KEY ? 'elevenlabs' : 'openai',
   });
 
   // Attach WebSocket server to HTTP server

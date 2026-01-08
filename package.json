@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
+    "@elevenlabs/elevenlabs-js": "^2.29.0",
     "@google-cloud/storage": "^7.16.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
@@ -75,6 +76,7 @@
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.6.0",
+    "esbuild": "^0.25.0",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "framer-motion": "^11.18.2",
@@ -96,7 +98,6 @@
     "openai": "^5.12.2",
     "openid-client": "^6.6.4",
     "p-queue": "^8.1.0",
-    "pg": "^8.13.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pdf-parse-fork": "^1.2.0",
@@ -104,6 +105,7 @@
     "pdf-poppler": "^0.2.1",
     "pdf2pic": "^3.2.0",
     "pdfjs-dist": "^5.4.54",
+    "pg": "^8.13.1",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -121,8 +123,7 @@
     "wouter": "^3.7.1",
     "ws": "^8.18.0",
     "zod": "^3.24.2",
-    "zod-validation-error": "^3.4.0",
-    "esbuild": "^0.25.0"
+    "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@replit/vite-plugin-cartographer": "^0.2.8",

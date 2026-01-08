@@ -2,32 +2,49 @@
  * Real-time Voice Service for TherapyFlow
  *
  * Provides:
- * 1. Text-to-Speech (TTS) using OpenAI
+ * 1. Text-to-Speech (TTS) using OpenAI or ElevenLabs
  * 2. WebSocket server for bidirectional real-time communication
  * 3. OpenAI Realtime API integration for barge-in mode
  */
 
 import OpenAI from 'openai';
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import WebSocket, { WebSocketServer } from 'ws';
 import { IncomingMessage, Server as HttpServer } from 'http';
 import { EventEmitter } from 'events';
 
-// Voice options for TTS
-export const VOICE_OPTIONS = [
-  { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced', premium: false },
-  { id: 'echo', name: 'Echo', description: 'Warm and conversational', premium: false },
-  { id: 'fable', name: 'Fable', description: 'Expressive and dynamic', premium: false },
-  { id: 'onyx', name: 'Onyx', description: 'Deep and authoritative', premium: false },
-  { id: 'nova', name: 'Nova', description: 'Friendly and upbeat', premium: false },
-  { id: 'shimmer', name: 'Shimmer', description: 'Clear and professional', premium: false },
+// OpenAI Voice options for TTS
+export const OPENAI_VOICE_OPTIONS = [
+  { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced', premium: false, provider: 'openai' },
+  { id: 'echo', name: 'Echo', description: 'Warm and conversational', premium: false, provider: 'openai' },
+  { id: 'fable', name: 'Fable', description: 'Expressive and dynamic', premium: false, provider: 'openai' },
+  { id: 'onyx', name: 'Onyx', description: 'Deep and authoritative', premium: false, provider: 'openai' },
+  { id: 'nova', name: 'Nova', description: 'Friendly and upbeat', premium: false, provider: 'openai' },
+  { id: 'shimmer', name: 'Shimmer', description: 'Clear and professional', premium: false, provider: 'openai' },
 ] as const;
 
+// ElevenLabs Voice options for TTS (premium voices)
+export const ELEVENLABS_VOICE_OPTIONS = [
+  { id: 'Rachel', name: 'Rachel', description: 'Calm and professional', premium: true, provider: 'elevenlabs', voiceId: '21m00Tcm4TlvDq8ikWAM' },
+  { id: 'Domi', name: 'Domi', description: 'Strong and confident', premium: true, provider: 'elevenlabs', voiceId: 'AZnzlk1XvdvUeBnXmlld' },
+  { id: 'Bella', name: 'Bella', description: 'Soft and gentle', premium: true, provider: 'elevenlabs', voiceId: 'EXAVITQu4vr4xnSDxMaL' },
+  { id: 'Antoni', name: 'Antoni', description: 'Warm and well-rounded', premium: true, provider: 'elevenlabs', voiceId: 'ErXwobaYiN019PkySvjV' },
+  { id: 'Elli', name: 'Elli', description: 'Emotional and expressive', premium: true, provider: 'elevenlabs', voiceId: 'MF3mGyEYCl7XYWbV9V6O' },
+  { id: 'Josh', name: 'Josh', description: 'Deep and narrative', premium: true, provider: 'elevenlabs', voiceId: 'TxGEqnHWrfWFTfGW9XjX' },
+] as const;
+
+// Combined voice options
+export const VOICE_OPTIONS = [...OPENAI_VOICE_OPTIONS, ...ELEVENLABS_VOICE_OPTIONS];
+
 export type VoiceId = typeof VOICE_OPTIONS[number]['id'];
+export type TTSProvider = 'openai' | 'elevenlabs';
 
 interface RealtimeConfig {
   openaiApiKey: string;
   anthropicApiKey?: string;
+  elevenlabsApiKey?: string;
   defaultVoice?: VoiceId;
+  defaultProvider?: TTSProvider;
 }
 
 interface VoiceSession {
@@ -36,6 +53,7 @@ interface VoiceSession {
   realtimeWs?: WebSocket;
   isBargeInEnabled: boolean;
   currentVoice: VoiceId;
+  currentProvider: TTSProvider;
   isPlaying: boolean;
   therapistId: string;
   clientContext?: {
@@ -50,10 +68,12 @@ interface VoiceSession {
  */
 export class RealtimeVoiceService extends EventEmitter {
   private openai: OpenAI | null = null;
+  private elevenlabs: ElevenLabsClient | null = null;
   private wss: WebSocketServer | null = null;
   private sessions: Map<string, VoiceSession> = new Map();
   private config: RealtimeConfig;
   private isInitialized = false;
+  private defaultProvider: TTSProvider = 'openai';
 
   constructor(config: RealtimeConfig) {
     super();
@@ -63,26 +83,55 @@ export class RealtimeVoiceService extends EventEmitter {
       this.openai = new OpenAI({ apiKey: config.openaiApiKey });
       this.isInitialized = true;
       console.log('[RealtimeVoice] Service initialized with OpenAI');
-    } else {
-      console.warn('[RealtimeVoice] OpenAI API key not provided - TTS disabled');
+    }
+
+    if (config.elevenlabsApiKey) {
+      this.elevenlabs = new ElevenLabsClient({ apiKey: config.elevenlabsApiKey });
+      this.isInitialized = true;
+      this.defaultProvider = config.defaultProvider || 'elevenlabs';
+      console.log('[RealtimeVoice] Service initialized with ElevenLabs');
+    }
+
+    if (!this.isInitialized) {
+      console.warn('[RealtimeVoice] No TTS API keys provided - TTS disabled');
     }
   }
 
   /**
-   * Generate audio from text using OpenAI TTS
+   * Generate audio from text using OpenAI or ElevenLabs TTS
    */
-  async generateSpeech(text: string, voiceId: VoiceId = 'nova'): Promise<Buffer | null> {
+  async generateSpeech(text: string, voiceId: VoiceId = 'nova', provider?: TTSProvider): Promise<Buffer | null> {
+    // Determine which provider to use
+    const voiceOption = VOICE_OPTIONS.find(v => v.id === voiceId);
+    const useProvider = provider || (voiceOption?.provider as TTSProvider) || this.defaultProvider;
+
+    if (useProvider === 'elevenlabs' && this.elevenlabs) {
+      return this.generateElevenLabsSpeech(text, voiceId);
+    } else if (this.openai) {
+      return this.generateOpenAISpeech(text, voiceId);
+    }
+
+    console.error('[RealtimeVoice] No TTS provider available');
+    return null;
+  }
+
+  /**
+   * Generate audio using OpenAI TTS
+   */
+  private async generateOpenAISpeech(text: string, voiceId: VoiceId): Promise<Buffer | null> {
     if (!this.openai) {
       console.error('[RealtimeVoice] OpenAI not initialized');
       return null;
     }
 
     try {
-      console.log(`[RealtimeVoice] Generating speech with voice: ${voiceId}`);
+      // Map to valid OpenAI voice or default to nova
+      const openaiVoice = OPENAI_VOICE_OPTIONS.find(v => v.id === voiceId)?.id || 'nova';
+      console.log(`[RealtimeVoice] Generating speech with OpenAI voice: ${openaiVoice}`);
 
       const response = await this.openai.audio.speech.create({
         model: 'tts-1',
-        voice: voiceId,
+        voice: openaiVoice as any,
         input: text,
         response_format: 'mp3',
       });
@@ -90,10 +139,55 @@ export class RealtimeVoiceService extends EventEmitter {
       const arrayBuffer = await response.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      console.log(`[RealtimeVoice] Generated ${buffer.length} bytes of audio`);
+      console.log(`[RealtimeVoice] Generated ${buffer.length} bytes of audio (OpenAI)`);
       return buffer;
     } catch (error) {
-      console.error('[RealtimeVoice] TTS generation failed:', error);
+      console.error('[RealtimeVoice] OpenAI TTS generation failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Generate audio using ElevenLabs TTS
+   */
+  private async generateElevenLabsSpeech(text: string, voiceId: VoiceId): Promise<Buffer | null> {
+    if (!this.elevenlabs) {
+      console.error('[RealtimeVoice] ElevenLabs not initialized');
+      return null;
+    }
+
+    try {
+      // Get ElevenLabs voice ID or use default Rachel
+      const elevenLabsVoice = ELEVENLABS_VOICE_OPTIONS.find(v => v.id === voiceId);
+      const voiceIdToUse = elevenLabsVoice?.voiceId || '21m00Tcm4TlvDq8ikWAM'; // Rachel as default
+
+      console.log(`[RealtimeVoice] Generating speech with ElevenLabs voice: ${voiceId} (${voiceIdToUse})`);
+
+      const audioStream = await this.elevenlabs.textToSpeech.convert(voiceIdToUse, {
+        text,
+        modelId: 'eleven_monolingual_v1',
+        outputFormat: 'mp3_44100_128',
+      });
+
+      // Collect all chunks from the stream
+      const chunks: Uint8Array[] = [];
+      const reader = audioStream.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) chunks.push(value);
+      }
+      const buffer = Buffer.concat(chunks.map(chunk => Buffer.from(chunk)));
+
+      console.log(`[RealtimeVoice] Generated ${buffer.length} bytes of audio (ElevenLabs)`);
+      return buffer;
+    } catch (error) {
+      console.error('[RealtimeVoice] ElevenLabs TTS generation failed:', error);
+      // Fallback to OpenAI if ElevenLabs fails
+      if (this.openai) {
+        console.log('[RealtimeVoice] Falling back to OpenAI TTS');
+        return this.generateOpenAISpeech(text, voiceId);
+      }
       return null;
     }
   }
@@ -143,6 +237,7 @@ export class RealtimeVoiceService extends EventEmitter {
         ws,
         isBargeInEnabled: false,
         currentVoice: this.config.defaultVoice || 'nova',
+        currentProvider: this.defaultProvider,
         isPlaying: false,
         therapistId: 'dr-jonathan-procter', // Default for single-therapist mode
       };
@@ -155,8 +250,12 @@ export class RealtimeVoiceService extends EventEmitter {
         sessionId,
         config: {
           voices: VOICE_OPTIONS,
+          openaiVoices: OPENAI_VOICE_OPTIONS,
+          elevenlabsVoices: ELEVENLABS_VOICE_OPTIONS,
           currentVoice: session.currentVoice,
+          currentProvider: session.currentProvider,
           bargeInEnabled: session.isBargeInEnabled,
+          elevenlabsAvailable: !!this.elevenlabs,
         },
       });
 
@@ -278,6 +377,14 @@ export class RealtimeVoiceService extends EventEmitter {
     if (message.voice && VOICE_OPTIONS.some(v => v.id === message.voice)) {
       session.currentVoice = message.voice;
     }
+    if (message.provider && (message.provider === 'openai' || message.provider === 'elevenlabs')) {
+      // Only allow elevenlabs if configured
+      if (message.provider === 'elevenlabs' && this.elevenlabs) {
+        session.currentProvider = message.provider;
+      } else if (message.provider === 'openai') {
+        session.currentProvider = message.provider;
+      }
+    }
     if (typeof message.bargeIn === 'boolean') {
       session.isBargeInEnabled = message.bargeIn;
     }
@@ -289,7 +396,9 @@ export class RealtimeVoiceService extends EventEmitter {
       type: 'configured',
       config: {
         voice: session.currentVoice,
+        provider: session.currentProvider,
         bargeInEnabled: session.isBargeInEnabled,
+        elevenlabsAvailable: !!this.elevenlabs,
       },
     });
   }
@@ -298,7 +407,7 @@ export class RealtimeVoiceService extends EventEmitter {
    * Handle speak request - generate TTS and send audio
    */
   private async handleSpeak(session: VoiceSession, message: any): Promise<void> {
-    const { text, voice } = message;
+    const { text, voice, provider } = message;
 
     if (!text) {
       this.sendToClient(session.ws, {
@@ -312,7 +421,8 @@ export class RealtimeVoiceService extends EventEmitter {
     this.sendToClient(session.ws, { type: 'speaking_start' });
 
     const voiceId = voice || session.currentVoice;
-    const audioBuffer = await this.generateSpeech(text, voiceId);
+    const useProvider = provider || session.currentProvider;
+    const audioBuffer = await this.generateSpeech(text, voiceId, useProvider);
 
     if (audioBuffer) {
       // Send audio as base64
