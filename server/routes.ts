@@ -1622,7 +1622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get all sessions and clients for matching
-      const sessions = await storage.getSessions(therapistId);
+      const sessions = await storage.getAllHistoricalSessions(therapistId);
       const allClients = await storage.getClients(therapistId);
 
       // Build a map of client names to client IDs for matching
