@@ -2110,10 +2110,10 @@ ${contextInfo ? `\nCurrent context:\n${contextInfo}` : ''}`,
     }
   });
 
-  // Voice assistant endpoint for iOS app
+  // Voice assistant endpoint for iOS app with TTS support
   app.post("/api/voice/assistant", async (req: any, res) => {
     try {
-      const { query, voiceId, context } = req.body;
+      const { query, voiceId = 'nova', context, includeTTS = true } = req.body;
 
       if (!query || typeof query !== 'string') {
         return res.status(400).json({
@@ -2164,13 +2164,37 @@ Help with practice management, client insights, and clinical questions.`,
       const aiResult = await anthropicResponse.json() as any;
       const responseText = aiResult.content?.[0]?.text || "I couldn't process that request.";
 
-      // TODO: If ElevenLabs is configured, generate audio here
-      // For now, return text only
+      // Generate TTS audio using OpenAI
+      let audioBase64: string | null = null;
+      if (includeTTS && process.env.OPENAI_API_KEY) {
+        try {
+          const { getRealtimeVoiceService } = await import('./services/realtimeVoice');
+          const voiceService = getRealtimeVoiceService();
+
+          if (voiceService) {
+            const validVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'] as const;
+            const selectedVoice = validVoices.includes(voiceId as any) ? voiceId : 'nova';
+            const audioBuffer = await voiceService.generateSpeech(responseText, selectedVoice as any);
+
+            if (audioBuffer) {
+              audioBase64 = audioBuffer.toString('base64');
+              console.log(`[Voice] Generated ${audioBuffer.length} bytes of TTS audio`);
+            }
+          } else {
+            console.warn('[Voice] RealtimeVoiceService not initialized');
+          }
+        } catch (ttsError) {
+          console.error('[Voice] TTS generation failed:', ttsError);
+          // Continue without audio - text response is still valid
+        }
+      }
 
       res.json({
         success: true,
         text: responseText,
-        audio: null // Audio generation would go here
+        audio: audioBase64,
+        audioFormat: audioBase64 ? 'mp3' : null,
+        voiceId: voiceId
       });
     } catch (error) {
       console.error("Error in voice assistant:", error);

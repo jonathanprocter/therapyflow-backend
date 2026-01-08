@@ -16,6 +16,7 @@ import { standardRateLimit, aiProcessingRateLimit } from './middleware/rateLimit
 // Import services
 import { pdfService, getPdfServiceStatus } from './services/pdfService';
 import { reconcileCalendar } from './services/calendarReconciliation';
+import { initializeRealtimeVoice, getRealtimeVoiceService } from './services/realtimeVoice';
 
 // Global error handlers for unhandled promises and exceptions
 process.on('unhandledRejection', (reason, promise) => {
@@ -210,6 +211,17 @@ app.get("/api/health/deep", async (req, res) => {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   
+  // Initialize RealtimeVoiceService with WebSocket support
+  const realtimeVoice = initializeRealtimeVoice({
+    openaiApiKey: process.env.OPENAI_API_KEY || '',
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+    defaultVoice: 'nova',
+  });
+
+  // Attach WebSocket server to HTTP server
+  realtimeVoice.initializeWebSocket(server);
+  log("🎤 Real-time voice WebSocket server initialized on /ws/voice");
+
   server.listen({
     port,
     host: "0.0.0.0",
