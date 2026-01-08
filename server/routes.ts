@@ -1595,6 +1595,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Link documents to sessions by parsing date from filename
+  // Documents may already have clientId but missing sessionId
+  app.post("/api/documents/link-to-sessions", async (req: any, res) => {
+    try {
+      const therapistId = req.therapistId || 'dr-jonathan-procter';
+
+      // Get all documents
+      const allDocuments = await storage.getDocumentsByTherapist(therapistId);
+
+      // Find documents that have clientId but no sessionId in metadata
+      const documentsNeedingSession = allDocuments.filter(doc => {
+        const metadata = doc.metadata as Record<string, unknown> || {};
+        return doc.clientId && !metadata.linkedSessionId && !metadata.sessionId;
+      });
+
+      console.log(`Found ${documentsNeedingSession.length} documents that need session linking`);
+
+      if (documentsNeedingSession.length === 0) {
+        return res.json({
+          success: true,
+          message: "All documents already linked to sessions",
+          processed: 0,
+          linked: 0
+        });
+      }
+
+      // Get all sessions for matching
+      const sessions = await storage.getSessions(therapistId);
+
+      const results = {
+        processed: 0,
+        linked: 0,
+        alreadyLinked: 0,
+        noMatchFound: 0,
+        errors: [] as string[]
+      };
+
+      // Date parsing patterns for filenames like:
+      // "Amberly Comeau Appointment 4-17-2024 1000 hrs - Progress Note.docx"
+      // "John Best Appointment 12-5-2024 900 hrs - Progress Note.docx"
+      const datePatterns = [
+        /(\d{1,2})-(\d{1,2})-(\d{4})/,  // M-D-YYYY or MM-DD-YYYY
+        /(\d{4})-(\d{1,2})-(\d{1,2})/,  // YYYY-M-D or YYYY-MM-DD
+        /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // M/D/YYYY
+        /(\d{1,2})\.(\d{1,2})\.(\d{4})/, // M.D.YYYY
+      ];
+
+      for (const doc of documentsNeedingSession) {
+        try {
+          results.processed++;
+
+          // Try to extract date from filename
+          let extractedDate: Date | null = null;
+
+          for (const pattern of datePatterns) {
+            const match = doc.fileName.match(pattern);
+            if (match) {
+              let year: number, month: number, day: number;
+
+              if (pattern.source.startsWith('(\\d{4})')) {
+                // YYYY-M-D format
+                year = parseInt(match[1]);
+                month = parseInt(match[2]);
+                day = parseInt(match[3]);
+              } else {
+                // M-D-YYYY format
+                month = parseInt(match[1]);
+                day = parseInt(match[2]);
+                year = parseInt(match[3]);
+              }
+
+              extractedDate = new Date(year, month - 1, day);
+              break;
+            }
+          }
+
+          if (!extractedDate) {
+            // No date found in filename, skip
+            results.noMatchFound++;
+            continue;
+          }
+
+          // Find sessions for this client on or near the extracted date
+          const clientSessions = sessions.filter(s => s.clientId === doc.clientId);
+
+          // Look for exact date match first, then within 1 day
+          let matchingSession = clientSessions.find(s => {
+            const sessionDate = new Date(s.scheduledAt);
+            return sessionDate.toDateString() === extractedDate!.toDateString();
+          });
+
+          if (!matchingSession) {
+            // Try finding within 1 day
+            const dayBefore = new Date(extractedDate);
+            dayBefore.setDate(dayBefore.getDate() - 1);
+            const dayAfter = new Date(extractedDate);
+            dayAfter.setDate(dayAfter.getDate() + 1);
+
+            matchingSession = clientSessions.find(s => {
+              const sessionDate = new Date(s.scheduledAt);
+              return sessionDate >= dayBefore && sessionDate <= dayAfter;
+            });
+          }
+
+          if (matchingSession) {
+            // Update document with session link
+            const metadata = (doc.metadata as Record<string, unknown>) || {};
+            await storage.updateDocument(doc.id, {
+              status: 'processed',
+              metadata: {
+                ...metadata,
+                linkedSessionId: matchingSession.id,
+                sessionId: matchingSession.id,
+                sessionDate: matchingSession.scheduledAt
+              }
+            });
+            results.linked++;
+            console.log(`Linked "${doc.fileName}" to session on ${new Date(matchingSession.scheduledAt).toLocaleDateString()}`);
+          } else {
+            results.noMatchFound++;
+            console.log(`No session found for "${doc.fileName}" on ${extractedDate.toLocaleDateString()}`);
+          }
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          results.errors.push(`[${doc.fileName}] ${errorMsg}`);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Processed ${results.processed} documents, linked ${results.linked} to sessions`,
+        ...results
+      });
+    } catch (error) {
+      console.error("Error linking documents to sessions:", error);
+      res.status(500).json({ error: "Failed to link documents to sessions" });
+    }
+  });
+
   // Batch Processing endpoint
   app.post("/api/documents/process-batch", upload.array('documents', 10), async (req: any, res) => {
     try {
