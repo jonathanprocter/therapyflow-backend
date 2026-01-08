@@ -1621,15 +1621,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get all sessions for matching
+      // Get all sessions and clients for matching
       const sessions = await storage.getSessions(therapistId);
+      const allClients = await storage.getClients(therapistId);
+
+      // Build a map of client names to client IDs for matching
+      const clientNameToIdMap = new Map<string, string>();
+      for (const client of allClients) {
+        // Add full name
+        clientNameToIdMap.set(client.name.toLowerCase(), client.id);
+        // Add variations (first name only, last name only)
+        const nameParts = client.name.toLowerCase().split(' ');
+        if (nameParts.length >= 2) {
+          clientNameToIdMap.set(nameParts[0], client.id); // First name
+          clientNameToIdMap.set(nameParts[nameParts.length - 1], client.id); // Last name
+        }
+      }
 
       const results = {
         processed: 0,
         linked: 0,
         alreadyLinked: 0,
         noMatchFound: 0,
-        errors: [] as string[]
+        errors: [] as string[],
+        debugInfo: [] as string[]
       };
 
       // Date parsing patterns for filenames like:
@@ -1677,8 +1692,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
 
-          // Find sessions for this client on or near the extracted date
-          const clientSessions = sessions.filter(s => s.clientId === doc.clientId);
+          // Extract client name from document filename for matching
+          // Filename format: "Chris Balabanick Appointment 4-17-2024..."
+          const docNameParts = doc.fileName.split(' Appointment ')[0];
+          const docClientName = docNameParts?.toLowerCase().trim();
+
+          // Look up client ID by name from the filename
+          let targetClientId = doc.clientId;
+          if (docClientName) {
+            const matchedClientId = clientNameToIdMap.get(docClientName);
+            if (matchedClientId) {
+              targetClientId = matchedClientId;
+            } else {
+              // Try partial matching by first or last name
+              for (const client of allClients) {
+                const clientNameLower = client.name.toLowerCase();
+                if (clientNameLower.includes(docClientName) || docClientName.includes(clientNameLower)) {
+                  targetClientId = client.id;
+                  break;
+                }
+                // Match by first name + last name
+                const docParts = docClientName.split(' ');
+                const clientParts = clientNameLower.split(' ');
+                if (docParts.length >= 2 && clientParts.length >= 2) {
+                  // Match if first names start same and last names match
+                  if (clientParts[0].startsWith(docParts[0].substring(0, 4)) &&
+                      clientParts[clientParts.length - 1] === docParts[docParts.length - 1]) {
+                    targetClientId = client.id;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+
+          // Find sessions for this client
+          const clientSessions = sessions.filter(s => s.clientId === targetClientId);
 
           // Look for exact date match first, then within 1 day
           let matchingSession = clientSessions.find(s => {
@@ -1697,6 +1746,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const sessionDate = new Date(s.scheduledAt);
               return sessionDate >= dayBefore && sessionDate <= dayAfter;
             });
+          }
+
+          // Debug info for first few failures
+          if (!matchingSession && results.debugInfo.length < 5) {
+            results.debugInfo.push(`Doc: ${doc.fileName.substring(0, 50)}... docClientId: ${doc.clientId}, targetClientId: ${targetClientId}, clientName: ${docClientName}, sessionsFound: ${clientSessions.length}, date: ${extractedDate.toLocaleDateString()}`);
           }
 
           if (matchingSession) {
