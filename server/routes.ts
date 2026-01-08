@@ -1797,6 +1797,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create sessions from document dates - for historical data that wasn't synced from calendar
+  app.post("/api/documents/create-sessions-from-docs", async (req: any, res) => {
+    try {
+      const therapistId = req.therapistId || 'dr-jonathan-procter';
+
+      // Get all documents
+      const allDocuments = await storage.getDocumentsByTherapist(therapistId);
+      const allClients = await storage.getClients(therapistId);
+
+      // Build a map of client names to client objects for matching
+      const clientNameToClient = new Map<string, typeof allClients[0]>();
+      for (const client of allClients) {
+        clientNameToClient.set(client.name.toLowerCase(), client);
+        // Add variations
+        const nameParts = client.name.toLowerCase().split(' ');
+        if (nameParts.length >= 2) {
+          clientNameToClient.set(nameParts[0], client);
+          clientNameToClient.set(nameParts[nameParts.length - 1], client);
+        }
+      }
+
+      const datePatterns = [
+        /(\d{1,2})-(\d{1,2})-(\d{4})/,  // M-D-YYYY
+        /(\d{4})-(\d{1,2})-(\d{1,2})/,  // YYYY-M-D
+      ];
+
+      const results = {
+        processed: 0,
+        sessionsCreated: 0,
+        alreadyExist: 0,
+        errors: [] as string[]
+      };
+
+      for (const doc of allDocuments) {
+        try {
+          results.processed++;
+
+          // Extract date from filename
+          let extractedDate: Date | null = null;
+          for (const pattern of datePatterns) {
+            const match = doc.fileName.match(pattern);
+            if (match) {
+              let year: number, month: number, day: number;
+              if (pattern.source.startsWith('(\\d{4})')) {
+                year = parseInt(match[1]);
+                month = parseInt(match[2]);
+                day = parseInt(match[3]);
+              } else {
+                month = parseInt(match[1]);
+                day = parseInt(match[2]);
+                year = parseInt(match[3]);
+              }
+              extractedDate = new Date(year, month - 1, day, 12, 0, 0); // Set to noon
+              break;
+            }
+          }
+
+          if (!extractedDate || extractedDate.getFullYear() > 2030) continue;
+
+          // Find or determine client
+          const docNameParts = doc.fileName.split(' Appointment ')[0];
+          const docClientName = docNameParts?.toLowerCase().trim();
+          let clientId = doc.clientId;
+
+          if (docClientName) {
+            const matchedClient = clientNameToClient.get(docClientName);
+            if (matchedClient) {
+              clientId = matchedClient.id;
+            } else {
+              // Try partial matching
+              for (const client of allClients) {
+                const clientNameLower = client.name.toLowerCase();
+                if (clientNameLower.includes(docClientName) || docClientName.includes(clientNameLower)) {
+                  clientId = client.id;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (!clientId) continue;
+
+          // Check if session already exists for this client on this date
+          const existingSessions = await storage.getSessionsByDate(therapistId, extractedDate);
+          const alreadyExists = existingSessions.some(s => s.clientId === clientId);
+
+          if (alreadyExists) {
+            results.alreadyExist++;
+            continue;
+          }
+
+          // Create the session
+          const sessionId = `doc-${doc.id.substring(0, 8)}`;
+          await storage.createSession({
+            id: sessionId,
+            clientId,
+            therapistId,
+            scheduledAt: extractedDate,
+            duration: 60,
+            sessionType: 'individual',
+            status: 'completed',
+            notes: `Created from document: ${doc.fileName}`,
+            isSimplePracticeEvent: false
+          });
+
+          results.sessionsCreated++;
+
+          // Update document with session link
+          const metadata = (doc.metadata as Record<string, unknown>) || {};
+          await storage.updateDocument(doc.id, {
+            status: 'processed',
+            metadata: {
+              ...metadata,
+              linkedSessionId: sessionId,
+              sessionId: sessionId,
+              sessionDate: extractedDate.toISOString()
+            }
+          });
+
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          results.errors.push(`[${doc.fileName}] ${errorMsg}`);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Created ${results.sessionsCreated} sessions from ${results.processed} documents`,
+        ...results
+      });
+    } catch (error) {
+      console.error("Error linking documents to sessions:", error);
+      res.status(500).json({ error: "Failed to link documents to sessions" });
+    }
+  });
+
   // Batch Processing endpoint
   app.post("/api/documents/process-batch", upload.array('documents', 10), async (req: any, res) => {
     try {
