@@ -4,7 +4,7 @@ services:
     runtime: node
     region: virginia
     plan: starter
-    buildCommand: npm install && cd client && npm install && cd .. && npm run build:full
+    buildCommand: npm install && npm run build:render
     startCommand: npm start
     healthCheckPath: /api/ai/health
     envVars:
