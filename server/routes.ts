@@ -1777,10 +1777,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Also count sessions per client for debugging
+      const sessionCountByClient = new Map<string, number>();
+      for (const session of sessions) {
+        sessionCountByClient.set(session.clientId, (sessionCountByClient.get(session.clientId) || 0) + 1);
+      }
+
       res.json({
         success: true,
         message: `Processed ${results.processed} documents, linked ${results.linked} to sessions`,
-        ...results
+        ...results,
+        totalSessions: sessions.length,
+        totalClients: allClients.length,
+        sampleClientSessions: Array.from(sessionCountByClient.entries()).slice(0, 5)
       });
     } catch (error) {
       console.error("Error linking documents to sessions:", error);
