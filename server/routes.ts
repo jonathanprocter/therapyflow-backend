@@ -1112,13 +1112,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (updates.content) {
         const originalContent = updates.content;
         updates.content = ClinicalEncryption.encrypt(originalContent);
-        
+
         // Generate AI tags and embedding if content was updated
-        const aiTags = await aiService.generateClinicalTags(originalContent);
-        const embedding = await aiService.generateEmbedding(originalContent);
-        updates.aiTags = aiTags.map(tag => tag.name);
-        updates.embedding = embedding;
-        
+        // Make these non-blocking to prevent update failures due to AI service issues
+        try {
+          const [aiTags, embedding] = await Promise.all([
+            aiService.generateClinicalTags(originalContent).catch(err => {
+              console.warn("Failed to generate clinical tags (non-blocking):", err.message);
+              return [];
+            }),
+            aiService.generateEmbedding(originalContent).catch(err => {
+              console.warn("Failed to generate embedding (non-blocking):", err.message);
+              return [];
+            })
+          ]);
+
+          if (aiTags.length > 0) {
+            updates.aiTags = aiTags.map(tag => tag.name);
+          }
+          if (embedding.length > 0) {
+            updates.embedding = embedding;
+          }
+        } catch (aiError) {
+          // Log but don't fail the update if AI services are unavailable
+          console.warn("AI enrichment failed (note will still be saved):", aiError);
+        }
+
         // If content is being added to a placeholder, update status
         if (existingNote.isPlaceholder) {
           updates.isPlaceholder = false;
@@ -1438,6 +1457,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching processing status:', error);
       res.status(500).json({ error: 'Failed to fetch processing status' });
+    }
+  });
+
+  // Reprocess unlinked documents - match to clients and sessions
+  app.post("/api/documents/reprocess-unlinked", async (req: any, res) => {
+    try {
+      const therapistId = req.therapistId || 'dr-jonathan-procter';
+
+      // Get all documents that don't have a client linked
+      const allDocuments = await storage.getDocumentsByTherapist(therapistId);
+      const unlinkedDocuments = allDocuments.filter(doc =>
+        !doc.clientId || doc.clientId === ''
+      );
+
+      console.log(`Found ${unlinkedDocuments.length} unlinked documents to reprocess`);
+
+      if (unlinkedDocuments.length === 0) {
+        return res.json({
+          success: true,
+          message: "No unlinked documents found",
+          processed: 0,
+          linked: 0,
+          needsReview: 0,
+          errors: []
+        });
+      }
+
+      // Get all clients and sessions for matching
+      const clients = await storage.getClients(therapistId);
+      const sessions = await storage.getSessions(therapistId);
+
+      const results = {
+        processed: 0,
+        linked: 0,
+        needsReview: 0,
+        errors: [] as string[]
+      };
+
+      for (const doc of unlinkedDocuments) {
+        try {
+          results.processed++;
+
+          // Try to match client from filename or extracted text
+          let matchedClient = null;
+          let matchConfidence = 0;
+
+          // Check filename for client name
+          const docNameLower = doc.fileName.toLowerCase();
+          for (const client of clients) {
+            const clientNameParts = client.name.toLowerCase().split(' ');
+            const hasNameMatch = clientNameParts.some(part =>
+              part.length > 2 && docNameLower.includes(part)
+            );
+            if (hasNameMatch) {
+              matchedClient = client;
+              matchConfidence = 0.7;
+              break;
+            }
+          }
+
+          // If no match from filename, try extracted text
+          if (!matchedClient && doc.extractedText) {
+            const textLower = doc.extractedText.toLowerCase();
+            for (const client of clients) {
+              if (textLower.includes(client.name.toLowerCase())) {
+                matchedClient = client;
+                matchConfidence = 0.9;
+                break;
+              }
+              // Try partial name match
+              const clientNameParts = client.name.toLowerCase().split(' ');
+              const hasNameMatch = clientNameParts.some(part =>
+                part.length > 2 && textLower.includes(part)
+              );
+              if (hasNameMatch) {
+                matchedClient = client;
+                matchConfidence = 0.6;
+                break;
+              }
+            }
+          }
+
+          if (matchedClient && matchConfidence >= 0.6) {
+            // Try to find a session for this client near the document upload date
+            const docDate = new Date(doc.uploadedAt);
+            const dayBefore = new Date(docDate);
+            dayBefore.setDate(dayBefore.getDate() - 1);
+            const dayAfter = new Date(docDate);
+            dayAfter.setDate(dayAfter.getDate() + 1);
+
+            const matchingSession = sessions.find(s =>
+              s.clientId === matchedClient!.id &&
+              new Date(s.scheduledAt) >= dayBefore &&
+              new Date(s.scheduledAt) <= dayAfter
+            );
+
+            // Update the document with the matched client (and session if found)
+            const updateData: any = {
+              clientId: matchedClient.id,
+              status: 'processed'
+            };
+
+            if (matchingSession) {
+              updateData.metadata = {
+                ...doc.metadata,
+                linkedSessionId: matchingSession.id,
+                sessionDate: matchingSession.scheduledAt
+              };
+            }
+
+            await storage.updateDocument(doc.id, updateData);
+            results.linked++;
+            console.log(`Linked document ${doc.fileName} to client ${matchedClient.name}`);
+          } else {
+            results.needsReview++;
+          }
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          results.errors.push(`[${doc.fileName}] ${errorMsg}`);
+        }
+      }
+
+      // Also run orphaned progress note linking
+      const { linkOrphanedProgressNotes } = await import("./services/calendarReconciliation");
+      const linkingResult = await linkOrphanedProgressNotes(therapistId);
+
+      res.json({
+        success: true,
+        message: `Processed ${results.processed} documents`,
+        ...results,
+        orphanedNotesLinked: linkingResult.linked
+      });
+    } catch (error) {
+      console.error("Error reprocessing unlinked documents:", error);
+      res.status(500).json({ error: "Failed to reprocess documents" });
     }
   });
 
@@ -2236,11 +2390,17 @@ ${sourceText}
 
       console.log(`Successfully saved ${savedSessions.length} sessions to database`);
 
+      // After syncing sessions, link orphaned progress notes to sessions by date
+      const { linkOrphanedProgressNotes } = await import("./services/calendarReconciliation");
+      const linkingResult = await linkOrphanedProgressNotes(req.therapistId);
+      console.log(`Linked ${linkingResult.linked} orphaned progress notes to sessions`);
+
       res.json({
         success: true,
         syncedCount: syncedSessions.length,
         savedCount: savedSessions.length,
         imported: savedSessions.length,
+        orphanedNotesLinked: linkingResult.linked,
         sessions: syncedSessions,
         dateRange: { startDate: effectiveStartDate, endDate: effectiveEndDate }
       });

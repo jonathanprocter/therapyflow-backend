@@ -91,14 +91,16 @@ export class DocumentProcessor {
         needsManualReview
       );
       
-      // Save original document
+      // Save original document with session information
       await this.saveDocument(
         file,
         fileName,
         clientMatch.id,
         therapistId,
         extractedText,
-        progressNote.id
+        progressNote.id,
+        sessionMatch?.id,
+        extractedData.sessionDate ? new Date(extractedData.sessionDate) : undefined
       );
       
       return {
@@ -623,7 +625,7 @@ Return your analysis in JSON format with both the extracted data and the compreh
   }
 
   /**
-   * Save the original document to database
+   * Save the original document to database with session date and session ID
    */
   private async saveDocument(
     file: Buffer,
@@ -631,11 +633,13 @@ Return your analysis in JSON format with both the extracted data and the compreh
     clientId: string,
     therapistId: string,
     extractedText: string,
-    progressNoteId: string
+    progressNoteId: string,
+    sessionId?: string,
+    sessionDate?: Date
   ) {
     // Clean the extracted text before saving
     const cleanedText = this.cleanTextForDatabase(extractedText);
-    
+
     return await storage.createDocument({
       clientId,
       therapistId,
@@ -644,7 +648,11 @@ Return your analysis in JSON format with both the extracted data and the compreh
       filePath: `/documents/${progressNoteId}/${fileName}`,
       extractedText: cleanedText,
       fileSize: file.length,
-      metadata: { progressNoteId },
+      metadata: {
+        progressNoteId,
+        sessionId: sessionId || null,
+        sessionDate: sessionDate?.toISOString() || null
+      },
     });
   }
 
