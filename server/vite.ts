@@ -30,6 +30,12 @@ export function serveStatic(app: Express) {
   // In production, look for public folder relative to the bundled dist/index.js
   const distPath = path.resolve(__dirname, "public");
 
+  // Debug logging for path resolution
+  console.log(`[vite] __dirname: ${__dirname}`);
+  console.log(`[vite] Looking for static files at: ${distPath}`);
+  console.log(`[vite] process.cwd(): ${process.cwd()}`);
+  console.log(`[vite] Directory contents of __dirname:`, fs.existsSync(__dirname) ? fs.readdirSync(__dirname) : 'NOT FOUND');
+
   if (!fs.existsSync(distPath)) {
     // In API-only mode (no frontend build), just log and skip static serving
     console.log(`[vite] Static directory not found: ${distPath} - running in API-only mode`);
