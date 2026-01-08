@@ -7,10 +7,12 @@ export class GoogleCalendarService {
   private calendar: any;
 
   constructor() {
-    // Always use Replit domain for consistency
-    const redirectUri = process.env.REPLIT_DOMAINS 
-      ? `https://${process.env.REPLIT_DOMAINS}/api/calendar/callback`
-      : 'http://localhost:5000/api/calendar/callback';
+    // Use Render URL in production, Replit domain, or localhost for dev
+    const redirectUri = process.env.RENDER_EXTERNAL_URL
+      ? `${process.env.RENDER_EXTERNAL_URL}/api/calendar/callback`
+      : process.env.REPLIT_DOMAINS
+        ? `https://${process.env.REPLIT_DOMAINS}/api/calendar/callback`
+        : 'http://localhost:5000/api/calendar/callback';
       
     console.log('Using OAuth2 redirect URI:', redirectUri);
       
