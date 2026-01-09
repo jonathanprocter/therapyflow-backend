@@ -147,7 +147,11 @@ struct DashboardRecentNotesSection: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(notes.prefix(3)) { note in
-                        NotePreviewCard(note: note)
+                        // Make notes clickable - navigate to detail view
+                        NavigationLink(destination: NoteDetailView(note: note)) {
+                            NotePreviewCard(note: note)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -285,6 +289,19 @@ struct SessionRowCard: View {
         self.reminders = QuickNoteService.shared.remindersForSession(session)
     }
 
+    /// Check if session is in the past
+    private var isPastSession: Bool {
+        session.scheduledAt < Date()
+    }
+
+    /// Accent color based on session status
+    private var accentColor: Color {
+        if isPastSession {
+            return Color.gray
+        }
+        return Color.theme.primary
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
@@ -292,7 +309,7 @@ struct SessionRowCard: View {
                     Text(session.scheduledAt.timeString)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(isPastSession ? Color.theme.tertiaryText : Color.theme.primaryText)
 
                     Text(session.scheduledAt.smartDateString)
                         .font(.caption2)
@@ -301,15 +318,29 @@ struct SessionRowCard: View {
                 .frame(width: 60)
 
                 Rectangle()
-                    .fill(Color.theme.primary)
+                    .fill(accentColor)
                     .frame(width: 3)
                     .cornerRadius(2)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(session.displayClientName)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(Color.theme.primaryText)
+                    HStack(spacing: 6) {
+                        Text(session.displayClientName)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(isPastSession ? Color.theme.secondaryText : Color.theme.primaryText)
+
+                        // Show "Completed" badge for past sessions
+                        if isPastSession {
+                            Text("Completed")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.gray)
+                                .cornerRadius(4)
+                        }
+                    }
 
                     HStack(spacing: 8) {
                         SessionTypeBadge(type: session.sessionType)
@@ -357,8 +388,13 @@ struct SessionRowCard: View {
                 .padding(.bottom, 12)
             }
         }
-        .background(Color.theme.surfaceSecondary)
+        .background(isPastSession ? Color.theme.surfaceSecondary.opacity(0.6) : Color.theme.surfaceSecondary)
         .cornerRadius(10)
+        .overlay(
+            // Subtle border for past sessions
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(isPastSession ? Color.gray.opacity(0.3) : Color.clear, lineWidth: 1)
+        )
     }
 }
 

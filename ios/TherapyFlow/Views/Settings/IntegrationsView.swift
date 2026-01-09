@@ -527,35 +527,70 @@ struct AIConfigurationView: View {
 // MARK: - OAuth Web Views
 struct GoogleAuthWebView: View {
     let onCallback: (URL) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var hasOpenedGoogle = false
 
     var body: some View {
-        // In production, use ASWebAuthenticationSession or WKWebView
         VStack(spacing: 20) {
-            Image(systemName: "globe")
-                .font(.system(size: 60))
-                .foregroundColor(Color.theme.primary)
+            if hasOpenedGoogle {
+                // After opening Google, show waiting state with dismiss option
+                Image(systemName: "checkmark.circle")
+                    .font(.system(size: 60))
+                    .foregroundColor(Color.theme.success)
 
-            Text("Google Sign-In")
-                .font(.title2)
-                .fontWeight(.semibold)
+                Text("Opened in Browser")
+                    .font(.title2)
+                    .fontWeight(.semibold)
 
-            Text("You will be redirected to Google to authorize calendar access.")
+                Text("Complete sign-in in your browser. If calendar sync doesn't appear after signing in, tap Done and try again.")
+                    .font(.subheadline)
+                    .foregroundColor(Color.theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                Button("Done") {
+                    dismiss()
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: 280)
+                .background(Color.theme.primary)
+                .cornerRadius(12)
+            } else {
+                Image(systemName: "globe")
+                    .font(.system(size: 60))
+                    .foregroundColor(Color.theme.primary)
+
+                Text("Google Sign-In")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+
+                Text("You will be redirected to Google to authorize calendar access.")
+                    .font(.subheadline)
+                    .foregroundColor(Color.theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                Button("Continue to Google") {
+                    let url = IntegrationsService.shared.connectGoogleCalendar()
+                    UIApplication.shared.open(url)
+                    hasOpenedGoogle = true
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: 280)
+                .background(Color.blue)
+                .cornerRadius(12)
+
+                Button("Cancel") {
+                    dismiss()
+                }
                 .font(.subheadline)
                 .foregroundColor(Color.theme.secondaryText)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-
-            Button("Continue to Google") {
-                // In production, open the OAuth URL
-                let url = IntegrationsService.shared.connectGoogleCalendar()
-                UIApplication.shared.open(url)
+                .padding(.top, 8)
             }
-            .font(.headline)
-            .foregroundColor(.white)
-            .padding()
-            .frame(maxWidth: 280)
-            .background(Color.blue)
-            .cornerRadius(12)
         }
         .padding()
     }
@@ -805,7 +840,8 @@ struct ElevenLabsConfigurationView: View {
                 try elevenLabs.saveAPIKey(apiKey)
                 await MainActor.run {
                     isValidating = false
-                    successMessage = "Saved. You can load voices below."
+                    // Successfully saved - dismiss the sheet
+                    dismiss()
                 }
             } catch {
                 await MainActor.run {
