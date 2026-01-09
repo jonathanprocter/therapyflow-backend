@@ -148,7 +148,7 @@ struct DashboardRecentNotesSection: View {
                 VStack(spacing: 12) {
                     ForEach(notes.prefix(3)) { note in
                         // Make notes clickable - navigate to detail view
-                        NavigationLink(destination: NoteDetailView(note: note)) {
+                        NavigationLink(destination: NoteDetailView(noteId: note.id)) {
                             NotePreviewCard(note: note)
                         }
                         .buttonStyle(.plain)
