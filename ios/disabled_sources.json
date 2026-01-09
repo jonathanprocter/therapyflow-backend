@@ -1,0 +1,214 @@
+[
+  {
+    "build_id": "8442C75D1F25491A80D0D842",
+    "name": "CalendarSyncView.swift"
+  },
+  {
+    "build_id": "1000000000000040",
+    "name": "DashboardView.swift"
+  },
+  {
+    "build_id": "1000000000000164",
+    "name": "DashboardComponents.swift"
+  },
+  {
+    "build_id": "1000000000000041",
+    "name": "StatsGridView.swift"
+  },
+  {
+    "build_id": "1000000000000042",
+    "name": "QuickActionsView.swift"
+  },
+  {
+    "build_id": "1000000000000050",
+    "name": "ClientsListView.swift"
+  },
+  {
+    "build_id": "1000000000000051",
+    "name": "ClientDetailView.swift"
+  },
+  {
+    "build_id": "1000000000000162",
+    "name": "ClientDetailComponents.swift"
+  },
+  {
+    "build_id": "1000000000000052",
+    "name": "ClientFormView.swift"
+  },
+  {
+    "build_id": "1000000000000053",
+    "name": "ClientRowView.swift"
+  },
+  {
+    "build_id": "1000000000000166",
+    "name": "ClientTimelineComponents.swift"
+  },
+  {
+    "build_id": "1000000000000060",
+    "name": "NotesListView.swift"
+  },
+  {
+    "build_id": "1000000000000061",
+    "name": "NoteDetailView.swift"
+  },
+  {
+    "build_id": "1000000000000168",
+    "name": "NoteDetailComponents.swift"
+  },
+  {
+    "build_id": "1000000000000062",
+    "name": "NoteFormView.swift"
+  },
+  {
+    "build_id": "1000000000000063",
+    "name": "NoteRowView.swift"
+  },
+  {
+    "build_id": "1000000000000070",
+    "name": "CalendarView.swift"
+  },
+  {
+    "build_id": "1000000000000160",
+    "name": "CalendarComponents.swift"
+  },
+  {
+    "build_id": "1000000000000071",
+    "name": "SessionDetailView.swift"
+  },
+  {
+    "build_id": "1000000000000167",
+    "name": "SessionDetailComponents.swift"
+  },
+  {
+    "build_id": "1000000000000072",
+    "name": "SessionFormView.swift"
+  },
+  {
+    "build_id": "1000000000000080",
+    "name": "SettingsView.swift"
+  },
+  {
+    "build_id": "1000000000000163",
+    "name": "SettingsComponents.swift"
+  },
+  {
+    "build_id": "1000000000000081",
+    "name": "ProfileView.swift"
+  },
+  {
+    "build_id": "C251DB362F00B73900E620AB",
+    "name": "IntegrationsView.swift"
+  },
+  {
+    "build_id": "1000000000000090",
+    "name": "SemanticSearchView.swift"
+  },
+  {
+    "build_id": "1000000000000091",
+    "name": "SearchResultRow.swift"
+  },
+  {
+    "build_id": "1000000000000100",
+    "name": "StatCard.swift"
+  },
+  {
+    "build_id": "1000000000000101",
+    "name": "RiskBadge.swift"
+  },
+  {
+    "build_id": "1000000000000102",
+    "name": "StatusBadge.swift"
+  },
+  {
+    "build_id": "1000000000000103",
+    "name": "AvatarView.swift"
+  },
+  {
+    "build_id": "1000000000000169",
+    "name": "MetadataRow.swift"
+  },
+  {
+    "build_id": "1000000000000104",
+    "name": "LoadingView.swift"
+  },
+  {
+    "build_id": "1000000000000105",
+    "name": "EmptyStateView.swift"
+  },
+  {
+    "build_id": "1000000000000106",
+    "name": "AdaptiveNavigationView.swift"
+  },
+  {
+    "build_id": "1000000000000110",
+    "name": "LoginView.swift"
+  },
+  {
+    "build_id": "1000000000000122",
+    "name": "View+Extensions.swift"
+  },
+  {
+    "build_id": "1000000000000140",
+    "name": "DocumentsListView.swift"
+  },
+  {
+    "build_id": "1000000000000165",
+    "name": "DocumentsListComponents.swift"
+  },
+  {
+    "build_id": "1000000000000141",
+    "name": "TreatmentPlansListView.swift"
+  },
+  {
+    "build_id": "1000000000000142",
+    "name": "FlowLayout.swift"
+  },
+  {
+    "build_id": "2000000000000054",
+    "name": "TherapeuticJourneyView.swift"
+  },
+  {
+    "build_id": "2000000000000082",
+    "name": "BulkImportView.swift"
+  },
+  {
+    "build_id": "2000000000000083",
+    "name": "DataExportView.swift"
+  },
+  {
+    "build_id": "2000000000000073",
+    "name": "SessionPrepView.swift"
+  },
+  {
+    "build_id": "2000000000000074",
+    "name": "SessionHistoryView.swift"
+  },
+  {
+    "build_id": "2000000000000143",
+    "name": "DocumentDetailView.swift"
+  },
+  {
+    "build_id": "1000000000000161",
+    "name": "DocumentDetailComponents.swift"
+  },
+  {
+    "build_id": "6F88B2415DDB44EBB7D0CC7F",
+    "name": "SessionTimelineView.swift"
+  },
+  {
+    "build_id": "7A49FAE2C5FF4D10833C67B4",
+    "name": "AIDashboardView.swift"
+  },
+  {
+    "build_id": "211C6354F1A84E91BF7EAEB2",
+    "name": "AIContextualHelperView.swift"
+  },
+  {
+    "build_id": "934B6FE3DEE1437FA5D21245",
+    "name": "ClientTimelineView.swift"
+  },
+  {
+    "build_id": "8DD394037B83472D924E2551",
+    "name": "AINotesAssistantView.swift"
+  }
+]

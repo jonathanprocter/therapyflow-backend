@@ -9,7 +9,6 @@ vite.config.ts.*
 *.local
 ._*
 $LOG_FILE
-ios/
 mobile/
 mobile_old/
 attached_assets/
@@ -28,3 +27,6 @@ clinical_review_results/
 !README.md
 client/.vite/
 .vite/
+ios/certificate.p12
+ios/*.xcuserstate
+*.xcuserstate

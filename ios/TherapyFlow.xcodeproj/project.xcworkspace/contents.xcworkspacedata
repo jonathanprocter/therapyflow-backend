@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "self:">
+   </FileRef>
+   <FileRef
+      location = "group:ColorTheme.swift">
+   </FileRef>
+   <FileRef
+      location = "group:NetworkMonitor.swift">
+   </FileRef>
+   <FileRef
+      location = "group:PersistenceController.swift">
+   </FileRef>
+   <FileRef
+      location = "group:AuthService.swift">
+   </FileRef>
+   <FileRef
+      location = "group:SyncService.swift">
+   </FileRef>
+   <FileRef
+      location = "group:Models.swift">
+   </FileRef>
+   <FileRef
+      location = "group:ViewComponents.swift">
+   </FileRef>
+   <FileRef
+      location = "group:ClientViews.swift">
+   </FileRef>
+   <FileRef
+      location = "group:MainViews.swift">
+   </FileRef>
+   <FileRef
+      location = "group:AIViews.swift">
+   </FileRef>
+   <FileRef
+      location = "group:SettingsViews.swift">
+   </FileRef>
+   <FileRef
+      location = "group:APIClient.swift">
+   </FileRef>
+   <FileRef
+      location = "group:CORE_DATA_SETUP.md">
+   </FileRef>
+   <FileRef
+      location = "group:BUILD_COMPLETE.md">
+   </FileRef>
+   <FileRef
+      location = "group:BUILD_FIX_SUMMARY.md">
+   </FileRef>
+   <FileRef
+      location = "group:CoreDataReference.txt">
+   </FileRef>
+   <FileRef
+      location = "group:BUILD_CHECKLIST.md">
+   </FileRef>
+   <FileRef
+      location = "group:README_BUILD_FIX.md">
+   </FileRef>
+   <FileRef
+      location = "group:CoreDataReference 2.txt">
+   </FileRef>
+</Workspace>
