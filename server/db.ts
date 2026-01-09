@@ -13,10 +13,10 @@ if (!process.env.DATABASE_URL) {
 // Configure connection pool for standard PostgreSQL (Render, etc.)
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Pool configuration
-  max: 10,                    // Maximum connections in the pool
+  // Pool configuration - increased for production workloads
+  max: 20,                    // Maximum connections in the pool (increased from 10)
   idleTimeoutMillis: 30000,   // Close idle connections after 30 seconds
-  connectionTimeoutMillis: 10000, // Timeout after 10 seconds when acquiring connection
+  connectionTimeoutMillis: 30000, // Timeout after 30 seconds when acquiring connection (increased from 10s)
   // SSL configuration for Render PostgreSQL
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });

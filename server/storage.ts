@@ -19,7 +19,7 @@ import {
 import { db } from "./db";
 import { calculateNoteQuality } from "./utils/noteQuality";
 import { ClinicalEncryption } from "./utils/encryption";
-import { eq, desc, and, or, like, sql, isNull, ne } from "drizzle-orm";
+import { eq, desc, and, or, like, sql, isNull, ne, inArray } from "drizzle-orm";
 
 /**
  * Strip markdown formatting from text before saving to database
@@ -86,6 +86,7 @@ export interface IStorage {
   // Clients
   getClients(therapistId: string): Promise<Client[]>;
   getClient(id: string): Promise<Client | undefined>;
+  getClientsByIds(ids: string[]): Promise<Map<string, Client>>;
   getClientByName(name: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: string, client: Partial<InsertClient>): Promise<Client>;
@@ -130,6 +131,7 @@ export interface IStorage {
   // Treatment Plans
   getTreatmentPlan(clientId: string): Promise<TreatmentPlan | undefined>;
   getTreatmentPlanByClient(clientId: string): Promise<TreatmentPlan | undefined>;
+  getAllTreatmentPlans(therapistId: string): Promise<TreatmentPlan[]>;
   createTreatmentPlan(plan: InsertTreatmentPlan): Promise<TreatmentPlan>;
   updateTreatmentPlan(id: string, plan: Partial<InsertTreatmentPlan>): Promise<TreatmentPlan>;
 
@@ -253,6 +255,15 @@ export class DatabaseStorage implements IStorage {
       and(eq(clients.id, id), isNull(clients.deletedAt))
     );
     return client || undefined;
+  }
+
+  async getClientsByIds(ids: string[]): Promise<Map<string, Client>> {
+    if (ids.length === 0) return new Map();
+    const uniqueIds = [...new Set(ids)];
+    const result = await db.select().from(clients).where(
+      and(inArray(clients.id, uniqueIds), isNull(clients.deletedAt))
+    );
+    return new Map(result.map(client => [client.id, client]));
   }
 
   async getClientByName(name: string): Promise<Client | undefined> {
@@ -637,6 +648,14 @@ export class DatabaseStorage implements IStorage {
 
   async getTreatmentPlanByClient(clientId: string): Promise<TreatmentPlan | undefined> {
     return this.getTreatmentPlan(clientId);
+  }
+
+  async getAllTreatmentPlans(therapistId: string): Promise<TreatmentPlan[]> {
+    return await db
+      .select()
+      .from(treatmentPlans)
+      .where(eq(treatmentPlans.therapistId, therapistId))
+      .orderBy(desc(treatmentPlans.updatedAt));
   }
 
   async createTreatmentPlan(plan: InsertTreatmentPlan): Promise<TreatmentPlan> {

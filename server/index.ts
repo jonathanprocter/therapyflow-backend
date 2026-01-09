@@ -135,12 +135,12 @@ app.get("/api/health/deep", async (req, res) => {
   try {
     // Minimal DB check: run a simple NOW()
     const [{ now }] = await (storage as any).db.execute(sql`SELECT now() as now`);
-    
+
     // Count documents and AI results
     const [{ count: docsCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
     const [{ count: aiCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
     const [{ count: edgesCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
-    
+
     res.json({
       ok: true,
       time: new Date().toISOString(),
@@ -159,6 +159,26 @@ app.get("/api/health/deep", async (req, res) => {
       took_ms: Date.now() - start,
     });
   }
+});
+
+// Readiness check for Render/K8s health probes
+app.get("/api/health/ready", async (req, res) => {
+  try {
+    // Quick DB connectivity check
+    await (storage as any).db.execute(sql`SELECT 1`);
+    res.json({ status: "ready", timestamp: new Date().toISOString() });
+  } catch (e: any) {
+    res.status(503).json({ status: "not ready", error: String(e) });
+  }
+});
+
+// Routes info endpoint for debugging
+app.get("/api/health/routes", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "Routes endpoint - use for debugging route registration",
+    timestamp: new Date().toISOString()
+  });
 });
 
 (async () => {

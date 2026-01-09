@@ -57,7 +57,7 @@ function safeDecrypt(content: string): string | null {
 function extractSection(content: string, label: string): string {
   const regex = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n\\*\\*|\\n[A-Z]{2,}:|$)`, "i");
   const match = content.match(regex);
-  return match ? match[1].trim() : "";
+  return match && match[1] ? match[1].trim() : "";
 }
 
 function parseSoapSections(content?: string | null) {
@@ -89,6 +89,33 @@ function safeDecryptJson(value: any) {
 }
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+// Helper to batch fetch clients for sessions (avoids N+1 query problem)
+async function attachClientsToSessions<T extends { clientId: string }>(items: T[]): Promise<(T & { client: any })[]> {
+  if (items.length === 0) return [];
+  const clientIds = [...new Set(items.map(item => item.clientId))];
+  const clientsMap = await storage.getClientsByIds(clientIds);
+  return items.map(item => ({
+    ...item,
+    client: clientsMap.get(item.clientId) || null
+  }));
+}
+
+// Helper to batch fetch clients for progress notes with decryption (avoids N+1 query problem)
+async function attachClientsToNotes<T extends { clientId: string; content?: string | null }>(notes: T[]): Promise<(T & { client: any; clientName: string | null; content: string | null })[]> {
+  if (notes.length === 0) return [];
+  const clientIds = [...new Set(notes.map(note => note.clientId))];
+  const clientsMap = await storage.getClientsByIds(clientIds);
+  return notes.map(note => {
+    const client = clientsMap.get(note.clientId) || null;
+    return {
+      ...note,
+      client,
+      clientName: client?.name ?? null,
+      content: note.content ? safeDecrypt(note.content) : null
+    };
+  });
+}
 
 // Extend Express Request type for therapist authentication
 interface AuthenticatedRequest extends Request {
@@ -437,52 +464,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sessions endpoints
   app.get("/api/sessions", async (req: any, res) => {
     try {
-      const {clientId, upcoming, today, date } = req.query;
+      const { clientId, client_id, upcoming, today, date, includePast, limit } = req.query;
+      // Support both clientId and client_id for iOS compatibility
+      const effectiveClientId = clientId || client_id;
+      // Parse limit with sensible defaults and max cap
+      const maxLimit = Math.min(parseInt(limit as string) || 500, 1000);
 
       if (today === "true") {
         const sessions = await storage.getTodaysSessions(req.therapistId);
-        // Fetch client data for each session
-        const sessionsWithClients = await Promise.all(
-          sessions.map(async (session) => {
-            const client = await storage.getClient(session.clientId);
-            return { ...session, client };
-          })
-        );
+        // Batch fetch clients (single query instead of N+1)
+        const sessionsWithClients = await attachClientsToSessions(sessions.slice(0, maxLimit));
         res.json(sessionsWithClients);
       } else if (upcoming === "true") {
-        const sessions = await storage.getTodaysSessions(req.therapistId);
-        // Fetch client data for each session
-        const sessionsWithClients = await Promise.all(
-          sessions.map(async (session) => {
-            const client = await storage.getClient(session.clientId);
-            return { ...session, client };
-          })
-        );
+        const sessions = await storage.getUpcomingSessions(req.therapistId, new Date());
+        // Batch fetch clients (single query instead of N+1)
+        const sessionsWithClients = await attachClientsToSessions(sessions.slice(0, maxLimit));
+        res.json(sessionsWithClients);
+      } else if (includePast === "true") {
+        // Get all historical sessions (past and upcoming)
+        const sessions = await storage.getAllHistoricalSessions(req.therapistId, true);
+        // Batch fetch clients (single query instead of N+1)
+        const sessionsWithClients = await attachClientsToSessions(sessions.slice(0, maxLimit));
         res.json(sessionsWithClients);
       } else if (date) {
         // Filter sessions for a specific date with proper timezone handling
         const sessions = await storage.getSessionsByDate(req.therapistId, new Date(date));
-        // Fetch client data for each session
-        const sessionsWithClients = await Promise.all(
-          sessions.map(async (session) => {
-            const client = await storage.getClient(session.clientId);
-            return { ...session, client };
-          })
-        );
+        // Batch fetch clients (single query instead of N+1)
+        const sessionsWithClients = await attachClientsToSessions(sessions.slice(0, maxLimit));
         res.json(sessionsWithClients);
-      } else if (clientId) {
-        const sessions = await storage.getSessions(clientId);
-        res.json(sessions);
+      } else if (effectiveClientId) {
+        const sessions = await storage.getSessions(effectiveClientId);
+        const sessionsWithClients = await attachClientsToSessions(sessions.slice(0, maxLimit));
+        res.json(sessionsWithClients);
       } else {
         // Return all upcoming and recent sessions for the therapist if no specific filter
         const sessions = await storage.getUpcomingSessions(req.therapistId, new Date('2010-01-01'));
-        // Fetch client data for each session
-        const sessionsWithClients = await Promise.all(
-          sessions.map(async (session) => {
-            const client = await storage.getClient(session.clientId);
-            return { ...session, client };
-          })
-        );
+        // Batch fetch clients (single query instead of N+1)
+        const sessionsWithClients = await attachClientsToSessions(sessions.slice(0, maxLimit));
         res.json(sessionsWithClients);
       }
     } catch (error) {
@@ -710,13 +728,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { includeCompleted = "true" } = req.query;
       const sessions = await storage.getAllHistoricalSessions(req.therapistId, includeCompleted === "true");
 
-      // Fetch client data for each session
-      const sessionsWithClients = await Promise.all(
-        sessions.map(async (session) => {
-          const client = await storage.getClient(session.clientId);
-          return { ...session, client };
-        })
-      );
+      // Batch fetch clients (single query instead of N+1)
+      const sessionsWithClients = await attachClientsToSessions(sessions);
 
       res.json(sessionsWithClients);
     } catch (error) {
@@ -730,13 +743,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { clientId } = req.query;
       const sessions = await storage.getCompletedSessions(req.therapistId, clientId);
 
-      // Fetch client data for each session
-      const sessionsWithClients = await Promise.all(
-        sessions.map(async (session) => {
-          const client = await storage.getClient(session.clientId);
-          return { ...session, client };
-        })
-      );
+      // Batch fetch clients (single query instead of N+1)
+      const sessionsWithClients = await attachClientsToSessions(sessions);
 
       res.json(sessionsWithClients);
     } catch (error) {
@@ -776,56 +784,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Progress Notes endpoints
   app.get("/api/progress-notes", async (req: any, res) => {
     try {
-      const { clientId, search, recent } = req.query;
+      const { clientId, client_id, search, recent, limit } = req.query;
+      // Support both clientId and client_id for iOS compatibility
+      const effectiveClientId = clientId || client_id;
+      // Parse limit with sensible defaults and max cap
+      const maxLimit = Math.min(parseInt(limit as string) || 100, 1000);
 
       if (recent === "true") {
         const notes = await storage.getRecentProgressNotes(req.therapistId);
-        // Fetch client data for each note and decrypt
-        const notesWithClients = await Promise.all(
-          notes.map(async (note) => {
-            const client = await storage.getClient(note.clientId);
-            return { 
-              ...note, 
-              client,
-              clientName: client?.name ?? null,
-              // Decrypt progress note content (gracefully handle non-encrypted data)
-              content: note.content ? safeDecrypt(note.content) : null
-            };
-          })
-        );
+        // Batch fetch clients and decrypt (single query instead of N+1)
+        const notesWithClients = await attachClientsToNotes(notes.slice(0, maxLimit));
         res.json(notesWithClients);
       } else if (search) {
         const notes = await storage.searchProgressNotes(req.therapistId, search);
-        const notesWithClients = await Promise.all(
-          notes.map(async (note) => {
-            const client = await storage.getClient(note.clientId);
-            return {
-              ...note,
-              client,
-              clientName: client?.name ?? null,
-              content: note.content ? safeDecrypt(note.content) : null
-            };
-          })
-        );
+        // Batch fetch clients and decrypt (single query instead of N+1)
+        const notesWithClients = await attachClientsToNotes(notes.slice(0, maxLimit));
         res.json(notesWithClients);
-      } else if (clientId) {
+      } else if (effectiveClientId) {
         // Verify client ownership before returning notes
-        const clientCheck = await SecureClientQueries.getClient(clientId, req.therapistId);
+        const clientCheck = await SecureClientQueries.getClient(effectiveClientId, req.therapistId);
         if (clientCheck.length === 0) {
           return res.status(403).json({ error: "Access denied" });
         }
-        
-        const notes = await storage.getProgressNotes(clientId);
+
+        const notes = await storage.getProgressNotes(effectiveClientId);
         const client = clientCheck[0];
-        const decryptedNotes = notes.map(note => ({
+        const decryptedNotes = notes.slice(0, maxLimit).map(note => ({
           ...note,
           client,
           clientName: client?.name ?? null,
           content: note.content ? safeDecrypt(note.content) : null
         }));
         res.json(decryptedNotes);
+      } else if (limit) {
+        // Allow fetching all notes with just a limit parameter
+        const notes = await storage.getRecentProgressNotes(req.therapistId);
+        const notesWithClients = await attachClientsToNotes(notes.slice(0, maxLimit));
+        res.json(notesWithClients);
       } else {
-        res.status(400).json({ error: "clientId, search, or recent parameter required" });
+        res.status(400).json({ error: "clientId, search, recent, or limit parameter required" });
       }
     } catch (error) {
       console.error("Error fetching progress notes:", error);
@@ -970,13 +967,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/progress-notes/manual-review", async (req: any, res) => {
     try {
       const notes = await storage.getProgressNotesForManualReview(req.therapistId);
+      // Batch fetch clients (single query instead of N+1)
+      const clientIds = [...new Set(notes.map(n => n.clientId))];
+      const clientsMap = await storage.getClientsByIds(clientIds);
+      // Fetch sessions individually (smaller result set, acceptable N+1)
       const notesWithClients = await Promise.all(
         notes.map(async (note) => {
-          const client = await storage.getClient(note.clientId);
           const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
-          return { 
-            ...note, 
-            client, 
+          return {
+            ...note,
+            client: clientsMap.get(note.clientId) || null,
             session,
             content: note.content ? safeDecrypt(note.content) : null
           };
@@ -992,13 +992,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/progress-notes/placeholders", async (req: any, res) => {
     try {
       const placeholders = await storage.getProgressNotePlaceholders(req.therapistId);
+      // Batch fetch clients (single query instead of N+1)
+      const clientIds = [...new Set(placeholders.map(n => n.clientId))];
+      const clientsMap = await storage.getClientsByIds(clientIds);
+      // Fetch sessions individually (smaller result set, acceptable N+1)
       const placeholdersWithClients = await Promise.all(
         placeholders.map(async (note) => {
-          const client = await storage.getClient(note.clientId);
           const session = note.sessionId ? await storage.getSession(note.sessionId) : null;
-          return { 
-            ...note, 
-            client, 
+          return {
+            ...note,
+            client: clientsMap.get(note.clientId) || null,
             session,
             content: note.content ? safeDecrypt(note.content) : null
           };
@@ -2110,6 +2113,41 @@ ${contextInfo ? `\nCurrent context:\n${contextInfo}` : ''}`,
     }
   });
 
+  // Voice endpoints for iOS app
+  app.get("/api/voice/recommended", async (req: any, res) => {
+    try {
+      const { getRealtimeVoiceService } = await import("./services/realtimeVoice");
+      const voiceService = getRealtimeVoiceService();
+      const voices = voiceService?.getVoices() ?? [];
+
+      const preferences = await getAppSetting<Record<string, string>>("voice_preferences");
+      const currentVoice = preferences?.[req.therapistId] ?? "";
+
+      res.json({ voices, currentVoice });
+    } catch (error) {
+      console.error("Error fetching recommended voices:", error);
+      res.status(500).json({ error: "Failed to load voices" });
+    }
+  });
+
+  app.post("/api/voice/set-voice", async (req: any, res) => {
+    try {
+      const { voiceId } = req.body;
+      if (!voiceId) {
+        return res.status(400).json({ error: "voiceId is required" });
+      }
+
+      const preferences = (await getAppSetting<Record<string, string>>("voice_preferences")) || {};
+      preferences[req.therapistId] = voiceId;
+      await setAppSetting("voice_preferences", preferences);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error setting voice:", error);
+      res.status(500).json({ error: "Failed to set voice" });
+    }
+  });
+
   // Voice assistant endpoint for iOS app with TTS support
   app.post("/api/voice/assistant", async (req: any, res) => {
     try {
@@ -2461,6 +2499,17 @@ ${sourceText}
 
 
   // Treatment Plan endpoints
+  // Plural form for iOS compatibility
+  app.get("/api/treatment-plans", async (req: any, res) => {
+    try {
+      const plans = await storage.getAllTreatmentPlans(req.therapistId);
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching treatment plans:", error);
+      res.status(500).json({ error: "Failed to fetch treatment plans" });
+    }
+  });
+
   app.get("/api/treatment-plan/:clientId", async (req, res) => {
     try {
       const plan = await storage.getTreatmentPlan(req.params.clientId);

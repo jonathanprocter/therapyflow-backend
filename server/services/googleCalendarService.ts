@@ -80,15 +80,14 @@ export class GoogleCalendarService {
       console.log('- Refresh token:', tokens.refresh_token ? 'Received' : 'Missing');
       console.log('- Token type:', tokens.token_type);
       console.log('- Expires in:', tokens.expiry_date ? new Date(tokens.expiry_date) : 'No expiry');
-      
+
       this.oauth2Client.setCredentials(tokens);
-      
-      // Store the refresh token in environment for future use
+
+      // Note: Refresh token received - stored securely via app settings, not logged
       if (tokens.refresh_token) {
-        console.log('💡 IMPORTANT: Save this refresh token to your Secrets as GOOGLE_REFRESH_TOKEN:');
-        console.log(tokens.refresh_token);
+        console.log('✅ Refresh token received and will be stored securely');
       }
-      
+
       return tokens;
     } catch (error) {
       console.error('Error exchanging authorization code:', error);
