@@ -288,3 +288,22 @@ app.get("/api/health/routes", (req, res) => {
     }
   });
 })();
+
+// Debug endpoint to check database connection
+app.get("/api/debug/db", async (req, res) => {
+  try {
+    const dbUrl = process.env.DATABASE_URL || "NOT SET";
+    // Mask password for security
+    const maskedUrl = dbUrl.replace(/:[^:@]+@/, ':****@');
+    const hostMatch = dbUrl.match(/@([^:/]+)/);
+    const dbHost = hostMatch ? hostMatch[1] : "unknown";
+    
+    res.json({
+      host: dbHost,
+      maskedUrl: maskedUrl,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: String(e) });
+  }
+});
