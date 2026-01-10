@@ -28,6 +28,9 @@ import {
 import multer from "multer";
 import { registerTranscriptRoutes } from "./routes/transcript-routes";
 import { aiRoutes } from "./routes/ai-routes";
+import aiServicesRoutes from "./routes/ai-services-routes";
+import calendarSyncRoutes from "./routes/calendar-sync-routes";
+import reportRoutes from "./routes/report-routes";
 import { verifyClientOwnership, SecureClientQueries } from "./middleware/clientAuth";
 import { ClinicalTransactions } from "./utils/transactions";
 import { encryptClientData, decryptClientData, ClinicalEncryption } from "./utils/encryption";
@@ -3479,6 +3482,36 @@ ${sourceText}
 
   // Register session timeline routes
   app.use('/api/sessions', (await import('./routes/session-timeline-routes')).default);
+
+  // Register AI services routes (ported from TherapyGenius)
+  app.use('/api/ai-services', aiServicesRoutes);
+
+  console.log("🧠 Enhanced AI Services available at:");
+  console.log("   GET  /api/ai-services/health");
+  console.log("   POST /api/ai-services/assessments/extract");
+  console.log("   POST /api/ai-services/tags/session");
+  console.log("   POST /api/ai-services/tags/client");
+  console.log("   GET  /api/ai-services/insights/practice");
+  console.log("   POST /api/ai-services/recommendations/session");
+  console.log("   POST /api/ai-services/recommendations/treatment");
+
+  // Register Smart Calendar Sync routes
+  app.use('/api/calendar-sync', calendarSyncRoutes);
+
+  console.log("📅 Smart Calendar Sync available at:");
+  console.log("   GET  /api/calendar-sync/status");
+  console.log("   POST /api/calendar-sync/sync");
+  console.log("   GET  /api/calendar-sync/history");
+  console.log("   POST /api/calendar-sync/alias");
+
+  // Register Report Generation routes
+  app.use('/api/reports', reportRoutes);
+
+  console.log("📝 Report Generation available at:");
+  console.log("   GET  /api/reports/types");
+  console.log("   POST /api/reports/generate");
+  console.log("   POST /api/reports/progress-summary");
+  console.log("   POST /api/reports/export");
 
   const httpServer = createServer(app);
   return httpServer;

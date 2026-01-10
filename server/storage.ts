@@ -1,8 +1,8 @@
-import { 
-  users, clients, sessions, progressNotes, caseConceptualizations, 
+import {
+  users, clients, sessions, progressNotes, caseConceptualizations,
   treatmentPlans, allianceScores, documents, aiInsights, crossReferences,
   transcriptBatches, transcriptFiles, sessionPreps, longitudinalRecords,
-  jobRuns, documentTextVersions,
+  jobRuns, documentTextVersions, calendarSyncHistory, calendarEventAliases, oauthTokens,
   type User, type InsertUser, type Client, type InsertClient,
   type Session, type InsertSession, type ProgressNote, type InsertProgressNote,
   type CaseConceptualization, type InsertCaseConceptualization,
@@ -14,7 +14,10 @@ import {
   type TranscriptFile, type InsertTranscriptFile,
   type LongitudinalRecord, type InsertLongitudinalRecord,
   type JobRun, type InsertJobRun,
-  type DocumentTextVersion, type InsertDocumentTextVersion
+  type DocumentTextVersion, type InsertDocumentTextVersion,
+  type CalendarSyncHistory, type InsertCalendarSyncHistory,
+  type CalendarEventAlias, type InsertCalendarEventAlias,
+  type OAuthTokens, type InsertOAuthTokens
 } from "@shared/schema";
 import { db } from "./db";
 import { calculateNoteQuality } from "./utils/noteQuality";
@@ -193,6 +196,29 @@ export interface IStorage {
     weeklySchedule: number;
     totalNotes: number;
     aiInsights: number;
+  }>;
+
+  // OAuth Tokens
+  getOAuthTokens(therapistId: string, provider?: string): Promise<OAuthTokens | undefined>;
+  storeOAuthTokens(tokens: InsertOAuthTokens): Promise<OAuthTokens>;
+  updateOAuthTokens(therapistId: string, provider: string, tokens: Partial<InsertOAuthTokens>): Promise<OAuthTokens | undefined>;
+
+  // Calendar Event Aliases
+  getEventAliases(therapistId: string): Promise<CalendarEventAlias[]>;
+  createEventAlias(alias: InsertCalendarEventAlias): Promise<CalendarEventAlias>;
+  deleteEventAlias(id: string): Promise<void>;
+  getEventAliasByAlias(therapistId: string, alias: string): Promise<CalendarEventAlias | undefined>;
+
+  // Calendar Sync History
+  createCalendarSyncHistory(history: InsertCalendarSyncHistory): Promise<CalendarSyncHistory>;
+  updateCalendarSyncHistory(id: string, updates: Partial<InsertCalendarSyncHistory>): Promise<CalendarSyncHistory | undefined>;
+  getCalendarSyncHistory(therapistId: string, limit?: number): Promise<CalendarSyncHistory[]>;
+  getCalendarSyncStats(therapistId: string): Promise<{
+    totalSyncs: number;
+    successfulSyncs: number;
+    failedSyncs: number;
+    lastSyncAt: Date | null;
+    eventsProcessed: number;
   }>;
 }
 
@@ -1173,6 +1199,175 @@ export class DatabaseStorage implements IStorage {
 
     return progressNote;
   }
-};
+
+  // OAuth Tokens Methods
+  async getOAuthTokens(therapistId: string, provider: string = "google"): Promise<OAuthTokens | undefined> {
+    const [tokens] = await db
+      .select()
+      .from(oauthTokens)
+      .where(
+        and(
+          eq(oauthTokens.therapistId, therapistId),
+          eq(oauthTokens.provider, provider)
+        )
+      );
+    return tokens || undefined;
+  }
+
+  async storeOAuthTokens(tokens: InsertOAuthTokens): Promise<OAuthTokens> {
+    // Upsert - insert or update if exists
+    const existing = await this.getOAuthTokens(tokens.therapistId, tokens.provider || "google");
+
+    if (existing) {
+      const [updated] = await db
+        .update(oauthTokens)
+        .set({ ...tokens, updatedAt: new Date() })
+        .where(eq(oauthTokens.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db
+      .insert(oauthTokens)
+      .values(tokens)
+      .returning();
+    return created;
+  }
+
+  async updateOAuthTokens(therapistId: string, provider: string, tokens: Partial<InsertOAuthTokens>): Promise<OAuthTokens | undefined> {
+    const [updated] = await db
+      .update(oauthTokens)
+      .set({ ...tokens, updatedAt: new Date() })
+      .where(
+        and(
+          eq(oauthTokens.therapistId, therapistId),
+          eq(oauthTokens.provider, provider)
+        )
+      )
+      .returning();
+    return updated || undefined;
+  }
+
+  // Calendar Event Aliases Methods
+  async getEventAliases(therapistId: string): Promise<CalendarEventAlias[]> {
+    return await db
+      .select()
+      .from(calendarEventAliases)
+      .where(eq(calendarEventAliases.therapistId, therapistId))
+      .orderBy(calendarEventAliases.alias);
+  }
+
+  async createEventAlias(alias: InsertCalendarEventAlias): Promise<CalendarEventAlias> {
+    const [created] = await db
+      .insert(calendarEventAliases)
+      .values(alias)
+      .returning();
+    return created;
+  }
+
+  async deleteEventAlias(id: string): Promise<void> {
+    await db
+      .delete(calendarEventAliases)
+      .where(eq(calendarEventAliases.id, id));
+  }
+
+  async getEventAliasByAlias(therapistId: string, alias: string): Promise<CalendarEventAlias | undefined> {
+    const [found] = await db
+      .select()
+      .from(calendarEventAliases)
+      .where(
+        and(
+          eq(calendarEventAliases.therapistId, therapistId),
+          eq(calendarEventAliases.alias, alias)
+        )
+      );
+    return found || undefined;
+  }
+
+  // Calendar Sync History Methods
+  async createCalendarSyncHistory(history: InsertCalendarSyncHistory): Promise<CalendarSyncHistory> {
+    const [created] = await db
+      .insert(calendarSyncHistory)
+      .values(history)
+      .returning();
+    return created;
+  }
+
+  async updateCalendarSyncHistory(id: string, updates: Partial<InsertCalendarSyncHistory>): Promise<CalendarSyncHistory | undefined> {
+    const [updated] = await db
+      .update(calendarSyncHistory)
+      .set(updates)
+      .where(eq(calendarSyncHistory.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getCalendarSyncHistory(therapistId: string, limit: number = 20): Promise<CalendarSyncHistory[]> {
+    return await db
+      .select()
+      .from(calendarSyncHistory)
+      .where(eq(calendarSyncHistory.therapistId, therapistId))
+      .orderBy(desc(calendarSyncHistory.startedAt))
+      .limit(limit);
+  }
+
+  async getCalendarSyncStats(therapistId: string): Promise<{
+    totalSyncs: number;
+    successfulSyncs: number;
+    failedSyncs: number;
+    lastSyncAt: Date | null;
+    eventsProcessed: number;
+  }> {
+    const [totalResult] = await db
+      .select({ count: sql`count(*)::int` })
+      .from(calendarSyncHistory)
+      .where(eq(calendarSyncHistory.therapistId, therapistId));
+
+    const [successResult] = await db
+      .select({ count: sql`count(*)::int` })
+      .from(calendarSyncHistory)
+      .where(
+        and(
+          eq(calendarSyncHistory.therapistId, therapistId),
+          eq(calendarSyncHistory.status, "success")
+        )
+      );
+
+    const [failedResult] = await db
+      .select({ count: sql`count(*)::int` })
+      .from(calendarSyncHistory)
+      .where(
+        and(
+          eq(calendarSyncHistory.therapistId, therapistId),
+          eq(calendarSyncHistory.status, "failed")
+        )
+      );
+
+    const [lastSync] = await db
+      .select({ completedAt: calendarSyncHistory.completedAt })
+      .from(calendarSyncHistory)
+      .where(
+        and(
+          eq(calendarSyncHistory.therapistId, therapistId),
+          eq(calendarSyncHistory.status, "success")
+        )
+      )
+      .orderBy(desc(calendarSyncHistory.completedAt))
+      .limit(1);
+
+    const [eventsResult] = await db
+      .select({ total: sql`coalesce(sum(${calendarSyncHistory.eventsProcessed}), 0)::int` })
+      .from(calendarSyncHistory)
+      .where(eq(calendarSyncHistory.therapistId, therapistId));
+
+    return {
+      totalSyncs: (totalResult as any)?.count || 0,
+      successfulSyncs: (successResult as any)?.count || 0,
+      failedSyncs: (failedResult as any)?.count || 0,
+      lastSyncAt: lastSync?.completedAt || null,
+      eventsProcessed: (eventsResult as any)?.total || 0
+    };
+  }
+}
 
 export const storage = new DatabaseStorage();

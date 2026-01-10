@@ -330,6 +330,91 @@ export const semanticEdges = pgTable("semantic_edges", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+// Clinical Assessments (PHQ-9, GAD-7, PCL-5, etc.)
+export const assessments = pgTable("assessments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").notNull().references(() => clients.id),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  sessionId: varchar("session_id").references(() => sessions.id),
+  instrument: text("instrument").notNull(), // PHQ-9, GAD-7, PCL-5, etc.
+  version: text("version"),
+  dateAdministered: timestamp("date_administered").notNull(),
+  scores: jsonb("scores").notNull(), // {totalScore, subscaleScores, items, interpretation, severity}
+  interpretation: text("interpretation"),
+  recommendations: text("recommendations"),
+  metadata: jsonb("metadata"), // {sourceDocumentId, confidence, extractionMethod, etc.}
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// AI-Generated Client Tags (longitudinal analysis)
+export const clientAiTags = pgTable("client_ai_tags", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").notNull().references(() => clients.id),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  tags: jsonb("tags").notNull(), // Full ClientTags structure
+  summary: text("summary"),
+  quickTags: text("quick_tags").array().default([]),
+  confidence: real("confidence"),
+  sessionsAnalyzed: integer("sessions_analyzed"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// AI-Generated Session Tags
+export const sessionAiTags = pgTable("session_ai_tags", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull().references(() => sessions.id),
+  noteId: varchar("note_id").references(() => progressNotes.id),
+  clientId: varchar("client_id").notNull().references(() => clients.id),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  tags: jsonb("tags").notNull(), // Full SessionTags structure
+  quickTags: text("quick_tags").array().default([]),
+  confidence: real("confidence"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Calendar Sync History (for smart scheduling)
+export const calendarSyncHistory = pgTable("calendar_sync_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  syncType: text("sync_type").notNull(), // "full", "incremental", "manual"
+  status: text("status").notNull(), // "success", "partial", "failed"
+  eventsProcessed: integer("events_processed").default(0),
+  eventsCreated: integer("events_created").default(0),
+  eventsUpdated: integer("events_updated").default(0),
+  eventsDeleted: integer("events_deleted").default(0),
+  errors: jsonb("errors"),
+  syncToken: text("sync_token"),
+  startedAt: timestamp("started_at").notNull(),
+  completedAt: timestamp("completed_at"),
+  metadata: jsonb("metadata"),
+});
+
+// Calendar Event Aliases (for client name matching)
+export const calendarEventAliases = pgTable("calendar_event_aliases", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  clientId: varchar("client_id").notNull().references(() => clients.id),
+  alias: text("alias").notNull(), // The alternate name used in calendar
+  source: text("source").default("manual"), // "manual", "auto-detected"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// OAuth Tokens (for Google Calendar integration)
+export const oauthTokens = pgTable("oauth_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  therapistId: varchar("therapist_id").notNull().references(() => users.id),
+  provider: text("provider").notNull().default("google"), // "google", "microsoft", etc.
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  scope: text("scope"),
+  tokenType: text("token_type").default("Bearer"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   clients: many(clients),
@@ -554,6 +639,38 @@ export const insertDocumentTextVersionSchema = createInsertSchema(documentTextVe
   createdAt: true,
 });
 
+export const insertAssessmentSchema = createInsertSchema(assessments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertClientAiTagsSchema = createInsertSchema(clientAiTags).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSessionAiTagsSchema = createInsertSchema(sessionAiTags).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCalendarSyncHistorySchema = createInsertSchema(calendarSyncHistory).omit({
+  id: true,
+});
+
+export const insertCalendarEventAliasSchema = createInsertSchema(calendarEventAliases).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOAuthTokensSchema = createInsertSchema(oauthTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -596,3 +713,21 @@ export type JobRun = typeof jobRuns.$inferSelect;
 
 export type InsertDocumentTextVersion = z.infer<typeof insertDocumentTextVersionSchema>;
 export type DocumentTextVersion = typeof documentTextVersions.$inferSelect;
+
+export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
+export type Assessment = typeof assessments.$inferSelect;
+
+export type InsertClientAiTags = z.infer<typeof insertClientAiTagsSchema>;
+export type ClientAiTags = typeof clientAiTags.$inferSelect;
+
+export type InsertSessionAiTags = z.infer<typeof insertSessionAiTagsSchema>;
+export type SessionAiTags = typeof sessionAiTags.$inferSelect;
+
+export type InsertCalendarSyncHistory = z.infer<typeof insertCalendarSyncHistorySchema>;
+export type CalendarSyncHistory = typeof calendarSyncHistory.$inferSelect;
+
+export type InsertCalendarEventAlias = z.infer<typeof insertCalendarEventAliasSchema>;
+export type CalendarEventAlias = typeof calendarEventAliases.$inferSelect;
+
+export type InsertOAuthTokens = z.infer<typeof insertOAuthTokensSchema>;
+export type OAuthTokens = typeof oauthTokens.$inferSelect;
