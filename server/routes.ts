@@ -152,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Clients endpoints
   app.get("/api/clients", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const clients = await storage.getClients(therapistId);
       res.json(clients);
     } catch (error) {
@@ -1198,7 +1198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Documents listing and detail endpoints
   app.get("/api/documents", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const clientId = req.query.clientId as string | undefined;
 
       if (clientId) {
@@ -1220,7 +1220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/documents/:id", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const document = await storage.getDocument(req.params.id);
       if (!document) {
         return res.status(404).json({ error: "Document not found" });
@@ -1238,7 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update document with AI analysis results and link to session
   app.patch("/api/documents/:id", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const documentId = req.params.id;
 
       // Verify document ownership
@@ -1300,7 +1300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create progress note from document analysis
   app.post("/api/documents/:id/create-note", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const documentId = req.params.id;
 
       // Verify document ownership
@@ -1469,7 +1469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reprocess unlinked documents - match to clients and sessions
   app.post("/api/documents/reprocess-unlinked", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
 
       // Get all documents that don't have a client linked
       const allDocuments = await storage.getDocumentsByTherapist(therapistId);
@@ -1605,7 +1605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Documents may already have clientId but missing sessionId
   app.post("/api/documents/link-to-sessions", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
 
       // Get all documents
       const allDocuments = await storage.getDocumentsByTherapist(therapistId);
@@ -1806,7 +1806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create sessions from document dates - for historical data that wasn't synced from calendar
   app.post("/api/documents/create-sessions-from-docs", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
 
       // Get all documents
       const allDocuments = await storage.getDocumentsByTherapist(therapistId);
@@ -2015,7 +2015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/chat", async (req: any, res) => {
     try {
       const { message, include_context, client_id } = req.body;
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
 
       if (!message || typeof message !== 'string') {
         return res.status(400).json({
@@ -2837,7 +2837,7 @@ ${sourceText}
       const hasRefreshToken = !!process.env.GOOGLE_REFRESH_TOKEN;
       
       // Get basic sync information
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const monthStart = new Date();
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
@@ -2901,7 +2901,7 @@ ${sourceText}
       if (!job) {
         return res.status(404).json({ error: "Job not found" });
       }
-      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+      const therapistId = (req as any).therapistId || 'therapist-1';
       if (job.therapistId && job.therapistId !== therapistId) {
         return res.status(403).json({ error: "Access denied" });
       }
@@ -2915,7 +2915,7 @@ ${sourceText}
   app.get("/api/jobs", async (req, res) => {
     try {
       const limit = Number(req.query.limit || 50);
-      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+      const therapistId = (req as any).therapistId || 'therapist-1';
       const jobs = await listJobs(limit, therapistId);
       res.json({ jobs });
     } catch (error) {
@@ -2930,7 +2930,7 @@ ${sourceText}
       if (!existing) {
         return res.status(404).json({ error: "Job not found" });
       }
-      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+      const therapistId = (req as any).therapistId || 'therapist-1';
       if (existing.therapistId && existing.therapistId !== therapistId) {
         return res.status(403).json({ error: "Access denied" });
       }
@@ -2944,7 +2944,7 @@ ${sourceText}
 
   app.get("/api/calendar/overview", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const { startDate, endDate } = req.query;
 
       const start = startDate ? new Date(startDate as string) : new Date('2010-01-01');
@@ -2989,7 +2989,7 @@ ${sourceText}
 
   app.get("/api/calendar/reconcile", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const { startDate, endDate } = req.query;
       const start = startDate ? new Date(startDate as string) : new Date(new Date().setMonth(new Date().getMonth() - 3));
       const end = endDate ? new Date(endDate as string) : new Date(new Date().setMonth(new Date().getMonth() + 3));
@@ -3004,7 +3004,7 @@ ${sourceText}
   app.post("/api/progress-notes/placeholders/:sessionId", async (req: any, res) => {
     try {
       const { sessionId } = req.params;
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
 
       const session = await storage.getSession(sessionId);
       if (!session || session.therapistId !== therapistId) {
@@ -3163,7 +3163,7 @@ ${sourceText}
   // Get calendar events - returns sessions with calendar data for the iOS app
   app.get("/api/calendar-events", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const { startDate, endDate, source } = req.query;
 
       // Parse date filters
@@ -3220,7 +3220,7 @@ ${sourceText}
   // Sync calendar events from external sources (for iOS app)
   app.post("/api/calendar-events/sync", async (req: any, res) => {
     try {
-      const therapistId = req.therapistId || 'dr-jonathan-procter';
+      const therapistId = req.therapistId || 'therapist-1';
       const { events, source } = req.body;
 
       if (!events || !Array.isArray(events)) {

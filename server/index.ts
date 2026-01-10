@@ -78,10 +78,10 @@ app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use('/api', standardRateLimit);
 
 // Single-therapist mode: automatically set therapistId for all requests
-// Using 'dr-jonathan-procter' to match existing client data in the database
+// Using 'therapist-1' to match existing client data in the database
 app.use((req: any, res, next) => {
-  req.therapistId = 'dr-jonathan-procter';
-  req.user = { id: 'dr-jonathan-procter', role: 'therapist' };
+  req.therapistId = 'therapist-1';
+  req.user = { id: 'therapist-1', role: 'therapist' };
   next();
 });
 
@@ -266,7 +266,7 @@ app.get("/api/health/routes", (req, res) => {
     if (shouldReconcile) {
       const runReconcile = async () => {
         try {
-          const therapistId = "dr-jonathan-procter";
+          const therapistId = "therapist-1";
           const start = new Date();
           start.setMonth(start.getMonth() - 1);
           const end = new Date();
