@@ -8,6 +8,7 @@ import { aiRouter } from "./routes/ai.js";
 import { semanticRouter } from "./routes/semantic.js";
 import { knowledgeGraphRoutes } from "./routes/knowledge-graph-routes-fixed.js";
 import { storage } from "./storage.js";
+import { db } from "./db.js";
 import { sql, eq } from "drizzle-orm";
 
 // Import middleware
@@ -134,12 +135,18 @@ app.get("/api/health/deep", async (req, res) => {
   const start = Date.now();
   try {
     // Minimal DB check: run a simple NOW()
-    const [{ now }] = await (storage as any).db.execute(sql`SELECT now() as now`);
+    const nowResult = await db.execute(sql`SELECT now() as now`);
+    const now = nowResult.rows[0]?.now;
 
     // Count documents and AI results
-    const [{ count: docsCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
-    const [{ count: aiCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
-    const [{ count: edgesCount }] = await (storage as any).db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+    const docsResult = await db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
+    const docsCount = docsResult.rows[0]?.count || 0;
+
+    const aiResult = await db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
+    const aiCount = aiResult.rows[0]?.count || 0;
+
+    const edgesResult = await db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+    const edgesCount = edgesResult.rows[0]?.count || 0;
 
     res.json({
       ok: true,
@@ -165,7 +172,7 @@ app.get("/api/health/deep", async (req, res) => {
 app.get("/api/health/ready", async (req, res) => {
   try {
     // Quick DB connectivity check
-    await (storage as any).db.execute(sql`SELECT 1`);
+    await db.execute(sql`SELECT 1`);
     res.json({ status: "ready", timestamp: new Date().toISOString() });
   } catch (e: any) {
     res.status(503).json({ status: "not ready", error: String(e) });
