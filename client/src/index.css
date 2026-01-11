@@ -85,7 +85,7 @@
   }
 
   .calendar-day-disabled {
-    @apply text-gray-400 cursor-not-allowed hover:bg-transparent;
+    @apply text-moss/40 cursor-not-allowed hover:bg-transparent;
   }
 
   /* Avatar styles */
@@ -112,6 +112,6 @@
   }
 
   .session-badge-cancelled {
-    @apply bg-gray-100 text-gray-600;
+    @apply bg-sage/10 text-moss;
   }
 }

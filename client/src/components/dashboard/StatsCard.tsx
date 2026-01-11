@@ -22,7 +22,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
 }) => {
   const colorMap = {
     sage: 'from-sage-400 to-sage-600',
-    blue: 'from-accent-blue to-blue-600',
+    blue: 'from-french-blue to-french-blue-600',
     amber: 'from-sage-400 to-sage-600', // Force amber to use sage colors
     green: 'from-sage-500 to-moss-600',
   };

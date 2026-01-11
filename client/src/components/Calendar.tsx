@@ -122,7 +122,7 @@ export function Calendar({ selectedDate, onDateSelect, sessions = [], className 
           className="p-1.5 hover:bg-sage/10 rounded-lg transition-colors"
           aria-label="Previous month"
         >
-          <ChevronLeft className="h-5 w-5 text-gray-600" />
+          <ChevronLeft className="h-5 w-5 text-moss" />
         </button>
         <h3 className="font-semibold text-evergreen">
           {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
@@ -132,7 +132,7 @@ export function Calendar({ selectedDate, onDateSelect, sessions = [], className 
           className="p-1.5 hover:bg-sage/10 rounded-lg transition-colors"
           aria-label="Next month"
         >
-          <ChevronRight className="h-5 w-5 text-gray-600" />
+          <ChevronRight className="h-5 w-5 text-moss" />
         </button>
       </div>
 
@@ -141,7 +141,7 @@ export function Calendar({ selectedDate, onDateSelect, sessions = [], className 
         {dayNames.map(day => (
           <div
             key={day}
-            className="aspect-square flex items-center justify-center text-xs font-medium text-gray-500"
+            className="aspect-square flex items-center justify-center text-xs font-medium text-moss/80"
           >
             {day}
           </div>

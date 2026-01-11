@@ -418,7 +418,7 @@ export default function ProgressNotes() {
                 <div>
                   <Label className="font-medium">Content:</Label>
                   <div 
-                    className="mt-2 p-4 rounded border bg-gray-50 whitespace-pre-wrap"
+                    className="mt-2 p-4 rounded border bg-ivory/80 whitespace-pre-wrap"
                     style={{ color: '#738A6E' }}
                   >
                     {viewNoteDialog.note.content || "No content available"}

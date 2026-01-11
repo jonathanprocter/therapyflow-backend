@@ -42,12 +42,12 @@ export function CalendarPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-evergreen">Calendar & Scheduling</h1>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-moss mt-1">
               Manage appointments with Google Calendar integration
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500 bg-sage/10 px-3 py-1 rounded-lg">
+            <span className="text-sm text-moss/80 bg-sage/10 px-3 py-1 rounded-lg">
               Google Calendar Synced
             </span>
             <button className="px-4 py-2 bg-sage text-white rounded-lg hover:bg-moss transition-colors flex items-center gap-2">
@@ -76,15 +76,15 @@ export function CalendarPage() {
             <h3 className="font-semibold text-evergreen mb-4">Quick Stats</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Today's Sessions</span>
+                <span className="text-sm text-moss">Today's Sessions</span>
                 <span className="font-semibold text-evergreen">{stats.today}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">This Week</span>
+                <span className="text-sm text-moss">This Week</span>
                 <span className="font-semibold text-evergreen">{stats.thisWeek}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">This Month</span>
+                <span className="text-sm text-moss">This Month</span>
                 <span className="font-semibold text-evergreen">{stats.thisMonth}</span>
               </div>
             </div>
@@ -95,10 +95,10 @@ export function CalendarPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-evergreen">Google Calendar Integration</h3>
               <button className="p-1.5 hover:bg-sage/10 rounded-lg transition-colors">
-                <Settings className="h-4 w-4 text-gray-500" />
+                <Settings className="h-4 w-4 text-moss/80" />
               </button>
             </div>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-moss mb-3">
               All sessions are automatically synced with your Google Calendar
             </p>
             <div className="flex items-center justify-between">
@@ -145,7 +145,7 @@ export function CalendarPage() {
                   />
                 ))
               ) : (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-moss/80">
                   <CalendarIcon className="h-12 w-12 mx-auto mb-3 text-sage/30" />
                   <p>No sessions scheduled for today</p>
                 </div>

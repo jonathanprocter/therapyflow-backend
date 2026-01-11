@@ -89,7 +89,7 @@ export default function SessionSummaryGenerator({
       case 'moderate': return 'bg-french-blue-light text-evergreen';
       case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+      default: return 'bg-ivory text-evergreen dark:bg-evergreen/20 dark:text-sage';
     }
   };
 
@@ -105,10 +105,10 @@ export default function SessionSummaryGenerator({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            <h2 className="text-xl font-bold text-evergreen dark:text-ivory">
               One-Click Session Summary
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-sm text-moss dark:text-sage mt-1">
               {clientName} • {new Date(sessionDate).toLocaleDateString()}
             </p>
           </div>
@@ -123,9 +123,9 @@ export default function SessionSummaryGenerator({
 
       <CardContent className="space-y-6">
         {/* Configuration Options */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-ivory/80 dark:bg-evergreen/50 rounded-lg">
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+            <label className="text-sm font-medium text-evergreen/90 dark:text-sage/70 mb-2 block">
               Summary Type
             </label>
             <Select value={summaryType} onValueChange={(value: "brief" | "comprehensive" | "clinical" | "treatment-planning") => setSummaryType(value)}>
@@ -150,7 +150,7 @@ export default function SessionSummaryGenerator({
                 className="mr-2"
                 data-testid="include-progress-notes"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Include Progress Notes</span>
+              <span className="text-sm text-evergreen/90 dark:text-sage/70">Include Progress Notes</span>
             </label>
           </div>
           
@@ -163,16 +163,16 @@ export default function SessionSummaryGenerator({
                 className="mr-2"
                 data-testid="include-previous-sessions"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Include Context</span>
+              <span className="text-sm text-evergreen/90 dark:text-sage/70">Include Context</span>
             </label>
           </div>
         </div>
 
         {/* Quick Insights Preview */}
         {quickInsights?.success && (
-          <Card className="border-blue-200 dark:border-blue-800">
+          <Card className="border-french-blue/30 dark:border-french-blue/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+              <CardTitle className="text-sm font-medium text-evergreen dark:text-french-blue">
                 <i className="fas fa-lightbulb mr-2"></i>
                 Quick Insights Preview
               </CardTitle>
@@ -180,11 +180,11 @@ export default function SessionSummaryGenerator({
             <CardContent className="pt-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Key Takeaways</h4>
-                  <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <h4 className="font-medium text-evergreen dark:text-ivory mb-2">Key Takeaways</h4>
+                  <ul className="text-sm text-moss dark:text-sage space-y-1">
                     {quickInsights.insights.keyTakeaways?.slice(0, 3).map((takeaway: string, idx: number) => (
                       <li key={idx} className="flex items-start">
-                        <i className="fas fa-circle text-xs mt-2 mr-2 text-blue-500"></i>
+                        <i className="fas fa-circle text-xs mt-2 mr-2 text-french-blue"></i>
                         {takeaway}
                       </li>
                     ))}
@@ -192,8 +192,8 @@ export default function SessionSummaryGenerator({
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Immediate Actions</h4>
-                  <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <h4 className="font-medium text-evergreen dark:text-ivory mb-2">Immediate Actions</h4>
+                  <ul className="text-sm text-moss dark:text-sage space-y-1">
                     {quickInsights.insights.immediateActions?.slice(0, 2).map((action: string, idx: number) => (
                       <li key={idx} className="flex items-start">
                         <i className="fas fa-arrow-right text-xs mt-2 mr-2 text-green-500"></i>
@@ -204,9 +204,9 @@ export default function SessionSummaryGenerator({
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Risk Flags</h4>
+                  <h4 className="font-medium text-evergreen dark:text-ivory mb-2">Risk Flags</h4>
                   {quickInsights.insights.riskFlags?.length > 0 ? (
-                    <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <ul className="text-sm text-moss dark:text-sage space-y-1">
                       {quickInsights.insights.riskFlags.slice(0, 2).map((flag: string, idx: number) => (
                         <li key={idx} className="flex items-start">
                           <i className="fas fa-exclamation-triangle text-xs mt-2 mr-2 text-red-500"></i>
@@ -280,8 +280,8 @@ export default function SessionSummaryGenerator({
 
                 <TabsContent value="overview" className="space-y-4">
                   <div>
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Session Overview</h3>
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <h3 className="font-medium text-evergreen dark:text-ivory mb-3">Session Overview</h3>
+                    <p className="text-evergreen/90 dark:text-sage/70 leading-relaxed">
                       {generateSummaryMutation.data.summary.sessionOverview}
                     </p>
                   </div>
@@ -290,7 +290,7 @@ export default function SessionSummaryGenerator({
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Key Themes</h4>
+                      <h4 className="font-medium text-evergreen dark:text-ivory mb-3">Key Themes</h4>
                       <div className="flex flex-wrap gap-2">
                         {generateSummaryMutation.data.summary.keyThemes.map((theme: string, idx: number) => (
                           <Badge key={idx} variant="secondary">
@@ -301,7 +301,7 @@ export default function SessionSummaryGenerator({
                     </div>
                     
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Interventions Used</h4>
+                      <h4 className="font-medium text-evergreen dark:text-ivory mb-3">Interventions Used</h4>
                       <div className="flex flex-wrap gap-2">
                         {generateSummaryMutation.data.summary.interventionsUsed.map((intervention: string, idx: number) => (
                           <Badge key={idx} variant="outline">
@@ -315,12 +315,12 @@ export default function SessionSummaryGenerator({
 
                 <TabsContent value="clinical" className="space-y-4">
                   <div>
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Clinical Observations</h3>
+                    <h3 className="font-medium text-evergreen dark:text-ivory mb-3">Clinical Observations</h3>
                     <ul className="space-y-2">
                       {generateSummaryMutation.data.summary.clinicalObservations.map((observation: string, idx: number) => (
                         <li key={idx} className="flex items-start">
-                          <i className="fas fa-circle text-xs mt-2 mr-3 text-blue-500"></i>
-                          <span className="text-gray-700 dark:text-gray-300">{observation}</span>
+                          <i className="fas fa-circle text-xs mt-2 mr-3 text-french-blue"></i>
+                          <span className="text-evergreen/90 dark:text-sage/70">{observation}</span>
                         </li>
                       ))}
                     </ul>
@@ -329,31 +329,31 @@ export default function SessionSummaryGenerator({
                   <Separator />
                   
                   <div>
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Session Metrics</h3>
+                    <h3 className="font-medium text-evergreen dark:text-ivory mb-3">Session Metrics</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      <div className="text-center p-4 bg-ivory/80 dark:bg-evergreen/50 rounded-lg">
+                        <div className="text-2xl font-bold text-evergreen dark:text-ivory">
                           {generateSummaryMutation.data.summary.sessionMetrics.duration}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Duration</div>
+                        <div className="text-sm text-moss dark:text-sage">Duration</div>
                       </div>
                       
-                      <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      <div className="text-center p-4 bg-ivory/80 dark:bg-evergreen/50 rounded-lg">
+                        <div className="text-2xl font-bold text-evergreen dark:text-ivory">
                           {generateSummaryMutation.data.summary.sessionMetrics.engagement}/10
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Engagement</div>
+                        <div className="text-sm text-moss dark:text-sage">Engagement</div>
                         <Progress 
                           value={generateSummaryMutation.data.summary.sessionMetrics.engagement * 10} 
                           className="mt-2 h-2"
                         />
                       </div>
                       
-                      <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      <div className="text-center p-4 bg-ivory/80 dark:bg-evergreen/50 rounded-lg">
+                        <div className="text-2xl font-bold text-evergreen dark:text-ivory">
                           {generateSummaryMutation.data.summary.sessionMetrics.adherence}/10
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Adherence</div>
+                        <div className="text-sm text-moss dark:text-sage">Adherence</div>
                         <Progress 
                           value={generateSummaryMutation.data.summary.sessionMetrics.adherence * 10} 
                           className="mt-2 h-2"
@@ -365,32 +365,32 @@ export default function SessionSummaryGenerator({
 
                 <TabsContent value="progress" className="space-y-4">
                   <div>
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Client Progress Assessment</h3>
+                    <h3 className="font-medium text-evergreen dark:text-ivory mb-3">Client Progress Assessment</h3>
                     <div className="flex items-center space-x-4 mb-4">
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Progress Rating:</span>
+                        <span className="text-sm text-moss dark:text-sage">Progress Rating:</span>
                         <div className="flex items-center space-x-2">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
                             getProgressColor(generateSummaryMutation.data.summary.clientProgress.rating)
                           }`}>
                             {generateSummaryMutation.data.summary.clientProgress.rating}
                           </div>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">/ 10</span>
+                          <span className="text-sm text-moss/80 dark:text-sage">/ 10</span>
                         </div>
                       </div>
                     </div>
                     
-                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                    <p className="text-evergreen/90 dark:text-sage/70 mb-4">
                       {generateSummaryMutation.data.summary.clientProgress.description}
                     </p>
                     
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Progress Indicators</h4>
+                      <h4 className="font-medium text-evergreen dark:text-ivory mb-2">Progress Indicators</h4>
                       <ul className="space-y-1">
                         {generateSummaryMutation.data.summary.clientProgress.progressIndicators.map((indicator: string, idx: number) => (
                           <li key={idx} className="flex items-start">
                             <i className="fas fa-arrow-up text-xs mt-2 mr-3 text-green-500"></i>
-                            <span className="text-gray-700 dark:text-gray-300">{indicator}</span>
+                            <span className="text-evergreen/90 dark:text-sage/70">{indicator}</span>
                           </li>
                         ))}
                       </ul>
@@ -400,12 +400,12 @@ export default function SessionSummaryGenerator({
                   <Separator />
                   
                   <div>
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Treatment Plan Updates</h3>
+                    <h3 className="font-medium text-evergreen dark:text-ivory mb-3">Treatment Plan Updates</h3>
                     <ul className="space-y-2">
                       {generateSummaryMutation.data.summary.treatmentPlanUpdates.map((update: string, idx: number) => (
                         <li key={idx} className="flex items-start">
                           <i className="fas fa-edit text-xs mt-2 mr-3" style={{ color: '#88A5BC' }}></i>
-                          <span className="text-gray-700 dark:text-gray-300">{update}</span>
+                          <span className="text-evergreen/90 dark:text-sage/70">{update}</span>
                         </li>
                       ))}
                     </ul>
@@ -414,7 +414,7 @@ export default function SessionSummaryGenerator({
 
                 <TabsContent value="risk" className="space-y-4">
                   <div>
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Risk Assessment</h3>
+                    <h3 className="font-medium text-evergreen dark:text-ivory mb-3">Risk Assessment</h3>
                     <div className="flex items-center space-x-3 mb-4">
                       <Badge className={getRiskLevelColor(generateSummaryMutation.data.summary.riskAssessment.level)}>
                         {generateSummaryMutation.data.summary.riskAssessment.level.toUpperCase()} RISK
@@ -423,12 +423,12 @@ export default function SessionSummaryGenerator({
                     
                     {generateSummaryMutation.data.summary.riskAssessment.factors.length > 0 && (
                       <div className="mb-4">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Risk Factors</h4>
+                        <h4 className="font-medium text-evergreen dark:text-ivory mb-2">Risk Factors</h4>
                         <ul className="space-y-1">
                           {generateSummaryMutation.data.summary.riskAssessment.factors.map((factor: string, idx: number) => (
                             <li key={idx} className="flex items-start">
                               <i className="fas fa-exclamation-triangle text-xs mt-2 mr-3 text-red-500"></i>
-                              <span className="text-gray-700 dark:text-gray-300">{factor}</span>
+                              <span className="text-evergreen/90 dark:text-sage/70">{factor}</span>
                             </li>
                           ))}
                         </ul>
@@ -436,12 +436,12 @@ export default function SessionSummaryGenerator({
                     )}
                     
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">Risk Management Recommendations</h4>
+                      <h4 className="font-medium text-evergreen dark:text-ivory mb-2">Risk Management Recommendations</h4>
                       <ul className="space-y-1">
                         {generateSummaryMutation.data.summary.riskAssessment.recommendations.map((recommendation: string, idx: number) => (
                           <li key={idx} className="flex items-start">
-                            <i className="fas fa-shield-alt text-xs mt-2 mr-3 text-blue-500"></i>
-                            <span className="text-gray-700 dark:text-gray-300">{recommendation}</span>
+                            <i className="fas fa-shield-alt text-xs mt-2 mr-3 text-french-blue"></i>
+                            <span className="text-evergreen/90 dark:text-sage/70">{recommendation}</span>
                           </li>
                         ))}
                       </ul>
@@ -451,14 +451,14 @@ export default function SessionSummaryGenerator({
 
                 <TabsContent value="next-steps" className="space-y-4">
                   <div>
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Next Steps & Action Items</h3>
+                    <h3 className="font-medium text-evergreen dark:text-ivory mb-3">Next Steps & Action Items</h3>
                     <ul className="space-y-3">
                       {generateSummaryMutation.data.summary.nextSteps.map((step: string, idx: number) => (
-                        <li key={idx} className="flex items-start p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                          <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
+                        <li key={idx} className="flex items-start p-3 bg-ivory/80 dark:bg-evergreen/50 rounded-lg">
+                          <div className="w-6 h-6 bg-french-blue text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">
                             {idx + 1}
                           </div>
-                          <span className="text-gray-700 dark:text-gray-300">{step}</span>
+                          <span className="text-evergreen/90 dark:text-sage/70">{step}</span>
                         </li>
                       ))}
                     </ul>

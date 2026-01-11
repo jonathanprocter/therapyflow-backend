@@ -107,10 +107,10 @@ export default function SessionPrep() {
     return (
       <div className="container mx-auto p-6">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-sage/30 rounded w-1/3"></div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
+              <div key={i} className="h-64 bg-sage/30 rounded-lg"></div>
             ))}
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function SessionPrep() {
       <div className="container mx-auto p-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Session Prep</h1>
-          <p className="text-gray-600">Unable to load session preparation data.</p>
+          <p className="text-moss">Unable to load session preparation data.</p>
           <Link href="/calendar">
             <Button className="mt-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -202,10 +202,10 @@ export default function SessionPrep() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-evergreen">
               Session Preparation
             </h1>
-            <p className="text-gray-600">
+            <p className="text-moss">
               Preparing for session with {client.name}
             </p>
           </div>
@@ -231,19 +231,19 @@ export default function SessionPrep() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-500">Client</p>
+              <p className="text-sm font-medium text-moss/80">Client</p>
               <p className="text-lg font-semibold">{client.name}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Date & Time</p>
+              <p className="text-sm font-medium text-moss/80">Date & Time</p>
               <p className="text-lg">{sessionTime}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Duration</p>
+              <p className="text-sm font-medium text-moss/80">Duration</p>
               <p className="text-lg">{session.duration} minutes</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Type</p>
+              <p className="text-sm font-medium text-moss/80">Type</p>
               <Badge variant="outline">{session.sessionType}</Badge>
             </div>
           </div>
@@ -267,11 +267,11 @@ export default function SessionPrep() {
                     <h4 className="font-medium text-sm">
                       Session {index + 1} ago
                     </h4>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-moss/80">
                       {formatInTimeZone(new Date(note.createdAt), 'America/New_York', 'MMM dd')}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-3">
+                  <p className="text-sm text-moss line-clamp-3">
                     {note.content?.substring(0, 150)}...
                   </p>
                   {note.aiTags.length > 0 && (
@@ -287,7 +287,7 @@ export default function SessionPrep() {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500">No recent progress notes available.</p>
+              <p className="text-sm text-moss/80">No recent progress notes available.</p>
             )}
           </CardContent>
         </Card>
@@ -305,21 +305,21 @@ export default function SessionPrep() {
               <>
                 <div>
                   <h4 className="font-medium text-sm mb-2">Presenting Issues</h4>
-                  <p className="text-sm text-gray-600">{caseConceptualization.presenting}</p>
+                  <p className="text-sm text-moss">{caseConceptualization.presenting}</p>
                 </div>
 
                 <div>
                   <h4 className="font-medium text-sm mb-2">Predisposing Factors</h4>
-                  <p className="text-sm text-gray-600">{caseConceptualization.predisposing}</p>
+                  <p className="text-sm text-moss">{caseConceptualization.predisposing}</p>
                 </div>
 
                 <div>
                   <h4 className="font-medium text-sm mb-2">Protective Factors</h4>
-                  <p className="text-sm text-gray-600">{caseConceptualization.protective}</p>
+                  <p className="text-sm text-moss">{caseConceptualization.protective}</p>
                 </div>
               </>
             ) : (
-              <p className="text-sm text-gray-500">No case conceptualization available.</p>
+              <p className="text-sm text-moss/80">No case conceptualization available.</p>
             )}
           </CardContent>
         </Card>
@@ -340,7 +340,7 @@ export default function SessionPrep() {
                     <h4 className="font-medium text-sm mb-2">Treatment Goals</h4>
                     <ul className="text-sm space-y-1">
                       {treatmentPlan.goals.slice(0, 3).map((goal, index) => (
-                        <li key={index} className="text-gray-600">• {goal}</li>
+                        <li key={index} className="text-moss">• {goal}</li>
                       ))}
                     </ul>
                   </div>
@@ -367,7 +367,7 @@ export default function SessionPrep() {
                   <AlertTriangle className="w-4 h-4 mr-1 text-sage" />
                   Perpetuating Factors
                 </h4>
-                <p className="text-sm text-gray-600">{caseConceptualization.perpetuating}</p>
+                <p className="text-sm text-moss">{caseConceptualization.perpetuating}</p>
               </div>
             )}
           </CardContent>
@@ -382,10 +382,10 @@ export default function SessionPrep() {
               AI Session Prep
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm text-gray-700">
+          <CardContent className="space-y-4 text-sm text-evergreen/90">
             {prepHistory.length > 0 && (
               <div className="flex items-center gap-2 text-sm">
-                <label htmlFor="prep-history" className="text-gray-600">Prep history</label>
+                <label htmlFor="prep-history" className="text-moss">Prep history</label>
                 <select
                   id="prep-history"
                   className="border rounded px-2 py-1"
@@ -400,7 +400,7 @@ export default function SessionPrep() {
                 </select>
                 {prepHistory.length > 1 && (
                   <>
-                    <label htmlFor="prep-compare" className="text-gray-600">Compare to</label>
+                    <label htmlFor="prep-compare" className="text-moss">Compare to</label>
                     <select
                       id="prep-compare"
                       className="border rounded px-2 py-1"
@@ -418,15 +418,15 @@ export default function SessionPrep() {
               </div>
             )}
             <div>
-              <h4 className="font-semibold text-gray-900">Where We Left Off</h4>
-              <p className="text-gray-600">{activePrep.where_we_left_off.session_ending_note}</p>
+              <h4 className="font-semibold text-evergreen">Where We Left Off</h4>
+              <p className="text-moss">{activePrep.where_we_left_off.session_ending_note}</p>
               <div className="mt-2">
                 <Badge variant="outline">Themes: {(activePrep.where_we_left_off.key_themes || []).join(", ")}</Badge>
               </div>
             </div>
             <Separator />
             <div>
-              <h4 className="font-semibold text-gray-900">Homework Follow-Up</h4>
+              <h4 className="font-semibold text-evergreen">Homework Follow-Up</h4>
               <ul className="list-disc pl-5">
                 {(activePrep.homework_follow_up.assignments || []).map((item: string, index: number) => (
                   <li key={index}>{item}</li>
@@ -435,7 +435,7 @@ export default function SessionPrep() {
             </div>
             <Separator />
             <div>
-              <h4 className="font-semibold text-gray-900">Clinical Flags</h4>
+              <h4 className="font-semibold text-evergreen">Clinical Flags</h4>
               <p>Risk level: {activePrep.clinical_flags.risk_level}</p>
               <ul className="list-disc pl-5">
                 {(activePrep.clinical_flags.requires_assessment || []).map((item: string, index: number) => (
@@ -445,7 +445,7 @@ export default function SessionPrep() {
             </div>
             <Separator />
             <div>
-              <h4 className="font-semibold text-gray-900">Suggested Openers</h4>
+              <h4 className="font-semibold text-evergreen">Suggested Openers</h4>
               <ul className="list-disc pl-5">
                 {(activePrep.suggested_openers.warm_openers || []).map((item: string, index: number) => (
                   <li key={index}>{item}</li>
@@ -466,7 +466,7 @@ export default function SessionPrep() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
             <div className="lg:col-span-2 flex items-center justify-between text-xs">
-              <span className="text-gray-500">Diff view</span>
+              <span className="text-moss/80">Diff view</span>
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -490,7 +490,7 @@ export default function SessionPrep() {
               );
               return (
                 <div className="lg:col-span-2 rounded border p-3 space-y-2">
-                  <div className="text-xs text-gray-500">Diff highlights</div>
+                  <div className="text-xs text-moss/80">Diff highlights</div>
                   <div className="flex flex-wrap gap-2">
                     {themeDiff.added.map((item, index) => (
                       <Badge key={`theme-add-${index}`} style={{ backgroundColor: 'rgba(142, 165, 140, 0.2)', color: '#344C3D' }}>
@@ -537,8 +537,8 @@ export default function SessionPrep() {
               );
             })()}
             {showFullDiff && (
-              <div className="lg:col-span-2 rounded border p-3 space-y-3 text-xs text-gray-600">
-                <div className="font-semibold text-gray-800">Inline Text Diff</div>
+              <div className="lg:col-span-2 rounded border p-3 space-y-3 text-xs text-moss">
+                <div className="font-semibold text-evergreen">Inline Text Diff</div>
                 {[
                   {
                     label: "Session Ending Note",
@@ -562,7 +562,7 @@ export default function SessionPrep() {
                   }
                 ].map((item, index) => (
                   <div key={index} className="space-y-1">
-                    <div className="text-gray-500">{item.label}</div>
+                    <div className="text-moss/80">{item.label}</div>
                     <div className="flex flex-wrap gap-1">
                       {diffWords(item.current || "", item.previous || "").map((part, idx) => (
                         <span
@@ -585,18 +585,18 @@ export default function SessionPrep() {
               </div>
             )}
             <div className="space-y-2">
-              <h4 className="font-semibold text-gray-900">Selected Prep</h4>
+              <h4 className="font-semibold text-evergreen">Selected Prep</h4>
               <div className="rounded border p-3 space-y-2">
                 <div>
-                  <div className="text-xs text-gray-500">Themes</div>
+                  <div className="text-xs text-moss/80">Themes</div>
                   <div>{activePrep.where_we_left_off.key_themes.join(", ")}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Risk Level</div>
+                  <div className="text-xs text-moss/80">Risk Level</div>
                   <div>{activePrep.clinical_flags.risk_level}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Focus Suggestions</div>
+                  <div className="text-xs text-moss/80">Focus Suggestions</div>
                   <ul className="list-disc pl-4">
                     {activePrep.session_focus_suggestions.map((item: string, index: number) => (
                       <li key={`focus-a-${index}`}>{item}</li>
@@ -606,18 +606,18 @@ export default function SessionPrep() {
               </div>
             </div>
             <div className="space-y-2">
-              <h4 className="font-semibold text-gray-900">Comparison Prep</h4>
+              <h4 className="font-semibold text-evergreen">Comparison Prep</h4>
               <div className="rounded border p-3 space-y-2">
                 <div>
-                  <div className="text-xs text-gray-500">Themes</div>
+                  <div className="text-xs text-moss/80">Themes</div>
                   <div>{comparisonPrep.where_we_left_off.key_themes.join(", ")}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Risk Level</div>
+                  <div className="text-xs text-moss/80">Risk Level</div>
                   <div>{comparisonPrep.clinical_flags.risk_level}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500">Focus Suggestions</div>
+                  <div className="text-xs text-moss/80">Focus Suggestions</div>
                   <ul className="list-disc pl-4">
                     {comparisonPrep.session_focus_suggestions.map((item: string, index: number) => (
                       <li key={`focus-b-${index}`}>{item}</li>

@@ -52,7 +52,7 @@ export function SessionCard({
   const statusStyles = {
     scheduled: 'bg-sage/20 text-evergreen border-sage/30',
     completed: 'bg-moss/20 text-evergreen border-moss/30',
-    cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
+    cancelled: 'bg-ivory text-moss border-sage/20',
   };
 
   return (
@@ -62,7 +62,7 @@ export function SessionCard({
           <Avatar name={client.name} initials={client.initials} />
           <div>
             <h4 className="font-semibold text-evergreen">{client.name}</h4>
-            <p className="text-sm text-gray-600">{sessionType} Session</p>
+            <p className="text-sm text-moss">{sessionType} Session</p>
           </div>
         </div>
 
@@ -76,12 +76,12 @@ export function SessionCard({
             {status}
           </span>
           <button className="p-1 hover:bg-sage/10 rounded">
-            <MoreVertical className="h-4 w-4 text-gray-500" />
+            <MoreVertical className="h-4 w-4 text-moss/80" />
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+      <div className="flex items-center gap-4 text-sm text-moss mb-3">
         <span className="flex items-center gap-1">
           <Clock className="h-3.5 w-3.5" />
           {time}

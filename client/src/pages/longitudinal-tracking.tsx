@@ -91,13 +91,13 @@ export default function LongitudinalTracking() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-gray-900">Longitudinal Tracking</h1>
-        <p className="text-gray-600">Generate longitudinal analyses to track clinical progress across the treatment arc.</p>
+        <h1 className="text-3xl font-bold text-evergreen">Longitudinal Tracking</h1>
+        <p className="text-moss">Generate longitudinal analyses to track clinical progress across the treatment arc.</p>
       </div>
 
       <Card className="border-moss/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-900">
+          <CardTitle className="flex items-center gap-2 text-evergreen">
             <LineChart className="h-5 w-5 text-french-blue" />
             Client Selection
           </CardTitle>
@@ -140,7 +140,7 @@ export default function LongitudinalTracking() {
       {selectedClientId && (
         <Card className="border-moss/20">
           <CardHeader>
-            <CardTitle className="text-gray-900">Analysis History</CardTitle>
+            <CardTitle className="text-evergreen">Analysis History</CardTitle>
             <CardDescription>Review past longitudinal analyses for this client.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 md:flex-row md:items-center">
@@ -175,7 +175,7 @@ export default function LongitudinalTracking() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card className="border-moss/20">
             <CardHeader>
-              <CardTitle className="text-gray-900">Treatment Arc Overview</CardTitle>
+              <CardTitle className="text-evergreen">Treatment Arc Overview</CardTitle>
               <CardDescription>Key context from the latest longitudinal analysis.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -185,16 +185,16 @@ export default function LongitudinalTracking() {
                 <Badge variant="outline">Duration: {analysis.treatment_duration_days ?? "N/A"} days</Badge>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-900">Theme arc</p>
+                <p className="text-sm font-medium text-evergreen">Theme arc</p>
                 <p className="text-sm text-muted-foreground">{analysis.theme_arc || "No summary available."}</p>
               </div>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Active themes</p>
+                  <p className="text-sm font-medium text-evergreen">Active themes</p>
                   {renderList(analysis.active_themes)}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Stuck themes</p>
+                  <p className="text-sm font-medium text-evergreen">Stuck themes</p>
                   {renderList(analysis.stuck_themes, "None flagged")}
                 </div>
               </div>
@@ -203,7 +203,7 @@ export default function LongitudinalTracking() {
 
           <Card className="border-moss/20">
             <CardHeader>
-              <CardTitle className="text-gray-900">Quantitative Signals</CardTitle>
+              <CardTitle className="text-evergreen">Quantitative Signals</CardTitle>
               <CardDescription>Trend-level metrics and risk tracking.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -213,7 +213,7 @@ export default function LongitudinalTracking() {
                 <Badge variant="outline">Behavioral: {analysis.behavioral_consistency || "Unknown"}</Badge>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Measure trajectories</p>
+                <p className="text-sm font-medium text-evergreen">Measure trajectories</p>
                 <div className="space-y-1">
                   {analysis.quantitative_trends && Object.keys(analysis.quantitative_trends).length > 0 ? (
                     Object.entries(analysis.quantitative_trends).map(([measure, trend]) => (
@@ -228,7 +228,7 @@ export default function LongitudinalTracking() {
                 </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Reliable change achieved</p>
+                <p className="text-sm font-medium text-evergreen">Reliable change achieved</p>
                 {renderList(analysis.reliable_change_achieved, "No reliable change flagged")}
               </div>
             </CardContent>
@@ -236,7 +236,7 @@ export default function LongitudinalTracking() {
 
           <Card className="border-moss/20">
             <CardHeader>
-              <CardTitle className="text-gray-900">Narrative & Pattern Tracking</CardTitle>
+              <CardTitle className="text-evergreen">Narrative & Pattern Tracking</CardTitle>
               <CardDescription>Qualitative shifts and relational patterns.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -245,15 +245,15 @@ export default function LongitudinalTracking() {
                 <Badge variant="outline">Alliance: {analysis.alliance_quality || "Unknown"}</Badge>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Dominant narrative</p>
+                <p className="text-sm font-medium text-evergreen">Dominant narrative</p>
                 <p className="text-sm text-muted-foreground">{analysis.dominant_narrative || "Not specified"}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Counter narratives</p>
+                <p className="text-sm font-medium text-evergreen">Counter narratives</p>
                 {renderList(analysis.counter_narratives, "None captured")}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Patterns to monitor</p>
+                <p className="text-sm font-medium text-evergreen">Patterns to monitor</p>
                 {renderList(analysis.patterns_client_may_not_see, "None captured")}
               </div>
             </CardContent>
@@ -261,32 +261,32 @@ export default function LongitudinalTracking() {
 
           <Card className="border-moss/20">
             <CardHeader>
-              <CardTitle className="text-gray-900">Treatment Focus</CardTitle>
+              <CardTitle className="text-evergreen">Treatment Focus</CardTitle>
               <CardDescription>Priority areas for the next phase of care.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Goals on track</p>
+                  <p className="text-sm font-medium text-evergreen">Goals on track</p>
                   {renderList(analysis.goals_on_track)}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Goals needing attention</p>
+                  <p className="text-sm font-medium text-evergreen">Goals needing attention</p>
                   {renderList(analysis.goals_needing_attention, "None flagged")}
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">What's working</p>
+                  <p className="text-sm font-medium text-evergreen">What's working</p>
                   {renderList(analysis.whats_working)}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">What's not landing</p>
+                  <p className="text-sm font-medium text-evergreen">What's not landing</p>
                   {renderList(analysis.whats_not_landing, "None noted")}
                 </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Focus recommendations</p>
+                <p className="text-sm font-medium text-evergreen">Focus recommendations</p>
                 {renderList(analysis.focus_recommendations, "No recommendations yet")}
               </div>
             </CardContent>
@@ -294,20 +294,20 @@ export default function LongitudinalTracking() {
 
           <Card className="border-moss/20 lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-gray-900">Clinical Hypotheses & Next Steps</CardTitle>
+              <CardTitle className="text-evergreen">Clinical Hypotheses & Next Steps</CardTitle>
               <CardDescription>Connections and predicted challenges for continued work.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
-                <p className="text-sm font-medium text-gray-900">Quant + Qual Connections</p>
+                <p className="text-sm font-medium text-evergreen">Quant + Qual Connections</p>
                 {renderList(analysis.quant_qual_connections)}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Predicted challenges</p>
+                <p className="text-sm font-medium text-evergreen">Predicted challenges</p>
                 {renderList(analysis.predicted_challenges, "No challenges flagged")}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Termination considerations</p>
+                <p className="text-sm font-medium text-evergreen">Termination considerations</p>
                 <p className="text-sm text-muted-foreground">{analysis.termination_considerations || "Not specified"}</p>
               </div>
             </CardContent>

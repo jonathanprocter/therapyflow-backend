@@ -190,7 +190,7 @@ export default function InteractiveNoteCreator() {
                     <SelectItem key={session.id} value={session.id}>
                       {new Date(session.scheduledAt).toLocaleDateString()} - {session.type || 'Session'}
                       {session.notes && (
-                        <span className="text-gray-500 ml-2">({session.notes.substring(0, 30)}...)</span>
+                        <span className="text-moss/80 ml-2">({session.notes.substring(0, 30)}...)</span>
                       )}
                     </SelectItem>
                   ))}
