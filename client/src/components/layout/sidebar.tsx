@@ -47,13 +47,13 @@ export default function Sidebar() {
   return (
     <aside className="sidebar w-64 flex flex-col">
       {/* Logo and Header */}
-      <div className="h-16 px-6 flex items-center border-b border-moss/15">
+      <div className="h-16 px-6 flex items-center border-b border-sepia/15">
         <Link href="/">
           <div className="flex items-center space-x-3 cursor-pointer">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-french-blue">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-teal">
               <Brain className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-evergreen">
+            <h1 className="text-xl font-bold text-ink">
               TherapyFlow
             </h1>
           </div>

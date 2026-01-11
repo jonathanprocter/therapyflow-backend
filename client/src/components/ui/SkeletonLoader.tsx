@@ -24,7 +24,7 @@ export const SkeletonLoader: React.FC<SkeletonProps> = ({
       {Array.from({ length: count }).map((_, i) => (
         <motion.div
           key={i}
-          className={`${variants[variant]} ${className} bg-sage-200/50`}
+          className={`${variants[variant]} ${className} bg-teal-200/50`}
           animate={{
             opacity: [0.5, 0.8, 0.5],
             background: [

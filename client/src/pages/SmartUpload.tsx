@@ -235,7 +235,7 @@ export default function SmartUpload() {
               accept=".pdf,.docx,.doc,.txt"
               onChange={(e) => setFiles(e.target.files)}
               data-testid="input-smart-files"
-              className="border border-sage/30 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
+              className="border border-teal/30 focus:border-[#88A5BC] focus:ring-[#88A5BC]"
             />
             <p className="text-sm" style={{ color: '#738A6E' }}>
               Supported formats: PDF, DOCX, DOC, TXT

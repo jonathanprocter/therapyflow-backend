@@ -67,18 +67,18 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
   const getSignificanceColor = (significance: string) => {
     switch (significance) {
       case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-french-blue bg-french-blue/10 border-french-blue/20';
-      case 'low': return 'text-sage bg-sage/10 border-sage/20';
-      default: return 'text-moss bg-ivory border-moss/20';
+      case 'medium': return 'text-teal bg-teal/10 border-teal/20';
+      case 'low': return 'text-teal bg-teal/10 border-teal/20';
+      default: return 'text-sepia bg-parchment border-sepia/20';
     }
   };
 
   const getFrequencyColor = (frequency: string) => {
     switch (frequency.toLowerCase()) {
       case 'high': return 'text-red-600 bg-red-50';
-      case 'medium': return 'text-french-blue bg-french-blue/10';
-      case 'low': return 'text-sage bg-sage/10';
-      default: return 'text-moss bg-ivory';
+      case 'medium': return 'text-teal bg-teal/10';
+      case 'low': return 'text-teal bg-teal/10';
+      default: return 'text-sepia bg-parchment';
     }
   };
 
@@ -99,10 +99,10 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
       <Card className={className} data-testid="memory-loading">
         <CardContent className="py-8">
           <div className="text-center space-y-4">
-            <Brain className="h-8 w-8 mx-auto text-sage animate-pulse" />
+            <Brain className="h-8 w-8 mx-auto text-teal animate-pulse" />
             <div>
-              <h3 className="text-lg font-medium text-evergreen">Retrieving Memory</h3>
-              <p className="text-moss text-sm mt-1">
+              <h3 className="text-lg font-medium text-ink">Retrieving Memory</h3>
+              <p className="text-sepia text-sm mt-1">
                 Accessing contextual therapeutic history...
               </p>
             </div>
@@ -119,8 +119,8 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
           <div className="text-center space-y-4">
             <AlertTriangle className="h-8 w-8 mx-auto text-red-500" />
             <div>
-              <h3 className="text-lg font-medium text-evergreen">Memory Unavailable</h3>
-              <p className="text-moss text-sm mt-1">
+              <h3 className="text-lg font-medium text-ink">Memory Unavailable</h3>
+              <p className="text-sepia text-sm mt-1">
                 Unable to retrieve contextual memory. Using manual recall.
               </p>
             </div>
@@ -144,7 +144,7 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-sage" />
+            <Brain className="h-5 w-5 text-teal" />
             <div>
               <CardTitle className="text-lg">Contextual Memory</CardTitle>
               <CardDescription>
@@ -167,7 +167,7 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
       <CardContent className="space-y-6">
         {/* Activity Selector */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-evergreen">Current Activity</label>
+          <label className="text-sm font-medium text-ink">Current Activity</label>
           <Select value={selectedActivity} onValueChange={setSelectedActivity}>
             <SelectTrigger data-testid="select-activity">
               <SelectValue placeholder="Select current activity" />
@@ -185,21 +185,21 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
         {/* Recent Patterns */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-sage" />
-            <h4 className="font-medium text-evergreen">Recent Patterns to Check</h4>
+            <TrendingUp className="h-4 w-4 text-teal" />
+            <h4 className="font-medium text-ink">Recent Patterns to Check</h4>
           </div>
           <ScrollArea className="h-32">
             <div className="space-y-2">
               {memory?.recentPatterns.map((pattern, index) => (
                 <div
                   key={index}
-                  className="p-3 border rounded-lg hover:bg-ivory transition-colors"
+                  className="p-3 border rounded-lg hover:bg-parchment transition-colors"
                   data-testid={`pattern-${index}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-evergreen">{pattern.theme}</span>
+                        <span className="font-medium text-ink">{pattern.theme}</span>
                         <Badge 
                           variant="secondary" 
                           className={`text-xs ${getFrequencyColor(pattern.frequency)}`}
@@ -207,9 +207,9 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
                           {pattern.frequency} frequency
                         </Badge>
                       </div>
-                      <p className="text-sm text-moss">{pattern.context}</p>
+                      <p className="text-sm text-sepia">{pattern.context}</p>
                     </div>
-                    <div className="text-xs text-moss text-right">
+                    <div className="text-xs text-sepia text-right">
                       <Clock className="h-3 w-3 inline mr-1" />
                       {formatRelativeDate(pattern.lastMentioned)}
                     </div>
@@ -223,8 +223,8 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
         {/* Relevant History */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-sage" />
-            <h4 className="font-medium text-evergreen">Relevant History</h4>
+            <History className="h-4 w-4 text-teal" />
+            <h4 className="font-medium text-ink">Relevant History</h4>
           </div>
           <ScrollArea className="h-40">
             <div className="space-y-2">
@@ -243,7 +243,7 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
                         >
                           {item.significance} significance
                         </Badge>
-                        <span className="text-xs text-moss">
+                        <span className="text-xs text-sepia">
                           {formatRelativeDate(item.date)}
                         </span>
                       </div>
@@ -260,18 +260,18 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
         {memory?.suggestedFocus && memory.suggestedFocus.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-sage" />
-              <h4 className="font-medium text-evergreen">Suggested Focus</h4>
+              <Target className="h-4 w-4 text-teal" />
+              <h4 className="font-medium text-ink">Suggested Focus</h4>
             </div>
             <div className="space-y-2">
               {memory.suggestedFocus.slice(0, 3).map((focus, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-2 p-2 rounded-lg bg-french-blue/5 border border-french-blue/20"
+                  className="flex items-start gap-2 p-2 rounded-lg bg-teal/5 border border-teal/20"
                   data-testid={`focus-${index}`}
                 >
-                  <Target className="h-4 w-4 text-french-blue mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-evergreen">{focus}</span>
+                  <Target className="h-4 w-4 text-teal mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-ink">{focus}</span>
                 </div>
               ))}
             </div>
@@ -282,8 +282,8 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
         {memory?.interventionEffectiveness && memory.interventionEffectiveness.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-sage" />
-              <h4 className="font-medium text-evergreen">Intervention Effectiveness</h4>
+              <Star className="h-4 w-4 text-teal" />
+              <h4 className="font-medium text-ink">Intervention Effectiveness</h4>
             </div>
             <div className="space-y-3">
               {memory.interventionEffectiveness.map((intervention, index) => (
@@ -294,7 +294,7 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-evergreen">{intervention.intervention}</span>
+                      <span className="font-medium text-ink">{intervention.intervention}</span>
                       <Badge variant="secondary" className="text-xs">
                         Used {intervention.timesUsed} times
                       </Badge>
@@ -302,8 +302,8 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
                     
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-moss">Effectiveness</span>
-                        <span className="text-evergreen font-medium">
+                        <span className="text-sepia">Effectiveness</span>
+                        <span className="text-ink font-medium">
                           {Math.round(intervention.effectiveness * 100)}%
                         </span>
                       </div>
@@ -314,7 +314,7 @@ export function ContextualMemoryPanel({ clientId, className="" }: ContextualMemo
                     </div>
                     
                     {intervention.clientFeedback && (
-                      <div className="text-sm text-moss italic">
+                      <div className="text-sm text-sepia italic">
                         <BookOpen className="h-3 w-3 inline mr-1" />
                         "{intervention.clientFeedback}"
                       </div>

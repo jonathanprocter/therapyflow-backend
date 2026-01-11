@@ -26,20 +26,20 @@ export function AIStatusWidget({ compact = false, showRefresh = true, className=
   if (compact) {
     return (
       <div className={`flex items-center gap-2 ${className}`} data-testid="ai-status-compact">
-        <Brain className="h-4 w-4 text-sage" />
+        <Brain className="h-4 w-4 text-teal" />
         <div className="flex items-center gap-1">
           {aiHealth?.openai && (
-            <Badge variant="secondary" className="bg-sage/10 text-sage text-xs px-1 py-0">
+            <Badge variant="secondary" className="bg-teal/10 text-teal text-xs px-1 py-0">
               OpenAI
             </Badge>
           )}
           {aiHealth?.anthropic && (
-            <Badge variant="secondary" className="bg-sage/10 text-sage text-xs px-1 py-0">
+            <Badge variant="secondary" className="bg-teal/10 text-teal text-xs px-1 py-0">
               Anthropic
             </Badge>
           )}
           {(!aiHealth?.openai && !aiHealth?.anthropic) && (
-            <Badge variant="outline" className="text-moss text-xs px-1 py-0">
+            <Badge variant="outline" className="text-sepia text-xs px-1 py-0">
               Manual
             </Badge>
           )}
@@ -64,7 +64,7 @@ export function AIStatusWidget({ compact = false, showRefresh = true, className=
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <Brain className="h-4 w-4 text-sage" />
+            <Brain className="h-4 w-4 text-teal" />
             AI Services
           </CardTitle>
           {showRefresh && (
@@ -83,23 +83,23 @@ export function AIStatusWidget({ compact = false, showRefresh = true, className=
       <CardContent className="space-y-4">
         {/* Provider Status */}
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-evergreen">AI Providers</h4>
+          <h4 className="text-sm font-medium text-ink">AI Providers</h4>
           <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-ivory">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-parchment">
               {aiHealth?.openai ? (
-                <CheckCircle className="h-4 w-4 text-sage" />
+                <CheckCircle className="h-4 w-4 text-teal" />
               ) : (
                 <AlertTriangle className="h-4 w-4 text-red-500" />
               )}
-              <span className="text-sm font-medium text-moss">OpenAI</span>
+              <span className="text-sm font-medium text-sepia">OpenAI</span>
             </div>
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-ivory">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-parchment">
               {aiHealth?.anthropic ? (
-                <CheckCircle className="h-4 w-4 text-sage" />
+                <CheckCircle className="h-4 w-4 text-teal" />
               ) : (
                 <AlertTriangle className="h-4 w-4 text-red-500" />
               )}
-              <span className="text-sm font-medium text-moss">Anthropic</span>
+              <span className="text-sm font-medium text-sepia">Anthropic</span>
             </div>
           </div>
         </div>
@@ -107,10 +107,10 @@ export function AIStatusWidget({ compact = false, showRefresh = true, className=
         {/* Service Status */}
         {aiHealth?.services && (
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-evergreen">Services</h4>
+            <h4 className="text-sm font-medium text-ink">Services</h4>
             <div className="space-y-1">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-moss">Analysis:</span>
+                <span className="text-sepia">Analysis:</span>
                 <Badge 
                   variant={aiHealth.services.analysis === 'available' ? 'secondary' : 'outline'}
                   className="text-xs"
@@ -119,7 +119,7 @@ export function AIStatusWidget({ compact = false, showRefresh = true, className=
                 </Badge>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-moss">Search:</span>
+                <span className="text-sepia">Search:</span>
                 <Badge 
                   variant={aiHealth.services.search === 'available' ? 'secondary' : 'outline'}
                   className="text-xs"
@@ -128,7 +128,7 @@ export function AIStatusWidget({ compact = false, showRefresh = true, className=
                 </Badge>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-moss">Validation:</span>
+                <span className="text-sepia">Validation:</span>
                 <Badge 
                   variant={aiHealth.services.validation === 'available' ? 'secondary' : 'outline'}
                   className="text-xs"
@@ -142,7 +142,7 @@ export function AIStatusWidget({ compact = false, showRefresh = true, className=
 
         {/* Fallback Notice */}
         {(!aiHealth?.openai && !aiHealth?.anthropic) && (
-          <Alert className="border-french-blue/20 bg-french-blue/5">
+          <Alert className="border-teal/20 bg-teal/5">
             <Shield className="h-4 w-4" />
             <AlertDescription className="text-xs">
               AI services using secure manual fallbacks. All operations remain HIPAA compliant.
@@ -152,7 +152,7 @@ export function AIStatusWidget({ compact = false, showRefresh = true, className=
 
         {/* Last Updated */}
         {aiHealth?.timestamp && (
-          <div className="text-xs text-moss">
+          <div className="text-xs text-sepia">
             Last checked: {new Date(aiHealth.timestamp).toLocaleTimeString()}
           </div>
         )}

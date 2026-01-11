@@ -749,7 +749,7 @@ export default function ClientDetail() {
     return (
       <div className="grid grid-cols-7 gap-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="text-center font-medium text-sm text-moss/80 p-2">
+          <div key={day} className="text-center font-medium text-sm text-sepia/80 p-2">
             {day}
           </div>
         ))}
@@ -757,7 +757,7 @@ export default function ClientDetail() {
           <div 
             key={idx} 
             className={`border rounded-lg p-2 min-h-[100px] ${
-              date.toDateString() === new Date().toDateString() ? 'bg-french-blue/10' : ''
+              date.toDateString() === new Date().toDateString() ? 'bg-teal/10' : ''
             }`}
           >
             <div className="text-sm font-medium">{date.getDate()}</div>
@@ -766,7 +766,7 @@ export default function ClientDetail() {
                 key={session.id}
                 className={`text-xs mt-1 p-1 rounded ${
                   session.status === 'completed' ? 'bg-green-100' :
-                  session.status === 'scheduled' ? 'bg-french-blue/20' :
+                  session.status === 'scheduled' ? 'bg-teal/20' :
                   'bg-red-100'
                 }`}
               >
@@ -783,23 +783,23 @@ export default function ClientDetail() {
   const TimelineView = () => {
     return (
       <div className="relative">
-        <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-sage/30"></div>
+        <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-teal/30"></div>
         {filteredAndSearchedSessions.map((session, idx) => (
           <div key={session.id} className="relative flex items-center mb-8">
             <div className={`absolute left-8 w-4 h-4 rounded-full -translate-x-1/2 ${
               session.status === 'completed' ? 'bg-green-500' :
-              session.status === 'scheduled' ? 'bg-french-blue' :
+              session.status === 'scheduled' ? 'bg-teal' :
               'bg-red-500'
             }`}></div>
             <div className="ml-16">
-              <div className="text-sm text-moss/80 mb-1">
+              <div className="text-sm text-sepia/80 mb-1">
                 {formatEDTDateShort(session.scheduledAt)} at {formatEDTTime(session.scheduledAt)}
               </div>
               <Card className="inline-block">
                 <CardContent className="p-3">
                   <div className="font-medium">{session.sessionType} Session</div>
                   {session.notes && (
-                    <div className="text-sm text-moss mt-1">{session.notes}</div>
+                    <div className="text-sm text-sepia mt-1">{session.notes}</div>
                   )}
                 </CardContent>
               </Card>
@@ -876,7 +876,7 @@ export default function ClientDetail() {
           {annotations.map(annotation => (
             <div
               key={annotation.id}
-              className="absolute w-6 h-6 bg-sage rounded-full cursor-pointer"
+              className="absolute w-6 h-6 bg-teal rounded-full cursor-pointer"
               style={{ left: `${annotation.x}%`, top: `${annotation.y}%` }}
               title={annotation.text}
             >
@@ -894,10 +894,10 @@ export default function ClientDetail() {
               <div key={annotation.id} className="border rounded p-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-medium text-white">#{idx + 1}</span>
-                  <span className="text-xs text-moss/80">{formatRelativeTime(annotation.createdAt)}</span>
+                  <span className="text-xs text-sepia/80">{formatRelativeTime(annotation.createdAt)}</span>
                 </div>
                 <p className="text-sm">{annotation.text}</p>
-                <p className="text-xs text-moss/80 mt-1">by {annotation.createdBy}</p>
+                <p className="text-xs text-sepia/80 mt-1">by {annotation.createdBy}</p>
               </div>
             ))}
             <Button 
@@ -928,15 +928,15 @@ export default function ClientDetail() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex h-screen bg-ivory/80">
+      <div className="flex h-screen bg-parchment/80">
         <Sidebar />
         <main className="flex-1 flex flex-col overflow-hidden">
           <TopBar />
           <div className="flex-1 overflow-y-auto p-6">
             <div className="animate-pulse">
-              <div className="h-8 bg-sage/30 rounded w-1/4 mb-6"></div>
-              <div className="h-64 bg-sage/30 rounded mb-4"></div>
-              <div className="h-96 bg-sage/30 rounded"></div>
+              <div className="h-8 bg-teal/30 rounded w-1/4 mb-6"></div>
+              <div className="h-64 bg-teal/30 rounded mb-4"></div>
+              <div className="h-96 bg-teal/30 rounded"></div>
             </div>
           </div>
         </main>
@@ -947,7 +947,7 @@ export default function ClientDetail() {
   // Error state
   if (hasError) {
     return (
-      <div className="flex h-screen bg-ivory/80">
+      <div className="flex h-screen bg-parchment/80">
         <Sidebar />
         <main className="flex-1 flex flex-col overflow-hidden">
           <TopBar />
@@ -1005,7 +1005,7 @@ export default function ClientDetail() {
   }
 
   return (
-    <div className="flex h-screen bg-ivory/80" data-testid="client-detail-page">
+    <div className="flex h-screen bg-parchment/80" data-testid="client-detail-page">
       <Sidebar />
 
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -1079,7 +1079,7 @@ export default function ClientDetail() {
 
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-evergreen" data-testid="client-name">
+                <h1 className="text-3xl font-bold text-ink" data-testid="client-name">
                   {client?.name || 'Loading...'}
                 </h1>
                 <div className="flex items-center gap-4 mt-2">
@@ -1113,13 +1113,13 @@ export default function ClientDetail() {
                     <div className="font-semibold mb-2">Notifications</div>
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <p className="text-sm text-moss/80">No new notifications</p>
+                        <p className="text-sm text-sepia/80">No new notifications</p>
                       ) : (
                         notifications.map(notif => (
-                          <div key={notif.id} className={`p-2 rounded ${notif.read ? '' : 'bg-french-blue/10'}`}>
+                          <div key={notif.id} className={`p-2 rounded ${notif.read ? '' : 'bg-teal/10'}`}>
                             <div className="font-medium text-sm">{notif.title}</div>
-                            <div className="text-xs text-moss">{notif.message}</div>
-                            <div className="text-xs text-sage mt-1">
+                            <div className="text-xs text-sepia">{notif.message}</div>
+                            <div className="text-xs text-teal mt-1">
                               {formatRelativeTime(notif.createdAt)}
                             </div>
                           </div>
@@ -1221,9 +1221,9 @@ export default function ClientDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {client?.email && (
                   <div>
-                    <label className="text-sm font-medium text-moss/80">Email</label>
+                    <label className="text-sm font-medium text-sepia/80">Email</label>
                     <div className="flex items-center gap-2">
-                      <p className="text-evergreen">{client?.email}</p>
+                      <p className="text-ink">{client?.email}</p>
                       <Button size="sm" variant="ghost" onClick={() => sendEmail(client?.email || '')}>
                         <Mail className="h-3 w-3" />
                       </Button>
@@ -1232,9 +1232,9 @@ export default function ClientDetail() {
                 )}
                 {client?.phone && (
                   <div>
-                    <label className="text-sm font-medium text-moss/80">Phone</label>
+                    <label className="text-sm font-medium text-sepia/80">Phone</label>
                     <div className="flex items-center gap-2">
-                      <p className="text-evergreen">{client?.phone}</p>
+                      <p className="text-ink">{client?.phone}</p>
                       <Button size="sm" variant="ghost" onClick={() => callPhone(client?.phone || '')}>
                         <Phone className="h-3 w-3" />
                       </Button>
@@ -1243,31 +1243,31 @@ export default function ClientDetail() {
                 )}
                 {client?.dateOfBirth && (
                   <div>
-                    <label className="text-sm font-medium text-moss/80">Date of Birth</label>
-                    <p className="text-evergreen">{formatEDTDate(client?.dateOfBirth || '')}</p>
+                    <label className="text-sm font-medium text-sepia/80">Date of Birth</label>
+                    <p className="text-ink">{formatEDTDate(client?.dateOfBirth || '')}</p>
                   </div>
                 )}
                 {client?.emergencyContact && (
                   <div>
-                    <label className="text-sm font-medium text-moss/80">Emergency Contact</label>
-                    <p className="text-evergreen">{client?.emergencyContact}</p>
+                    <label className="text-sm font-medium text-sepia/80">Emergency Contact</label>
+                    <p className="text-ink">{client?.emergencyContact}</p>
                   </div>
                 )}
                 {client?.insurance && (
                   <div>
-                    <label className="text-sm font-medium text-moss/80">Insurance</label>
-                    <p className="text-evergreen">{client?.insurance}</p>
+                    <label className="text-sm font-medium text-sepia/80">Insurance</label>
+                    <p className="text-ink">{client?.insurance}</p>
                   </div>
                 )}
                 <div>
-                  <label className="text-sm font-medium text-moss/80">Client Since</label>
-                  <p className="text-evergreen">{formatEDTDate(client?.createdAt || '')}</p>
+                  <label className="text-sm font-medium text-sepia/80">Client Since</label>
+                  <p className="text-ink">{formatEDTDate(client?.createdAt || '')}</p>
                 </div>
 
                 {/* Custom Fields */}
                 {customFields.map(field => (
                   <div key={field.id}>
-                    <label className="text-sm font-medium text-moss/80">{field.name || 'Custom Field'}</label>
+                    <label className="text-sm font-medium text-sepia/80">{field.name || 'Custom Field'}</label>
                     {field.type === 'checkbox' ? (
                       <Checkbox checked={field.value} />
                     ) : field.type === 'select' ? (
@@ -1282,7 +1282,7 @@ export default function ClientDetail() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <p className="text-evergreen">{field.value || 'Not set'}</p>
+                      <p className="text-ink">{field.value || 'Not set'}</p>
                     )}
                   </div>
                 ))}
@@ -1299,7 +1299,7 @@ export default function ClientDetail() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-moss/80">Standing Clinical Considerations</label>
+                <label className="text-sm font-medium text-sepia/80">Standing Clinical Considerations</label>
                 <Textarea
                   value={clinicalConsiderations}
                   onChange={(event) => setClinicalConsiderations(event.target.value)}
@@ -1308,7 +1308,7 @@ export default function ClientDetail() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-moss/80">Preferred Modalities</label>
+                <label className="text-sm font-medium text-sepia/80">Preferred Modalities</label>
                 <Input
                   value={preferredModalities}
                   onChange={(event) => setPreferredModalities(event.target.value)}
@@ -1361,7 +1361,7 @@ export default function ClientDetail() {
 
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <Zap className="h-4 w-4 text-sage" />
+                      <Zap className="h-4 w-4 text-teal" />
                       <span className="text-sm font-medium">Consistency Score</span>
                     </div>
                     <div className="text-2xl font-bold">{analytics.consistencyScore.toFixed(0)}%</div>
@@ -1430,10 +1430,10 @@ export default function ClientDetail() {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="h-5 w-5 text-french-blue" />
+                      <Calendar className="h-5 w-5 text-teal" />
                       <div>
-                        <p className="text-sm font-medium text-moss/80">Total Sessions</p>
-                        <p className="text-2xl font-bold text-evergreen">{sessionStats.total}</p>
+                        <p className="text-sm font-medium text-sepia/80">Total Sessions</p>
+                        <p className="text-2xl font-bold text-ink">{sessionStats.total}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -1444,8 +1444,8 @@ export default function ClientDetail() {
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="h-5 w-5 text-green-600" />
                       <div>
-                        <p className="text-sm font-medium text-moss/80">Completed</p>
-                        <p className="text-2xl font-bold text-evergreen">{sessionStats.completed}</p>
+                        <p className="text-sm font-medium text-sepia/80">Completed</p>
+                        <p className="text-2xl font-bold text-ink">{sessionStats.completed}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -1454,10 +1454,10 @@ export default function ClientDetail() {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
-                      <Clock className="h-5 w-5 text-sage" />
+                      <Clock className="h-5 w-5 text-teal" />
                       <div>
-                        <p className="text-sm font-medium text-moss/80">Scheduled</p>
-                        <p className="text-2xl font-bold text-evergreen">{sessionStats.scheduled}</p>
+                        <p className="text-sm font-medium text-sepia/80">Scheduled</p>
+                        <p className="text-2xl font-bold text-ink">{sessionStats.scheduled}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -1468,8 +1468,8 @@ export default function ClientDetail() {
                     <div className="flex items-center space-x-2">
                       <Clock className="h-5 w-5" style={{ color: '#88A5BC' }} />
                       <div>
-                        <p className="text-sm font-medium text-moss/80">Total Hours</p>
-                        <p className="text-2xl font-bold text-evergreen">{sessionStats.totalHours}</p>
+                        <p className="text-sm font-medium text-sepia/80">Total Hours</p>
+                        <p className="text-2xl font-bold text-ink">{sessionStats.totalHours}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -1538,7 +1538,7 @@ export default function ClientDetail() {
                   {/* Search and Filter Controls */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-sage" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-teal" />
                       <Input
                         type="text"
                         placeholder="Search sessions..."
@@ -1610,7 +1610,7 @@ export default function ClientDetail() {
                     </Alert>
                   )}
 
-                  <p className="text-sm text-moss/80 mb-4">
+                  <p className="text-sm text-sepia/80 mb-4">
                     Showing {filteredAndSearchedSessions.length} of {clientSessions.length} total appointments
                   </p>
                 </CardHeader>
@@ -1626,14 +1626,14 @@ export default function ClientDetail() {
                       <div className="space-y-4">
                         {[...Array(3)].map((_, i) => (
                           <div key={i} className="animate-pulse">
-                            <div className="h-20 bg-sage/30 rounded"></div>
+                            <div className="h-20 bg-teal/30 rounded"></div>
                           </div>
                         ))}
                       </div>
                     ) : filteredAndSearchedSessions.length === 0 ? (
                       <div className="text-center py-8">
-                        <Calendar className="h-12 w-12 text-sage/70 mx-auto mb-4" />
-                        <p className="text-moss/80 mb-4">
+                        <Calendar className="h-12 w-12 text-teal/70 mx-auto mb-4" />
+                        <p className="text-sepia/80 mb-4">
                           {searchTerm || dateRange.start || dateRange.end
                             ? "No sessions match your search criteria"
                             : sessionFilter === "all" 
@@ -1652,7 +1652,7 @@ export default function ClientDetail() {
                         {filteredAndSearchedSessions.map((session) => (
                           <div 
                             key={session.id} 
-                            className="border rounded-lg p-4 hover:bg-ivory/80 transition-colors"
+                            className="border rounded-lg p-4 hover:bg-parchment/80 transition-colors"
                             data-testid={`session-${session.id}`}
                             role="listitem"
                           >
@@ -1667,10 +1667,10 @@ export default function ClientDetail() {
                                   }}
                                 />
                                 <div>
-                                  <h4 className="font-medium text-evergreen">
+                                  <h4 className="font-medium text-ink">
                                     {session.sessionType.charAt(0).toUpperCase() + session.sessionType.slice(1)} Session
                                   </h4>
-                                  <p className="text-sm text-moss/80">
+                                  <p className="text-sm text-sepia/80">
                                     {formatEDTDateShort(session.scheduledAt)} at {formatEDTTime(session.scheduledAt)}
                                   </p>
                                 </div>
@@ -1686,7 +1686,7 @@ export default function ClientDetail() {
                                 >
                                   {session.status}
                                 </Badge>
-                                <span className="text-sm text-moss/80">{session.duration} min</span>
+                                <span className="text-sm text-sepia/80">{session.duration} min</span>
 
                                 {/* Quick status change buttons */}
                                 {session.status === 'scheduled' && (
@@ -1720,15 +1720,15 @@ export default function ClientDetail() {
                               </div>
                             </div>
                             {session.notes && (
-                              <p className="text-sm text-moss mt-2">{session.notes}</p>
+                              <p className="text-sm text-sepia mt-2">{session.notes}</p>
                             )}
                             {session.googleEventId && (
-                              <div className="text-xs text-sage mt-2">
+                              <div className="text-xs text-teal mt-2">
                                 Google Event ID: {session.googleEventId}
                               </div>
                             )}
                             {session.isSimplePracticeEvent && (
-                              <div className="text-xs text-french-blue mt-1">
+                              <div className="text-xs text-teal mt-1">
                                 SimplePractice Import
                               </div>
                             )}
@@ -1774,14 +1774,14 @@ export default function ClientDetail() {
                     <div className="space-y-4">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="animate-pulse">
-                          <div className="h-32 bg-sage/30 rounded"></div>
+                          <div className="h-32 bg-teal/30 rounded"></div>
                         </div>
                       ))}
                     </div>
                   ) : clientNotes.length === 0 && activeNoteId !== 'new' ? (
                     <div className="text-center py-8">
-                      <MessageSquare className="h-12 w-12 text-sage/70 mx-auto mb-4" />
-                      <p className="text-moss/80 mb-4">No progress notes for this client</p>
+                      <MessageSquare className="h-12 w-12 text-teal/70 mx-auto mb-4" />
+                      <p className="text-sepia/80 mb-4">No progress notes for this client</p>
                       <Button onClick={() => setActiveNoteId('new')}>
                         <Plus className="h-4 w-4 mr-2" />
                         Create First Note
@@ -1792,11 +1792,11 @@ export default function ClientDetail() {
                       {clientNotes.map((note) => (
                         <div key={note.id} className="border rounded-lg p-4" role="listitem">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-evergreen">
+                            <h4 className="font-medium text-ink">
                               Session: {formatEDTDateShort(note.sessionDate)}
                             </h4>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-moss/80">
+                              <span className="text-sm text-sepia/80">
                                 Created: {formatEDTDateShort(note.createdAt)}
                               </span>
                               <Button size="sm" variant="ghost" onClick={() => setActiveNoteId(note.id)}>
@@ -1815,7 +1815,7 @@ export default function ClientDetail() {
                                   <div className="space-y-2">
                                     {note.editedAt && (
                                       <div className="border rounded p-2">
-                                        <div className="text-sm text-moss/80">
+                                        <div className="text-sm text-sepia/80">
                                           Edited {formatRelativeTime(note.editedAt)} by {note.editedBy}
                                         </div>
                                         <div className="text-sm mt-1">Version {note.version || 1}</div>
@@ -1839,7 +1839,7 @@ export default function ClientDetail() {
                           ) : (
                             <>
                               <div className="prose max-w-none">
-                                <p className="text-evergreen/90 whitespace-pre-wrap">{note.content}</p>
+                                <p className="text-ink/90 whitespace-pre-wrap">{note.content}</p>
                               </div>
                               {note.tags && note.tags.length > 0 && (
                                 <div className="flex gap-1 mt-3">
@@ -1877,14 +1877,14 @@ export default function ClientDetail() {
                     <div className="space-y-4">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="animate-pulse">
-                          <div className="h-16 bg-sage/30 rounded"></div>
+                          <div className="h-16 bg-teal/30 rounded"></div>
                         </div>
                       ))}
                     </div>
                   ) : clientDocuments.length === 0 ? (
                     <div className="text-center py-8">
-                      <FileText className="h-12 w-12 text-sage/70 mx-auto mb-4" />
-                      <p className="text-moss/80 mb-4">No documents uploaded for this client</p>
+                      <FileText className="h-12 w-12 text-teal/70 mx-auto mb-4" />
+                      <p className="text-sepia/80 mb-4">No documents uploaded for this client</p>
                       <Button>
                         <Plus className="h-4 w-4 mr-2" />
                         Upload First Document
@@ -1895,13 +1895,13 @@ export default function ClientDetail() {
                       {clientDocuments.map((document) => (
                         <div 
                           key={document.id} 
-                          className="border rounded-lg p-4 hover:bg-ivory/80 transition-colors"
+                          className="border rounded-lg p-4 hover:bg-parchment/80 transition-colors"
                           role="listitem"
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <h4 className="font-medium text-evergreen">{document.filename}</h4>
-                              <p className="text-sm text-moss/80">
+                              <h4 className="font-medium text-ink">{document.filename}</h4>
+                              <p className="text-sm text-sepia/80">
                                 Uploaded on {formatEDTDateShort(document.uploadedAt)}
                               </p>
                             </div>

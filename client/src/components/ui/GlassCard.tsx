@@ -21,13 +21,13 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   const variants = {
     light: 'bg-white/70',
     medium: 'bg-white/85',
-    dark: 'bg-sage-800/70',
+    dark: 'bg-sepia/70',
   };
 
   const baseClasses = cn(
-    'rounded-xl border border-sage-200/20',
+    'rounded-xl border border-rule/30',
     blur && 'backdrop-blur-lg',
-    hover && 'transition-all duration-300 hover:shadow-sage-lg hover:-translate-y-1',
+    hover && 'transition-all duration-300 hover:shadow-gold hover:-translate-y-1',
     variants[variant],
     className
   );

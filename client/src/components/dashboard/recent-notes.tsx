@@ -103,7 +103,7 @@ export default function RecentNotes() {
             {notes.map((note) => (
               <div
                 key={note.id}
-                className="p-4 border rounded-lg cursor-pointer transition-colors hover:bg-ivory-50"
+                className="p-4 border rounded-lg cursor-pointer transition-colors hover:bg-parchment-50"
                 style={{ 
                   borderColor: 'rgba(115, 138, 110, 0.2)'
                 }}

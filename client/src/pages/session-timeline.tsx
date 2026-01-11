@@ -190,25 +190,25 @@ export default function SessionTimeline() {
 
   const getRiskLevelColor = (riskLevel?: string) => {
     switch (riskLevel) {
-      case "critical": return "bg-evergreen/20 text-evergreen border-evergreen/30";
-      case "high": return "bg-moss/20 text-moss border-moss/30";
-      case "moderate": return "bg-french-blue/20 text-french-blue border-french-blue/30";
-      case "low": return "bg-sage/20 text-sage border-sage/30";
-      default: return "bg-ivory text-moss border-moss/20";
+      case "critical": return "bg-ink/20 text-ink border-ink/30";
+      case "high": return "bg-sepia/20 text-sepia border-sepia/30";
+      case "moderate": return "bg-teal/20 text-teal border-teal/30";
+      case "low": return "bg-teal/20 text-teal border-teal/30";
+      default: return "bg-parchment text-sepia border-sepia/20";
     }
   };
 
   const getProgressRatingColor = (rating?: number) => {
-    if (!rating) return "text-moss";
-    if (rating >= 8) return "text-sage";
-    if (rating >= 6) return "text-french-blue";
-    if (rating >= 4) return "text-moss";
-    return "text-evergreen";
+    if (!rating) return "text-sepia";
+    if (rating >= 8) return "text-teal";
+    if (rating >= 6) return "text-teal";
+    if (rating >= 4) return "text-sepia";
+    return "text-ink";
   };
 
   const SessionCard = ({ session }: { session: SessionTimelineData }) => (
     <Card 
-      className="bg-white border-moss/20 hover:border-sage/30 cursor-pointer transition-all duration-200 hover:shadow-md"
+      className="bg-white border-sepia/20 hover:border-teal/30 cursor-pointer transition-all duration-200 hover:shadow-md"
       onClick={() => setSelectedSession(session)}
       data-testid={`session-card-${session.id}`}
     >
@@ -216,8 +216,8 @@ export default function SessionTimeline() {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
-              <h3 className="font-semibold text-evergreen text-sm">{session.clientName}</h3>
-              <Badge variant="outline" className="text-xs bg-french-blue/10 text-french-blue border-french-blue/30">
+              <h3 className="font-semibold text-ink text-sm">{session.clientName}</h3>
+              <Badge variant="outline" className="text-xs bg-teal/10 text-teal border-teal/30">
                 {session.sessionType}
               </Badge>
               {session.riskLevel && (
@@ -227,7 +227,7 @@ export default function SessionTimeline() {
               )}
             </div>
             
-            <div className="flex items-center space-x-4 text-xs text-moss mb-2">
+            <div className="flex items-center space-x-4 text-xs text-sepia mb-2">
               <div className="flex items-center space-x-1">
                 <Calendar className="h-3 w-3" />
                 <span>{formatEDTDate(session.sessionDate)}</span>
@@ -251,12 +251,12 @@ export default function SessionTimeline() {
             {session.themes && session.themes.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {session.themes.slice(0, 3).map((theme, index) => (
-                  <Badge key={index} variant="outline" className="text-xs bg-ivory text-moss border-moss/20">
+                  <Badge key={index} variant="outline" className="text-xs bg-parchment text-sepia border-sepia/20">
                     {theme}
                   </Badge>
                 ))}
                 {session.themes.length > 3 && (
-                  <Badge variant="outline" className="text-xs bg-ivory text-moss border-moss/20">
+                  <Badge variant="outline" className="text-xs bg-parchment text-sepia border-sepia/20">
                     +{session.themes.length - 3} more
                   </Badge>
                 )}
@@ -266,9 +266,9 @@ export default function SessionTimeline() {
           
           <div className="flex flex-col items-end space-y-1">
             {session.progressNoteId && (
-              <FileText className="h-4 w-4 text-sage" />
+              <FileText className="h-4 w-4 text-teal" />
             )}
-            <ChevronRight className="h-4 w-4 text-moss" />
+            <ChevronRight className="h-4 w-4 text-sepia" />
           </div>
         </div>
       </CardContent>
@@ -279,18 +279,18 @@ export default function SessionTimeline() {
     <div className="space-y-6">
       {Object.entries(groupedSessions).map(([period, sessions]) => (
         <div key={period} className="space-y-3">
-          <div className="flex items-center space-x-2 sticky top-0 bg-ivory/80 backdrop-blur-sm py-2 z-10">
-            <div className="w-3 h-3 bg-sage rounded-full"></div>
-            <h3 className="font-semibold text-evergreen text-lg">{period}</h3>
-            <Badge variant="outline" className="bg-moss/10 text-moss border-moss/30">
+          <div className="flex items-center space-x-2 sticky top-0 bg-parchment/80 backdrop-blur-sm py-2 z-10">
+            <div className="w-3 h-3 bg-teal rounded-full"></div>
+            <h3 className="font-semibold text-ink text-lg">{period}</h3>
+            <Badge variant="outline" className="bg-sepia/10 text-sepia border-sepia/30">
               {sessions.length} sessions
             </Badge>
           </div>
           
-          <div className="ml-6 border-l-2 border-sage/20 pl-6 space-y-3">
+          <div className="ml-6 border-l-2 border-teal/20 pl-6 space-y-3">
             {sessions.map((session) => (
               <div key={session.id} className="relative">
-                <div className="absolute -left-8 top-4 w-2 h-2 bg-french-blue rounded-full border-2 border-white"></div>
+                <div className="absolute -left-8 top-4 w-2 h-2 bg-teal rounded-full border-2 border-white"></div>
                 <SessionCard session={session} />
               </div>
             ))}
@@ -300,9 +300,9 @@ export default function SessionTimeline() {
       
       {filteredSessions.length === 0 && (
         <div className="text-center py-12">
-          <GitCommit className="h-16 w-16 text-sage/40 mx-auto mb-4" />
-          <p className="text-lg text-moss mb-2">No sessions found</p>
-          <p className="text-sm text-moss/70">Try adjusting your filters to see more sessions</p>
+          <GitCommit className="h-16 w-16 text-teal/40 mx-auto mb-4" />
+          <p className="text-lg text-sepia mb-2">No sessions found</p>
+          <p className="text-sm text-sepia/70">Try adjusting your filters to see more sessions</p>
         </div>
       )}
     </div>
@@ -310,21 +310,21 @@ export default function SessionTimeline() {
 
   const AnalyticsView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <Card className="bg-white border-moss/20">
+      <Card className="bg-white border-sepia/20">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-evergreen">
-            <BarChart3 className="h-5 w-5 text-french-blue" />
+          <CardTitle className="flex items-center space-x-2 text-ink">
+            <BarChart3 className="h-5 w-5 text-teal" />
             <span>Session Overview</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-moss">Total Sessions</span>
-              <span className="font-semibold text-evergreen">{analytics.totalSessions}</span>
+              <span className="text-sepia">Total Sessions</span>
+              <span className="font-semibold text-ink">{analytics.totalSessions}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-moss">Average Rating</span>
+              <span className="text-sepia">Average Rating</span>
               <span className={`font-semibold ${getProgressRatingColor(analytics.averageProgressRating)}`}>
                 {analytics.averageProgressRating ? analytics.averageProgressRating.toFixed(1) : 'N/A'}/10
               </span>
@@ -333,10 +333,10 @@ export default function SessionTimeline() {
         </CardContent>
       </Card>
 
-      <Card className="bg-white border-moss/20">
+      <Card className="bg-white border-sepia/20">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-evergreen">
-            <Users className="h-5 w-5 text-sage" />
+          <CardTitle className="flex items-center space-x-2 text-ink">
+            <Users className="h-5 w-5 text-teal" />
             <span>Client Distribution</span>
           </CardTitle>
         </CardHeader>
@@ -344,18 +344,18 @@ export default function SessionTimeline() {
           <div className="space-y-2 max-h-32 overflow-y-auto">
             {Object.entries(analytics.clientDistribution || {}).map(([client, count]) => (
               <div key={client} className="flex justify-between text-sm">
-                <span className="text-moss truncate">{client}</span>
-                <span className="font-medium text-evergreen">{count}</span>
+                <span className="text-sepia truncate">{client}</span>
+                <span className="font-medium text-ink">{count}</span>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-white border-moss/20">
+      <Card className="bg-white border-sepia/20">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-evergreen">
-            <PieChart className="h-5 w-5 text-french-blue" />
+          <CardTitle className="flex items-center space-x-2 text-ink">
+            <PieChart className="h-5 w-5 text-teal" />
             <span>Session Types</span>
           </CardTitle>
         </CardHeader>
@@ -363,18 +363,18 @@ export default function SessionTimeline() {
           <div className="space-y-2">
             {Object.entries(analytics.sessionTypeDistribution || {}).map(([type, count]) => (
               <div key={type} className="flex justify-between text-sm">
-                <span className="text-moss capitalize">{type}</span>
-                <span className="font-medium text-evergreen">{count}</span>
+                <span className="text-sepia capitalize">{type}</span>
+                <span className="font-medium text-ink">{count}</span>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-white border-moss/20">
+      <Card className="bg-white border-sepia/20">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-evergreen">
-            <Heart className="h-5 w-5 text-sage" />
+          <CardTitle className="flex items-center space-x-2 text-ink">
+            <Heart className="h-5 w-5 text-teal" />
             <span>Risk Levels</span>
           </CardTitle>
         </CardHeader>
@@ -382,8 +382,8 @@ export default function SessionTimeline() {
           <div className="space-y-2">
             {Object.entries(analytics.riskDistribution || {}).map(([risk, count]) => (
               <div key={risk} className="flex justify-between text-sm">
-                <span className="text-moss capitalize">{risk}</span>
-                <span className="font-medium text-evergreen">{count}</span>
+                <span className="text-sepia capitalize">{risk}</span>
+                <span className="font-medium text-ink">{count}</span>
               </div>
             ))}
           </div>
@@ -397,10 +397,10 @@ export default function SessionTimeline() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-evergreen" data-testid="timeline-title">
+          <h1 className="text-2xl font-bold text-ink" data-testid="timeline-title">
             Session Timeline
           </h1>
-          <p className="text-moss" data-testid="timeline-subtitle">
+          <p className="text-sepia" data-testid="timeline-subtitle">
             Interactive visualization of therapy sessions and progress over time
           </p>
         </div>
@@ -408,11 +408,11 @@ export default function SessionTimeline() {
         <div className="flex items-center space-x-3">
           <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as any)}>
             <TabsList className="bg-white">
-              <TabsTrigger value="timeline" className="data-[state=active]:bg-sage data-[state=active]:text-white">
+              <TabsTrigger value="timeline" className="data-[state=active]:bg-teal data-[state=active]:text-white">
                 <GitCommit className="h-4 w-4 mr-1" />
                 Timeline
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="data-[state=active]:bg-sage data-[state=active]:text-white">
+              <TabsTrigger value="analytics" className="data-[state=active]:bg-teal data-[state=active]:text-white">
                 <BarChart3 className="h-4 w-4 mr-1" />
                 Analytics
               </TabsTrigger>
@@ -422,19 +422,19 @@ export default function SessionTimeline() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-white border-moss/20 mb-6">
+      <Card className="bg-white border-sepia/20 mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-evergreen">
-            <Filter className="h-5 w-5 text-french-blue" />
+          <CardTitle className="flex items-center space-x-2 text-ink">
+            <Filter className="h-5 w-5 text-teal" />
             <span>Filters</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="space-y-2">
-              <Label className="text-evergreen">Client</Label>
+              <Label className="text-ink">Client</Label>
               <Select value={filters.clientId} onValueChange={(value) => setFilters({...filters, clientId: value})}>
-                <SelectTrigger className="border-moss/30 focus:ring-sage focus:border-sage" data-testid="filter-client">
+                <SelectTrigger className="border-sepia/30 focus:ring-sage focus:border-teal" data-testid="filter-client">
                   <SelectValue placeholder="All clients" />
                 </SelectTrigger>
                 <SelectContent>
@@ -447,9 +447,9 @@ export default function SessionTimeline() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-evergreen">Session Type</Label>
+              <Label className="text-ink">Session Type</Label>
               <Select value={filters.sessionType} onValueChange={(value) => setFilters({...filters, sessionType: value})}>
-                <SelectTrigger className="border-moss/30 focus:ring-sage focus:border-sage" data-testid="filter-session-type">
+                <SelectTrigger className="border-sepia/30 focus:ring-sage focus:border-teal" data-testid="filter-session-type">
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
@@ -462,9 +462,9 @@ export default function SessionTimeline() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-evergreen">Date Range</Label>
+              <Label className="text-ink">Date Range</Label>
               <Select value={filters.dateRange} onValueChange={(value) => setFilters({...filters, dateRange: value})}>
-                <SelectTrigger className="border-moss/30 focus:ring-sage focus:border-sage" data-testid="filter-date-range">
+                <SelectTrigger className="border-sepia/30 focus:ring-sage focus:border-teal" data-testid="filter-date-range">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -476,9 +476,9 @@ export default function SessionTimeline() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-evergreen">Risk Level</Label>
+              <Label className="text-ink">Risk Level</Label>
               <Select value={filters.riskLevel} onValueChange={(value) => setFilters({...filters, riskLevel: value})}>
-                <SelectTrigger className="border-moss/30 focus:ring-sage focus:border-sage" data-testid="filter-risk-level">
+                <SelectTrigger className="border-sepia/30 focus:ring-sage focus:border-teal" data-testid="filter-risk-level">
                   <SelectValue placeholder="All levels" />
                 </SelectTrigger>
                 <SelectContent>
@@ -492,14 +492,14 @@ export default function SessionTimeline() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-evergreen">Search</Label>
+              <Label className="text-ink">Search</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-moss" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-sepia" />
                 <Input
                   placeholder="Search clients, themes..."
                   value={filters.searchTerm}
                   onChange={(e) => setFilters({...filters, searchTerm: e.target.value})}
-                  className="pl-9 border-moss/30 focus:ring-sage focus:border-sage"
+                  className="pl-9 border-sepia/30 focus:ring-sage focus:border-teal"
                   data-testid="filter-search"
                 />
               </div>
@@ -508,9 +508,9 @@ export default function SessionTimeline() {
 
           {viewMode === 'timeline' && (
             <div className="mt-4 flex items-center space-x-4">
-              <Label className="text-evergreen">Time Scale:</Label>
+              <Label className="text-ink">Time Scale:</Label>
               <Select value={timeScale} onValueChange={(value) => setTimeScale(value as any)}>
-                <SelectTrigger className="w-32 border-moss/30 focus:ring-sage focus:border-sage">
+                <SelectTrigger className="w-32 border-sepia/30 focus:ring-sage focus:border-teal">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -528,8 +528,8 @@ export default function SessionTimeline() {
       {/* Main Content */}
       {isLoading ? (
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage mx-auto"></div>
-          <p className="mt-2 text-moss">Loading session data...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal mx-auto"></div>
+          <p className="mt-2 text-sepia">Loading session data...</p>
         </div>
       ) : viewMode === 'timeline' ? (
         <TimelineView />
@@ -541,35 +541,35 @@ export default function SessionTimeline() {
       <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
         <DialogContent className="max-w-2xl bg-white">
           <DialogHeader>
-            <DialogTitle className="text-evergreen">Session Details</DialogTitle>
+            <DialogTitle className="text-ink">Session Details</DialogTitle>
           </DialogHeader>
           {selectedSession && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-evergreen">Client</Label>
-                  <p className="text-moss">{selectedSession.clientName}</p>
+                  <Label className="text-ink">Client</Label>
+                  <p className="text-sepia">{selectedSession.clientName}</p>
                 </div>
                 <div>
-                  <Label className="text-evergreen">Date & Time</Label>
-                  <p className="text-moss">{formatEDTDateTime(selectedSession.sessionDate)}</p>
+                  <Label className="text-ink">Date & Time</Label>
+                  <p className="text-sepia">{formatEDTDateTime(selectedSession.sessionDate)}</p>
                 </div>
                 <div>
-                  <Label className="text-evergreen">Session Type</Label>
-                  <p className="text-moss capitalize">{selectedSession.sessionType}</p>
+                  <Label className="text-ink">Session Type</Label>
+                  <p className="text-sepia capitalize">{selectedSession.sessionType}</p>
                 </div>
                 <div>
-                  <Label className="text-evergreen">Duration</Label>
-                  <p className="text-moss">{selectedSession.duration ? `${selectedSession.duration} minutes` : 'Not specified'}</p>
+                  <Label className="text-ink">Duration</Label>
+                  <p className="text-sepia">{selectedSession.duration ? `${selectedSession.duration} minutes` : 'Not specified'}</p>
                 </div>
               </div>
 
               {selectedSession.themes && selectedSession.themes.length > 0 && (
                 <div>
-                  <Label className="text-evergreen">Themes</Label>
+                  <Label className="text-ink">Themes</Label>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {selectedSession.themes.map((theme, index) => (
-                      <Badge key={index} variant="outline" className="bg-ivory text-moss border-moss/20">
+                      <Badge key={index} variant="outline" className="bg-parchment text-sepia border-sepia/20">
                         {theme}
                       </Badge>
                     ))}
@@ -579,8 +579,8 @@ export default function SessionTimeline() {
 
               {selectedSession.interventions && selectedSession.interventions.length > 0 && (
                 <div>
-                  <Label className="text-evergreen">Interventions</Label>
-                  <ul className="list-disc list-inside text-moss text-sm mt-1 space-y-1">
+                  <Label className="text-ink">Interventions</Label>
+                  <ul className="list-disc list-inside text-sepia text-sm mt-1 space-y-1">
                     {selectedSession.interventions.map((intervention, index) => (
                       <li key={index}>{intervention}</li>
                     ))}
@@ -590,8 +590,8 @@ export default function SessionTimeline() {
 
               {selectedSession.nextSteps && selectedSession.nextSteps.length > 0 && (
                 <div>
-                  <Label className="text-evergreen">Next Steps</Label>
-                  <ul className="list-disc list-inside text-moss text-sm mt-1 space-y-1">
+                  <Label className="text-ink">Next Steps</Label>
+                  <ul className="list-disc list-inside text-sepia text-sm mt-1 space-y-1">
                     {selectedSession.nextSteps.map((step, index) => (
                       <li key={index}>{step}</li>
                     ))}
@@ -601,14 +601,14 @@ export default function SessionTimeline() {
 
               <div className="flex justify-between pt-4">
                 {selectedSession.progressNoteId && (
-                  <Button variant="outline" className="text-french-blue border-french-blue/30 hover:bg-french-blue/10">
+                  <Button variant="outline" className="text-teal border-teal/30 hover:bg-teal/10">
                     <FileText className="h-4 w-4 mr-2" />
                     View Progress Note
                   </Button>
                 )}
                 <Button 
                   onClick={() => setSelectedSession(null)}
-                  className="bg-sage hover:bg-sage/80 text-white"
+                  className="bg-teal hover:bg-teal/80 text-white"
                 >
                   Close
                 </Button>

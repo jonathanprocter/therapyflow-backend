@@ -97,7 +97,7 @@ export function SemanticSearchPanel({ clientId, onResultSelect }: SemanticSearch
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5 text-sage" />
+            <Search className="h-5 w-5 text-teal" />
             Semantic Search
           </CardTitle>
           <CardDescription>
@@ -107,7 +107,7 @@ export function SemanticSearchPanel({ clientId, onResultSelect }: SemanticSearch
         <CardContent className="space-y-4">
           {/* Search Query */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-evergreen">Search Query</label>
+            <label className="text-sm font-medium text-ink">Search Query</label>
             <div className="flex gap-2">
               <Input
                 placeholder="Search for themes, interventions, patterns, or specific content..."
@@ -120,7 +120,7 @@ export function SemanticSearchPanel({ clientId, onResultSelect }: SemanticSearch
               <Button
                 onClick={handleSearch}
                 disabled={!query.trim() || isSearching}
-                className="bg-sage hover:bg-sage/90 text-white"
+                className="bg-teal hover:bg-teal/90 text-white"
                 data-testid="button-search"
               >
                 {isSearching ? (
@@ -141,7 +141,7 @@ export function SemanticSearchPanel({ clientId, onResultSelect }: SemanticSearch
           {/* Search Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-evergreen">Date Range</label>
+              <label className="text-sm font-medium text-ink">Date Range</label>
               <Select value={dateRange} onValueChange={setDateRange}>
                 <SelectTrigger data-testid="select-date-range">
                   <SelectValue placeholder="Select date range" />
@@ -157,7 +157,7 @@ export function SemanticSearchPanel({ clientId, onResultSelect }: SemanticSearch
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-evergreen">Risk Level</label>
+              <label className="text-sm font-medium text-ink">Risk Level</label>
               <Select value={riskLevel} onValueChange={setRiskLevel}>
                 <SelectTrigger data-testid="select-risk-level">
                   <SelectValue placeholder="Select risk level" />
@@ -174,17 +174,17 @@ export function SemanticSearchPanel({ clientId, onResultSelect }: SemanticSearch
 
           {/* AI Service Status */}
           <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-sm text-moss">
+            <span className="text-sm text-sepia">
               Search powered by {aiHealth?.openai && aiHealth?.anthropic ? 'AI providers' : 'keyword matching'}
             </span>
             <div className="flex items-center gap-2">
               {aiHealth?.openai && (
-                <Badge variant="secondary" className="bg-sage/10 text-sage text-xs">
+                <Badge variant="secondary" className="bg-teal/10 text-teal text-xs">
                   OpenAI
                 </Badge>
               )}
               {aiHealth?.anthropic && (
-                <Badge variant="secondary" className="bg-sage/10 text-sage text-xs">
+                <Badge variant="secondary" className="bg-teal/10 text-teal text-xs">
                   Anthropic
                 </Badge>
               )}
@@ -221,33 +221,33 @@ export function SemanticSearchPanel({ clientId, onResultSelect }: SemanticSearch
                   {results.map((result: SearchResult, index: number) => (
                     <div
                       key={result.id || index}
-                      className="p-4 bg-ivory rounded-lg border hover:shadow-md transition-shadow cursor-pointer"
+                      className="p-4 bg-parchment rounded-lg border hover:shadow-md transition-shadow cursor-pointer"
                       onClick={() => onResultSelect?.(result)}
                       data-testid={`search-result-${index}`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-french-blue" />
+                            <FileText className="h-4 w-4 text-teal" />
                             {result.clientName && (
                               <>
-                                <User className="h-3 w-3 text-moss" />
-                                <span className="text-sm font-medium text-evergreen">
+                                <User className="h-3 w-3 text-sepia" />
+                                <span className="text-sm font-medium text-ink">
                                   {result.clientName}
                                 </span>
                               </>
                             )}
                             {result.sessionDate && (
                               <>
-                                <Calendar className="h-3 w-3 text-moss" />
-                                <span className="text-sm text-moss">
+                                <Calendar className="h-3 w-3 text-sepia" />
+                                <span className="text-sm text-sepia">
                                   {formatDistanceToNow(new Date(result.sessionDate), { addSuffix: true })}
                                 </span>
                               </>
                             )}
                           </div>
                           
-                          <p className="text-moss text-sm leading-relaxed">
+                          <p className="text-sepia text-sm leading-relaxed">
                             {result.snippet || result.content}
                           </p>
                           
@@ -281,7 +281,7 @@ export function SemanticSearchPanel({ clientId, onResultSelect }: SemanticSearch
                 </div>
               </ScrollArea>
             ) : (
-              <div className="text-center py-8 text-moss">
+              <div className="text-center py-8 text-sepia">
                 <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No results found for your search query.</p>
                 <p className="text-sm mt-1">Try different keywords or adjust your filters.</p>

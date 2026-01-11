@@ -62,7 +62,7 @@ export default function DataSettings() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-evergreen">Data & Risk Settings</h1>
+        <h1 className="text-3xl font-bold text-ink">Data & Risk Settings</h1>
         <p className="text-muted-foreground mt-1">Configure retention policies and risk alert thresholds.</p>
       </div>
 

@@ -56,14 +56,14 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
       <Card data-testid="progress-patterns-loading">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-sage animate-pulse" />
+            <BarChart3 className="h-5 w-5 text-teal animate-pulse" />
             Loading Progress Patterns...
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 bg-ivory rounded-lg animate-pulse" />
+              <div key={i} className="h-20 bg-parchment rounded-lg animate-pulse" />
             ))}
           </div>
         </CardContent>
@@ -87,12 +87,12 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-sage" />
+            <BarChart3 className="h-5 w-5 text-teal" />
             Progress Patterns
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-moss">
+          <div className="text-center py-8 text-sepia">
             <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No progress patterns available yet.</p>
             <p className="text-sm mt-1">Analysis will appear after more sessions are recorded.</p>
@@ -105,35 +105,35 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'improving':
-        return <TrendingUp className="h-4 w-4 text-sage" />;
+        return <TrendingUp className="h-4 w-4 text-teal" />;
       case 'declining':
         return <TrendingDown className="h-4 w-4 text-red-500" />;
       default:
-        return <BarChart3 className="h-4 w-4 text-moss" />;
+        return <BarChart3 className="h-4 w-4 text-sepia" />;
     }
   };
 
   const getTrendColor = (trend: string) => {
     switch (trend) {
       case 'improving':
-        return 'text-sage';
+        return 'text-teal';
       case 'declining':
         return 'text-red-500';
       default:
-        return 'text-moss';
+        return 'text-sepia';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'on-track':
-        return 'bg-sage/10 text-sage';
+        return 'bg-teal/10 text-teal';
       case 'achieved':
         return 'bg-green-100 text-green-800';
       case 'at-risk':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-moss/10 text-moss';
+        return 'bg-sepia/10 text-sepia';
     }
   };
 
@@ -144,7 +144,7 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-sage" />
+              <BarChart3 className="h-5 w-5 text-teal" />
               Overall Progress Trend
             </CardTitle>
           </CardHeader>
@@ -160,7 +160,7 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
                 {Math.round(patterns.overallTrend.confidence * 100)}% confidence
               </Badge>
             </div>
-            <p className="text-moss text-sm leading-relaxed">
+            <p className="text-sepia text-sm leading-relaxed">
               {patterns.overallTrend.summary}
             </p>
           </CardContent>
@@ -180,18 +180,18 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
             <ScrollArea className="h-64">
               <div className="space-y-4">
                 {patterns.patterns.map((pattern, index) => (
-                  <div key={index} className="p-4 bg-ivory rounded-lg border" data-testid={`pattern-${index}`}>
+                  <div key={index} className="p-4 bg-parchment rounded-lg border" data-testid={`pattern-${index}`}>
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
                           {getTrendIcon(pattern.trend)}
-                          <h4 className="font-medium text-evergreen">{pattern.metric}</h4>
+                          <h4 className="font-medium text-ink">{pattern.metric}</h4>
                           <Badge variant="secondary" className="text-xs">
                             {pattern.timespan}
                           </Badge>
                         </div>
-                        <p className="text-moss text-sm">{pattern.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-moss">
+                        <p className="text-sepia text-sm">{pattern.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-sepia">
                           <span>Confidence: {Math.round(pattern.confidence * 100)}%</span>
                           <span>Significance: {Math.round(pattern.significance * 100)}%</span>
                         </div>
@@ -210,17 +210,17 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
         <Card data-testid="therapeutic-goals">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-sage" />
+              <Target className="h-5 w-5 text-teal" />
               Therapeutic Goals Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {patterns.goals.map((goal, index) => (
-                <div key={index} className="p-4 bg-ivory rounded-lg border" data-testid={`goal-${index}`}>
+                <div key={index} className="p-4 bg-parchment rounded-lg border" data-testid={`goal-${index}`}>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-evergreen">{goal.goal}</h4>
+                      <h4 className="font-medium text-ink">{goal.goal}</h4>
                       <Badge className={getStatusColor(goal.status)}>
                         {goal.status.replace('-', ' ')}
                       </Badge>
@@ -228,18 +228,18 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
                     
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-moss">Progress</span>
-                        <span className="font-medium text-evergreen">{goal.progress}%</span>
+                        <span className="text-sepia">Progress</span>
+                        <span className="font-medium text-ink">{goal.progress}%</span>
                       </div>
                       <Progress value={goal.progress} className="h-2" />
                     </div>
 
                     {goal.insights && goal.insights.length > 0 && (
                       <div className="space-y-1">
-                        <h5 className="text-sm font-medium text-evergreen">Recent Insights</h5>
+                        <h5 className="text-sm font-medium text-ink">Recent Insights</h5>
                         <ul className="space-y-1">
                           {goal.insights.slice(0, 2).map((insight, insightIndex) => (
-                            <li key={insightIndex} className="text-xs text-moss ml-4 list-disc">
+                            <li key={insightIndex} className="text-xs text-sepia ml-4 list-disc">
                               {insight}
                             </li>
                           ))}
@@ -247,7 +247,7 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 text-xs text-moss">
+                    <div className="flex items-center gap-2 text-xs text-sepia">
                       <Calendar className="h-3 w-3" />
                       <span>Last updated: {goal.lastUpdate}</span>
                     </div>
@@ -264,18 +264,18 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
         <Card data-testid="progress-recommendations">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-sage" />
+              <Brain className="h-5 w-5 text-teal" />
               AI Recommendations
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {patterns.recommendations.map((rec, index) => (
-                <div key={index} className="p-3 bg-ivory rounded-lg border" data-testid={`recommendation-${index}`}>
+                <div key={index} className="p-3 bg-parchment rounded-lg border" data-testid={`recommendation-${index}`}>
                   <div className="flex items-start gap-3">
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
-                        <p className="text-moss text-sm font-medium">{rec.action}</p>
+                        <p className="text-sepia text-sm font-medium">{rec.action}</p>
                         <Badge 
                           variant={rec.priority === 'high' ? 'destructive' : rec.priority === 'medium' ? 'default' : 'secondary'}
                           className="text-xs"
@@ -283,7 +283,7 @@ export function ProgressPatternsPanel({ clientId }: ProgressPatternsPanelProps) 
                           {rec.priority}
                         </Badge>
                       </div>
-                      <p className="text-moss text-xs">{rec.rationale}</p>
+                      <p className="text-sepia text-xs">{rec.rationale}</p>
                     </div>
                   </div>
                 </div>

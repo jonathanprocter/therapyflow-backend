@@ -29,7 +29,7 @@ export function Avatar({ name, initials, size = 'md' }: { name: string; initials
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-lg bg-sage text-white font-semibold",
+        "flex items-center justify-center rounded-lg bg-teal text-white font-semibold",
         sizeClasses[size as keyof typeof sizeClasses]
       )}
       title={name}
@@ -50,19 +50,19 @@ export function SessionCard({
   onPrep,
 }: SessionCardProps) {
   const statusStyles = {
-    scheduled: 'bg-sage/20 text-evergreen border-sage/30',
-    completed: 'bg-moss/20 text-evergreen border-moss/30',
-    cancelled: 'bg-ivory text-moss border-sage/20',
+    scheduled: 'bg-teal/20 text-ink border-teal/30',
+    completed: 'bg-sepia/20 text-ink border-sepia/30',
+    cancelled: 'bg-parchment text-sepia border-teal/20',
   };
 
   return (
-    <div className="bg-white rounded-lg border border-sage/20 p-4 hover:shadow-md transition-all">
+    <div className="bg-white rounded-lg border border-teal/20 p-4 hover:shadow-md transition-all">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <Avatar name={client.name} initials={client.initials} />
           <div>
-            <h4 className="font-semibold text-evergreen">{client.name}</h4>
-            <p className="text-sm text-moss">{sessionType} Session</p>
+            <h4 className="font-semibold text-ink">{client.name}</h4>
+            <p className="text-sm text-sepia">{sessionType} Session</p>
           </div>
         </div>
 
@@ -75,13 +75,13 @@ export function SessionCard({
           >
             {status}
           </span>
-          <button className="p-1 hover:bg-sage/10 rounded">
-            <MoreVertical className="h-4 w-4 text-moss/80" />
+          <button className="p-1 hover:bg-teal/10 rounded">
+            <MoreVertical className="h-4 w-4 text-sepia/80" />
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-moss mb-3">
+      <div className="flex items-center gap-4 text-sm text-sepia mb-3">
         <span className="flex items-center gap-1">
           <Clock className="h-3.5 w-3.5" />
           {time}
@@ -95,19 +95,19 @@ export function SessionCard({
       <div className="flex items-center gap-2">
         <button
           onClick={onCaseReview}
-          className="flex-1 px-3 py-1.5 text-sm bg-sage/10 text-evergreen rounded-lg hover:bg-sage/20 transition-colors font-medium"
+          className="flex-1 px-3 py-1.5 text-sm bg-teal/10 text-ink rounded-lg hover:bg-teal/20 transition-colors font-medium"
         >
           Case Review
         </button>
         <button
           onClick={onEdit}
-          className="flex-1 px-3 py-1.5 text-sm bg-ivory text-evergreen rounded-lg hover:bg-sage/10 transition-colors font-medium"
+          className="flex-1 px-3 py-1.5 text-sm bg-parchment text-ink rounded-lg hover:bg-teal/10 transition-colors font-medium"
         >
           Edit
         </button>
         <button
           onClick={onPrep}
-          className="flex-1 px-3 py-1.5 text-sm bg-ivory text-evergreen rounded-lg hover:bg-sage/10 transition-colors font-medium"
+          className="flex-1 px-3 py-1.5 text-sm bg-parchment text-ink rounded-lg hover:bg-teal/10 transition-colors font-medium"
         >
           Prep
         </button>

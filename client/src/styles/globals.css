@@ -4,67 +4,117 @@
 
 @layer base {
   :root {
-    /* TherapyFlow Brand Colors - HEX values */
-    --color-ivory: #F2F3F1;
-    --color-sage: #8EA58C;
-    --color-moss: #738A6E;
-    --color-evergreen: #344C3D;
-    --color-french-blue: #88A5BC;
+    /* ============================================ */
+    /* INSIGHT ATLAS - COMPLETE COLOR PALETTE      */
+    /* ============================================ */
+
+    /* BRAND COLORS (Core Identity) */
+    --color-sepia: #5C4A3D;
+    --color-sepia-light: #7A6A5D;
+    --color-parchment: #F5F3ED;
+    --color-parchment-dark: #E8E4DC;
+    --color-ink: #3D3229;
     --color-white: #FFFFFF;
 
-    /* Sage color variants for complete palette */
-    --sage-50: #f7f9f7;
-    --sage-100: #e8ede7;
-    --sage-200: #d1dbd0;
-    --sage-300: #b3c4b1;
-    --sage-400: #8EA58C;  /* Main sage */
-    --sage-500: #738A6E;  /* Moss */
-    --sage-600: #5a6e57;
-    --sage-700: #475646;
-    --sage-800: #3a453a;
-    --sage-900: #344C3D;  /* Evergreen */
+    /* PRIMARY PALETTE - GOLD */
+    --gold-50: #FBF7E9;
+    --gold-100: #F5EDD0;
+    --gold-200: #EBDAA1;
+    --gold-300: #DCBE5E;
+    --gold-400: #C9A227;
+    --gold-500: #A88A1F;
+    --gold-600: #8A7019;
+    --gold-700: #6B5614;
+    --gold-800: #4D3D0F;
+    --gold-900: #2E240A;
 
-    /* Override ALL yellow color variables globally */
-    --yellow-50: var(--sage-50);
-    --yellow-100: var(--sage-100);
-    --yellow-200: var(--sage-200);
-    --yellow-300: var(--sage-300);
-    --yellow-400: var(--sage-400);
-    --yellow-500: var(--sage-500);
-    --yellow-600: var(--sage-600);
-    --yellow-700: var(--sage-700);
-    --yellow-800: var(--sage-800);
-    --yellow-900: var(--sage-900);
+    /* BURGUNDY / OXBLOOD */
+    --burgundy-50: #F9F5F6;
+    --burgundy-100: #F0E5E8;
+    --burgundy-200: #E0CAD0;
+    --burgundy-300: #C9A0AD;
+    --burgundy-400: #8A5066;
+    --burgundy-500: #6B3A4A;
+    --burgundy-600: #582534;
+    --burgundy-700: #451D29;
+    --burgundy-800: #32151E;
+    --burgundy-900: #1F0D13;
 
-    /* Override amber colors */
-    --amber-50: var(--sage-50);
-    --amber-100: var(--sage-100);
-    --amber-200: var(--sage-200);
-    --amber-300: var(--sage-300);
-    --amber-400: var(--sage-400);
-    --amber-500: var(--sage-500);
-    --amber-600: var(--sage-600);
+    /* CORAL / TERRACOTTA */
+    --coral-50: #FDF5F3;
+    --coral-100: #FAE8E4;
+    --coral-200: #F4CFC6;
+    --coral-300: #E08B73;
+    --coral-400: #D4735C;
+    --coral-500: #C45A43;
+    --coral-600: #A44736;
+    --coral-700: #833829;
+    --coral-800: #62291F;
+    --coral-900: #411B14;
 
-    /* Tailwind CSS variables mapped to brand colors */
-    --background: 242 243 241;        /* Ivory */
-    --foreground: 52 76 61;           /* Evergreen */
+    /* TEAL */
+    --teal-50: #F0FAF8;
+    --teal-100: #D9F2EE;
+    --teal-200: #B8E0D9;
+    --teal-300: #7FCDC2;
+    --teal-400: #3BA396;
+    --teal-500: #2A9D8F;
+    --teal-600: #228076;
+    --teal-700: #1A635B;
+    --teal-800: #134640;
+    --teal-900: #0C2925;
+
+    /* ORANGE */
+    --orange-50: #FEF6EE;
+    --orange-100: #FCEBD8;
+    --orange-200: #F8D4B0;
+    --orange-300: #F0B07A;
+    --orange-400: #E89B5A;
+    --orange-500: #D47F3A;
+    --orange-600: #B0652C;
+    --orange-700: #8C4E22;
+    --orange-800: #683818;
+    --orange-900: #44230F;
+
+    /* GREEN */
+    --green-50: #F0F9F5;
+    --green-100: #D9F0E6;
+    --green-200: #B3E0CC;
+    --green-300: #7FCBA8;
+    --green-400: #4A9B7F;
+    --green-500: #3D8069;
+    --green-600: #306653;
+    --green-700: #244C3E;
+    --green-800: #183329;
+    --green-900: #0C1914;
+
+    /* TEXT COLORS */
+    --text-heading: #2D2520;
+    --text-body: #3D3229;
+    --text-muted: #5C5248;
+    --text-subtle: #7A7168;
+    --text-inverse: #FDFCFA;
+
+    /* Tailwind CSS variables mapped to Insight Atlas */
+    --background: 253 252 250;        /* #FDFCFA */
+    --foreground: 61 50 41;           /* Ink */
     --card: 255 255 255;              /* White */
-    --card-foreground: 52 76 61;      /* Evergreen */
+    --card-foreground: 61 50 41;      /* Ink */
     --popover: 255 255 255;           /* White */
-    --popover-foreground: 52 76 61;   /* Evergreen */
-    --primary: 142 165 140;           /* Sage */
-    --primary-foreground: 255 255 255; /* White */
-    --secondary: 242 243 241;         /* Ivory */
-    --secondary-foreground: 52 76 61; /* Evergreen */
-    --muted: 242 243 241;             /* Ivory */
-    --muted-foreground: 115 138 110;  /* Moss */
-    --accent: 136 165 188;            /* French Blue */
-    --accent-foreground: 255 255 255; /* White */
-    --destructive: 52 76 61;          /* Evergreen */
-    --destructive-foreground: 255 255 255; /* White */
-    --border: 115 138 110;            /* Moss */
-    --input: 242 243 241;             /* Ivory */
-    --ring: 136 165 188;              /* French Blue */
+    --popover-foreground: 61 50 41;   /* Ink */
+    --primary: 107 58 74;             /* Burgundy */
+    --primary-foreground: 253 252 250; /* White */
+    --secondary: 245 243 237;         /* Parchment */
+    --secondary-foreground: 61 50 41; /* Ink */
+    --muted: 245 243 237;             /* Parchment */
+    --muted-foreground: 92 82 72;     /* Text muted */
+    --accent: 201 162 39;             /* Gold */
+    --accent-foreground: 61 50 41;    /* Ink */
+    --destructive: 244 67 54;         /* Error */
+    --destructive-foreground: 253 252 250;
+    --border: 209 205 199;            /* Rule */
+    --input: 245 243 237;             /* Parchment */
+    --ring: 201 162 39;               /* Gold */
     --radius: 0.75rem;
   }
 
@@ -73,8 +123,8 @@
   }
 
   html, body, #root {
-    background-color: #F2F3F1;
-    color: #344C3D;
+    background-color: #FDFCFA;
+    color: #3D3229;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
     padding: 0;
@@ -86,27 +136,27 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: #344C3D;
+    color: #2D2520;
   }
 
   p, span {
-    color: #738A6E;
+    color: #5C5248;
   }
 
   a {
-    color: #88A5BC;
+    color: #2A9D8F;
     text-decoration: none;
   }
 
   a:hover {
-    color: #6B8BA6;
+    color: #3BA396;
   }
 }
 
 @layer components {
-  /* Button styles */
+  /* Button styles - Insight Atlas */
   .btn-primary {
-    background-color: #8EA58C;
+    background-color: #6B3A4A;
     color: #FFFFFF;
     border: none;
     padding: 0.5rem 1rem;
@@ -115,60 +165,73 @@
   }
 
   .btn-primary:hover {
-    background-color: #7A8F78;
+    background-color: #8A5066;
   }
 
   .btn-secondary {
     background-color: transparent;
-    color: #88A5BC;
-    border: 2px solid #88A5BC;
+    color: #2A9D8F;
+    border: 2px solid #2A9D8F;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     transition: all 0.2s;
   }
 
   .btn-secondary:hover {
-    background-color: #88A5BC;
+    background-color: #2A9D8F;
     color: #FFFFFF;
+  }
+
+  .btn-gold {
+    background-color: #C9A227;
+    color: #FFFFFF;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+  }
+
+  .btn-gold:hover {
+    background-color: #A88A1F;
   }
 
   /* Card styles */
   .card {
     background-color: #FFFFFF;
-    border: 1px solid rgba(115, 138, 110, 0.15);
+    border: 1px solid #D1CDC7;
     border-radius: 0.75rem;
-    box-shadow: 0 2px 4px rgba(52, 76, 61, 0.08);
+    box-shadow: 0 2px 4px rgba(61, 50, 41, 0.08);
   }
 
   .card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(52, 76, 61, 0.12);
+    box-shadow: 0 4px 14px rgba(201, 162, 39, 0.15);
   }
 
   /* Sidebar styles */
   .sidebar {
     background-color: #FFFFFF;
-    border-right: 1px solid rgba(115, 138, 110, 0.15);
+    border-right: 1px solid #D1CDC7;
   }
 
   /* Input styles */
   input, textarea, select {
     background-color: #FFFFFF;
-    border: 1px solid rgba(115, 138, 110, 0.3);
-    color: #344C3D;
+    border: 1px solid #D1CDC7;
+    color: #3D3229;
     border-radius: 0.5rem;
     padding: 0.5rem;
   }
 
   input:focus, textarea:focus, select:focus {
     outline: none;
-    border-color: #88A5BC;
-    box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2);
+    border-color: #C9A227;
+    box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2);
   }
 
   /* Badge styles */
   .badge {
-    background-color: #8EA58C;
+    background-color: #C9A227;
     color: #FFFFFF;
     padding: 0.25rem 0.5rem;
     border-radius: 9999px;
@@ -176,133 +239,87 @@
     font-weight: 500;
   }
 
-  .badge-blue {
-    background-color: #88A5BC;
+  .badge-teal {
+    background-color: #2A9D8F;
+    color: #FFFFFF;
+  }
+
+  .badge-coral {
+    background-color: #D4735C;
+    color: #FFFFFF;
+  }
+
+  .badge-burgundy {
+    background-color: #6B3A4A;
     color: #FFFFFF;
   }
 }
 
-/* COMPLETE YELLOW COLOR OVERRIDE - Force sage-green therapeutic palette */
+/* COMPREHENSIVE COLOR OVERRIDE - Insight Atlas Palette */
 
-/* Background color overrides */
-.bg-yellow-50, .bg-yellow-100 { background-color: var(--sage-50) !important; }
-.bg-yellow-200 { background-color: var(--sage-100) !important; }
-.bg-yellow-300 { background-color: var(--sage-200) !important; }
-.bg-yellow-400 { background-color: var(--sage-300) !important; }
-.bg-yellow-500 { background-color: var(--color-sage) !important; }
-.bg-yellow-600 { background-color: var(--color-moss) !important; }
-.bg-yellow-700 { background-color: var(--sage-600) !important; }
-.bg-yellow-800 { background-color: var(--sage-700) !important; }
-.bg-yellow-900 { background-color: var(--color-evergreen) !important; }
-
-/* Amber overrides */
-.bg-amber-50, .bg-amber-100 { background-color: var(--sage-50) !important; }
-.bg-amber-200 { background-color: var(--sage-100) !important; }
-.bg-amber-300 { background-color: var(--sage-200) !important; }
-.bg-amber-400 { background-color: var(--sage-300) !important; }
-.bg-amber-500 { background-color: var(--color-sage) !important; }
-.bg-amber-600 { background-color: var(--color-moss) !important; }
+/* Background color overrides - Map old colors to new */
+.bg-ivory { background-color: #F5F3ED !important; }
+.bg-sage { background-color: #4A9B7F !important; }
+.bg-moss { background-color: #5C5248 !important; }
+.bg-evergreen { background-color: #3D3229 !important; }
+.bg-french-blue { background-color: #2A9D8F !important; }
 
 /* Text color overrides */
-.text-yellow-400 { color: var(--color-sage) !important; }
-.text-yellow-500, .text-yellow-600 { color: var(--color-moss) !important; }
-.text-yellow-700, .text-yellow-800, .text-yellow-900 { color: var(--color-evergreen) !important; }
-.text-amber-400 { color: var(--color-sage) !important; }
-.text-amber-500, .text-amber-600 { color: var(--color-moss) !important; }
-.text-amber-700, .text-amber-800 { color: var(--color-evergreen) !important; }
+.text-ivory { color: #F5F3ED !important; }
+.text-sage { color: #4A9B7F !important; }
+.text-moss { color: #5C5248 !important; }
+.text-evergreen { color: #3D3229 !important; }
+.text-french-blue { color: #2A9D8F !important; }
 
 /* Border color overrides */
-.border-yellow-200 { border-color: var(--sage-100) !important; }
-.border-yellow-300 { border-color: var(--sage-200) !important; }
-.border-yellow-400 { border-color: var(--sage-300) !important; }
-.border-yellow-500 { border-color: var(--color-sage) !important; }
-.border-amber-200 { border-color: var(--sage-100) !important; }
-.border-amber-300 { border-color: var(--sage-200) !important; }
-.border-amber-400 { border-color: var(--sage-300) !important; }
+.border-ivory { border-color: #F5F3ED !important; }
+.border-sage { border-color: #4A9B7F !important; }
+.border-moss { border-color: #5C5248 !important; }
+.border-evergreen { border-color: #3D3229 !important; }
+.border-french-blue { border-color: #2A9D8F !important; }
 
-/* Hover state overrides */
-.hover\:bg-yellow-50:hover { background-color: var(--sage-50) !important; }
-.hover\:bg-yellow-100:hover { background-color: var(--sage-100) !important; }
-.hover\:bg-yellow-200:hover { background-color: var(--sage-200) !important; }
-.hover\:bg-yellow-500:hover { background-color: var(--color-sage) !important; }
-.hover\:bg-amber-500:hover { background-color: var(--color-sage) !important; }
+/* Insight Atlas specific utility classes */
+.text-sepia { color: #5C4A3D !important; }
+.text-parchment { color: #F5F3ED !important; }
+.text-ink { color: #3D3229 !important; }
+.text-gold { color: #C9A227 !important; }
+.text-burgundy { color: #6B3A4A !important; }
+.text-coral { color: #D4735C !important; }
+.text-teal { color: #2A9D8F !important; }
 
-/* Orange overrides for good measure */
-.bg-orange-50, .bg-orange-100, .bg-orange-200 { background-color: var(--sage-50) !important; }
-.bg-orange-300 { background-color: var(--sage-200) !important; }
-.bg-orange-400, .bg-orange-500 { background-color: var(--color-sage) !important; }
-.text-orange-500, .text-orange-600 { color: var(--color-moss) !important; }
+.bg-sepia { background-color: #5C4A3D !important; }
+.bg-parchment { background-color: #F5F3ED !important; }
+.bg-ink { background-color: #3D3229 !important; }
+.bg-gold { background-color: #C9A227 !important; }
+.bg-burgundy { background-color: #6B3A4A !important; }
+.bg-coral { background-color: #D4735C !important; }
+.bg-teal { background-color: #2A9D8F !important; }
 
-/* COMPREHENSIVE WILDCARD OVERRIDES - Catch any remaining yellow/amber/orange */
-[class*="bg-yellow"]:not(.bulk-transcripts-page *), [class*="bg-amber"]:not(.bulk-transcripts-page *), [class*="bg-orange"]:not(.bulk-transcripts-page *) {
-  background-color: var(--color-ivory) !important;
-  border-color: rgba(115, 138, 110, 0.2) !important;
+.border-sepia { border-color: #5C4A3D !important; }
+.border-parchment { border-color: #F5F3ED !important; }
+.border-ink { border-color: #3D3229 !important; }
+.border-gold { border-color: #C9A227 !important; }
+.border-burgundy { border-color: #6B3A4A !important; }
+.border-coral { border-color: #D4735C !important; }
+.border-teal { border-color: #2A9D8F !important; }
+
+/* Focus state overrides */
+*:focus, *:focus-visible, *:focus-within,
+input:focus, select:focus, textarea:focus, button:focus {
+  outline: 2px solid #C9A227 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2) !important;
 }
 
-[class*="text-yellow"]:not(.bulk-transcripts-page *), [class*="text-amber"]:not(.bulk-transcripts-page *), [class*="text-orange"]:not(.bulk-transcripts-page *) {
-  color: var(--color-evergreen) !important;
-}
-
-[class*="border-yellow"]:not(.bulk-transcripts-page *), [class*="border-amber"]:not(.bulk-transcripts-page *), [class*="border-orange"]:not(.bulk-transcripts-page *) {
-  border-color: var(--color-sage) !important;
-}
-
-/* Component-specific therapeutic overrides */
-.filter-label, .session-label, .batch-label, .risk-label, .progress-label, .status-label,
-.badge, .tag, .chip, .label {
-  background-color: var(--sage-50) !important;
-  color: var(--color-evergreen) !important;
-  border: 1px solid var(--sage-300) !important;
-}
-
-/* AI Feature highlights - use French Blue */
-.ai-highlight, .ai-feature, .ai-badge, .ai-tag,
-[class*="ai-"], [class*="AI-"], [data-ai="true"] {
-  background-color: rgba(136, 165, 188, 0.1) !important;
-  color: var(--color-french-blue) !important;
-  border-color: var(--color-french-blue) !important;
-}
-
-/* Button comprehensive overrides - exclude bulk transcripts page */
-.btn-primary:not(.bulk-transcripts-page *), button[class*="yellow"]:not(.bulk-transcripts-page *), button[class*="amber"]:not(.bulk-transcripts-page *), button[class*="orange"]:not(.bulk-transcripts-page *) {
-  background-color: var(--color-sage) !important;
-  color: white !important;
-  border: none !important;
-}
-
-.btn-primary:hover:not(.bulk-transcripts-page *), button[class*="yellow"]:hover:not(.bulk-transcripts-page *), button[class*="amber"]:hover:not(.bulk-transcripts-page *) {
-  background-color: var(--color-moss) !important;
-}
-
-/* File input comprehensive fix */
-input[type="file"] {
-  background-color: transparent !important;
-  color: var(--color-evergreen) !important;
-}
-
-/* Fix file input highlight */
-input[type="file"]::-webkit-file-upload-button {
-  background-color: #8EA58C !important; /* Sage background */
-  color: white !important;
-  border: 1px solid #8EA58C !important;
-}
-
-/* Override any browser default yellow highlights */
+/* Selection colors */
 ::selection {
-  background: rgba(142, 165, 140, 0.3) !important; /* Sage selection */
-  color: #344C3D !important;
+  background: rgba(201, 162, 39, 0.3) !important;
+  color: #3D3229 !important;
 }
 
-/* Fix ALL input field styling - prevent any yellow backgrounds */
-input, input[type="text"], input[type="search"], input[type="email"], input[type="password"] {
-  background-color: #FFFFFF !important;
-  color: #344C3D !important;
-}
-
-input:focus, input[type="text"]:focus, input[type="search"]:focus {
-  background-color: #FFFFFF !important;
-  border-color: #88A5BC !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.1) !important;
+::-moz-selection {
+  background: rgba(201, 162, 39, 0.3) !important;
+  color: #3D3229 !important;
 }
 
 /* Remove autocomplete yellow background */
@@ -310,380 +327,94 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #FFFFFF inset !important;
-  -webkit-text-fill-color: #344C3D !important;
-  background-color: #FFFFFF !important;
+  -webkit-box-shadow: 0 0 0 30px #FDFCFA inset !important;
+  -webkit-text-fill-color: #3D3229 !important;
+  background-color: #FDFCFA !important;
 }
 
-/* Remove any yellow/orange highlighting throughout the application */
-*::-moz-selection {
-  background-color: rgba(136, 165, 188, 0.3) !important; /* French Blue selection */
-  color: #344C3D !important; /* Evergreen text */
-}
-
-*::selection {
-  background-color: rgba(136, 165, 188, 0.3) !important; /* French Blue selection */
-  color: #344C3D !important; /* Evergreen text */
-}
-
-/* Override any browser default highlighting */
-*:focus, *:focus-visible, *:focus-within {
-  outline: 2px solid #88A5BC !important; /* French Blue outline */
-  outline-offset: 2px !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
-}
-
-/* Override any Radix UI component colors that might be yellow */
-[data-radix-collection-item], [data-state="open"], [data-state="checked"], [data-highlighted] {
-  background-color: rgba(136, 165, 188, 0.1) !important; /* French Blue background */
-  color: #344C3D !important; /* Evergreen text */
-}
-
-/* ULTIMATE YELLOW OVERRIDE - Catch anything that might slip through */
-* {
-  /* Override any CSS variables that might contain yellow */
-  --yellow-50: var(--sage-50) !important;
-  --yellow-100: var(--sage-100) !important;
-  --yellow-200: var(--sage-200) !important;
-  --yellow-300: var(--sage-300) !important;
-  --yellow-400: var(--sage-400) !important;
-  --yellow-500: var(--sage-500) !important;
-  --yellow-600: var(--sage-600) !important;
-  --yellow-700: var(--sage-700) !important;
-  --yellow-800: var(--sage-800) !important;
-  --yellow-900: var(--sage-900) !important;
-  
-  --amber-50: var(--sage-50) !important;
-  --amber-100: var(--sage-100) !important;
-  --amber-200: var(--sage-200) !important;
-  --amber-300: var(--sage-300) !important;
-  --amber-400: var(--sage-400) !important;
-  --amber-500: var(--sage-500) !important;
-  --amber-600: var(--sage-600) !important;
-}
-
-/* Final comprehensive override for any elements using yellow/amber/orange anywhere */
-[style*="yellow"], [style*="amber"], [style*="orange"], [style*="#ff"], [style*="rgb(255"] {
-  background-color: var(--color-ivory) !important;
-  color: var(--color-evergreen) !important;
-}
-
-/* Override computed styles that might be yellow */
-[style*="background-color: yellow"], [style*="background-color: amber"], [style*="background-color: orange"] {
-  background-color: var(--color-sage) !important;
-}
-
-[style*="color: yellow"], [style*="color: amber"], [style*="color: orange"] {
-  color: var(--color-evergreen) !important;
-}
-
-/* Final catch-all for any remaining yellow artifacts */
-[class*="-yellow-"], [class*="-amber-"], [class*="-orange-"] {
-  background-color: var(--color-ivory) !important;
-  color: var(--color-evergreen) !important;
-  border-color: var(--color-sage) !important;
-}
-
-/* CRITICAL FOCUS STATE OVERRIDES - Eliminate yellow focus rings */
-*:focus, *:focus-visible, *:focus-within,
-input:focus, select:focus, textarea:focus, button:focus,
-[role="button"]:focus, [role="tab"]:focus, [role="option"]:focus,
-[tabindex]:focus, [data-state="open"]:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  outline-offset: 2px !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  --tw-ring-opacity: 0.5 !important;
-}
-
-/* Override Radix UI focus states */
-[data-radix-focus-guard], [data-radix-collection-item]:focus,
-[data-highlighted], [data-state="active"]:focus,
-[data-state="checked"]:focus, [data-state="selected"]:focus {
-  background-color: rgba(136, 165, 188, 0.1) !important;
-  color: var(--color-evergreen) !important;
-  outline: 2px solid var(--color-french-blue) !important;
-}
-
-/* Override any hover states that might be yellow */
-*:hover, button:hover, [role="button"]:hover,
-input:hover, select:hover, textarea:hover {
-  border-color: var(--color-sage) !important;
-}
-
-/* Override active/pressed states */
-*:active, button:active, [role="button"]:active,
-input:active, select:active, textarea:active {
-  background-color: rgba(142, 165, 140, 0.1) !important;
-  border-color: var(--color-sage) !important;
-}
-
-/* BROWSER-SPECIFIC YELLOW ELIMINATION */
-/* Chrome/Safari autofill yellow override */
-input:-webkit-autofill,
-input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active,
-textarea:-webkit-autofill,
-textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus,
-select:-webkit-autofill,
-select:-webkit-autofill:hover,
-select:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 30px var(--color-ivory) inset !important;
-  -webkit-text-fill-color: var(--color-evergreen) !important;
-  background-color: var(--color-ivory) !important;
-  transition: background-color 5000s ease-in-out 0s !important;
-}
-
-/* Firefox form validation yellow override */
-input:invalid, textarea:invalid, select:invalid {
-  box-shadow: none !important;
-  border-color: var(--color-sage) !important;
-}
-
-/* Override browser default highlights */
-::-moz-selection {
-  background: rgba(136, 165, 188, 0.3) !important;
-  color: var(--color-evergreen) !important;
-}
-
-/* Override any framework CSS that might inject yellow */
-.ring-yellow-500, .ring-yellow-400, .ring-amber-500, .ring-amber-400 {
-  --tw-ring-color: var(--color-french-blue) !important;
-}
-
-.focus\:ring-yellow-500:focus, .focus\:ring-yellow-400:focus,
-.focus\:ring-amber-500:focus, .focus\:ring-amber-400:focus {
-  --tw-ring-color: var(--color-french-blue) !important;
-}
-
-/* CALENDAR COMPONENT FIXES - Eliminate pink backgrounds */
-.react-day-picker .rdp-day_today {
-  background-color: var(--color-sage) !important;
-  color: white !important;
-}
-
-.react-day-picker .rdp-day_selected {
-  background-color: var(--color-french-blue) !important;
-  color: white !important;
-}
-
-.react-day-picker .rdp-day:hover {
-  background-color: rgba(136, 165, 188, 0.1) !important;
-}
-
-/* Calendar specific overrides */
-[data-today="true"], .rdp-day_today, .day_today {
-  background-color: var(--color-sage) !important;
-  color: white !important;
-}
-
-[data-selected="true"], .rdp-day_selected, .day_selected {
-  background-color: var(--color-french-blue) !important;
-  color: white !important;
-}
-
-/* AI Dashboard and Select component focus fixes */
-[role="combobox"], [role="listbox"], [role="option"],
-.select-trigger, .select-content, .select-item {
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-}
-
-[role="combobox"]:focus, [role="listbox"]:focus, [role="option"]:focus,
-.select-trigger:focus, .select-content:focus, .select-item:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
-}
-
-/* Fix initials squares - remove ivory background from client initials */
-.client-initials, .initials-square, .avatar-initials {
-  background-color: var(--color-sage) !important;
-  color: white !important;
-}
-
-/* Override any remaining yellow/amber focus states in specific components */
-[data-radix-select-trigger]:focus,
-[data-radix-select-content]:focus,
-[data-radix-tabs-trigger]:focus,
-[data-radix-button]:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
-}
-
-/* COMPREHENSIVE CALENDAR OVERRIDES */
-/* Target all react-day-picker classes to eliminate pink backgrounds */
+/* Calendar component fixes */
 .rdp, .react-day-picker {
-  --rdp-cell-size: 40px;
-  --rdp-accent-color: #8EA58C !important;
-  --rdp-background-color: #F2F3F1 !important;
+  --rdp-accent-color: #6B3A4A !important;
+  --rdp-background-color: #F5F3ED !important;
 }
 
-.rdp-day_today, .rdp-day_selected {
-  background-color: var(--color-sage) !important;
+.rdp-day_today {
+  background-color: #C9A227 !important;
+  color: white !important;
+}
+
+.rdp-day_selected {
+  background-color: #6B3A4A !important;
   color: white !important;
 }
 
 .rdp-button:hover:not([disabled]) {
-  background-color: rgba(136, 165, 188, 0.1) !important;
+  background-color: rgba(201, 162, 39, 0.1) !important;
 }
 
 .rdp-button:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  background-color: rgba(136, 165, 188, 0.1) !important;
+  outline: 2px solid #C9A227 !important;
+  background-color: rgba(201, 162, 39, 0.1) !important;
 }
 
-/* Target shadcn calendar component specifically */
-.calendar .rdp-day_today {
-  background-color: var(--color-sage) !important;
+/* Client initials - use burgundy */
+.client-initials, .initials-square, .avatar-initials,
+[data-testid*="client-initials"], [data-testid*="initials"] {
+  background-color: #6B3A4A !important;
   color: white !important;
 }
 
-.calendar .rdp-day_selected {
-  background-color: var(--color-french-blue) !important;
-  color: white !important;
+/* Ring colors */
+.ring-gold, .focus\:ring-gold:focus {
+  --tw-ring-color: #C9A227 !important;
 }
 
-/* AI DASHBOARD COMPREHENSIVE FOCUS FIX */
-/* Select components in AI dashboard */
-[data-testid*="select"], [data-testid*="dropdown"], 
-button[role="combobox"], [aria-expanded] {
-  --tw-ring-color: var(--color-french-blue) !important;
+.ring-burgundy, .focus\:ring-burgundy:focus {
+  --tw-ring-color: #6B3A4A !important;
 }
 
-[data-testid*="select"]:focus, [data-testid*="dropdown"]:focus,
-button[role="combobox"]:focus, [aria-expanded]:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  border-color: var(--color-french-blue) !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+.ring-teal, .focus\:ring-teal:focus {
+  --tw-ring-color: #2A9D8F !important;
 }
 
-/* Tabs in AI dashboard */
-[role="tab"], [role="tablist"], [data-state="active"] {
-  --tw-ring-color: var(--color-french-blue) !important;
+/* Utility classes for Insight Atlas theming */
+.insight-primary { background-color: #6B3A4A !important; color: white !important; }
+.insight-secondary { background-color: #F5F3ED !important; color: #3D3229 !important; }
+.insight-accent { background-color: #C9A227 !important; color: white !important; }
+.insight-muted { background-color: #FDFCFA !important; color: #5C5248 !important; }
+.insight-text { color: #3D3229 !important; }
+.insight-border { border-color: #D1CDC7 !important; }
+
+/* Gradient utilities */
+.gradient-gold {
+  background: linear-gradient(135deg, #C9A227 0%, #A88A1F 100%);
 }
 
-[role="tab"]:focus, [data-state="active"]:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+.gradient-burgundy {
+  background: linear-gradient(135deg, #6B3A4A 0%, #582534 100%);
 }
 
-/* Button focus in AI components */
-button[data-testid*="button"], button[data-testid*="analyze"], 
-button[data-testid*="search"], button[data-testid*="refresh"] {
-  --tw-ring-color: var(--color-french-blue) !important;
+.gradient-teal {
+  background: linear-gradient(135deg, #2A9D8F 0%, #228076 100%);
 }
 
-button[data-testid*="button"]:focus, button[data-testid*="analyze"]:focus,
-button[data-testid*="search"]:focus, button[data-testid*="refresh"]:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+.gradient-coral {
+  background: linear-gradient(135deg, #D4735C 0%, #C45A43 100%);
 }
 
-/* CALENDAR SYNC OAUTH SPECIFIC FIXES */
-/* Target calendar sync page buttons and padded items */
-button[data-testid*="connect"], button[data-testid*="sync"],
-button[data-testid*="calendar"], [data-testid*="connection"] {
-  --tw-ring-color: var(--color-french-blue) !important;
+/* Box shadow utilities */
+.shadow-gold {
+  box-shadow: 0 4px 14px 0 rgba(201, 162, 39, 0.25);
 }
 
-button[data-testid*="connect"]:focus, button[data-testid*="sync"]:focus,
-button[data-testid*="calendar"]:focus, [data-testid*="connection"]:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  border-color: var(--color-french-blue) !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+.shadow-burgundy {
+  box-shadow: 0 4px 14px 0 rgba(107, 58, 74, 0.25);
 }
 
-/* Target calendar integration cards and their focus states */
-[data-testid*="status-card"], [data-testid*="sync-card"],
-[data-testid*="oauth"], [data-testid*="integration"] {
-  --tw-ring-color: var(--color-french-blue) !important;
+.shadow-teal {
+  box-shadow: 0 4px 14px 0 rgba(42, 157, 143, 0.25);
 }
 
-[data-testid*="status-card"]:focus, [data-testid*="sync-card"]:focus,
-[data-testid*="oauth"]:focus, [data-testid*="integration"]:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
+.shadow-coral {
+  box-shadow: 0 4px 14px 0 rgba(212, 115, 92, 0.25);
 }
-
-/* Generic focus override for any element with padding in calendar sync */
-.calendar-sync button, .calendar-sync [role="button"],
-.calendar-sync .p-4, .calendar-sync .p-6 {
-  --tw-ring-color: var(--color-french-blue) !important;
-}
-
-.calendar-sync button:focus, .calendar-sync [role="button"]:focus,
-.calendar-sync .p-4:focus, .calendar-sync .p-6:focus {
-  outline: 2px solid var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
-}
-
-/* FINAL COMPREHENSIVE YELLOW ELIMINATION */
-/* Nuclear option - override ANY remaining yellow, amber, orange focus rings */
-*[class*="ring-yellow"], *[class*="ring-amber"], *[class*="ring-orange"],
-*[class*="focus:ring-yellow"], *[class*="focus:ring-amber"], *[class*="focus:ring-orange"] {
-  --tw-ring-color: var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-}
-
-*[class*="ring-yellow"]:focus, *[class*="ring-amber"]:focus, *[class*="ring-orange"]:focus,
-*[class*="focus:ring-yellow"]:focus, *[class*="focus:ring-amber"]:focus, *[class*="focus:ring-orange"]:focus {
-  --tw-ring-color: var(--color-french-blue) !important;
-  ring-color: var(--color-french-blue) !important;
-  outline: 2px solid var(--color-french-blue) !important;
-  box-shadow: 0 0 0 2px rgba(136, 165, 188, 0.2) !important;
-}
-
-/* Override any CSS custom properties that might be setting yellow */
-:root, html, body, * {
-  --ring-color: var(--color-french-blue) !important;
-  --tw-ring-color: var(--color-french-blue) !important;
-  --ring-yellow-500: var(--color-french-blue) !important;
-  --ring-amber-500: var(--color-french-blue) !important;
-  --ring-orange-500: var(--color-french-blue) !important;
-}
-
-/* COMPREHENSIVE CLIENT INITIALS FIX */
-/* Force all client initials to use therapeutic colors */
-.client-initials, [data-testid*="client-initials"], 
-[data-testid*="initials"], .initials,
-.w-12.h-12.rounded-lg, .w-12.h-12.rounded-lg.flex {
-  background-color: #8EA58C !important;
-  color: #FFFFFF !important;
-}
-
-/* Additional specificity for any remaining ivory squares */
-div.flex-shrink-0.w-12.h-12.rounded-lg.flex.items-center.justify-center,
-.flex-shrink-0.w-12.h-12.rounded-lg.flex.items-center.justify-center {
-  background-color: #8EA58C !important;
-}
-
-.flex-shrink-0.w-12.h-12.rounded-lg.flex.items-center.justify-center span {
-  color: #FFFFFF !important;
-}
-
-/* Utility classes for easy therapeutic color application */
-.therapeutic-primary { background-color: var(--color-sage) !important; color: white !important; }
-.therapeutic-secondary { background-color: var(--sage-100) !important; color: var(--color-evergreen) !important; }
-.therapeutic-accent { background-color: var(--color-french-blue) !important; color: white !important; }
-.therapeutic-muted { background-color: var(--color-ivory) !important; color: var(--color-moss) !important; }
-.therapeutic-text { color: var(--color-evergreen) !important; }
-.therapeutic-border { border-color: var(--color-sage) !important; }

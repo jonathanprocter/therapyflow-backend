@@ -162,7 +162,7 @@ export default function DocumentsUpload() {
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
                 placeholder="e.g., client-123"
-                className="bg-white border border-sage/30 focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                className="bg-white border border-teal/30 focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
                 style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)' }}
                 data-testid="input-client-id"
               />
@@ -174,7 +174,7 @@ export default function DocumentsUpload() {
                 type="date"
                 value={appointmentDate}
                 onChange={(e) => setAppointmentDate(e.target.value)}
-                className="bg-white border border-sage/30 focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+                className="bg-white border border-teal/30 focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
                 style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)' }}
                 data-testid="input-appointment-date"
               />
@@ -189,7 +189,7 @@ export default function DocumentsUpload() {
               multiple
               accept=".pdf,.docx,.doc,.txt"
               onChange={(e) => setFiles(e.target.files)}
-              className="bg-white border border-sage/30 focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
+              className="bg-white border border-teal/30 focus:border-[#88A5BC] focus:ring-[#88A5BC] focus:ring-1"
               style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(115, 138, 110, 0.3)' }}
               data-testid="input-files"
             />

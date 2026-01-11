@@ -7,7 +7,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Georgia', 'serif'],
+        serif: ['Georgia', 'Cambria', 'serif'],
         mono: ['Menlo', 'monospace'],
         'inter': ['Inter', 'system-ui', 'sans-serif'],
       },
@@ -17,76 +17,223 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
-        // Brand colors
-        ivory: "#F2F3F1",
+        // ============================================
+        // INSIGHT ATLAS - COMPLETE COLOR PALETTE
+        // ============================================
+
+        // BRAND COLORS (Core Identity)
+        sepia: {
+          DEFAULT: "#5C4A3D",
+          light: "#7A6A5D",
+        },
+        parchment: {
+          DEFAULT: "#F5F3ED",
+          dark: "#E8E4DC",
+        },
+        ink: "#3D3229",
+
+        // PRIMARY PALETTE - GOLD (Premium Accent)
+        gold: {
+          DEFAULT: "#C9A227",
+          light: "#DCBE5E",
+          dark: "#A88A1F",
+          subtle: "rgba(201, 162, 39, 0.08)",
+          muted: "rgba(201, 162, 39, 0.25)",
+          glow: "rgba(201, 162, 39, 0.4)",
+          tint: "#FBF7E9",
+          50: "#FBF7E9",
+          100: "#F5EDD0",
+          200: "#EBDAA1",
+          300: "#DCBE5E",
+          400: "#C9A227",
+          500: "#A88A1F",
+          600: "#8A7019",
+          700: "#6B5614",
+          800: "#4D3D0F",
+          900: "#2E240A",
+        },
+
+        // BURGUNDY / OXBLOOD (Authority & CTAs)
+        burgundy: {
+          DEFAULT: "#6B3A4A",
+          light: "#8A5066",
+          subtle: "rgba(107, 58, 74, 0.06)",
+          muted: "rgba(107, 58, 74, 0.25)",
+          50: "#F9F5F6",
+          100: "#F0E5E8",
+          200: "#E0CAD0",
+          300: "#C9A0AD",
+          400: "#8A5066",
+          500: "#6B3A4A",
+          600: "#582534",
+          700: "#451D29",
+          800: "#32151E",
+          900: "#1F0D13",
+        },
+        oxblood: "#582534",
+
+        // CORAL / TERRACOTTA (Action & Highlights)
+        coral: {
+          DEFAULT: "#D4735C",
+          ember: "#E76F51",
+          light: "#E08B73",
+          subtle: "rgba(212, 115, 92, 0.08)",
+          muted: "rgba(212, 115, 92, 0.25)",
+          apply: "#E07A5F",
+          50: "#FDF5F3",
+          100: "#FAE8E4",
+          200: "#F4CFC6",
+          300: "#E08B73",
+          400: "#D4735C",
+          500: "#C45A43",
+          600: "#A44736",
+          700: "#833829",
+          800: "#62291F",
+          900: "#411B14",
+        },
+
+        // TEAL (Trust & Calm)
+        teal: {
+          DEFAULT: "#2A9D8F",
+          light: "#3BA396",
+          subtle: "rgba(42, 157, 143, 0.08)",
+          muted: "rgba(42, 157, 143, 0.25)",
+          border: "#B8E0D9",
+          50: "#F0FAF8",
+          100: "#D9F2EE",
+          200: "#B8E0D9",
+          300: "#7FCDC2",
+          400: "#3BA396",
+          500: "#2A9D8F",
+          600: "#228076",
+          700: "#1A635B",
+          800: "#134640",
+          900: "#0C2925",
+        },
+
+        // ORANGE (Warmth)
+        orange: {
+          DEFAULT: "#E89B5A",
+          light: "#F0B07A",
+          subtle: "rgba(232, 155, 90, 0.1)",
+          50: "#FEF6EE",
+          100: "#FCEBD8",
+          200: "#F8D4B0",
+          300: "#F0B07A",
+          400: "#E89B5A",
+          500: "#D47F3A",
+          600: "#B0652C",
+          700: "#8C4E22",
+          800: "#683818",
+          900: "#44230F",
+        },
+
+        // GREEN (Success/Application)
+        green: {
+          DEFAULT: "#4A9B7F",
+          success: "#4CAF50",
+          50: "#F0F9F5",
+          100: "#D9F0E6",
+          200: "#B3E0CC",
+          300: "#7FCBA8",
+          400: "#4A9B7F",
+          500: "#3D8069",
+          600: "#306653",
+          700: "#244C3E",
+          800: "#183329",
+          900: "#0C1914",
+        },
+
+        // TEXT COLORS
+        heading: "#2D2520",
+        body: "#3D3229",
+        "text-muted": "#5C5248",
+        "text-subtle": "#7A7168",
+        "text-inverse": "#FDFCFA",
+
+        // BACKGROUND COLORS
+        "bg-primary": "#FDFCFA",
+        "bg-secondary": "#F5F3ED",
+        "bg-card": "#FFFFFF",
+        cream: {
+          DEFAULT: "#FAF9F7",
+          warm: "#FDF8F3",
+          pink: "#FFF5F3",
+        },
+
+        // BOX-SPECIFIC BACKGROUNDS
+        "quick-glance": "#FDF8F3",
+        "insight-note": "#FDF8F3",
+        "insight-blob": "#FFE4D6",
+        "apply-it": "#F5FAFA",
+        reflection: "#F0FAF8",
+        "key-takeaways": "#FBF7E9",
+
+        // BORDER & RULE COLORS
+        rule: {
+          DEFAULT: "#D1CDC7",
+          light: "#E5E2DD",
+        },
+        "border-light": "#E8DFD0",
+        "border-teal": "#B8E0D9",
+
+        // QUOTE & TABLE COLORS
+        "quote-mark": "#E8C5B8",
+        "table-header-start": "#D4A84B",
+        "table-header-end": "#E8A84B",
+        "table-row-alt": "#FDF8F3",
+
+        // SEMANTIC / STATUS COLORS
+        success: "#4CAF50",
+        warning: "#FF9800",
+        error: "#F44336",
+
+        // DARK MODE
+        "dark-bg": "#1A1816",
+
+        // Legacy mappings for compatibility
+        ivory: "#F5F3ED",
         sage: {
-          DEFAULT: "#8EA58C",
-          50: "#f7f9f7",
-          100: "#e8ede7",
-          200: "#d1dbd0",
-          300: "#b3c4b1",
-          400: "#8EA58C",
-          500: "#738A6E",
-          600: "#5a6e57",
-          700: "#475646",
-          800: "#3a453a",
-          900: "#344C3D",
+          DEFAULT: "#4A9B7F",
+          50: "#F0F9F5",
+          100: "#D9F0E6",
+          200: "#B3E0CC",
+          300: "#7FCBA8",
+          400: "#4A9B7F",
+          500: "#3D8069",
+          600: "#306653",
+          700: "#244C3E",
+          800: "#183329",
+          900: "#0C1914",
         },
         moss: {
-          DEFAULT: "#738A6E",
-          50: "#f7f9f7",
-          100: "#e8ede7",
-          200: "#d1dbd0",
-          300: "#b3c4b1",
-          400: "#8EA58C",
-          500: "#738A6E",
-          600: "#5a6e57",
-          700: "#475646",
-          800: "#3a453a",
-          900: "#344C3D",
+          DEFAULT: "#5C5248",
+          50: "#F5F3ED",
+          100: "#E8E4DC",
+          200: "#D1CDC7",
+          300: "#A9A39B",
+          400: "#7A7168",
+          500: "#5C5248",
+          600: "#4A423A",
+          700: "#3D3229",
+          800: "#2D2520",
+          900: "#1A1816",
         },
-        evergreen: "#344C3D",
+        evergreen: "#3D3229",
         "french-blue": {
-          DEFAULT: "#88A5BC",
-          50: "#f0f4f7",
-          100: "#dde7ee",
-          200: "#bdd0dd",
-          300: "#88A5BC",
-          400: "#6B8BA6",
-          500: "#5a7490",
-          600: "#4a5f7a",
-          700: "#3a4a63",
-          800: "#2a354c",
-          900: "#1a2135",
+          DEFAULT: "#2A9D8F",
+          50: "#F0FAF8",
+          100: "#D9F2EE",
+          200: "#B8E0D9",
+          300: "#7FCDC2",
+          400: "#3BA396",
+          500: "#2A9D8F",
+          600: "#228076",
+          700: "#1A635B",
+          800: "#134640",
+          900: "#0C2925",
         },
-        
-        // Override yellow completely with sage palette
-        yellow: {
-          50: "#f7f9f7",
-          100: "#e8ede7",
-          200: "#d1dbd0",
-          300: "#b3c4b1",
-          400: "#8EA58C",
-          500: "#738A6E",
-          600: "#5a6e57",
-          700: "#475646",
-          800: "#3a453a",
-          900: "#344C3D",
-        },
-        
-        // Override amber with sage palette
-        amber: {
-          50: "#f7f9f7",
-          100: "#e8ede7",
-          200: "#d1dbd0",
-          300: "#b3c4b1",
-          400: "#8EA58C",
-          500: "#738A6E",
-          600: "#5a6e57",
-          700: "#475646",
-          800: "#3a453a",
-          900: "#344C3D",
-        },
+
         // Theme variables mapped to brand colors
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -156,10 +303,26 @@ export default {
             height: "0",
           },
         },
+        "gold-shimmer": {
+          "0%, 100%": {
+            opacity: "1",
+          },
+          "50%": {
+            opacity: "0.7",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "gold-shimmer": "gold-shimmer 2s ease-in-out infinite",
+      },
+      boxShadow: {
+        'gold': '0 4px 14px 0 rgba(201, 162, 39, 0.25)',
+        'gold-lg': '0 10px 40px 0 rgba(201, 162, 39, 0.3)',
+        'burgundy': '0 4px 14px 0 rgba(107, 58, 74, 0.25)',
+        'teal': '0 4px 14px 0 rgba(42, 157, 143, 0.25)',
+        'coral': '0 4px 14px 0 rgba(212, 115, 92, 0.25)',
       },
     },
   },

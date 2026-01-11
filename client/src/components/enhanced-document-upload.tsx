@@ -215,17 +215,17 @@ export default function EnhancedDocumentUpload() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-500';
-      case 'processing': return 'bg-french-blue';
+      case 'processing': return 'bg-teal';
       case 'failed': return 'bg-red-500';
-      default: return 'bg-sage/50';
+      default: return 'bg-teal/50';
     }
   };
 
   const getScoreColor = (score?: number) => {
-    if (!score) return 'text-moss/80';
+    if (!score) return 'text-sepia/80';
     if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-moss';
-    if (score >= 40) return 'text-moss';
+    if (score >= 60) return 'text-sepia';
+    if (score >= 40) return 'text-sepia';
     return 'text-red-600';
   };
 
@@ -233,38 +233,38 @@ export default function EnhancedDocumentUpload() {
     switch (riskLevel) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
       case 'high': return 'bg-red-50 text-red-800 border-red-200';
-      case 'moderate': return 'bg-french-blue-light text-evergreen border-french-blue';
+      case 'moderate': return 'bg-teal-light text-ink border-teal';
       case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-ivory text-evergreen border-sage/20';
+      default: return 'bg-parchment text-ink border-teal/20';
     }
   };
 
   return (
     <div className="space-y-6" data-testid="enhanced-document-upload">
       {/* Upload Area */}
-      <Card className="border-2 border-dashed border-sage/30 hover:border-french-blue/60 transition-colors">
+      <Card className="border-2 border-dashed border-teal/30 hover:border-teal/60 transition-colors">
         <CardContent className="p-8">
           <div
             {...getRootProps()}
             className={`text-center cursor-pointer transition-colors rounded-lg p-6 ${
-              isDragActive ? 'bg-french-blue/10 border-french-blue/50' : 'hover:bg-ivory/80'
+              isDragActive ? 'bg-teal/10 border-teal/50' : 'hover:bg-parchment/80'
             }`}
             data-testid="dropzone"
           >
             <input {...getInputProps()} />
-            <Upload className="mx-auto h-12 w-12 text-sage mb-4" />
-            <h3 className="text-lg font-semibold text-evergreen mb-2">
+            <Upload className="mx-auto h-12 w-12 text-teal mb-4" />
+            <h3 className="text-lg font-semibold text-ink mb-2">
               Enhanced Progress Note Upload
             </h3>
-            <p className="text-moss mb-4">
+            <p className="text-sepia mb-4">
               {isDragActive
                 ? "Drop your document here..."
                 : "Drag and drop your progress note, or click to browse"}
             </p>
-            <p className="text-sm text-moss/80">
+            <p className="text-sm text-sepia/80">
               Supports: TXT (optimal), PDF, DOCX, DOC, RTF • Max 50MB
             </p>
-            <p className="text-xs text-french-blue mt-2">
+            <p className="text-xs text-teal mt-2">
               ✨ Now with enhanced AI analysis, robust PDF parsing, and intelligent client matching
             </p>
           </div>
@@ -287,10 +287,10 @@ export default function EnhancedDocumentUpload() {
                 <div key={stage.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${getStatusColor(stage.status)}`} />
-                    <IconComponent className="h-4 w-4 text-moss" />
+                    <IconComponent className="h-4 w-4 text-sepia" />
                     <span className="font-medium">{stage.name}</span>
                     {stage.status === 'processing' && (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-sage" />
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-teal" />
                     )}
                   </div>
                   {stage.score !== undefined && (
@@ -349,7 +349,7 @@ export default function EnhancedDocumentUpload() {
                 </Alert>
               )}
               
-              <div className="text-sm text-moss">
+              <div className="text-sm text-sepia">
                 {processingResult.processingNotes}
               </div>
             </CardContent>
@@ -485,7 +485,7 @@ export default function EnhancedDocumentUpload() {
                   <FileText className="h-4 w-4" />
                   Content Preview
                 </h4>
-                <div className="bg-ivory/80 p-3 rounded text-sm max-h-32 overflow-y-auto">
+                <div className="bg-parchment/80 p-3 rounded text-sm max-h-32 overflow-y-auto">
                   {processingResult.extractedData.content.substring(0, 500)}
                   {processingResult.extractedData.content.length > 500 && "..."}
                 </div>
@@ -508,7 +508,7 @@ export default function EnhancedDocumentUpload() {
                     <div className={`text-2xl font-bold ${getScoreColor(score)}`}>
                       {score}%
                     </div>
-                    <div className="text-xs text-moss capitalize">
+                    <div className="text-xs text-sepia capitalize">
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
                   </div>

@@ -2,22 +2,22 @@ import { Link } from 'wouter';
 
 export default function HomePage() {
   return (
-    <div className="bg-ivory min-h-screen pt-8">
+    <div className="bg-parchment min-h-screen pt-8">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-evergreen">
+          <h1 className="text-4xl font-bold mb-4 text-ink">
             Welcome to TherapyFlow
           </h1>
-          <p className="text-xl mb-6 text-moss">
+          <p className="text-xl mb-6 text-sepia">
             Comprehensive clinical management platform with AI-powered document processing
           </p>
 
           {/* Quick Actions Banner */}
-          <div className="rounded-lg p-6 mb-8 bg-sage/10 border border-sage/20">
-            <h3 className="text-lg font-semibold mb-3 text-evergreen">
+          <div className="rounded-lg p-6 mb-8 bg-teal/10 border border-teal/20">
+            <h3 className="text-lg font-semibold mb-3 text-ink">
               Get Started
             </h3>
-            <p className="mb-4 text-sm text-moss">
+            <p className="mb-4 text-sm text-sepia">
               Begin managing your clinical practice with AI-powered tools
             </p>
             <div className="flex justify-center gap-3">
@@ -38,7 +38,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4">
           {/* Clinical Management Section */}
           <div>
-            <h2 className="text-2xl font-semibold mb-6 text-center text-evergreen">
+            <h2 className="text-2xl font-semibold mb-6 text-center text-ink">
               Clinical Management
             </h2>
 
@@ -46,10 +46,10 @@ export default function HomePage() {
               <div className="card p-6 transition-all cursor-pointer h-[180px] flex flex-col justify-between mb-5">
                 <div className="text-3xl mb-3">🏠</div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2 text-evergreen">
+                  <h3 className="text-lg font-semibold mb-2 text-ink">
                     Dashboard
                   </h3>
-                  <p className="text-sm text-moss">
+                  <p className="text-sm text-sepia">
                     Overview of appointments, insights, and clinical metrics
                   </p>
                 </div>
@@ -151,7 +151,7 @@ export default function HomePage() {
 
           {/* AI Document Processing Section */}
           <div>
-            <h2 className="text-2xl font-semibold mb-6 text-center text-evergreen">
+            <h2 className="text-2xl font-semibold mb-6 text-center text-ink">
               AI Document Processing
             </h2>
 
@@ -300,7 +300,7 @@ export default function HomePage() {
 
           {/* Analysis & Reports Section */}
           <div>
-            <h2 className="text-2xl font-semibold mb-6 text-center text-evergreen">
+            <h2 className="text-2xl font-semibold mb-6 text-center text-ink">
               Analysis & Reports
             </h2>
 

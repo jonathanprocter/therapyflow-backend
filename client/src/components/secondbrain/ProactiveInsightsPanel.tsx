@@ -57,19 +57,19 @@ export function ProactiveInsightsPanel({
 
   const getAlertIcon = (type: string) => {
     switch (type) {
-      case 'opportunity': return <Target className="h-4 w-4 text-sage" />;
+      case 'opportunity': return <Target className="h-4 w-4 text-teal" />;
       case 'concern': return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'reminder': return <Clock className="h-4 w-4 text-french-blue" />;
-      default: return <AlertCircle className="h-4 w-4 text-moss" />;
+      case 'reminder': return <Clock className="h-4 w-4 text-teal" />;
+      default: return <AlertCircle className="h-4 w-4 text-sepia" />;
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-50 text-red-700 border-red-200';
-      case 'medium': return 'bg-french-blue/10 text-french-blue border-french-blue/20';
-      case 'low': return 'bg-sage/10 text-sage border-sage/20';
-      default: return 'bg-ivory text-moss border-moss/20';
+      case 'medium': return 'bg-teal/10 text-teal border-teal/20';
+      case 'low': return 'bg-teal/10 text-teal border-teal/20';
+      default: return 'bg-parchment text-sepia border-sepia/20';
     }
   };
 
@@ -88,10 +88,10 @@ export function ProactiveInsightsPanel({
       <Card className={className} data-testid="insights-loading">
         <CardContent className="py-8">
           <div className="text-center space-y-4">
-            <Lightbulb className="h-8 w-8 mx-auto text-sage animate-pulse" />
+            <Lightbulb className="h-8 w-8 mx-auto text-teal animate-pulse" />
             <div>
-              <h3 className="text-lg font-medium text-evergreen">Generating Insights</h3>
-              <p className="text-moss text-sm mt-1">
+              <h3 className="text-lg font-medium text-ink">Generating Insights</h3>
+              <p className="text-sepia text-sm mt-1">
                 Analyzing patterns and preparing proactive suggestions...
               </p>
             </div>
@@ -108,8 +108,8 @@ export function ProactiveInsightsPanel({
           <div className="text-center space-y-4">
             <AlertTriangle className="h-8 w-8 mx-auto text-red-500" />
             <div>
-              <h3 className="text-lg font-medium text-evergreen">Insights Unavailable</h3>
-              <p className="text-moss text-sm mt-1">
+              <h3 className="text-lg font-medium text-ink">Insights Unavailable</h3>
+              <p className="text-sepia text-sm mt-1">
                 Unable to generate insights. Using manual analysis.
               </p>
             </div>
@@ -133,7 +133,7 @@ export function ProactiveInsightsPanel({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-sage" />
+            <Lightbulb className="h-5 w-5 text-teal" />
             <div>
               <CardTitle className="text-lg">Proactive Insights</CardTitle>
               <CardDescription>
@@ -156,23 +156,23 @@ export function ProactiveInsightsPanel({
       <CardContent className="space-y-6">
         {/* Insight Summary */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 bg-ivory rounded-lg">
-            <div className="text-2xl font-bold text-evergreen">
+          <div className="text-center p-3 bg-parchment rounded-lg">
+            <div className="text-2xl font-bold text-ink">
               {insights?.suggestions.length || 0}
             </div>
-            <div className="text-sm text-moss">Suggestions</div>
+            <div className="text-sm text-sepia">Suggestions</div>
           </div>
-          <div className="text-center p-3 bg-ivory rounded-lg">
-            <div className="text-2xl font-bold text-evergreen">
+          <div className="text-center p-3 bg-parchment rounded-lg">
+            <div className="text-2xl font-bold text-ink">
               {insights?.patterns.length || 0}
             </div>
-            <div className="text-sm text-moss">Patterns</div>
+            <div className="text-sm text-sepia">Patterns</div>
           </div>
-          <div className="text-center p-3 bg-ivory rounded-lg">
-            <div className="text-2xl font-bold text-evergreen">
+          <div className="text-center p-3 bg-parchment rounded-lg">
+            <div className="text-2xl font-bold text-ink">
               {insights?.alerts.length || 0}
             </div>
-            <div className="text-sm text-moss">Alerts</div>
+            <div className="text-sm text-sepia">Alerts</div>
           </div>
         </div>
 
@@ -216,17 +216,17 @@ export function ProactiveInsightsPanel({
           {/* Suggestions Tab */}
           <TabsContent value="suggestions" className="space-y-4">
             <div className="space-y-3">
-              <h4 className="font-medium text-evergreen">Session Suggestions</h4>
+              <h4 className="font-medium text-ink">Session Suggestions</h4>
               <ScrollArea className="h-32">
                 <div className="space-y-2">
                   {insights?.suggestions.map((suggestion, index) => (
                     <div
                       key={index}
-                      className="flex items-start gap-2 p-2 rounded-lg bg-ivory"
+                      className="flex items-start gap-2 p-2 rounded-lg bg-parchment"
                       data-testid={`suggestion-${index}`}
                     >
-                      <CheckCircle className="h-4 w-4 text-sage mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-evergreen">{suggestion}</span>
+                      <CheckCircle className="h-4 w-4 text-teal mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-ink">{suggestion}</span>
                     </div>
                   ))}
                 </div>
@@ -236,18 +236,18 @@ export function ProactiveInsightsPanel({
             {/* Question Suggestions */}
             {insights?.questionSuggestions && insights.questionSuggestions.length > 0 && (
               <div className="space-y-3">
-                <h4 className="font-medium text-evergreen">Suggested Questions</h4>
+                <h4 className="font-medium text-ink">Suggested Questions</h4>
                 <ScrollArea className="h-32">
                   <div className="space-y-2">
                     {insights.questionSuggestions.map((question, index) => (
                       <div
                         key={index}
-                        className="p-2 rounded-lg bg-french-blue/5 border border-french-blue/20"
+                        className="p-2 rounded-lg bg-teal/5 border border-teal/20"
                         data-testid={`question-${index}`}
                       >
                         <div className="flex items-start gap-2">
-                          <MessageSquare className="h-4 w-4 text-french-blue mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-evergreen italic">"{question}"</span>
+                          <MessageSquare className="h-4 w-4 text-teal mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-ink italic">"{question}"</span>
                         </div>
                       </div>
                     ))}
@@ -259,16 +259,16 @@ export function ProactiveInsightsPanel({
             {/* Opportunities */}
             {insights?.opportunities && insights.opportunities.length > 0 && (
               <div className="space-y-3">
-                <h4 className="font-medium text-evergreen">Therapeutic Opportunities</h4>
+                <h4 className="font-medium text-ink">Therapeutic Opportunities</h4>
                 <div className="space-y-2">
                   {insights.opportunities.slice(0, 3).map((opportunity, index) => (
                     <div
                       key={index}
-                      className="flex items-start gap-2 p-2 rounded-lg bg-sage/5 border border-sage/20"
+                      className="flex items-start gap-2 p-2 rounded-lg bg-teal/5 border border-teal/20"
                       data-testid={`opportunity-${index}`}
                     >
-                      <Target className="h-4 w-4 text-sage mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-evergreen">{opportunity}</span>
+                      <Target className="h-4 w-4 text-teal mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-ink">{opportunity}</span>
                     </div>
                   ))}
                 </div>
@@ -288,17 +288,17 @@ export function ProactiveInsightsPanel({
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <h5 className="font-medium text-evergreen">{pattern.name}</h5>
+                        <h5 className="font-medium text-ink">{pattern.name}</h5>
                         <Badge variant="secondary" className="text-xs">
                           {Math.round(pattern.confidence * 100)}% confidence
                         </Badge>
                       </div>
-                      <p className="text-sm text-moss">{pattern.description}</p>
+                      <p className="text-sm text-sepia">{pattern.description}</p>
                       {pattern.recommendations && pattern.recommendations.length > 0 && (
                         <div className="space-y-1">
-                          <div className="text-xs font-medium text-evergreen">Recommendations:</div>
+                          <div className="text-xs font-medium text-ink">Recommendations:</div>
                           {pattern.recommendations.map((rec, recIndex) => (
-                            <div key={recIndex} className="text-xs text-moss">
+                            <div key={recIndex} className="text-xs text-sepia">
                               • {rec}
                             </div>
                           ))}
@@ -335,8 +335,8 @@ export function ProactiveInsightsPanel({
                             variant="secondary" 
                             className={`text-xs ${
                               alert.priority === 'high' ? 'bg-red-100 text-red-700' :
-                              alert.priority === 'medium' ? 'bg-french-blue/10 text-french-blue' :
-                              'bg-sage/10 text-sage'
+                              alert.priority === 'medium' ? 'bg-teal/10 text-teal' :
+                              'bg-teal/10 text-teal'
                             }`}
                           >
                             {alert.priority} priority

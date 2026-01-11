@@ -348,7 +348,7 @@ export function TherapeuticDashboardWidget() {
           {recentInsights.slice(0, 5).map((insight: any) => (
             <div 
               key={insight.id}
-              className="p-3 rounded-lg cursor-pointer transition-colors hover:bg-ivory-100"
+              className="p-3 rounded-lg cursor-pointer transition-colors hover:bg-parchment-100"
               style={{ 
                 backgroundColor: 'rgba(242, 243, 241, 0.5)'
               }}

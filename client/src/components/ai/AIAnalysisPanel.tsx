@@ -79,22 +79,22 @@ export function AIAnalysisPanel({ clientId, initialContent = '', onAnalysisCompl
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Brain className="h-5 w-5 text-sage" />
+              <Brain className="h-5 w-5 text-teal" />
               AI Clinical Analysis
             </CardTitle>
             <div className="flex items-center gap-2">
               {aiHealth?.openai && (
-                <Badge variant="secondary" className="bg-sage/10 text-sage">
+                <Badge variant="secondary" className="bg-teal/10 text-teal">
                   OpenAI
                 </Badge>
               )}
               {aiHealth?.anthropic && (
-                <Badge variant="secondary" className="bg-sage/10 text-sage">
+                <Badge variant="secondary" className="bg-teal/10 text-teal">
                   Anthropic
                 </Badge>
               )}
               {(!aiHealth?.openai && !aiHealth?.anthropic) && (
-                <Badge variant="outline" className="text-moss">
+                <Badge variant="outline" className="text-sepia">
                   Manual Mode
                 </Badge>
               )}
@@ -107,7 +107,7 @@ export function AIAnalysisPanel({ clientId, initialContent = '', onAnalysisCompl
         <CardContent className="space-y-4">
           {/* Content Input */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-evergreen">Clinical Content</label>
+            <label className="text-sm font-medium text-ink">Clinical Content</label>
             <Textarea
               placeholder="Enter session notes, observations, or clinical content for AI analysis..."
               value={content}
@@ -121,7 +121,7 @@ export function AIAnalysisPanel({ clientId, initialContent = '', onAnalysisCompl
           <Button
             onClick={handleAnalyze}
             disabled={!content.trim() || isAnalyzing}
-            className="w-full bg-sage hover:bg-sage/90 text-white"
+            className="w-full bg-teal hover:bg-teal/90 text-white"
             data-testid="button-analyze"
           >
             {isAnalyzing ? (
@@ -144,7 +144,7 @@ export function AIAnalysisPanel({ clientId, initialContent = '', onAnalysisCompl
         <Card data-testid="analysis-results">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-sage" />
+              <CheckCircle className="h-5 w-5 text-teal" />
               Analysis Results
               <Badge variant="outline" className="ml-auto">
                 Confidence: {Math.round(analysis.confidence * 100)}%
@@ -155,9 +155,9 @@ export function AIAnalysisPanel({ clientId, initialContent = '', onAnalysisCompl
             {/* Summary */}
             {analysis.summary && (
               <div className="space-y-2">
-                <h4 className="font-medium text-evergreen">Clinical Summary</h4>
-                <div className="p-3 bg-ivory rounded-lg border">
-                  <p className="text-moss text-sm">{analysis.summary}</p>
+                <h4 className="font-medium text-ink">Clinical Summary</h4>
+                <div className="p-3 bg-parchment rounded-lg border">
+                  <p className="text-sepia text-sm">{analysis.summary}</p>
                 </div>
               </div>
             )}
@@ -165,10 +165,10 @@ export function AIAnalysisPanel({ clientId, initialContent = '', onAnalysisCompl
             {/* Tags */}
             {analysis.tags && analysis.tags.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-medium text-evergreen">Clinical Tags</h4>
+                <h4 className="font-medium text-ink">Clinical Tags</h4>
                 <div className="flex flex-wrap gap-2">
                   {analysis.tags.map((tag: string, index: number) => (
-                    <Badge key={index} variant="secondary" className="bg-french-blue/10 text-french-blue">
+                    <Badge key={index} variant="secondary" className="bg-teal/10 text-teal">
                       {tag}
                     </Badge>
                   ))}
@@ -179,13 +179,13 @@ export function AIAnalysisPanel({ clientId, initialContent = '', onAnalysisCompl
             {/* Insights */}
             {analysis.insights && analysis.insights.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-medium text-evergreen">Clinical Insights</h4>
+                <h4 className="font-medium text-ink">Clinical Insights</h4>
                 <ScrollArea className="h-32">
                   <div className="space-y-2">
                     {analysis.insights.map((insight: any, index: number) => (
-                      <div key={index} className="p-3 bg-ivory rounded-lg border">
+                      <div key={index} className="p-3 bg-parchment rounded-lg border">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-moss text-sm flex-1">{insight.content}</p>
+                          <p className="text-sepia text-sm flex-1">{insight.content}</p>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <Badge 
                               variant={insight.category === 'risk' ? 'destructive' : 'secondary'}
@@ -193,7 +193,7 @@ export function AIAnalysisPanel({ clientId, initialContent = '', onAnalysisCompl
                             >
                               {insight.category}
                             </Badge>
-                            <span className="text-xs text-moss">
+                            <span className="text-xs text-sepia">
                               {Math.round(insight.confidence * 100)}%
                             </span>
                           </div>
@@ -208,16 +208,16 @@ export function AIAnalysisPanel({ clientId, initialContent = '', onAnalysisCompl
             {/* Recommendations */}
             {analysis.recommendations && analysis.recommendations.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-medium text-evergreen">Clinical Recommendations</h4>
+                <h4 className="font-medium text-ink">Clinical Recommendations</h4>
                 <ScrollArea className="h-40">
                   <div className="space-y-3">
                     {analysis.recommendations.map((rec: any, index: number) => (
-                      <div key={index} className="p-3 bg-ivory rounded-lg border">
+                      <div key={index} className="p-3 bg-parchment rounded-lg border">
                         <div className="flex items-start gap-2">
-                          <Lightbulb className="h-4 w-4 text-sage mt-0.5 flex-shrink-0" />
+                          <Lightbulb className="h-4 w-4 text-teal mt-0.5 flex-shrink-0" />
                           <div className="flex-1 space-y-1">
-                            <p className="text-moss text-sm font-medium">{rec.intervention}</p>
-                            <p className="text-moss text-xs">{rec.rationale}</p>
+                            <p className="text-sepia text-sm font-medium">{rec.intervention}</p>
+                            <p className="text-sepia text-xs">{rec.rationale}</p>
                             <Badge 
                               variant={rec.priority === 'high' ? 'destructive' : rec.priority === 'medium' ? 'default' : 'secondary'}
                               className="text-xs"

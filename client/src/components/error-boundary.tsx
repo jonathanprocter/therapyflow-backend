@@ -47,7 +47,7 @@ class ErrorBoundary extends Component<Props, State> {
               {this.state.error && (
                 <details className="text-xs" style={{ color: '#738A6E' }}>
                   <summary className="cursor-pointer mb-2">Error details</summary>
-                  <pre className="whitespace-pre-wrap break-words p-2 bg-ivory/80 rounded">
+                  <pre className="whitespace-pre-wrap break-words p-2 bg-parchment/80 rounded">
                     {this.state.error.message}
                   </pre>
                 </details>

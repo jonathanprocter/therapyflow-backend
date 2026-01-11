@@ -51,14 +51,14 @@ export default function SemanticSearch() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-evergreen">Semantic Search</h1>
+        <h1 className="text-3xl font-bold text-ink">Semantic Search</h1>
         <p className="text-muted-foreground mt-1">Find clinical content with smart filters and relevance scoring.</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5 text-french-blue" />
+            <Search className="h-5 w-5 text-teal" />
             Search Query
           </CardTitle>
           <CardDescription>Search across progress notes using semantic + keyword matching.</CardDescription>

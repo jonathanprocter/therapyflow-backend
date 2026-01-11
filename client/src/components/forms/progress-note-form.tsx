@@ -146,7 +146,7 @@ export default function ProgressNoteForm({ onSuccess, initialData }: ProgressNot
           <CardContent className="space-y-4">
             {sessionPrep.keyTopics.length > 0 && (
               <div>
-                <h4 className="font-medium text-evergreen mb-2">Key Topics to Address</h4>
+                <h4 className="font-medium text-ink mb-2">Key Topics to Address</h4>
                 <div className="flex flex-wrap gap-2">
                   {sessionPrep.keyTopics.map((topic, index) => (
                     <Badge key={index} variant="outline">{topic}</Badge>
@@ -157,8 +157,8 @@ export default function ProgressNoteForm({ onSuccess, initialData }: ProgressNot
             
             {sessionPrep.therapeuticQuestions.length > 0 && (
               <div>
-                <h4 className="font-medium text-evergreen mb-2">Therapeutic Questions</h4>
-                <ul className="space-y-1 text-sm text-moss">
+                <h4 className="font-medium text-ink mb-2">Therapeutic Questions</h4>
+                <ul className="space-y-1 text-sm text-sepia">
                   {sessionPrep.therapeuticQuestions.map((question, index) => (
                     <li key={index} className="flex items-start space-x-2">
                       <span className="text-primary">•</span>
@@ -171,8 +171,8 @@ export default function ProgressNoteForm({ onSuccess, initialData }: ProgressNot
 
             {sessionPrep.riskAssessment && (
               <div>
-                <h4 className="font-medium text-evergreen mb-2">Risk Assessment</h4>
-                <p className="text-sm text-moss">{sessionPrep.riskAssessment}</p>
+                <h4 className="font-medium text-ink mb-2">Risk Assessment</h4>
+                <p className="text-sm text-sepia">{sessionPrep.riskAssessment}</p>
               </div>
             )}
           </CardContent>
@@ -320,7 +320,7 @@ export default function ProgressNoteForm({ onSuccess, initialData }: ProgressNot
                         className="w-full"
                         data-testid="progress-rating-slider"
                       />
-                      <div className="text-center text-sm text-moss">
+                      <div className="text-center text-sm text-sepia">
                         Current rating: {field.value || 5}/10
                       </div>
                     </div>
@@ -369,7 +369,7 @@ export default function ProgressNoteForm({ onSuccess, initialData }: ProgressNot
           </div>
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end space-x-4 pt-4 border-t border-sage/20">
+          <div className="flex items-center justify-end space-x-4 pt-4 border-t border-teal/20">
             <Button 
               type="button" 
               variant="outline" 

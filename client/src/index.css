@@ -1,4 +1,4 @@
-/* client/src/index.css */
+/* client/src/index.css - Insight Atlas Color Palette */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
@@ -6,55 +6,166 @@
 
 @layer base {
   :root {
-    /* Brand Colors - RGB format for Tailwind */
-    --color-ivory: 242 243 241;
-    --color-sage: 142 165 140;
-    --color-moss: 115 138 110;
-    --color-evergreen: 52 76 61;
-    --color-french-blue: 136 165 188;
+    /* ============================================ */
+    /* INSIGHT ATLAS - COMPLETE COLOR PALETTE      */
+    /* ============================================ */
 
-    /* System colors using brand palette */
-    --background: 242 243 241; /* ivory */
-    --foreground: 52 76 61; /* evergreen */
+    /* BRAND COLORS (Core Identity) */
+    --color-sepia: #5C4A3D;
+    --color-sepia-light: #7A6A5D;
+    --color-parchment: #F5F3ED;
+    --color-parchment-dark: #E8E4DC;
+    --color-ink: #3D3229;
+
+    /* PRIMARY PALETTE - GOLD (Premium Accent) */
+    --color-gold: #C9A227;
+    --color-gold-light: #DCBE5E;
+    --color-gold-dark: #A88A1F;
+    --color-gold-subtle: rgba(201, 162, 39, 0.08);
+    --color-gold-muted: rgba(201, 162, 39, 0.25);
+    --color-gold-glow: rgba(201, 162, 39, 0.4);
+    --color-gold-tint: #FBF7E9;
+
+    /* BURGUNDY / OXBLOOD (Authority & CTAs) */
+    --color-burgundy: #6B3A4A;
+    --color-burgundy-light: #8A5066;
+    --color-oxblood: #582534;
+    --color-burgundy-subtle: rgba(107, 58, 74, 0.06);
+    --color-burgundy-muted: rgba(107, 58, 74, 0.25);
+
+    /* CORAL / TERRACOTTA (Action & Highlights) */
+    --color-coral: #D4735C;
+    --color-coral-ember: #E76F51;
+    --color-coral-light: #E08B73;
+    --color-coral-apply: #E07A5F;
+    --color-coral-subtle: rgba(212, 115, 92, 0.08);
+    --color-coral-muted: rgba(212, 115, 92, 0.25);
+
+    /* TEAL (Trust & Calm) */
+    --color-teal: #2A9D8F;
+    --color-teal-light: #3BA396;
+    --color-teal-subtle: rgba(42, 157, 143, 0.08);
+    --color-teal-muted: rgba(42, 157, 143, 0.25);
+    --color-teal-border: #B8E0D9;
+
+    /* ORANGE (Warmth) */
+    --color-orange: #E89B5A;
+    --color-orange-light: #F0B07A;
+    --color-orange-subtle: rgba(232, 155, 90, 0.1);
+
+    /* GREEN (Success/Application) */
+    --color-green: #4A9B7F;
+    --color-success: #4CAF50;
+
+    /* TEXT COLORS */
+    --color-heading: #2D2520;
+    --color-body: #3D3229;
+    --color-text-muted: #5C5248;
+    --color-text-subtle: #7A7168;
+    --color-text-inverse: #FDFCFA;
+
+    /* BACKGROUND COLORS */
+    --color-bg-primary: #FDFCFA;
+    --color-bg-secondary: #F5F3ED;
+    --color-bg-card: #FFFFFF;
+    --color-cream: #FAF9F7;
+    --color-cream-warm: #FDF8F3;
+    --color-cream-pink: #FFF5F3;
+
+    /* BOX-SPECIFIC BACKGROUNDS */
+    --color-quick-glance: #FDF8F3;
+    --color-insight-note: #FDF8F3;
+    --color-insight-blob: #FFE4D6;
+    --color-apply-it: #F5FAFA;
+    --color-reflection: #F0FAF8;
+    --color-key-takeaways: #FBF7E9;
+
+    /* BORDER & RULE COLORS */
+    --color-rule: #D1CDC7;
+    --color-rule-light: #E5E2DD;
+    --color-border-light: #E8DFD0;
+    --color-border-teal: #B8E0D9;
+
+    /* QUOTE & TABLE COLORS */
+    --color-quote-mark: #E8C5B8;
+    --color-table-header-start: #D4A84B;
+    --color-table-header-end: #E8A84B;
+    --color-table-row-alt: #FDF8F3;
+
+    /* SEMANTIC / STATUS COLORS */
+    --color-warning: #FF9800;
+    --color-error: #F44336;
+
+    /* DARK MODE */
+    --color-dark-bg: #1A1816;
+
+    /* System colors using Insight Atlas palette */
+    --background: 253 252 250; /* bg-primary */
+    --foreground: 61 50 41; /* ink */
 
     --card: 255 255 255;
-    --card-foreground: 52 76 61;
+    --card-foreground: 61 50 41;
 
     --popover: 255 255 255;
-    --popover-foreground: 52 76 61;
+    --popover-foreground: 61 50 41;
 
-    --primary: 142 165 140; /* sage */
-    --primary-foreground: 255 255 255;
+    --primary: 107 58 74; /* burgundy */
+    --primary-foreground: 253 252 250;
 
-    --secondary: 115 138 110; /* moss */
-    --secondary-foreground: 255 255 255;
+    --secondary: 245 243 237; /* parchment */
+    --secondary-foreground: 61 50 41;
 
-    --muted: 242 243 241; /* ivory */
-    --muted-foreground: 115 138 110; /* moss */
+    --muted: 245 243 237; /* parchment */
+    --muted-foreground: 92 82 72; /* text-muted */
 
-    --accent: 136 165 188; /* french-blue */
-    --accent-foreground: 52 76 61;
+    --accent: 201 162 39; /* gold */
+    --accent-foreground: 61 50 41;
 
-    --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
+    --destructive: 244 67 54; /* error */
+    --destructive-foreground: 253 252 250;
 
-    --border: 142 165 140 / 0.2; /* sage with opacity */
-    --input: 142 165 140 / 0.2;
-    --ring: 142 165 140;
+    --border: 209 205 199; /* rule */
+    --input: 209 205 199;
+    --ring: 201 162 39; /* gold */
 
     --radius: 0.5rem;
 
-    /* Sage color palette */
-    --color-sage-50: 246 247 246;
-    --color-sage-100: 227 231 227;
-    --color-sage-200: 199 210 199;
-    --color-sage-300: 163 181 163;
-    --color-sage-400: 127 146 127;
-    --color-sage-500: 99 117 99;
-    --color-sage-600: 78 93 78;
-    --color-sage-700: 64 75 64;
-    --color-sage-800: 54 63 54;
-    --color-sage-900: 47 53 47;
+    /* Chart colors using Insight Atlas palette */
+    --chart-1: #C9A227; /* gold */
+    --chart-2: #6B3A4A; /* burgundy */
+    --chart-3: #2A9D8F; /* teal */
+    --chart-4: #D4735C; /* coral */
+    --chart-5: #E89B5A; /* orange */
+  }
+
+  .dark {
+    --background: 26 24 22; /* dark-bg */
+    --foreground: 253 252 250; /* text-inverse */
+
+    --card: 45 37 32;
+    --card-foreground: 253 252 250;
+
+    --popover: 45 37 32;
+    --popover-foreground: 253 252 250;
+
+    --primary: 201 162 39; /* gold */
+    --primary-foreground: 26 24 22;
+
+    --secondary: 61 50 41;
+    --secondary-foreground: 253 252 250;
+
+    --muted: 61 50 41;
+    --muted-foreground: 122 113 104;
+
+    --accent: 42 157 143; /* teal */
+    --accent-foreground: 253 252 250;
+
+    --destructive: 244 67 54;
+    --destructive-foreground: 253 252 250;
+
+    --border: 92 82 72;
+    --input: 92 82 72;
+    --ring: 201 162 39;
   }
 }
 
@@ -64,7 +175,7 @@
   }
 
   body {
-    @apply bg-ivory text-evergreen antialiased;
+    @apply bg-parchment text-ink antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
@@ -73,30 +184,30 @@
   /* Calendar specific styles */
   .calendar-day {
     @apply relative w-full aspect-square flex items-center justify-center text-sm;
-    @apply hover:bg-sage/10 rounded transition-colors cursor-pointer;
+    @apply hover:bg-gold-subtle rounded transition-colors cursor-pointer;
   }
 
   .calendar-day-today {
-    @apply bg-sage text-white font-semibold hover:bg-moss;
+    @apply bg-burgundy text-white font-semibold hover:bg-burgundy-light;
   }
 
   .calendar-day-selected {
-    @apply ring-2 ring-sage ring-offset-2 ring-offset-ivory;
+    @apply ring-2 ring-gold ring-offset-2 ring-offset-parchment;
   }
 
   .calendar-day-disabled {
-    @apply text-moss/40 cursor-not-allowed hover:bg-transparent;
+    @apply text-text-subtle cursor-not-allowed hover:bg-transparent;
   }
 
   /* Avatar styles */
   .avatar-initials {
-    @apply bg-sage text-white font-semibold;
+    @apply bg-burgundy text-white font-semibold;
   }
 
   /* Session card styles */
   .session-card {
-    @apply bg-white border border-sage/20 rounded-lg p-4;
-    @apply hover:shadow-lg hover:border-sage/40 transition-all;
+    @apply bg-white border border-rule rounded-lg p-4;
+    @apply hover:shadow-gold hover:border-gold/40 transition-all;
   }
 
   .session-badge {
@@ -104,14 +215,93 @@
   }
 
   .session-badge-scheduled {
-    @apply bg-sage/20 text-evergreen;
+    @apply bg-gold-subtle text-sepia;
   }
 
   .session-badge-completed {
-    @apply bg-moss/20 text-evergreen;
+    @apply bg-teal-subtle text-teal;
   }
 
   .session-badge-cancelled {
-    @apply bg-sage/10 text-moss;
+    @apply bg-coral-subtle text-coral;
+  }
+
+  /* Insight Atlas specific components */
+  .insight-card {
+    @apply bg-cream-warm border border-rule-light rounded-lg p-6;
+    @apply shadow-sm hover:shadow-gold transition-all;
+  }
+
+  .gold-accent {
+    @apply text-gold font-semibold;
+  }
+
+  .burgundy-button {
+    @apply bg-burgundy text-white px-4 py-2 rounded-lg;
+    @apply hover:bg-burgundy-light transition-colors;
+    @apply focus:ring-2 focus:ring-gold focus:ring-offset-2;
+  }
+
+  .teal-link {
+    @apply text-teal hover:text-teal-light underline-offset-2;
+    @apply hover:underline transition-colors;
+  }
+
+  .coral-highlight {
+    @apply bg-coral-subtle text-coral px-2 py-1 rounded;
+  }
+
+  /* Quick Glance box */
+  .quick-glance-box {
+    @apply bg-quick-glance border-l-4 border-gold p-4 rounded-r-lg;
+  }
+
+  /* Insight Note box */
+  .insight-note-box {
+    @apply bg-insight-note border border-coral-muted p-4 rounded-lg;
+    @apply relative overflow-hidden;
+  }
+
+  /* Apply It box */
+  .apply-it-box {
+    @apply bg-apply-it border border-teal-border p-4 rounded-lg;
+  }
+
+  /* Reflection box */
+  .reflection-box {
+    @apply bg-reflection border border-teal/20 p-4 rounded-lg;
+  }
+
+  /* Key Takeaways box */
+  .key-takeaways-box {
+    @apply bg-key-takeaways border-l-4 border-gold p-4 rounded-r-lg;
+  }
+
+  /* Table styles */
+  .insight-table {
+    @apply w-full border-collapse;
+  }
+
+  .insight-table th {
+    @apply bg-gradient-to-r from-table-header-start to-table-header-end;
+    @apply text-white font-semibold p-3 text-left;
+  }
+
+  .insight-table tr:nth-child(even) {
+    @apply bg-table-row-alt;
+  }
+
+  .insight-table td {
+    @apply p-3 border-b border-rule-light;
+  }
+
+  /* Quote styles */
+  .insight-quote {
+    @apply relative pl-8 py-4 italic text-text-muted;
+  }
+
+  .insight-quote::before {
+    content: '"';
+    @apply absolute left-0 top-0 text-6xl text-quote-mark font-serif leading-none;
   }
 }

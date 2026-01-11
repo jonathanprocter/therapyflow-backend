@@ -106,15 +106,15 @@ export default function ClientDetail() {
     switch (relation.toLowerCase()) {
       case 'treats':
       case 'improves':
-        return "bg-sage text-ivory";
+        return "bg-teal text-parchment";
       case 'causes':
       case 'worsens':
-        return "bg-moss text-ivory";
+        return "bg-sepia text-parchment";
       case 'relates':
       case 'connects':
-        return "bg-french-blue text-ivory";
+        return "bg-teal text-parchment";
       default:
-        return "bg-evergreen text-ivory";
+        return "bg-ink text-parchment";
     }
   };
 

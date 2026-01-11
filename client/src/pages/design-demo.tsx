@@ -15,7 +15,7 @@ const DesignDemo = () => {
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Stats Grid */}
         <section>
-          <h2 className="text-2xl font-light text-sage-700 mb-4">Statistics Cards</h2>
+          <h2 className="text-2xl font-light text-teal-700 mb-4">Statistics Cards</h2>
           <Grid columns={4} gap="lg">
             {stats.map((stat, index) => (
               <StatsCard key={stat.title} {...stat} index={index} />
@@ -25,26 +25,26 @@ const DesignDemo = () => {
 
         {/* Glass Cards */}
         <section>
-          <h2 className="text-2xl font-light text-sage-700 mb-4">Glass Morphism</h2>
+          <h2 className="text-2xl font-light text-teal-700 mb-4">Glass Morphism</h2>
           <Grid columns={3} gap="md">
             <GlassCard variant="light" className="p-6">
-              <h3 className="text-lg font-medium text-sage-800">Light Glass</h3>
-              <p className="text-sage-600 mt-2">Subtle transparency with blur</p>
+              <h3 className="text-lg font-medium text-teal-800">Light Glass</h3>
+              <p className="text-teal-600 mt-2">Subtle transparency with blur</p>
             </GlassCard>
             <GlassCard variant="medium" className="p-6">
-              <h3 className="text-lg font-medium text-sage-800">Medium Glass</h3>
-              <p className="text-sage-600 mt-2">Balanced opacity and blur</p>
+              <h3 className="text-lg font-medium text-teal-800">Medium Glass</h3>
+              <p className="text-teal-600 mt-2">Balanced opacity and blur</p>
             </GlassCard>
             <GlassCard variant="dark" className="p-6 text-white">
               <h3 className="text-lg font-medium">Dark Glass</h3>
-              <p className="text-sage-100 mt-2">Dark mode compatible</p>
+              <p className="text-teal-100 mt-2">Dark mode compatible</p>
             </GlassCard>
           </Grid>
         </section>
 
         {/* Loading States */}
         <section>
-          <h2 className="text-2xl font-light text-sage-700 mb-4">Loading States</h2>
+          <h2 className="text-2xl font-light text-teal-700 mb-4">Loading States</h2>
           <GlassCard className="p-6 space-y-4">
             <SkeletonLoader variant="text" count={3} className="mb-2" />
             <SkeletonLoader variant="card" />

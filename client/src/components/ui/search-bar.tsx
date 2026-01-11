@@ -21,14 +21,14 @@ export default function SearchBar() {
       <input
         type="text"
         placeholder="Search notes, clients, insights..."
-        className="w-96 pl-10 pr-4 py-2 border border-sage/30 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+        className="w-96 pl-10 pr-4 py-2 border border-teal/30 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => setShowResults(true)}
         onBlur={() => setTimeout(() => setShowResults(false), 200)}
         data-testid="search-input"
       />
-      <i className="fas fa-search absolute left-3 top-3 text-sage"></i>
+      <i className="fas fa-search absolute left-3 top-3 text-teal"></i>
       <div className="absolute right-3 top-2">
         <span className="inline-flex items-center px-2 py-1 text-xs bg-primary/10 text-primary rounded">
           <i className="fas fa-magic mr-1"></i>
@@ -38,9 +38,9 @@ export default function SearchBar() {
 
       {/* Search Results Dropdown */}
       {showResults && query.length > 2 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-sage/20 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-teal/20 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
           {isLoading ? (
-            <div className="p-4 text-center text-moss/80">
+            <div className="p-4 text-center text-sepia/80">
               <i className="fas fa-spinner fa-spin mr-2"></i>
               Searching...
             </div>
@@ -49,19 +49,19 @@ export default function SearchBar() {
               {searchResults.map((result: any) => (
                 <div
                   key={result.id}
-                  className="px-4 py-3 hover:bg-ivory/80 cursor-pointer border-b border-sage/10 last:border-b-0"
+                  className="px-4 py-3 hover:bg-parchment/80 cursor-pointer border-b border-teal/10 last:border-b-0"
                   data-testid={`search-result-${result.id}`}
                 >
                   <div className="flex items-start space-x-3">
                     <i className="fas fa-notes-medical text-primary mt-1"></i>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-evergreen truncate">
+                      <p className="text-sm font-medium text-ink truncate">
                         {result.client?.name || "Unknown Client"}
                       </p>
-                      <p className="text-xs text-moss/80 mb-1">
+                      <p className="text-xs text-sepia/80 mb-1">
                         {new Date(result.sessionDate).toLocaleDateString()}
                       </p>
-                      <p className="text-sm text-moss line-clamp-2">
+                      <p className="text-sm text-sepia line-clamp-2">
                         {result.content}
                       </p>
                     </div>
@@ -70,7 +70,7 @@ export default function SearchBar() {
               ))}
             </div>
           ) : (
-            <div className="p-4 text-center text-moss/80">
+            <div className="p-4 text-center text-sepia/80">
               No results found for "{query}"
             </div>
           )}

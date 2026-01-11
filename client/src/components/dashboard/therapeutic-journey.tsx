@@ -65,14 +65,14 @@ export default function TherapeuticJourney() {
               <div className={`relative z-10 w-4 h-4 bg-${milestone.color} rounded-full border-4 border-white shadow-md`}></div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-semibold text-evergreen" data-testid={`milestone-title-${index}`}>
+                  <h4 className="text-sm font-semibold text-ink" data-testid={`milestone-title-${index}`}>
                     {milestone.title}
                   </h4>
-                  <span className="text-xs text-moss/80" data-testid={`milestone-date-${index}`}>
+                  <span className="text-xs text-sepia/80" data-testid={`milestone-date-${index}`}>
                     {milestone.date}
                   </span>
                 </div>
-                <p className="text-sm text-moss mb-2" data-testid={`milestone-description-${index}`}>
+                <p className="text-sm text-sepia mb-2" data-testid={`milestone-description-${index}`}>
                   {milestone.description}
                 </p>
                 <div className="flex items-center space-x-2" data-testid={`milestone-metrics-${index}`}>

@@ -95,7 +95,7 @@ export default function ClinicalWorkflows() {
           workflowTasks.map((task) => (
             <div 
               key={task.title}
-              className="p-4 bg-ivory/80 rounded-lg transition-colors hover:bg-ivory"
+              className="p-4 bg-parchment/80 rounded-lg transition-colors hover:bg-parchment"
               data-testid={`workflow-${task.title.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <div className="flex items-center justify-between">
@@ -104,10 +104,10 @@ export default function ClinicalWorkflows() {
                     <i className={`${task.icon} ${task.iconColor} text-sm`}></i>
                   </div>
                   <div>
-                    <h4 className="font-medium text-evergreen" data-testid={`task-title-${task.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <h4 className="font-medium text-ink" data-testid={`task-title-${task.title.toLowerCase().replace(/\s+/g, '-')}`}>
                       {task.title}
                     </h4>
-                    <p className="text-sm text-moss/80" data-testid={`task-description-${task.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <p className="text-sm text-sepia/80" data-testid={`task-description-${task.title.toLowerCase().replace(/\s+/g, '-')}`}>
                       {task.description}
                     </p>
                   </div>

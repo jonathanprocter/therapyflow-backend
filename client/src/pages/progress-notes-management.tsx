@@ -204,7 +204,7 @@ export default function ProgressNotesManagement() {
 
   const getStatusBadge = (note: ProgressNote) => {
     if (note.isPlaceholder) {
-      return <Badge variant="outline" className="text-moss"><Clock className="w-3 h-3 mr-1" />Placeholder</Badge>;
+      return <Badge variant="outline" className="text-sepia"><Clock className="w-3 h-3 mr-1" />Placeholder</Badge>;
     }
     if (note.requiresManualReview) {
       return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" />Needs Review</Badge>;
@@ -234,8 +234,8 @@ export default function ProgressNotesManagement() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-evergreen">Progress Notes Management</h1>
-          <p className="text-moss mt-2">Manage SimplePractice appointments and progress note placeholders</p>
+          <h1 className="text-3xl font-bold text-ink">Progress Notes Management</h1>
+          <p className="text-sepia mt-2">Manage SimplePractice appointments and progress note placeholders</p>
         </div>
         <Button 
           onClick={() => createPlaceholdersMutation.mutate()}
@@ -493,11 +493,11 @@ export default function ProgressNotesManagement() {
               </div>
               {placeholdersLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal"></div>
                 </div>
               ) : placeholders.length === 0 ? (
-                <div className="text-center py-8 text-moss/80">
-                  <FileText className="w-12 h-12 mx-auto mb-4 text-sage/70" />
+                <div className="text-center py-8 text-sepia/80">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-teal/70" />
                   <p>No placeholders found. Click "Create Placeholders" to generate them for SimplePractice appointments.</p>
                 </div>
               ) : (
@@ -508,22 +508,22 @@ export default function ProgressNotesManagement() {
                         <div className="flex justify-between items-start">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <User className="w-4 h-4 text-moss/80" />
+                              <User className="w-4 h-4 text-sepia/80" />
                               <span className="font-medium">{note.client?.name || 'Unknown Client'}</span>
                               {getStatusBadge(note)}
                               {note.qualityScore !== undefined && getQualityBadge(note)}
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-moss">
+                            <div className="flex items-center gap-2 text-sm text-sepia">
                               <Calendar className="w-4 h-4" />
                               <span>{format(new Date(note.sessionDate), 'PPP p')}</span>
                               {note.session && (
-                                <span className="text-sage">
+                                <span className="text-teal">
                                   • {note.session.sessionType} • {note.session.duration}min
                                 </span>
                               )}
                             </div>
                             {note.content && (
-                              <p className="text-sm text-evergreen/90 mt-2 line-clamp-2">
+                              <p className="text-sm text-ink/90 mt-2 line-clamp-2">
                                 {note.content.substring(0, 150)}...
                               </p>
                             )}
@@ -573,10 +573,10 @@ export default function ProgressNotesManagement() {
             <CardContent>
               {manualReviewLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal"></div>
                 </div>
               ) : manualReviewNotes.length === 0 ? (
-                <div className="text-center py-8 text-moss/80">
+                <div className="text-center py-8 text-sepia/80">
                   <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
                   <p>No notes require manual review. All processed notes look good!</p>
                 </div>
@@ -588,7 +588,7 @@ export default function ProgressNotesManagement() {
                         <div className="flex justify-between items-start">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <User className="w-4 h-4 text-moss/80" />
+                              <User className="w-4 h-4 text-sepia/80" />
                               <span className="font-medium">{note.client?.name || 'Unknown Client'}</span>
                               {getStatusBadge(note)}
                               {note.qualityScore !== undefined && getQualityBadge(note)}
@@ -598,12 +598,12 @@ export default function ProgressNotesManagement() {
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-moss">
+                            <div className="flex items-center gap-2 text-sm text-sepia">
                               <Calendar className="w-4 h-4" />
                               <span>{format(new Date(note.sessionDate), 'PPP p')}</span>
                             </div>
                             {note.processingNotes && (
-                              <div className="bg-ivory border border-moss/20 rounded p-2 text-sm">
+                              <div className="bg-parchment border border-sepia/20 rounded p-2 text-sm">
                                 <strong>Processing Notes:</strong> {note.processingNotes}
                               </div>
                             )}
@@ -613,7 +613,7 @@ export default function ProgressNotesManagement() {
                               </div>
                             )}
                             {note.content && (
-                              <p className="text-sm text-evergreen/90 mt-2 line-clamp-3">
+                              <p className="text-sm text-ink/90 mt-2 line-clamp-3">
                                 {note.content.substring(0, 200)}...
                               </p>
                             )}

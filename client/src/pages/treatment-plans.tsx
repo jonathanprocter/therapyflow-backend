@@ -36,7 +36,7 @@ export default function TreatmentPlans() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-evergreen">Treatment Plans</h1>
+        <h1 className="text-3xl font-bold text-ink">Treatment Plans</h1>
         <p className="text-muted-foreground mt-1">Track goals with dynamic signals from recent notes.</p>
       </div>
 

@@ -96,15 +96,15 @@ export function Calendar({ selectedDate, onDateSelect, sessions = [], className 
           onClick={() => handleDateClick(day)}
           className={cn(
             "aspect-square flex flex-col items-center justify-center text-sm rounded-lg transition-colors relative",
-            "hover:bg-sage/10",
-            isToday(day) && "bg-sage text-white hover:bg-moss",
+            "hover:bg-teal/10",
+            isToday(day) && "bg-teal text-white hover:bg-sepia",
             isSelected(day) && !isToday(day) && "ring-2 ring-sage ring-offset-2",
-            !isToday(day) && !isSelected(day) && "text-evergreen"
+            !isToday(day) && !isSelected(day) && "text-ink"
           )}
         >
           {day}
           {dayHasSession && (
-            <div className="absolute bottom-1 w-1 h-1 rounded-full bg-sage" />
+            <div className="absolute bottom-1 w-1 h-1 rounded-full bg-teal" />
           )}
         </button>
       );
@@ -114,25 +114,25 @@ export function Calendar({ selectedDate, onDateSelect, sessions = [], className 
   };
 
   return (
-    <div className={cn("bg-white rounded-lg border border-sage/20 p-4", className)}>
+    <div className={cn("bg-white rounded-lg border border-teal/20 p-4", className)}>
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={previousMonth}
-          className="p-1.5 hover:bg-sage/10 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-teal/10 rounded-lg transition-colors"
           aria-label="Previous month"
         >
-          <ChevronLeft className="h-5 w-5 text-moss" />
+          <ChevronLeft className="h-5 w-5 text-sepia" />
         </button>
-        <h3 className="font-semibold text-evergreen">
+        <h3 className="font-semibold text-ink">
           {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
         </h3>
         <button
           onClick={nextMonth}
-          className="p-1.5 hover:bg-sage/10 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-teal/10 rounded-lg transition-colors"
           aria-label="Next month"
         >
-          <ChevronRight className="h-5 w-5 text-moss" />
+          <ChevronRight className="h-5 w-5 text-sepia" />
         </button>
       </div>
 
@@ -141,7 +141,7 @@ export function Calendar({ selectedDate, onDateSelect, sessions = [], className 
         {dayNames.map(day => (
           <div
             key={day}
-            className="aspect-square flex items-center justify-center text-xs font-medium text-moss/80"
+            className="aspect-square flex items-center justify-center text-xs font-medium text-sepia/80"
           >
             {day}
           </div>

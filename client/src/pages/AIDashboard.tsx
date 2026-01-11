@@ -54,8 +54,8 @@ export default function AIDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-evergreen">AI Clinical Dashboard</h1>
-          <p className="text-moss mt-2">
+          <h1 className="text-3xl font-bold text-ink">AI Clinical Dashboard</h1>
+          <p className="text-sepia mt-2">
             Comprehensive AI-powered clinical analysis, search, and pattern recognition
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function AIDashboard() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Brain className="h-5 w-5 text-sage" />
+                <Brain className="h-5 w-5 text-teal" />
                 AI Services Status
               </CardTitle>
               <Button
@@ -83,38 +83,38 @@ export default function AIDashboard() {
             <div className="grid grid-cols-2 gap-2">
               <div className="flex items-center gap-2">
                 {aiHealth?.openai ? (
-                  <CheckCircle className="h-4 w-4 text-sage" />
+                  <CheckCircle className="h-4 w-4 text-teal" />
                 ) : (
                   <AlertTriangle className="h-4 w-4 text-red-500" />
                 )}
-                <span className="text-sm text-moss">OpenAI</span>
+                <span className="text-sm text-sepia">OpenAI</span>
               </div>
               <div className="flex items-center gap-2">
                 {aiHealth?.anthropic ? (
-                  <CheckCircle className="h-4 w-4 text-sage" />
+                  <CheckCircle className="h-4 w-4 text-teal" />
                 ) : (
                   <AlertTriangle className="h-4 w-4 text-red-500" />
                 )}
-                <span className="text-sm text-moss">Anthropic</span>
+                <span className="text-sm text-sepia">Anthropic</span>
               </div>
             </div>
             
             {aiHealth?.services && (
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-moss">Analysis:</span>
+                  <span className="text-sepia">Analysis:</span>
                   <Badge variant="secondary" className="text-xs">
                     {aiHealth.services.analysis}
                   </Badge>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-moss">Search:</span>
+                  <span className="text-sepia">Search:</span>
                   <Badge variant="secondary" className="text-xs">
                     {aiHealth.services.search}
                   </Badge>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-moss">Validation:</span>
+                  <span className="text-sepia">Validation:</span>
                   <Badge variant="secondary" className="text-xs">
                     {aiHealth.services.validation}
                   </Badge>
@@ -160,7 +160,7 @@ export default function AIDashboard() {
               </Select>
             </div>
             {selectedClient && (
-              <Badge variant="secondary" className="bg-sage/10 text-sage">
+              <Badge variant="secondary" className="bg-teal/10 text-teal">
                 {selectedClient.name}
               </Badge>
             )}
@@ -226,10 +226,10 @@ export default function AIDashboard() {
             <Card>
               <CardContent className="py-12">
                 <div className="text-center space-y-4">
-                  <TrendingUp className="h-12 w-12 mx-auto text-moss opacity-50" />
+                  <TrendingUp className="h-12 w-12 mx-auto text-sepia opacity-50" />
                   <div>
-                    <h3 className="text-lg font-medium text-evergreen">Select a Client</h3>
-                    <p className="text-moss text-sm mt-1">
+                    <h3 className="text-lg font-medium text-ink">Select a Client</h3>
+                    <p className="text-sepia text-sm mt-1">
                       Progress patterns analysis requires a specific client to be selected.
                     </p>
                   </div>
@@ -254,9 +254,9 @@ export default function AIDashboard() {
             <Card>
               <CardContent className="py-8">
                 <div className="text-center">
-                  <Brain className="h-12 w-12 mx-auto text-moss mb-4" />
-                  <h3 className="text-lg font-medium text-evergreen mb-2">Knowledge Graph</h3>
-                  <p className="text-moss text-sm">
+                  <Brain className="h-12 w-12 mx-auto text-sepia mb-4" />
+                  <h3 className="text-lg font-medium text-ink mb-2">Knowledge Graph</h3>
+                  <p className="text-sepia text-sm">
                     Select a specific client to build their clinical knowledge graph and explore therapeutic connections.
                   </p>
                 </div>
@@ -276,9 +276,9 @@ export default function AIDashboard() {
             <Card>
               <CardContent className="py-8">
                 <div className="text-center">
-                  <Shield className="h-12 w-12 mx-auto text-moss mb-4" />
-                  <h3 className="text-lg font-medium text-evergreen mb-2">Proactive Insights</h3>
-                  <p className="text-moss text-sm">
+                  <Shield className="h-12 w-12 mx-auto text-sepia mb-4" />
+                  <h3 className="text-lg font-medium text-ink mb-2">Proactive Insights</h3>
+                  <p className="text-sepia text-sm">
                     Select a specific client to generate proactive insights and session preparation suggestions.
                   </p>
                 </div>
@@ -297,9 +297,9 @@ export default function AIDashboard() {
             <Card>
               <CardContent className="py-8">
                 <div className="text-center">
-                  <Brain className="h-12 w-12 mx-auto text-moss mb-4" />
-                  <h3 className="text-lg font-medium text-evergreen mb-2">Contextual Memory</h3>
-                  <p className="text-moss text-sm">
+                  <Brain className="h-12 w-12 mx-auto text-sepia mb-4" />
+                  <h3 className="text-lg font-medium text-ink mb-2">Contextual Memory</h3>
+                  <p className="text-sepia text-sm">
                     Select a specific client to access their contextual memory and relevant therapeutic history.
                   </p>
                 </div>
@@ -310,13 +310,13 @@ export default function AIDashboard() {
       </Tabs>
 
       {/* Security Notice */}
-      <Card className="border-french-blue/20 bg-french-blue/5">
+      <Card className="border-teal/20 bg-teal/5">
         <CardContent className="py-4">
           <div className="flex items-start gap-3">
-            <Shield className="h-5 w-5 text-french-blue mt-0.5 flex-shrink-0" />
+            <Shield className="h-5 w-5 text-teal mt-0.5 flex-shrink-0" />
             <div className="space-y-1">
-              <h4 className="text-sm font-medium text-evergreen">HIPAA Compliance & Security</h4>
-              <p className="text-xs text-moss leading-relaxed">
+              <h4 className="text-sm font-medium text-ink">HIPAA Compliance & Security</h4>
+              <p className="text-xs text-sepia leading-relaxed">
                 All AI interactions are encrypted, audited, and comply with HIPAA regulations. 
                 No PHI is transmitted to external services without proper safeguards. 
                 Audit logs are maintained for all AI operations and data access.
