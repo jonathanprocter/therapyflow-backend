@@ -252,7 +252,7 @@ export class ClinicalAuditLogger {
         details: entry.details,
         riskLevel: entry.riskLevel,
         timestamp: entry.timestamp
-      });
+      } as any);
       
     } catch (error) {
       console.error('[AUDIT] Failed to write audit log:', error);

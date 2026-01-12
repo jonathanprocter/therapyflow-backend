@@ -81,6 +81,10 @@ export class QuickRecallService {
   }
 
   private async searchProgressNotes(clientId: string, query: string) {
+    // Sanitize query for safe LIKE pattern matching
+    const sanitizedQuery = query.replace(/[%_\\]/g, '\\$&');
+    const likePattern = `%${sanitizedQuery}%`;
+
     return await db
       .select()
       .from(progressNotes)
@@ -88,31 +92,39 @@ export class QuickRecallService {
         and(
           eq(progressNotes.clientId, clientId),
           or(
-            like(progressNotes.content, `%${query}%`),
-            sql`${progressNotes.tags}::text ILIKE '%${query}%'`
+            like(progressNotes.content, likePattern),
+            sql`${progressNotes.tags}::text ILIKE ${likePattern}`
           )
         )
       );
   }
 
   private async searchInsights(clientId: string, query: string) {
+    // Sanitize query for safe LIKE pattern matching
+    const sanitizedQuery = query.replace(/[%_\\]/g, '\\$&');
+    const likePattern = `%${sanitizedQuery}%`;
+
     return await db
       .select()
       .from(sessionInsights)
       .where(
         and(
           eq(sessionInsights.clientId, clientId),
-          like(sessionInsights.insight, `%${query}%`)
+          like(sessionInsights.insight, likePattern)
         )
       );
   }
 
   private async searchTags(clientId: string, query: string) {
+    // Sanitize query for safe LIKE pattern matching
+    const sanitizedQuery = query.replace(/[%_\\]/g, '\\$&');
+    const likePattern = `%${sanitizedQuery}%`;
+
     return await db
       .select()
       .from(sessionTags)
       .where(
-        sql`${sessionTags.tags}::text ILIKE '%${query}%'`
+        sql`${sessionTags.tags}::text ILIKE ${likePattern}`
       );
   }
 
@@ -140,13 +152,17 @@ export class QuickRecallService {
   }
 
   private async calculateFrequency(clientId: string, query: string): Promise<number> {
+    // Sanitize query for safe LIKE pattern matching
+    const sanitizedQuery = query.replace(/[%_\\]/g, '\\$&');
+    const likePattern = `%${sanitizedQuery}%`;
+
     const [result] = await db
       .select({ count: sql`count(*)::int` })
       .from(progressNotes)
       .where(
         and(
           eq(progressNotes.clientId, clientId),
-          like(progressNotes.content, `%${query}%`)
+          like(progressNotes.content, likePattern)
         )
       );
 
@@ -154,16 +170,20 @@ export class QuickRecallService {
   }
 
   private async getTimelineForQuery(clientId: string, query: string): Promise<Date[]> {
+    // Sanitize query for safe LIKE pattern matching
+    const sanitizedQuery = query.replace(/[%_\\]/g, '\\$&');
+    const likePattern = `%${sanitizedQuery}%`;
+
     const notes = await db
       .select({ date: progressNotes.sessionDate })
       .from(progressNotes)
       .where(
         and(
           eq(progressNotes.clientId, clientId),
-          like(progressNotes.content, `%${query}%`)
+          like(progressNotes.content, likePattern)
         )
       )
-      .orderBy((sql as any)`desc(${progressNotes.sessionDate})`)
+      .orderBy(sql`${progressNotes.sessionDate} DESC`)
       .limit(10);
 
     return notes.map(n => n.date);

@@ -85,7 +85,7 @@ export class AutoTagger {
           category,
           tags: categoryTags,
           confidence: this.calculateConfidence(content, categoryTags),
-        });
+        } as any);
       }
     }
 
@@ -97,7 +97,7 @@ export class AutoTagger {
         insight: insight.text,
         insightType: insight.type,
         confidence: insight.confidence,
-      });
+      } as any);
     }
   }
 
@@ -108,6 +108,8 @@ export class AutoTagger {
       const categoryTags = new Set<string>();
 
       for (const [tagName, pattern] of Object.entries(patterns)) {
+        // Reset lastIndex to avoid global regex state issues
+        pattern.lastIndex = 0;
         if (pattern.test(content)) {
           categoryTags.add(tagName);
         }
@@ -154,6 +156,8 @@ export class AutoTagger {
     ];
 
     for (const { pattern, type } of insightPatterns) {
+      // Reset lastIndex before matching
+      pattern.lastIndex = 0;
       let match;
       while ((match = pattern.exec(content)) !== null) {
         insights.push({

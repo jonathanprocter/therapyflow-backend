@@ -12,10 +12,10 @@ export async function setAppSetting(key: string, value: any): Promise<void> {
   if (existing.length > 0) {
     await db
       .update(appSettings)
-      .set({ value, updatedAt: new Date() })
+      .set({ value, updatedAt: new Date() } as any)
       .where(eq(appSettings.key, key));
     return;
   }
 
-  await db.insert(appSettings).values({ key, value, updatedAt: new Date() });
+  await db.insert(appSettings).values({ key, value, updatedAt: new Date() } as any);
 }

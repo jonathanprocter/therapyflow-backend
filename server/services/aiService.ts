@@ -17,12 +17,20 @@ function stripMarkdownCodeBlocks(text: string): string {
   return cleaned.trim();
 }
 
+// Validate API keys at startup
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn('[AI Service] ANTHROPIC_API_KEY not set - Anthropic features will fail');
+}
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('[AI Service] OPENAI_API_KEY not set - OpenAI features will fail');
+}
+
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || ''
 });
 
 export interface ClinicalTag {

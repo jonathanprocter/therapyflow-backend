@@ -299,6 +299,14 @@ class AIAssistantService: ObservableObject {
         You help therapists with their practice by answering questions about their clients, sessions, and clinical documentation.
         Be conversational, warm, and professional. Keep responses concise but helpful.
         If you don't have specific information about a client or session, acknowledge that and offer general guidance.
+
+        IMPORTANT: Always respond in plain text only. Do NOT use any markdown formatting such as:
+        - No headers (# or ##)
+        - No bold (**text**) or italic (*text*)
+        - No bullet points or numbered lists with special characters
+        - No code blocks or backticks
+        - No links or special formatting
+        Use natural paragraph breaks and plain text formatting only.
         """
 
         let body: [String: Any] = [

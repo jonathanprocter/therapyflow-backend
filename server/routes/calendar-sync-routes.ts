@@ -116,7 +116,10 @@ router.get("/history", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Therapist ID required" });
     }
 
-    const limit = parseInt(req.query.limit as string) || 20;
+    // Validate and clamp limit to reasonable bounds
+    let limit = parseInt(req.query.limit as string) || 20;
+    limit = Math.max(1, Math.min(limit, 100)); // Between 1 and 100
+
     const history = await smartCalendarSync.getSyncHistory(therapistId, limit);
 
     res.json({ history });

@@ -1,9 +1,10 @@
 import { pgTable, text, jsonb, timestamp, boolean, integer, uuid, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { sessions, clients, users } from "./schema";
 
 export const sessionTags = pgTable("session_tags", {
   id: uuid("id").defaultRandom().primaryKey(),
-  sessionId: uuid("session_id").notNull(),
+  sessionId: uuid("session_id").notNull().references(() => sessions.id, { onDelete: 'cascade' }),
   category: text("category").notNull(),
   tags: jsonb("tags").notNull().$type<string[]>(),
   confidence: integer("confidence").default(0),
@@ -15,9 +16,9 @@ export const sessionTags = pgTable("session_tags", {
 
 export const sessionInsights = pgTable("session_insights", {
   id: uuid("id").defaultRandom().primaryKey(),
-  sessionId: uuid("session_id").notNull(),
-  clientId: uuid("client_id").notNull(),
-  therapistId: uuid("therapist_id").notNull(),
+  sessionId: uuid("session_id").notNull().references(() => sessions.id, { onDelete: 'cascade' }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  therapistId: uuid("therapist_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   insight: text("insight").notNull(),
   insightType: text("insight_type").notNull(),
   confidence: integer("confidence").default(0),
@@ -30,8 +31,8 @@ export const sessionInsights = pgTable("session_insights", {
 
 export const journeySynthesis = pgTable("journey_synthesis", {
   id: uuid("id").defaultRandom().primaryKey(),
-  clientId: uuid("client_id").notNull(),
-  therapistId: uuid("therapist_id").notNull(),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  therapistId: uuid("therapist_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   synthesisDate: timestamp("synthesis_date").notNull(),
   timeRange: jsonb("time_range").$type<{ start: Date; end: Date }>(),
   dominantThemes: jsonb("dominant_themes").$type<Record<string, any>>(),
@@ -48,8 +49,8 @@ export const journeySynthesis = pgTable("journey_synthesis", {
 
 export const sessionCrossReferences = pgTable("session_cross_references", {
   id: uuid("id").defaultRandom().primaryKey(),
-  sourceSessionId: uuid("source_session_id").notNull(),
-  targetSessionId: uuid("target_session_id").notNull(),
+  sourceSessionId: uuid("source_session_id").notNull().references(() => sessions.id, { onDelete: 'cascade' }),
+  targetSessionId: uuid("target_session_id").notNull().references(() => sessions.id, { onDelete: 'cascade' }),
   referenceType: text("reference_type").notNull(),
   similarity: integer("similarity").default(0),
   metadata: jsonb("metadata").$type<Record<string, any>>(),

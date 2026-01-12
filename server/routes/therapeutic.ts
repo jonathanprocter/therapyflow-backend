@@ -8,10 +8,10 @@ router.post('/synthesize/:clientId', verifyClientOwnership, async (req: Request,
   try {
     const { clientId } = req.params;
     const { startDate, endDate, focusTags } = req.body;
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = (req as any).user?.id || (req as any).therapistId;
 
     if (!therapistId) {
-      return res.status(401).json({ success: false, error: 'Unauthorized' });
+      return res.status(401).json({ success: false, error: 'Unauthorized - therapist ID required' });
     }
 
     const synthesis = await enhancedStorage.synthesizeClientJourney(
@@ -35,10 +35,10 @@ router.post('/recall/:clientId', verifyClientOwnership, async (req: Request, res
   try {
     const { clientId } = req.params;
     const { query } = req.body;
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = (req as any).user?.id || (req as any).therapistId;
 
     if (!therapistId) {
-      return res.status(401).json({ success: false, error: 'Unauthorized' });
+      return res.status(401).json({ success: false, error: 'Unauthorized - therapist ID required' });
     }
 
     const results = await enhancedStorage.quickRecall(
@@ -57,11 +57,11 @@ router.post('/recall/:clientId', verifyClientOwnership, async (req: Request, res
 // Get recent insights across all clients for dashboard widget (must come before parameterized route)
 router.get('/insights/recent', async (req: Request, res: Response) => {
   try {
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = (req as any).user?.id || (req as any).therapistId;
     const { limit = 10 } = req.query;
 
     if (!therapistId) {
-      return res.status(401).json({ success: false, error: 'Unauthorized' });
+      return res.status(401).json({ success: false, error: 'Unauthorized - therapist ID required' });
     }
 
     // For now, return empty array - would need to implement cross-client insights
@@ -78,10 +78,10 @@ router.get('/insights/recent', async (req: Request, res: Response) => {
 router.get('/insights/:clientId', verifyClientOwnership, async (req: Request, res: Response) => {
   try {
     const { clientId } = req.params;
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = (req as any).user?.id || (req as any).therapistId;
 
     if (!therapistId) {
-      return res.status(401).json({ success: false, error: 'Unauthorized' });
+      return res.status(401).json({ success: false, error: 'Unauthorized - therapist ID required' });
     }
 
     const insights = await enhancedStorage.getTherapeuticInsights(clientId);
@@ -97,10 +97,10 @@ router.get('/tags/:clientId', verifyClientOwnership, async (req: Request, res: R
   try {
     const { clientId } = req.params;
     const { category } = req.query;
-    const therapistId = (req as any).user?.id || (req as any).therapistId || 'mock-therapist-id';
+    const therapistId = (req as any).user?.id || (req as any).therapistId;
 
     if (!therapistId) {
-      return res.status(401).json({ success: false, error: 'Unauthorized' });
+      return res.status(401).json({ success: false, error: 'Unauthorized - therapist ID required' });
     }
 
     const tags = await enhancedStorage.getSessionTags(

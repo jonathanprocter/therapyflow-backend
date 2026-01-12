@@ -208,17 +208,16 @@ export class DocumentProcessor {
    */
   private async extractTextFromPDF(buffer: Buffer): Promise<string> {
     try {
-      // Use the PDFService for proper text extraction
-      const { PDFService } = await import('./pdfService');
-      const pdfService = new PDFService();
-      const extractedData = await pdfService.extractText(buffer);
-      
-      if (!extractedData.text || extractedData.text.trim().length < 10) {
+      // Use the pdfService singleton for proper text extraction
+      const { pdfService } = await import('./pdfService');
+      const extractedText = await pdfService.extractText(buffer);
+
+      if (!extractedText || extractedText.trim().length < 10) {
         throw new Error('No readable text found in PDF');
       }
-      
-      console.log(`Successfully extracted ${extractedData.text.length} characters from PDF (${extractedData.pages} pages)`);
-      return extractedData.text;
+
+      console.log(`Successfully extracted ${extractedText.length} characters from PDF`);
+      return extractedText;
     } catch (error: any) {
       console.error('PDF text extraction failed:', error);
       throw new Error(`Failed to extract text from PDF: ${error.message}`);

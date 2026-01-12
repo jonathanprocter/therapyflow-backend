@@ -34,8 +34,18 @@ class WakeWordDetector: NSObject, ObservableObject {
     }
 
     // MARK: - Wake Word Configuration
-    let wakeWords = ["cipher", "hey cipher", "hi cipher", "okay cipher", "ok cipher"]
+    let wakeWords = ["cipher", "hey cipher", "hi cipher", "okay cipher", "ok cipher", "yo cipher", "hey cypher", "hi cypher"]
     let assistantName = "Cipher"
+
+    // Extended phonetic variations that speech recognition might produce
+    let phoneticVariations = [
+        "cypher", "syphur", "sipher", "sypher", "psypher",
+        "sigh fur", "psi fur", "cyber", "cifer", "sifer",
+        "sai fur", "sy fur", "ci fur", "psych fur",
+        "cyfer", "syfer", "cyphur", "siphur",
+        "hey syphur", "hey cyfer", "hey sifer",
+        "hey psi fur", "hey cyber", "hey sigh fur"
+    ]
 
     // End conversation phrases
     let endConversationPhrases = [
@@ -92,9 +102,10 @@ class WakeWordDetector: NSObject, ObservableObject {
 
     // Debounce and reliability
     private var lastWakeWordTime: Date?
-    private let wakeWordDebounce: TimeInterval = 3.0  // Ignore repeat detections within 3 seconds
+    private let wakeWordDebounce: TimeInterval = 2.0  // Ignore repeat detections within 2 seconds
     private var consecutiveErrors = 0
-    private let maxConsecutiveErrors = 5
+    private let maxConsecutiveErrors = 8  // More tolerance before giving up
+    private let baseErrorRecoveryDelay: UInt64 = 150_000_000  // 150ms base delay (faster recovery)
 
     // Conversation inactivity timeout
     private var conversationInactivityTimer: Task<Void, Never>?
@@ -284,18 +295,20 @@ class WakeWordDetector: NSObject, ObservableObject {
                     self.consecutiveErrors += 1
                     let nsError = error as NSError
 
-                    // Only log non-timeout errors
+                    // Only log non-timeout errors (1110 is normal speech timeout)
                     if nsError.domain != "kAFAssistantErrorDomain" || nsError.code != 1110 {
                         print("WakeWordDetector: Recognition error (\(self.consecutiveErrors)): \(error.localizedDescription)")
                     }
 
                     // Restart listening after a brief pause (if not too many errors)
+                    // Use faster recovery with exponential backoff capped at 500ms
                     if self.wakeWordEnabled && !self.isActivated && self.consecutiveErrors < self.maxConsecutiveErrors {
-                        try? await Task.sleep(nanoseconds: UInt64(min(500_000_000 * self.consecutiveErrors, 2_000_000_000)))
+                        let delay = min(self.baseErrorRecoveryDelay * UInt64(self.consecutiveErrors), 500_000_000)
+                        try? await Task.sleep(nanoseconds: delay)
                         self.restartListening()
                     } else if self.consecutiveErrors >= self.maxConsecutiveErrors {
-                        print("WakeWordDetector: Too many consecutive errors, pausing for 10 seconds")
-                        try? await Task.sleep(nanoseconds: 10_000_000_000)
+                        print("WakeWordDetector: Too many consecutive errors, pausing for 3 seconds")
+                        try? await Task.sleep(nanoseconds: 3_000_000_000)  // Reduced from 10s to 3s
                         self.consecutiveErrors = 0
                         if self.wakeWordEnabled && !self.isActivated {
                             self.restartListening()
@@ -350,17 +363,32 @@ class WakeWordDetector: NSObject, ObservableObject {
     private func containsWakeWord(_ transcript: String) -> Bool {
         let normalized = normalizeTranscript(transcript)
 
+        // Check primary wake words
         for wakeWord in wakeWords {
             if normalized.contains(normalizeTranscript(wakeWord)) {
                 return true
             }
         }
 
-        // Also check for common misrecognitions
-        let variations = ["cypher", "syphur", "sipher", "sypher", "psypher"]
-        for variation in variations {
-            if normalized.contains(variation) || normalized.contains("hey \(variation)") {
+        // Check extended phonetic variations
+        for variation in phoneticVariations {
+            let normalizedVariation = normalizeTranscript(variation)
+            if normalized.contains(normalizedVariation) {
                 return true
+            }
+        }
+
+        // Check for partial matches at word boundaries (more aggressive matching)
+        let words = normalized.split(separator: " ").map { String($0) }
+        for word in words {
+            // Match words that sound like "cipher" - starts with 's', 'c', or 'ps' and ends with 'er', 'ur', or 'r'
+            if (word.hasPrefix("s") || word.hasPrefix("c") || word.hasPrefix("ps")) &&
+               (word.hasSuffix("er") || word.hasSuffix("ur") || word.hasSuffix("r") || word.hasSuffix("fur")) &&
+               word.count >= 4 && word.count <= 8 {
+                // Additional check: contains 'i', 'y', or 'ai' sound
+                if word.contains("i") || word.contains("y") || word.contains("ai") {
+                    return true
+                }
             }
         }
 

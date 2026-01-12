@@ -263,7 +263,7 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values(insertUser as any)
       .returning();
     return user;
   }
@@ -300,7 +300,7 @@ export class DatabaseStorage implements IStorage {
   async createClient(client: InsertClient): Promise<Client> {
     const [newClient] = await db
       .insert(clients)
-      .values(client)
+      .values(client as any)
       .returning();
     return newClient;
   }
@@ -308,7 +308,7 @@ export class DatabaseStorage implements IStorage {
   async updateClient(id: string, client: Partial<InsertClient>): Promise<Client> {
     const [updatedClient] = await db
       .update(clients)
-      .set({ ...client, updatedAt: new Date() })
+      .set({ ...client, updatedAt: new Date() } as any)
       .where(eq(clients.id, id))
       .returning();
     return updatedClient;
@@ -319,11 +319,11 @@ export class DatabaseStorage implements IStorage {
     // This prevents calendar sync from recreating them
     await db
       .update(clients)
-      .set({ 
+      .set({
         deletedAt: new Date(),
         status: 'deleted',
         updatedAt: new Date()
-      })
+      } as any)
       .where(eq(clients.id, id));
   }
 
@@ -456,7 +456,7 @@ export class DatabaseStorage implements IStorage {
   async createSession(session: InsertSession): Promise<Session> {
     const [newSession] = await db
       .insert(sessions)
-      .values(session)
+      .values(session as any)
       .returning();
     return newSession;
   }
@@ -464,7 +464,7 @@ export class DatabaseStorage implements IStorage {
   async updateSession(id: string, session: Partial<InsertSession>): Promise<Session> {
     const [updatedSession] = await db
       .update(sessions)
-      .set({ ...session, updatedAt: new Date() })
+      .set({ ...session, updatedAt: new Date() } as any)
       .where(eq(sessions.id, id))
       .returning();
     return updatedSession;
@@ -475,10 +475,10 @@ export class DatabaseStorage implements IStorage {
 
     const result = await db
       .update(sessions)
-      .set({ 
+      .set({
         status: "completed",
         updatedAt: now
-      })
+      } as any)
       .where(
         and(
           eq(sessions.therapistId, therapistId),
@@ -526,7 +526,7 @@ export class DatabaseStorage implements IStorage {
       aiTags: []
     }));
 
-    await db.insert(progressNotes).values(placeholderNotes);
+    await db.insert(progressNotes).values(placeholderNotes as any);
 
     return placeholderNotes.length;
   }
@@ -562,34 +562,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProgressNote(note: InsertProgressNote): Promise<ProgressNote> {
+    const noteData = note as any;
     // Strip markdown formatting from content before saving
-    const cleanContent = note.content ? stripMarkdown(note.content) : note.content;
+    const cleanContent = noteData.content ? stripMarkdown(noteData.content) : noteData.content;
     const quality = calculateNoteQuality(cleanContent);
     const [newNote] = await db
       .insert(progressNotes)
       .values({
-        ...note,
+        ...noteData,
         content: cleanContent,
-        qualityScore: cleanContent ? quality.score : note.qualityScore,
-        qualityFlags: cleanContent ? quality.flags : note.qualityFlags,
-      })
+        qualityScore: cleanContent ? quality.score : noteData.qualityScore,
+        qualityFlags: cleanContent ? quality.flags : noteData.qualityFlags,
+      } as any)
       .returning();
     return newNote;
   }
 
   async updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote> {
+    const noteData = note as any;
     // Strip markdown formatting from content before saving
-    const cleanContent = note.content !== undefined ? stripMarkdown(note.content || '') : undefined;
+    const cleanContent = noteData.content !== undefined ? stripMarkdown(noteData.content || '') : undefined;
     const quality = cleanContent !== undefined ? calculateNoteQuality(cleanContent) : null;
     const [updatedNote] = await db
       .update(progressNotes)
       .set({
-        ...note,
-        content: cleanContent !== undefined ? cleanContent : note.content,
-        qualityScore: quality ? quality.score : note.qualityScore,
-        qualityFlags: quality ? quality.flags : note.qualityFlags,
+        ...noteData,
+        content: cleanContent !== undefined ? cleanContent : noteData.content,
+        qualityScore: quality ? quality.score : noteData.qualityScore,
+        qualityFlags: quality ? quality.flags : noteData.qualityFlags,
         updatedAt: new Date()
-      })
+      } as any)
       .where(eq(progressNotes.id, id))
       .returning();
     return updatedNote;
@@ -644,7 +646,7 @@ export class DatabaseStorage implements IStorage {
   async createCaseConceptualization(conceptualization: InsertCaseConceptualization): Promise<CaseConceptualization> {
     const [newConceptualization] = await db
       .insert(caseConceptualizations)
-      .values(conceptualization)
+      .values(conceptualization as any)
       .returning();
     return newConceptualization;
   }
@@ -652,7 +654,7 @@ export class DatabaseStorage implements IStorage {
   async updateCaseConceptualization(id: string, conceptualization: Partial<InsertCaseConceptualization>): Promise<CaseConceptualization> {
     const [updatedConceptualization] = await db
       .update(caseConceptualizations)
-      .set({ ...conceptualization, updatedAt: new Date() })
+      .set({ ...conceptualization, updatedAt: new Date() } as any)
       .where(eq(caseConceptualizations.id, id))
       .returning();
     return updatedConceptualization;
@@ -687,7 +689,7 @@ export class DatabaseStorage implements IStorage {
   async createTreatmentPlan(plan: InsertTreatmentPlan): Promise<TreatmentPlan> {
     const [newPlan] = await db
       .insert(treatmentPlans)
-      .values(plan)
+      .values(plan as any)
       .returning();
     return newPlan;
   }
@@ -695,7 +697,7 @@ export class DatabaseStorage implements IStorage {
   async updateTreatmentPlan(id: string, plan: Partial<InsertTreatmentPlan>): Promise<TreatmentPlan> {
     const [updatedPlan] = await db
       .update(treatmentPlans)
-      .set({ ...plan, updatedAt: new Date() })
+      .set({ ...plan, updatedAt: new Date() } as any)
       .where(eq(treatmentPlans.id, id))
       .returning();
     return updatedPlan;
@@ -712,7 +714,7 @@ export class DatabaseStorage implements IStorage {
   async createAllianceScore(score: InsertAllianceScore): Promise<AllianceScore> {
     const [newScore] = await db
       .insert(allianceScores)
-      .values(score)
+      .values(score as any)
       .returning();
     return newScore;
   }
@@ -737,7 +739,7 @@ export class DatabaseStorage implements IStorage {
   async createDocument(document: InsertDocument): Promise<Document> {
     const [newDocument] = await db
       .insert(documents)
-      .values(document)
+      .values(document as any)
       .returning();
     return newDocument;
   }
@@ -745,7 +747,7 @@ export class DatabaseStorage implements IStorage {
   async updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document> {
     const [updatedDocument] = await db
       .update(documents)
-      .set({ ...updates, uploadedAt: new Date() })
+      .set({ ...updates, uploadedAt: new Date() } as any)
       .where(eq(documents.id, id))
       .returning();
     return updatedDocument;
@@ -779,7 +781,7 @@ export class DatabaseStorage implements IStorage {
   async createAiInsight(insight: InsertAiInsight): Promise<AiInsight> {
     const [newInsight] = await db
       .insert(aiInsights)
-      .values(insight)
+      .values(insight as any)
       .returning();
     return newInsight;
   }
@@ -787,7 +789,7 @@ export class DatabaseStorage implements IStorage {
   async markInsightAsRead(id: string): Promise<void> {
     await db
       .update(aiInsights)
-      .set({ isRead: true })
+      .set({ isRead: true } as any)
       .where(eq(aiInsights.id, id));
   }
 
@@ -832,13 +834,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createLongitudinalRecord(record: InsertLongitudinalRecord): Promise<LongitudinalRecord> {
+    const recordData = record as any;
     const [created] = await db
       .insert(longitudinalRecords)
       .values({
-        ...record,
-        record: this.encryptJsonPayload(record.record),
-        analysis: this.encryptJsonPayload(record.analysis),
-      })
+        ...recordData,
+        record: this.encryptJsonPayload(recordData.record),
+        analysis: this.encryptJsonPayload(recordData.analysis),
+      } as any)
       .returning();
     return created;
   }
@@ -875,7 +878,7 @@ export class DatabaseStorage implements IStorage {
   async createJobRun(run: InsertJobRun & { id?: string }): Promise<JobRun> {
     const [created] = await db
       .insert(jobRuns)
-      .values({ ...run, updatedAt: new Date() })
+      .values({ ...run, updatedAt: new Date() } as any)
       .returning();
     return created;
   }
@@ -883,7 +886,7 @@ export class DatabaseStorage implements IStorage {
   async updateJobRun(id: string, updates: Partial<InsertJobRun>): Promise<JobRun | undefined> {
     const [updated] = await db
       .update(jobRuns)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...updates, updatedAt: new Date() } as any)
       .where(eq(jobRuns.id, id))
       .returning();
     return updated || undefined;
@@ -908,7 +911,7 @@ export class DatabaseStorage implements IStorage {
   async createDocumentTextVersion(version: InsertDocumentTextVersion): Promise<DocumentTextVersion> {
     const [created] = await db
       .insert(documentTextVersions)
-      .values(version)
+      .values(version as any)
       .returning();
     return created;
   }
@@ -1020,7 +1023,7 @@ export class DatabaseStorage implements IStorage {
         isPlaceholder: true,
         requiresManualReview: false,
         content: null // Empty content for placeholder
-      })
+      } as any)
       .returning();
     return placeholder;
   }
@@ -1065,7 +1068,7 @@ export class DatabaseStorage implements IStorage {
   async createTranscriptBatch(batch: InsertTranscriptBatch): Promise<TranscriptBatch> {
     const [newBatch] = await db
       .insert(transcriptBatches)
-      .values(batch)
+      .values(batch as any)
       .returning();
     return newBatch;
   }
@@ -1086,7 +1089,7 @@ export class DatabaseStorage implements IStorage {
   async updateTranscriptBatch(id: string, updates: Partial<InsertTranscriptBatch>): Promise<TranscriptBatch> {
     const [updatedBatch] = await db
       .update(transcriptBatches)
-      .set(updates)
+      .set(updates as any)
       .where(eq(transcriptBatches.id, id))
       .returning();
     return updatedBatch;
@@ -1096,7 +1099,7 @@ export class DatabaseStorage implements IStorage {
   async createTranscriptFile(file: InsertTranscriptFile): Promise<TranscriptFile> {
     const [newFile] = await db
       .insert(transcriptFiles)
-      .values(file)
+      .values(file as any)
       .returning();
     return newFile;
   }
@@ -1145,7 +1148,7 @@ export class DatabaseStorage implements IStorage {
   async updateTranscriptFile(id: string, updates: Partial<InsertTranscriptFile>): Promise<TranscriptFile> {
     const [updatedFile] = await db
       .update(transcriptFiles)
-      .set(updates)
+      .set(updates as any)
       .where(eq(transcriptFiles.id, id))
       .returning();
     return updatedFile;
@@ -1160,7 +1163,7 @@ export class DatabaseStorage implements IStorage {
         assignedSessionType: sessionType,
         status: "assigned",
         assignedAt: new Date()
-      })
+      } as any)
       .where(eq(transcriptFiles.id, fileId))
       .returning();
     return updatedFile;
@@ -1189,7 +1192,7 @@ export class DatabaseStorage implements IStorage {
         aiConfidenceScore: file.clientMatchConfidence,
         processingNotes: file.processingNotes,
         originalDocumentId: null // Could link to document table if needed
-      })
+      } as any)
       .returning();
 
     // Update the transcript file to link to the created progress note
@@ -1215,13 +1218,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async storeOAuthTokens(tokens: InsertOAuthTokens): Promise<OAuthTokens> {
+    const tokensData = tokens as any;
     // Upsert - insert or update if exists
-    const existing = await this.getOAuthTokens(tokens.therapistId, tokens.provider || "google");
+    const existing = await this.getOAuthTokens(tokensData.therapistId, tokensData.provider || "google");
 
     if (existing) {
       const [updated] = await db
         .update(oauthTokens)
-        .set({ ...tokens, updatedAt: new Date() })
+        .set({ ...tokensData, updatedAt: new Date() } as any)
         .where(eq(oauthTokens.id, existing.id))
         .returning();
       return updated;
@@ -1229,7 +1233,7 @@ export class DatabaseStorage implements IStorage {
 
     const [created] = await db
       .insert(oauthTokens)
-      .values(tokens)
+      .values(tokensData as any)
       .returning();
     return created;
   }
@@ -1237,7 +1241,7 @@ export class DatabaseStorage implements IStorage {
   async updateOAuthTokens(therapistId: string, provider: string, tokens: Partial<InsertOAuthTokens>): Promise<OAuthTokens | undefined> {
     const [updated] = await db
       .update(oauthTokens)
-      .set({ ...tokens, updatedAt: new Date() })
+      .set({ ...tokens, updatedAt: new Date() } as any)
       .where(
         and(
           eq(oauthTokens.therapistId, therapistId),
@@ -1260,7 +1264,7 @@ export class DatabaseStorage implements IStorage {
   async createEventAlias(alias: InsertCalendarEventAlias): Promise<CalendarEventAlias> {
     const [created] = await db
       .insert(calendarEventAliases)
-      .values(alias)
+      .values(alias as any)
       .returning();
     return created;
   }
@@ -1288,7 +1292,7 @@ export class DatabaseStorage implements IStorage {
   async createCalendarSyncHistory(history: InsertCalendarSyncHistory): Promise<CalendarSyncHistory> {
     const [created] = await db
       .insert(calendarSyncHistory)
-      .values(history)
+      .values(history as any)
       .returning();
     return created;
   }
@@ -1296,7 +1300,7 @@ export class DatabaseStorage implements IStorage {
   async updateCalendarSyncHistory(id: string, updates: Partial<InsertCalendarSyncHistory>): Promise<CalendarSyncHistory | undefined> {
     const [updated] = await db
       .update(calendarSyncHistory)
-      .set(updates)
+      .set(updates as any)
       .where(eq(calendarSyncHistory.id, id))
       .returning();
     return updated || undefined;

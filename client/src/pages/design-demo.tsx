@@ -4,9 +4,9 @@ import { Users, Calendar, FileText, Brain } from 'lucide-react';
 
 const DesignDemo = () => {
   const stats = [
-    { title: 'Active Clients', value: '24', change: '+12%', icon: Users, color: 'sage' as const },
-    { title: 'Sessions', value: '156', change: '+8%', icon: Calendar, color: 'blue' as const },
-    { title: 'Notes', value: '89', change: '+23%', icon: FileText, color: 'sage' as const },
+    { title: 'Active Clients', value: '24', change: '+12%', icon: Users, color: 'teal' as const },
+    { title: 'Sessions', value: '156', change: '+8%', icon: Calendar, color: 'gold' as const },
+    { title: 'Notes', value: '89', change: '+23%', icon: FileText, color: 'coral' as const },
     { title: 'Insights', value: '45', change: '+15%', icon: Brain, color: 'green' as const },
   ];
 

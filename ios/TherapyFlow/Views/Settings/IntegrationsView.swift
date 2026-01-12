@@ -31,9 +31,7 @@ struct IntegrationsView: View {
                                 .font(.headline)
                                 .foregroundColor(Color.theme.primaryText)
 
-                            Text(integrationsService.isAIConfigured ?
-                                 "Connected to \(integrationsService.aiProvider.displayName)" :
-                                    "Not configured")
+                            Text(aiStatusText)
                                 .font(.caption)
                                 .foregroundColor(integrationsService.isAIConfigured ?
                                                  Color.theme.success : Color.theme.secondaryText)
@@ -47,9 +45,45 @@ struct IntegrationsView: View {
                         }
                     }
 
+                    // Show configured providers
+                    if !integrationsService.configuredProviders.isEmpty {
+                        HStack(spacing: 8) {
+                            ForEach(Array(integrationsService.configuredProviders), id: \.self) { provider in
+                                HStack(spacing: 4) {
+                                    Image(systemName: provider.icon)
+                                        .font(.caption)
+                                    Text(provider == .anthropic ? "Claude" : "GPT-4")
+                                        .font(.caption)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.theme.primary.opacity(0.1))
+                                .cornerRadius(8)
+                            }
+
+                            if integrationsService.configuredProviders.count == 2 {
+                                Text("Dual Mode")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(Color.theme.success)
+                            }
+                        }
+                    }
+
                     Text("Enable AI-powered session insights, progress note analysis, risk detection, and therapeutic theme extraction.")
                         .font(.caption)
                         .foregroundColor(Color.theme.secondaryText)
+
+                    // Show error if keychain had issues
+                    if let error = integrationsService.lastKeyLoadError {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(Color.theme.warning)
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(Color.theme.warning)
+                        }
+                    }
 
                     Button(action: { showingAIConfiguration = true }) {
                         Text(integrationsService.isAIConfigured ? "Manage AI Settings" : "Configure AI")
@@ -66,7 +100,7 @@ struct IntegrationsView: View {
             } header: {
                 Text("AI Provider")
             } footer: {
-                Text("Your API key is stored securely in the device keychain and is never shared.")
+                Text("Configure both Claude and OpenAI for optimal dual-LLM routing. Your API keys are stored securely in the device keychain.")
             }
 
             // ElevenLabs Voice Section
@@ -292,6 +326,21 @@ struct IntegrationsView: View {
         }
     }
 
+    // MARK: - Computed Properties
+
+    private var aiStatusText: String {
+        let providers = integrationsService.configuredProviders
+        if providers.count == 2 {
+            return "Dual LLM mode active"
+        } else if providers.contains(.anthropic) {
+            return "Connected to Claude (Anthropic)"
+        } else if providers.contains(.openAI) {
+            return "Connected to OpenAI"
+        } else {
+            return "Not configured"
+        }
+    }
+
     // MARK: - Actions
 
     private func connectGoogle() {
@@ -359,86 +408,137 @@ struct AIConfigurationView: View {
     @ObservedObject private var integrationsService = IntegrationsService.shared
     @Environment(\.dismiss) private var dismiss
 
-    @State private var selectedProvider: AIProvider = .anthropic
-    @State private var apiKey = ""
+    @State private var anthropicKey = ""
+    @State private var openAIKey = ""
     @State private var isValidating = false
     @State private var validationError: String?
-    @State private var showingAPIKey = false
+    @State private var showingAnthropicKey = false
+    @State private var showingOpenAIKey = false
 
     var body: some View {
         Form {
-            Section {
-                ForEach(AIProvider.allCases, id: \.self) { provider in
-                    Button(action: { selectedProvider = provider }) {
-                        HStack(spacing: 12) {
+            // Status section
+            if !integrationsService.configuredProviders.isEmpty {
+                Section {
+                    ForEach(Array(integrationsService.configuredProviders), id: \.self) { provider in
+                        HStack {
                             Image(systemName: provider.icon)
-                                .font(.title3)
-                                .foregroundColor(Color.theme.primary)
-                                .frame(width: 28)
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(provider.displayName)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(Color.theme.primaryText)
-
-                                Text(provider.description)
-                                    .font(.caption)
-                                    .foregroundColor(Color.theme.secondaryText)
-                            }
-
+                                .foregroundColor(Color.theme.success)
+                            Text(provider.displayName)
+                                .font(.subheadline)
                             Spacer()
-
-                            if selectedProvider == provider {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(Color.theme.primary)
-                            }
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(Color.theme.success)
                         }
                     }
-                    .buttonStyle(.plain)
+
+                    if integrationsService.configuredProviders.count == 2 {
+                        HStack {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .foregroundColor(Color.theme.primary)
+                            Text("Dual LLM routing active")
+                                .font(.caption)
+                                .foregroundColor(Color.theme.secondaryText)
+                        }
+                    }
+                } header: {
+                    Text("Configured Providers")
                 }
-            } header: {
-                Text("Select AI Provider")
             }
 
+            // Claude (Anthropic) section
             Section {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("API Key")
+                    HStack {
+                        Image(systemName: "brain.head.profile")
+                            .foregroundColor(Color.theme.primary)
+                        Text("Claude (Anthropic)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Spacer()
+                        if integrationsService.hasAPIKey(for: .anthropic) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(Color.theme.success)
+                                .font(.caption)
+                        }
+                    }
+
+                    Text("Best for clinical analysis, progress notes, and therapeutic insights")
                         .font(.caption)
                         .foregroundColor(Color.theme.secondaryText)
 
                     HStack {
-                        if showingAPIKey {
-                            TextField("Enter your API key", text: $apiKey)
+                        if showingAnthropicKey {
+                            TextField("Enter Claude API key", text: $anthropicKey)
                                 .textContentType(.password)
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
                         } else {
-                            SecureField("Enter your API key", text: $apiKey)
+                            SecureField("Enter Claude API key", text: $anthropicKey)
                                 .textContentType(.password)
                         }
 
-                        Button(action: { showingAPIKey.toggle() }) {
-                            Image(systemName: showingAPIKey ? "eye.slash" : "eye")
+                        Button(action: { showingAnthropicKey.toggle() }) {
+                            Image(systemName: showingAnthropicKey ? "eye.slash" : "eye")
                                 .foregroundColor(Color.theme.secondaryText)
                         }
                     }
+                }
+            } header: {
+                Text("Claude API Key")
+            } footer: {
+                Text("Get your API key from console.anthropic.com")
+            }
 
-                    if let error = validationError {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundColor(Color.theme.error)
+            // OpenAI section
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Image(systemName: "sparkles")
+                            .foregroundColor(Color.theme.primary)
+                        Text("OpenAI (GPT-4)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Spacer()
+                        if integrationsService.hasAPIKey(for: .openAI) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(Color.theme.success)
+                                .font(.caption)
+                        }
+                    }
+
+                    Text("Best for quick queries, scheduling, and general assistance")
+                        .font(.caption)
+                        .foregroundColor(Color.theme.secondaryText)
+
+                    HStack {
+                        if showingOpenAIKey {
+                            TextField("Enter OpenAI API key", text: $openAIKey)
+                                .textContentType(.password)
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                        } else {
+                            SecureField("Enter OpenAI API key", text: $openAIKey)
+                                .textContentType(.password)
+                        }
+
+                        Button(action: { showingOpenAIKey.toggle() }) {
+                            Image(systemName: showingOpenAIKey ? "eye.slash" : "eye")
+                                .foregroundColor(Color.theme.secondaryText)
+                        }
                     }
                 }
             } header: {
-                Text("\(selectedProvider.displayName) API Key")
+                Text("OpenAI API Key")
             } footer: {
-                VStack(alignment: .leading, spacing: 8) {
-                    if selectedProvider == .anthropic {
-                        Text("Get your API key from console.anthropic.com")
-                    } else {
-                        Text("Get your API key from platform.openai.com")
-                    }
+                Text("Get your API key from platform.openai.com")
+            }
+
+            if let error = validationError {
+                Section {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(Color.theme.error)
                 }
             }
 
@@ -449,15 +549,15 @@ struct AIConfigurationView: View {
                             ProgressView()
                                 .scaleEffect(0.8)
                         }
-                        Text(isValidating ? "Validating..." : "Save Configuration")
+                        Text(isValidating ? "Saving..." : "Save Configuration")
                     }
                     .frame(maxWidth: .infinity)
                 }
-                .disabled(apiKey.isEmpty || isValidating)
+                .disabled((anthropicKey.isEmpty && openAIKey.isEmpty) || isValidating)
 
-                if integrationsService.hasAPIKey(for: selectedProvider) {
-                    Button(action: removeConfiguration) {
-                        Text("Remove Configuration")
+                if integrationsService.isAIConfigured {
+                    Button(action: removeAllConfigurations) {
+                        Text("Remove All Configurations")
                             .foregroundColor(Color.theme.error)
                             .frame(maxWidth: .infinity)
                     }
@@ -473,12 +573,6 @@ struct AIConfigurationView: View {
                 }
             }
         }
-        .onAppear {
-            if integrationsService.isAIConfigured {
-                selectedProvider = integrationsService.aiProvider
-                // Don't show existing key for security
-            }
-        }
     }
 
     private func validateAndSave() {
@@ -487,36 +581,58 @@ struct AIConfigurationView: View {
 
         Task {
             do {
-                let isValid = try await integrationsService.validateAIAPIKey(
-                    provider: selectedProvider,
-                    apiKey: apiKey
+                // Validate and save Anthropic key if provided
+                if !anthropicKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    let isValid = try await integrationsService.validateAIAPIKey(
+                        provider: .anthropic,
+                        apiKey: anthropicKey
+                    )
+                    if !isValid {
+                        await MainActor.run {
+                            validationError = "Invalid Claude API key"
+                            isValidating = false
+                        }
+                        return
+                    }
+                }
+
+                // Validate and save OpenAI key if provided
+                if !openAIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    let isValid = try await integrationsService.validateAIAPIKey(
+                        provider: .openAI,
+                        apiKey: openAIKey
+                    )
+                    if !isValid {
+                        await MainActor.run {
+                            validationError = "Invalid OpenAI API key"
+                            isValidating = false
+                        }
+                        return
+                    }
+                }
+
+                // Save both keys
+                try integrationsService.configureBothAIProviders(
+                    anthropicKey: anthropicKey.isEmpty ? nil : anthropicKey,
+                    openAIKey: openAIKey.isEmpty ? nil : openAIKey
                 )
 
-                if isValid {
-                    try integrationsService.configureAI(provider: selectedProvider, apiKey: apiKey)
-
-                    await MainActor.run {
-                        isValidating = false
-                        dismiss()
-                    }
-                } else {
-                    await MainActor.run {
-                        validationError = "Invalid API key. Please check and try again."
-                        isValidating = false
-                    }
+                await MainActor.run {
+                    isValidating = false
+                    dismiss()
                 }
             } catch {
                 await MainActor.run {
-                    validationError = "Validation failed: \(error.localizedDescription)"
+                    validationError = "Failed to save: \(error.localizedDescription)"
                     isValidating = false
                 }
             }
         }
     }
 
-    private func removeConfiguration() {
+    private func removeAllConfigurations() {
         do {
-            try integrationsService.removeAIConfiguration(for: selectedProvider)
+            try integrationsService.removeAllAIConfigurations()
             dismiss()
         } catch {
             validationError = error.localizedDescription

@@ -17,13 +17,16 @@ import { generateSessionPrep } from "./services/sessionPrepGenerator";
 import { generateLongitudinalTracking, formatLongitudinalContext } from "./services/longitudinalTracking";
 import { checkRiskEscalation } from "./services/riskMonitor";
 import { buildGoalSignals } from "./services/goalSignals";
-import { 
-  insertClientSchema, 
-  insertSessionSchema, 
+import {
+  insertClientSchema,
+  insertSessionSchema,
   insertProgressNoteSchema,
   insertCaseConceptualizationSchema,
   insertTreatmentPlanSchema,
-  insertAllianceScoreSchema
+  insertAllianceScoreSchema,
+  type InsertProgressNote,
+  type InsertClient,
+  type InsertSession
 } from "@shared/schema";
 import multer from "multer";
 import { registerTranscriptRoutes } from "./routes/transcript-routes";
@@ -881,8 +884,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req,
         {
           dryRun: !!dryRun,
-          createdNotes: result.createdNotes?.length || 0,
-          missingSessions: result.missingSessions?.length || 0,
+          totalProcessed: result.total || 0,
+          matchedSessions: result.matchedSessions || 0,
+          missingSessions: result.missingSessions || 0,
         }
       );
       res.json({ success: true, ...result });
@@ -897,7 +901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const noteData = insertProgressNoteSchema.parse({
         ...req.body,
         therapistId: req.therapistId
-      });
+      }) as any;
 
       // Verify client ownership before creating note
       const clientCheck = await SecureClientQueries.getClient(noteData.clientId, req.therapistId);
@@ -917,13 +921,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           therapistId: req.therapistId,
           sessionId: noteData.sessionId || undefined,
           tags: noteData.tags || [],
-          aiTags: aiTags.map(tag => tag.name),
+          aiTags: aiTags.map((tag: any) => tag.name),
           riskLevel: noteData.riskLevel || 'low',
           progressRating: noteData.progressRating || undefined
         },
         aiTags.length > 0 ? {
-          insights: aiTags.map(tag => tag.name),
-          tags: aiTags.map(tag => tag.name),
+          insights: aiTags.map((tag: any) => tag.name),
+          tags: aiTags.map((tag: any) => tag.name),
           riskFactors: []
         } : undefined
       );
@@ -1100,7 +1104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/progress-notes/:id", async (req: any, res) => {
     try {
       const noteId = req.params.id;
-      const updates = insertProgressNoteSchema.partial().parse(req.body);
+      const updates = insertProgressNoteSchema.partial().parse(req.body) as any;
 
       // Get the existing note to verify ownership
       const existingNote = await storage.getProgressNote(noteId);
@@ -1270,8 +1274,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Store AI analysis in metadata
       if (aiAnalysis) {
+        const existingMetadata = (existing.metadata && typeof existing.metadata === 'object') ? existing.metadata as Record<string, unknown> : {};
         updateData.metadata = {
-          ...existing.metadata,
+          ...existingMetadata,
           aiAnalysis: {
             summary: aiAnalysis.summary,
             themes: aiAnalysis.themes,
@@ -1566,8 +1571,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
 
             if (matchingSession) {
+              const docMetadata = (doc.metadata && typeof doc.metadata === 'object') ? doc.metadata as Record<string, unknown> : {};
               updateData.metadata = {
-                ...doc.metadata,
+                ...docMetadata,
                 linkedSessionId: matchingSession.id,
                 sessionDate: matchingSession.scheduledAt
               };
@@ -2186,7 +2192,15 @@ ${contextInfo ? `\nCurrent context:\n${contextInfo}` : ''}`,
           max_tokens: 512,
           system: `You are a voice assistant for TherapyFlow, a mental health practice app.
 Keep responses brief and conversational - suitable for spoken delivery.
-Help with practice management, client insights, and clinical questions.`,
+Help with practice management, client insights, and clinical questions.
+
+IMPORTANT: Always respond in plain text only. Do NOT use any markdown formatting:
+- No headers (# or ##)
+- No bold (**text**) or italic (*text*)
+- No bullet points or numbered lists
+- No code blocks or backticks
+- No links or special formatting
+Responses must be natural speech, ready for text-to-speech conversion.`,
           messages: [
             { role: 'user', content: query }
           ]
@@ -3419,12 +3433,12 @@ ${sourceText}
       const therapistId = req.therapistId;
 
       // Process document using existing enhanced processor
+      // Signature: processDocument(file: Buffer, fileName: string, therapistId: string, documentId?: string)
       const result = await enhancedDocumentProcessor.processDocument(
         req.file.buffer,
         req.file.originalname,
-        req.file.mimetype,
         therapistId,
-        clientId
+        clientId // Optional documentId for linking
       );
 
       res.json(result);
@@ -3442,22 +3456,33 @@ ${sourceText}
         return res.status(400).json({ error: "No files uploaded" });
       }
 
+      const { clientId } = req.body;
       const therapistId = req.therapistId;
 
-      // Queue bulk import job
-      const jobId = await bulkImportProgressNotes(
-        files.map(f => ({
-          buffer: f.buffer,
-          originalname: f.originalname,
-          mimetype: f.mimetype,
-        })),
-        therapistId
-      );
+      if (!clientId) {
+        return res.status(400).json({ error: "clientId is required for bulk transcript import" });
+      }
+
+      // Process each file and combine results
+      const allResults = [];
+      for (const file of files) {
+        const rawText = file.buffer.toString('utf-8');
+        const result = await bulkImportProgressNotes(
+          clientId,
+          therapistId,
+          rawText,
+          { dryRun: false }
+        );
+        allResults.push({
+          fileName: file.originalname,
+          ...result
+        });
+      }
 
       res.json({
         success: true,
-        jobId,
         fileCount: files.length,
+        results: allResults,
         message: `Processing ${files.length} files`
       });
     } catch (error) {

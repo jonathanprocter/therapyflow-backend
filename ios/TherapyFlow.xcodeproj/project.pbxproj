@@ -324,16 +324,6 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		F000000000000020 /* Dictation */ = {
-			isa = PBXGroup;
-			children = (
-				F000000000000012 /* FloatingDictationButton.swift */,
-				F000000000000013 /* QuickNoteRecordingSheet.swift */,
-				F000000000000014 /* RecentQuickNotesView.swift */,
-			);
-			path = Dictation;
-			sourceTree = "<group>";
-		};
 		5000000000000013 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -536,6 +526,16 @@
 				7C2283A7EEE143FA873D6779 /* SessionTimelineView.swift */,
 			);
 			path = AI;
+			sourceTree = "<group>";
+		};
+		F000000000000020 /* Dictation */ = {
+			isa = PBXGroup;
+			children = (
+				F000000000000012 /* FloatingDictationButton.swift */,
+				F000000000000013 /* QuickNoteRecordingSheet.swift */,
+				F000000000000014 /* RecentQuickNotesView.swift */,
+			);
+			path = Dictation;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

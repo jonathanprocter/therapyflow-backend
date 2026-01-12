@@ -49,6 +49,8 @@
 	<string>TherapyFlow needs microphone access to record session notes and transcribe audio.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>TherapyFlow needs photo library access to attach images to client records and notes.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>TherapyFlow uses speech recognition so you can ask the AI questions by voice and transcribe your spoken notes.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -71,18 +73,10 @@
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
-		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>TherapyFlow uses speech recognition so you can ask the AI questions by voice and transcribe your spoken notes.</string>
 </dict>
 </plist>

@@ -1,5 +1,4 @@
 import Foundation
-import Foundation
 import AuthenticationServices
 
 // MARK: - Integrations Service
@@ -14,6 +13,8 @@ class IntegrationsService: ObservableObject {
     @Published var googleCalendarConnected: Bool = false
     @Published var simplePracticeConnected: Bool = false
     @Published var calendarSyncEnabled: Bool = false
+    @Published var configuredProviders: Set<AIProvider> = []  // Track which providers have keys
+    @Published var lastKeyLoadError: String?  // Surface errors to UI
 
     // MARK: - Private Properties
     private let keychain = KeychainService.shared
@@ -21,6 +22,7 @@ class IntegrationsService: ObservableObject {
     // Keychain keys
     private let anthropicAPIKeyKey = "com.therapyflow.anthropic.apikey"
     private let openAIAPIKeyKey = "com.therapyflow.openai.apikey"
+    private let elevenLabsAPIKeyKey = "com.therapyflow.elevenlabs.apikey"  // Unified ElevenLabs key
     private let googleOAuthTokenKey = "com.therapyflow.google.oauth"
     private let googleRefreshTokenKey = "com.therapyflow.google.refresh"
     private let googleTokenExpiryKey = "com.therapyflow.google.expiry"
@@ -32,25 +34,46 @@ class IntegrationsService: ObservableObject {
 
     // MARK: - Load Status
     private func loadIntegrationStatus() {
+        lastKeyLoadError = nil
+
         // First check UserDefaults for saved provider preference
         if let savedProviderRaw = UserDefaults.standard.string(forKey: "selectedAIProvider"),
            let savedProvider = AIProvider(rawValue: savedProviderRaw) {
             aiProvider = savedProvider
         }
 
+        // Check which providers have keys configured
+        configuredProviders.removeAll()
         let hasAnthropicKey = hasKey(anthropicAPIKeyKey)
         let hasOpenAIKey = hasKey(openAIAPIKeyKey)
 
+        if hasAnthropicKey {
+            configuredProviders.insert(.anthropic)
+        }
+        if hasOpenAIKey {
+            configuredProviders.insert(.openAI)
+        }
+
         if hasAnthropicKey || hasOpenAIKey {
+            // If the saved provider doesn't have a key, fall back to one that does
             if !hasKeyForCurrentProvider() {
-                // Fall back to any available provider key
+                // Prefer Anthropic for clinical work, fall back to OpenAI
                 aiProvider = hasAnthropicKey ? .anthropic : .openAI
+                // Update UserDefaults with the fallback choice
+                UserDefaults.standard.set(aiProvider.rawValue, forKey: "selectedAIProvider")
+                print("IntegrationsService: Saved provider had no key, falling back to \(aiProvider.displayName)")
             }
             isAIConfigured = true
-            print("Loaded AI API key(s) from keychain")
+            print("IntegrationsService: Loaded AI API key(s) - Anthropic: \(hasAnthropicKey), OpenAI: \(hasOpenAIKey)")
         } else {
             isAIConfigured = false
-            print("No AI API key found in keychain")
+            // Check if this might be a keychain access issue (e.g., device not unlocked yet)
+            if !isKeychainAccessible() {
+                lastKeyLoadError = "Keychain not accessible. Please unlock your device and try again."
+                print("IntegrationsService: Keychain not accessible - device may need to be unlocked")
+            } else {
+                print("IntegrationsService: No AI API keys found in keychain")
+            }
         }
 
         // Check calendar connections
@@ -68,14 +91,42 @@ class IntegrationsService: ObservableObject {
         calendarSyncEnabled = UserDefaults.standard.bool(forKey: "calendarSyncEnabled")
     }
 
+    /// Check if keychain is accessible (device unlocked)
+    private func isKeychainAccessible() -> Bool {
+        // Try to write and read a test value to verify keychain access
+        let testKey = "com.therapyflow.keychain.test"
+        let testData = "test".data(using: .utf8)!
+
+        do {
+            try keychain.save(key: testKey, data: testData)
+            let retrieved = try keychain.retrieve(key: testKey)
+            try? keychain.delete(key: testKey)
+            return retrieved != nil
+        } catch {
+            return false
+        }
+    }
+
+    /// Reload integration status (call after app becomes active)
+    func reloadStatus() {
+        loadIntegrationStatus()
+    }
+
     // MARK: - AI Configuration
 
     /// Save AI API key securely
     func configureAI(provider: AIProvider, apiKey: String) throws {
+        let trimmedKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Validate key format
+        guard !trimmedKey.isEmpty else {
+            throw IntegrationError.apiError("API key cannot be empty")
+        }
+
         let key = provider == .anthropic ? anthropicAPIKeyKey : openAIAPIKeyKey
 
         // Convert API key to data
-        guard let keyData = apiKey.data(using: .utf8) else {
+        guard let keyData = trimmedKey.data(using: .utf8) else {
             throw IntegrationError.apiError("Failed to encode API key")
         }
 
@@ -84,14 +135,16 @@ class IntegrationsService: ObservableObject {
 
         // Verify the key was saved correctly
         guard let savedData = try? keychain.retrieve(key: key),
-              String(data: savedData, encoding: .utf8) == apiKey else {
-            throw IntegrationError.apiError("Failed to verify saved API key")
+              String(data: savedData, encoding: .utf8) == trimmedKey else {
+            throw IntegrationError.apiError("Failed to verify saved API key. Keychain may not be accessible.")
         }
 
         // Persist provider selection to UserDefaults for faster startup
         UserDefaults.standard.set(provider.rawValue, forKey: "selectedAIProvider")
 
         self.aiProvider = provider
+        self.configuredProviders.insert(provider)
+        self.lastKeyLoadError = nil
         refreshAIConfigurationStatus()
 
         // Notify the backend about the AI configuration
@@ -99,7 +152,32 @@ class IntegrationsService: ObservableObject {
             try? await notifyBackendAIConfigured(provider: provider)
         }
 
-        print("AI API key saved successfully for provider: \(provider.displayName)")
+        print("IntegrationsService: API key saved successfully for provider: \(provider.displayName)")
+    }
+
+    /// Save both AI providers' keys at once (for dual LLM mode)
+    func configureBothAIProviders(anthropicKey: String?, openAIKey: String?) throws {
+        var savedProviders: [AIProvider] = []
+
+        if let anthropicKey = anthropicKey, !anthropicKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            try configureAI(provider: .anthropic, apiKey: anthropicKey)
+            savedProviders.append(.anthropic)
+        }
+
+        if let openAIKey = openAIKey, !openAIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            try configureAI(provider: .openAI, apiKey: openAIKey)
+            savedProviders.append(.openAI)
+        }
+
+        if savedProviders.isEmpty {
+            throw IntegrationError.apiError("At least one API key must be provided")
+        }
+
+        // Set primary provider (prefer Anthropic for clinical work)
+        aiProvider = savedProviders.contains(.anthropic) ? .anthropic : .openAI
+        UserDefaults.standard.set(aiProvider.rawValue, forKey: "selectedAIProvider")
+
+        print("IntegrationsService: Configured \(savedProviders.count) AI provider(s): \(savedProviders.map { $0.displayName }.joined(separator: ", "))")
     }
 
     /// Get current AI API key
@@ -154,7 +232,52 @@ class IntegrationsService: ObservableObject {
     private func refreshAIConfigurationStatus() {
         let hasAnthropicKey = hasKey(anthropicAPIKeyKey)
         let hasOpenAIKey = hasKey(openAIAPIKeyKey)
+
+        configuredProviders.removeAll()
+        if hasAnthropicKey { configuredProviders.insert(.anthropic) }
+        if hasOpenAIKey { configuredProviders.insert(.openAI) }
+
         isAIConfigured = hasAnthropicKey || hasOpenAIKey
+    }
+
+    // MARK: - ElevenLabs API Key (for Voice)
+
+    /// Save ElevenLabs API key
+    func configureElevenLabs(apiKey: String) throws {
+        let trimmedKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedKey.isEmpty else {
+            throw IntegrationError.apiError("ElevenLabs API key cannot be empty")
+        }
+
+        guard let keyData = trimmedKey.data(using: .utf8) else {
+            throw IntegrationError.apiError("Failed to encode ElevenLabs API key")
+        }
+
+        try keychain.save(key: elevenLabsAPIKeyKey, data: keyData)
+
+        // Verify save
+        guard let savedData = try? keychain.retrieve(key: elevenLabsAPIKeyKey),
+              String(data: savedData, encoding: .utf8) == trimmedKey else {
+            throw IntegrationError.apiError("Failed to verify saved ElevenLabs API key")
+        }
+
+        print("IntegrationsService: ElevenLabs API key saved successfully")
+    }
+
+    /// Get ElevenLabs API key
+    func getElevenLabsAPIKey() -> String? {
+        guard let data = try? keychain.retrieve(key: elevenLabsAPIKeyKey) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// Check if ElevenLabs is configured
+    func hasElevenLabsKey() -> Bool {
+        return hasKey(elevenLabsAPIKeyKey)
+    }
+
+    /// Remove ElevenLabs configuration
+    func removeElevenLabsConfiguration() {
+        try? keychain.delete(key: elevenLabsAPIKeyKey)
     }
 
     /// Validate AI API key by making a test request

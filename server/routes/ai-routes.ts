@@ -24,7 +24,7 @@ router.post('/analyze-note', async (req: any, res) => {
     await ClinicalAuditLogger.logAIActivity(
       req.therapistId,
       AuditAction.AI_ANALYSIS,
-      { clientId, contentLength: content.length },
+      { clientId },
       req
     );
 
@@ -99,7 +99,7 @@ router.post('/search', async (req: any, res) => {
     await ClinicalAuditLogger.logAIActivity(
       req.therapistId,
       AuditAction.AI_SEARCH,
-      { query, clientId, searchType: 'semantic' },
+      { clientId },
       req
     );
 

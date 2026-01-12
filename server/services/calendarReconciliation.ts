@@ -17,6 +17,13 @@ interface LinkingResult {
   details: Array<{ noteId: string; sessionId: string; clientId: string; sessionDate: string }>;
 }
 
+interface OrphanedDocumentRow {
+  document_id: string;
+  client_id: string;
+  note_id: string;
+  session_date: string;
+}
+
 /**
  * Link orphaned progress notes (those without sessionId) to sessions by matching
  * clientId and sessionDate within a reasonable time window (same day).
@@ -78,7 +85,7 @@ export async function linkOrphanedProgressNotes(therapistId: string): Promise<Li
         .set({
           sessionId: closestSession.id,
           updatedAt: new Date()
-        })
+        } as any) // Type assertion needed due to drizzle-orm partial update typing
         .where(eq(progressNotes.id, note.id));
 
       linked.push({
@@ -115,7 +122,8 @@ export async function linkDocumentsToSessions(therapistId: string): Promise<numb
 
   let linkedCount = 0;
 
-  for (const row of documentsWithOrphanedNotes.rows) {
+  for (const rawRow of documentsWithOrphanedNotes.rows) {
+    const row = rawRow as unknown as OrphanedDocumentRow;
     const noteDate = new Date(row.session_date);
     const startOfDay = new Date(noteDate);
     startOfDay.setHours(0, 0, 0, 0);
@@ -143,7 +151,7 @@ export async function linkDocumentsToSessions(therapistId: string): Promise<numb
         .set({
           sessionId: closestSession.id,
           updatedAt: new Date()
-        })
+        } as any) // Type assertion needed due to drizzle-orm partial update typing
         .where(eq(progressNotes.id, row.note_id));
 
       linkedCount++;

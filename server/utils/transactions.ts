@@ -73,7 +73,7 @@ export class ClinicalTransactions {
             isPlaceholder: false,
             createdAt: new Date(),
             updatedAt: new Date(),
-          })
+          } as any)
           .returning();
 
         // 4. Insert AI analysis if provided
@@ -98,7 +98,7 @@ export class ClinicalTransactions {
                 analysisType: 'automated'
               },
               createdAt: new Date(),
-            })
+            } as any)
             .returning();
         }
 
@@ -107,7 +107,7 @@ export class ClinicalTransactions {
           .update(clients)
           .set({
             updatedAt: new Date(),
-          })
+          } as any)
           .where(eq(clients.id, noteData.clientId));
 
         return {
@@ -147,27 +147,28 @@ export class ClinicalTransactions {
       }
 
       // 2. Encrypt sensitive fields
+      const updatesData = updates as any;
       const encryptedUpdates: any = {
-        ...updates,
+        ...updatesData,
         updatedAt: new Date(),
       };
 
       // Encrypt phone if provided
-      if (updates.phone) {
-        encryptedUpdates.phone = ClinicalEncryption.encrypt(updates.phone);
+      if (updatesData.phone) {
+        encryptedUpdates.phone = ClinicalEncryption.encrypt(updatesData.phone);
       }
 
       // Encrypt emergency contact if provided
-      if (updates.emergencyContact) {
+      if (updatesData.emergencyContact) {
         encryptedUpdates.emergencyContact = JSON.parse(
-          ClinicalEncryption.encrypt(JSON.stringify(updates.emergencyContact))
+          ClinicalEncryption.encrypt(JSON.stringify(updatesData.emergencyContact))
         );
       }
 
       // Encrypt insurance if provided
-      if (updates.insurance) {
+      if (updatesData.insurance) {
         encryptedUpdates.insurance = JSON.parse(
-          ClinicalEncryption.encrypt(JSON.stringify(updates.insurance))
+          ClinicalEncryption.encrypt(JSON.stringify(updatesData.insurance))
         );
       }
 
@@ -219,11 +220,11 @@ export class ClinicalTransactions {
       // Update sessions to remove client reference (keep for audit trail)
       await tx
         .update(sessions)
-        .set({ 
+        .set({
           status: 'cancelled',
           notes: 'Client data deleted',
           updatedAt: new Date()
-        })
+        } as any)
         .where(eq(sessions.clientId, clientId));
 
       // Finally delete client
@@ -264,7 +265,7 @@ export class ClinicalTransactions {
           status: 'deleted',
           deletedAt: new Date(),
           updatedAt: new Date()
-        })
+        } as any)
         .where(eq(clients.id, clientId))
         .returning();
 
@@ -275,7 +276,7 @@ export class ClinicalTransactions {
           status: 'cancelled',
           notes: 'Client deactivated',
           updatedAt: new Date()
-        })
+        } as any)
         .where(and(
           eq(sessions.clientId, clientId),
           eq(sessions.status, 'scheduled')
@@ -328,7 +329,7 @@ export class ClinicalTransactions {
           progressNoteStatus: 'pending',
           createdAt: new Date(),
           updatedAt: new Date(),
-        })
+        } as any)
         .returning();
 
       // 3. Create progress note placeholder
@@ -344,7 +345,7 @@ export class ClinicalTransactions {
           isPlaceholder: true,
           createdAt: new Date(),
           updatedAt: new Date(),
-        })
+        } as any)
         .returning();
 
       return {

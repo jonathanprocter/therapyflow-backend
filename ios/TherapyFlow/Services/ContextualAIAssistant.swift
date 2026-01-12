@@ -657,6 +657,15 @@ class ContextualAIAssistant: ObservableObject {
         - If asked about availability, check the calendar events across all sources
         - Be proactive in offering relevant insights from the data
         - If you genuinely don't have certain information, say so clearly but offer what you do have
+
+        --- FORMATTING ---
+        IMPORTANT: Always respond in plain text only. Do NOT use any markdown formatting such as:
+        - No headers (# or ##)
+        - No bold (**text**) or italic (*text*)
+        - No bullet points or numbered lists with special characters
+        - No code blocks or backticks
+        - No links or special formatting
+        Use natural paragraph breaks and plain text formatting only.
         """
 
         return prompt
@@ -674,6 +683,8 @@ class ContextualAIAssistant: ObservableObject {
 
         Be conversational, warm, and professional. Provide specific, actionable information.
         When discussing clients, use their names and reference specific details from their records.
+
+        FORMATTING: Always respond in plain text only. Do NOT use markdown formatting (no headers, bold, italic, bullets, code blocks, or links). Use natural paragraph breaks only.
 
         Current screen context: \(currentContext.displayName)
         """

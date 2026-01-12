@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Calendar } from '@/components/Calendar';
 import { SessionCard } from '@/components/SessionCard';
-import { Settings, Plus } from 'lucide-react';
+import { Settings, Plus, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Mock data - replace with real data

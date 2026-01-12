@@ -35,6 +35,8 @@ interface ClinicalEntity {
 
 interface ClinicalConnection {
   id: string;
+  fromEntityId: string;
+  toEntityId: string;
   relationshipType: string;
   strength: number;
   frequency: number;

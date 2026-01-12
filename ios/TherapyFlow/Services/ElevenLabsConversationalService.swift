@@ -47,7 +47,11 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
     // API Configuration
     private let elevenLabsBaseURL = "https://api.elevenlabs.io/v1"
     private var apiKey: String {
-        // Check keychain for ElevenLabs key
+        // Use unified IntegrationsService for ElevenLabs key retrieval
+        if let key = IntegrationsService.shared.getElevenLabsAPIKey(), !key.isEmpty {
+            return key
+        }
+        // Fall back to direct keychain check (for backwards compatibility)
         if let data = try? KeychainService.shared.retrieve(key: "com.therapyflow.elevenlabs.apikey"),
            let key = String(data: data, encoding: .utf8), !key.isEmpty {
             return key
@@ -93,7 +97,8 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
         speechRecognizer?.delegate = self
         checkAuthorization()
         setupWakeWordIntegration()
-        isAPIKeyConfigured = !apiKey.isEmpty
+        // Check both IntegrationsService and direct keychain for API key
+        isAPIKeyConfigured = IntegrationsService.shared.hasElevenLabsKey() || !apiKey.isEmpty
     }
 
     private func setupWakeWordIntegration() {
@@ -227,24 +232,19 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
 
     // MARK: - Save ElevenLabs API Key
     func saveAPIKey(_ key: String) throws {
-        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedKey.isEmpty, let data = trimmedKey.data(using: .utf8) else {
-            throw NSError(domain: "ElevenLabs", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid API key format"])
-        }
-        try KeychainService.shared.save(key: "com.therapyflow.elevenlabs.apikey", data: data)
-        guard let saved = try KeychainService.shared.retrieve(key: "com.therapyflow.elevenlabs.apikey"),
-              String(data: saved, encoding: .utf8) == trimmedKey else {
-            throw NSError(domain: "ElevenLabs", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to verify saved API key"])
-        }
+        // Use unified IntegrationsService for key storage
+        try IntegrationsService.shared.configureElevenLabs(apiKey: key)
         isAPIKeyConfigured = true
     }
 
     func hasAPIKey() -> Bool {
-        return isAPIKeyConfigured || !apiKey.isEmpty
+        return isAPIKeyConfigured || IntegrationsService.shared.hasElevenLabsKey() || !apiKey.isEmpty
     }
 
     func removeAPIKey() throws {
-        try KeychainService.shared.delete(key: "com.therapyflow.elevenlabs.apikey")
+        IntegrationsService.shared.removeElevenLabsConfiguration()
+        // Also remove from direct keychain for backwards compatibility
+        try? KeychainService.shared.delete(key: "com.therapyflow.elevenlabs.apikey")
         isAPIKeyConfigured = false
     }
 
@@ -580,6 +580,14 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
         You help therapists with clinical documentation, scheduling, client insights, and practice management.
         Be conversational, warm, and professional. Provide concise but helpful responses.
         You have full access to the practice data provided in the context.
+
+        IMPORTANT: Always respond in plain text only. Do NOT use any markdown formatting such as:
+        - No headers (# or ##)
+        - No bold (**text**) or italic (*text*)
+        - No bullet points or numbered lists with special characters
+        - No code blocks or backticks
+        - No links or special formatting
+        Keep responses natural and conversational, suitable for text-to-speech.
         """
 
         // Route to appropriate LLM

@@ -562,114 +562,27 @@ export const noteEmbeddings = pgTable("note_embeddings", {
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertClientSchema = createInsertSchema(clients).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertSessionSchema = createInsertSchema(sessions).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertProgressNoteSchema = createInsertSchema(progressNotes).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertCaseConceptualizationSchema = createInsertSchema(caseConceptualizations).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertTreatmentPlanSchema = createInsertSchema(treatmentPlans).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertAllianceScoreSchema = createInsertSchema(allianceScores).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertDocumentSchema = createInsertSchema(documents).omit({
-  id: true,
-  uploadedAt: true,
-});
-
-export const insertAiInsightSchema = createInsertSchema(aiInsights).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertTranscriptBatchSchema = createInsertSchema(transcriptBatches).omit({
-  id: true,
-  uploadedAt: true,
-});
-
-export const insertTranscriptFileSchema = createInsertSchema(transcriptFiles).omit({
-  id: true,
-  uploadedAt: true,
-});
-
-export const insertLongitudinalRecordSchema = createInsertSchema(longitudinalRecords).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertJobRunSchema = createInsertSchema(jobRuns).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertDocumentTextVersionSchema = createInsertSchema(documentTextVersions).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertAssessmentSchema = createInsertSchema(assessments).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertClientAiTagsSchema = createInsertSchema(clientAiTags).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertSessionAiTagsSchema = createInsertSchema(sessionAiTags).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertCalendarSyncHistorySchema = createInsertSchema(calendarSyncHistory).omit({
-  id: true,
-});
-
-export const insertCalendarEventAliasSchema = createInsertSchema(calendarEventAliases).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertOAuthTokensSchema = createInsertSchema(oauthTokens).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Insert schemas - id, createdAt, updatedAt have defaults so they're already optional
+export const insertUserSchema = createInsertSchema(users);
+export const insertClientSchema = createInsertSchema(clients);
+export const insertSessionSchema = createInsertSchema(sessions);
+export const insertProgressNoteSchema = createInsertSchema(progressNotes);
+export const insertCaseConceptualizationSchema = createInsertSchema(caseConceptualizations);
+export const insertTreatmentPlanSchema = createInsertSchema(treatmentPlans);
+export const insertAllianceScoreSchema = createInsertSchema(allianceScores);
+export const insertDocumentSchema = createInsertSchema(documents);
+export const insertAiInsightSchema = createInsertSchema(aiInsights);
+export const insertTranscriptBatchSchema = createInsertSchema(transcriptBatches);
+export const insertTranscriptFileSchema = createInsertSchema(transcriptFiles);
+export const insertLongitudinalRecordSchema = createInsertSchema(longitudinalRecords);
+export const insertJobRunSchema = createInsertSchema(jobRuns);
+export const insertDocumentTextVersionSchema = createInsertSchema(documentTextVersions);
+export const insertAssessmentSchema = createInsertSchema(assessments);
+export const insertClientAiTagsSchema = createInsertSchema(clientAiTags);
+export const insertSessionAiTagsSchema = createInsertSchema(sessionAiTags);
+export const insertCalendarSyncHistorySchema = createInsertSchema(calendarSyncHistory);
+export const insertCalendarEventAliasSchema = createInsertSchema(calendarEventAliases);
+export const insertOAuthTokensSchema = createInsertSchema(oauthTokens);
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;

@@ -4,9 +4,7 @@
 // =============================================================================
 
 import { storage } from '../storage.js';
-const db = storage.db;
 import { eq, and, asc } from 'drizzle-orm';
-import { clinicalAI } from './clinicalAI.js';
 // Simplified audit logging for now
 const auditLog = async (action: string, userId: string, data: any) => {
   console.log(`[AUDIT] ${action} by ${userId}:`, data);

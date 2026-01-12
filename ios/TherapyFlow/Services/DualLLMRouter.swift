@@ -180,23 +180,74 @@ class DualLLMRouter: ObservableObject {
         let category = classifyTask(prompt, context: context)
         let preferredProvider = category.preferredProvider
 
+        // Check if ANY provider is available first
+        guard hasAnyProviderConfigured() else {
+            throw LLMError.apiKeyNotConfigured(provider: preferredProvider)
+        }
+
         // Check if preferred provider is available
         let actualProvider = selectProvider(preferred: preferredProvider)
 
         print("DualLLMRouter: Routing '\(category.description)' task to \(actualProvider.displayName)")
 
-        let response = try await executeWithProvider(
-            actualProvider,
-            prompt: prompt,
-            context: context,
-            systemPrompt: systemPrompt,
-            category: category
-        )
+        do {
+            let response = try await executeWithProvider(
+                actualProvider,
+                prompt: prompt,
+                context: context,
+                systemPrompt: systemPrompt,
+                category: category
+            )
 
-        // Update stats
-        updateStats(provider: actualProvider, tokensUsed: response.tokensUsed ?? 0)
+            // Update stats
+            updateStats(provider: actualProvider, tokensUsed: response.tokensUsed ?? 0)
 
-        return response
+            return response
+        } catch let error as LLMError {
+            // If the primary provider fails due to API error, try fallback
+            if case .apiError = error {
+                let fallback: AIProvider = actualProvider == .anthropic ? .openAI : .anthropic
+                if integrations.hasAPIKey(for: fallback) {
+                    print("DualLLMRouter: Primary provider \(actualProvider.displayName) failed, attempting fallback to \(fallback.displayName)")
+                    let response = try await executeWithProvider(
+                        fallback,
+                        prompt: prompt,
+                        context: context,
+                        systemPrompt: systemPrompt,
+                        category: category
+                    )
+                    updateStats(provider: fallback, tokensUsed: response.tokensUsed ?? 0)
+                    return response
+                }
+            }
+            throw error
+        }
+    }
+
+    /// Check if at least one AI provider is configured
+    func hasAnyProviderConfigured() -> Bool {
+        return integrations.hasAPIKey(for: .anthropic) || integrations.hasAPIKey(for: .openAI)
+    }
+
+    /// Check if both providers are configured for optimal dual routing
+    func hasBothProvidersConfigured() -> Bool {
+        return integrations.hasAPIKey(for: .anthropic) && integrations.hasAPIKey(for: .openAI)
+    }
+
+    /// Get configuration status message for UI
+    func getConfigurationStatus() -> String {
+        let hasAnthropic = integrations.hasAPIKey(for: .anthropic)
+        let hasOpenAI = integrations.hasAPIKey(for: .openAI)
+
+        if hasAnthropic && hasOpenAI {
+            return "Dual LLM mode active: Claude for clinical analysis, GPT-4 for quick queries"
+        } else if hasAnthropic {
+            return "Claude (Anthropic) configured. Add OpenAI key for optimal routing."
+        } else if hasOpenAI {
+            return "OpenAI configured. Add Claude key for better clinical analysis."
+        } else {
+            return "No AI providers configured. Add API keys in Settings > Integrations."
+        }
     }
 
     /// Force execution with a specific provider
@@ -217,20 +268,19 @@ class DualLLMRouter: ObservableObject {
 
     private func selectProvider(preferred: AIProvider) -> AIProvider {
         // Check if preferred provider has API key
-        let preferredKey = integrations.getAPIKey(for: preferred)
-        if !preferredKey.isEmpty {
+        if integrations.hasAPIKey(for: preferred) {
             return preferred
         }
 
         // Fall back to the other provider
         let fallback: AIProvider = preferred == .anthropic ? .openAI : .anthropic
-        let fallbackKey = integrations.getAPIKey(for: fallback)
-        if !fallbackKey.isEmpty {
+        if integrations.hasAPIKey(for: fallback) {
             print("DualLLMRouter: Preferred provider \(preferred.displayName) not configured, falling back to \(fallback.displayName)")
             return fallback
         }
 
-        // Default to preferred even if not configured (will fail gracefully)
+        // No providers configured - return preferred anyway (will throw proper error later)
+        print("DualLLMRouter: WARNING - No AI providers configured!")
         return preferred
     }
 
@@ -255,6 +305,14 @@ class DualLLMRouter: ObservableObject {
         You are an AI assistant for TherapyFlow, a mental health practice management application.
         You help therapists with clinical documentation, analysis, and practice management.
         Be professional, warm, and clinically accurate. Use evidence-based approaches.
+
+        IMPORTANT: Always respond in plain text only. Do NOT use any markdown formatting such as:
+        - No headers (# or ##)
+        - No bold (**text**) or italic (*text*)
+        - No bullet points or numbered lists with special characters
+        - No code blocks or backticks
+        - No links or special formatting
+        Use natural paragraph breaks and plain text formatting only.
         """
 
         var messages: [[String: String]] = []
@@ -333,6 +391,14 @@ class DualLLMRouter: ObservableObject {
         You are an AI assistant for TherapyFlow, a mental health practice management app.
         Provide concise, helpful responses for scheduling, data lookup, and quick queries.
         Be professional and efficient.
+
+        IMPORTANT: Always respond in plain text only. Do NOT use any markdown formatting such as:
+        - No headers (# or ##)
+        - No bold (**text**) or italic (*text*)
+        - No bullet points or numbered lists with special characters
+        - No code blocks or backticks
+        - No links or special formatting
+        Use natural paragraph breaks and plain text formatting only.
         """
 
         var messages: [[String: String]] = [

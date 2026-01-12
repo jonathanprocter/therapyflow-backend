@@ -7,14 +7,15 @@ import type { InsertProgressNote, ProgressNote } from '@shared/schema';
 export class EnhancedDatabaseStorage extends DatabaseStorage {
   async createProgressNote(note: InsertProgressNote): Promise<ProgressNote> {
     const createdNote = await super.createProgressNote(note);
+    const noteData = note as any;
 
-    if (note.content && !note.isPlaceholder) {
+    if (noteData.content && !noteData.isPlaceholder) {
       try {
         await autoTagger.tagContent(
-          note.content,
-          note.sessionId || '',
-          note.clientId,
-          note.therapistId
+          noteData.content,
+          noteData.sessionId || '',
+          noteData.clientId,
+          noteData.therapistId
         );
       } catch (error) {
         console.error('Error auto-tagging progress note:', error);
@@ -26,11 +27,12 @@ export class EnhancedDatabaseStorage extends DatabaseStorage {
 
   async updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote> {
     const updatedNote = await super.updateProgressNote(id, note);
+    const noteData = note as any;
 
-    if (note.content && updatedNote.sessionId && !updatedNote.isPlaceholder) {
+    if (noteData.content && updatedNote.sessionId && !updatedNote.isPlaceholder) {
       try {
         await autoTagger.tagContent(
-          note.content,
+          noteData.content,
           updatedNote.sessionId,
           updatedNote.clientId,
           updatedNote.therapistId

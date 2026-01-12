@@ -156,9 +156,11 @@ export class EnhancedDocumentProcessor {
         if (filenameClient && filenameDate && filenameDate.confidence > 80) {
           console.log('✅ Using filename-based data for scanned/image PDF');
           return {
+            success: true,
+            confidence: Math.floor((filenameDate.confidence + (filenameClient ? 95 : 0)) / 2) / 100,
+            needsManualReview: true,
             rawText: '',
-            cleanedText: '',
-            extractedText: `[SCANNED DOCUMENT - TEXT NOT EXTRACTABLE]\n\nFilename: ${fileName}\nClient: ${filenameClient}\nSession Date: ${filenameDate.date.toISOString().split('T')[0]}\n\nThis appears to be a scanned image or password-protected PDF where text extraction is not possible. Clinical data has been extracted from the filename.`,
+            cleanedText: `[SCANNED DOCUMENT - TEXT NOT EXTRACTABLE]\n\nFilename: ${fileName}\nClient: ${filenameClient}\nSession Date: ${filenameDate.date.toISOString().split('T')[0]}\n\nThis appears to be a scanned image or password-protected PDF where text extraction is not possible. Clinical data has been extracted from the filename.`,
             extractedData: {
               clientName: filenameClient,
               sessionDate: filenameDate.date,

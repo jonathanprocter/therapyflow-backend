@@ -66,7 +66,7 @@ export async function enqueueJob(
     retries: job.retries,
     maxRetries: job.maxRetries,
     therapistId: job.therapistId,
-  });
+  } as any);
   processQueue().catch((error) => {
     console.error("[JOB_QUEUE] Failed to process queue:", error);
   });

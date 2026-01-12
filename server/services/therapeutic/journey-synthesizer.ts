@@ -55,23 +55,33 @@ export class JourneySynthesizer {
   }
 
   private async getSessionTags(clientId: string, startDate?: Date, endDate?: Date) {
-    const query = db
+    const conditions = [eq(sessions.clientId, clientId)];
+
+    if (startDate && endDate) {
+      conditions.push(between(sessions.scheduledAt, startDate, endDate));
+    }
+
+    return await db
       .select({
         tags: sessionTags,
         sessionDate: sessions.scheduledAt,
       })
       .from(sessionTags)
       .innerJoin(sessions, eq(sessionTags.sessionId, sessions.id))
-      .where(eq(sessions.clientId, clientId));
-
-    return await query;
+      .where(and(...conditions));
   }
 
   private async getSessionInsights(clientId: string, startDate?: Date, endDate?: Date) {
+    const conditions = [eq(sessionInsights.clientId, clientId)];
+
+    if (startDate && endDate) {
+      conditions.push(between(sessionInsights.createdAt, startDate, endDate));
+    }
+
     return await db
       .select()
       .from(sessionInsights)
-      .where(eq(sessionInsights.clientId, clientId))
+      .where(and(...conditions))
       .orderBy(desc(sessionInsights.createdAt));
   }
 

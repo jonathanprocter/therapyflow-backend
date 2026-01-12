@@ -102,8 +102,8 @@ export class ExportService {
       },
       clientInfo: {
         name: client?.name || 'Unknown Client',
-        age: client?.dateOfBirth ? this.calculateAge(client.dateOfBirth) : 'Unknown',
-        primaryConcerns: client?.primaryConcerns || 'Not documented',
+        age: client?.dateOfBirth ? this.calculateAge(client.dateOfBirth.toISOString()) : 'Unknown',
+        primaryConcerns: (client as any)?.primaryConcerns || 'Not documented',
         contactInfo: {
           email: client?.email || 'Not provided',
           phone: client?.phone || 'Not provided'

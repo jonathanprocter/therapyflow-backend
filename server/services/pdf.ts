@@ -72,14 +72,13 @@ export async function parsePDF(documentId: string) {
     
   } catch (error) {
     console.warn('⚠️ Enhanced processing failed, trying basic extraction:', error);
-    
+
     // Fallback to basic extraction using the buffer data
     try {
-      const data = Buffer.from(bufferArray);
       text = cleanFallback(data);
       qualityScore = text.length > 100 ? 40 : 10;
       meta = { method: "fallback", error: String(error) };
-      
+
       if (text.length < 50) {
         throw new Error("All extraction methods failed - document appears corrupted");
       }

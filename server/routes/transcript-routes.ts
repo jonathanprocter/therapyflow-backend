@@ -147,9 +147,9 @@ async function processTranscriptBatch(batchId: string, fileBuffers?: { [filename
 
 export function registerTranscriptRoutes(app: Express): void {
   // Get all transcript batches for a therapist
-  app.get('/api/transcripts/batches', async (req, res) => {
+  app.get('/api/transcripts/batches', async (req: any, res) => {
     try {
-      const therapistId = 'dr-jonathan-procter'; // Mock therapist ID
+      const therapistId = req.therapistId;
       const batches = await storage.getTranscriptBatches(therapistId);
       res.json(batches);
     } catch (error) {
@@ -179,9 +179,9 @@ export function registerTranscriptRoutes(app: Express): void {
   });
 
   // Create a new transcript batch and upload files
-  app.post('/api/transcripts/batches', upload.array('files', 500), async (req, res) => {
+  app.post('/api/transcripts/batches', upload.array('files', 500), async (req: any, res) => {
     try {
-      const therapistId = 'dr-jonathan-procter'; // Mock therapist ID
+      const therapistId = req.therapistId;
       const { batchName } = req.body;
       const files = req.files as Express.Multer.File[];
 
@@ -275,9 +275,9 @@ export function registerTranscriptRoutes(app: Express): void {
   });
 
   // Get processing statistics for visualization
-  app.get('/api/transcripts/stats', async (req, res) => {
+  app.get('/api/transcripts/stats', async (req: any, res) => {
     try {
-      const therapistId = 'dr-jonathan-procter'; // Mock therapist ID
+      const therapistId = req.therapistId;
       const batches = await storage.getTranscriptBatches(therapistId);
       
       const stats = {
@@ -296,9 +296,9 @@ export function registerTranscriptRoutes(app: Express): void {
   });
 
   // Get files that need manual review
-  app.get('/api/transcripts/review', async (req, res) => {
+  app.get('/api/transcripts/review', async (req: any, res) => {
     try {
-      const therapistId = 'dr-jonathan-procter'; // Mock therapist ID
+      const therapistId = req.therapistId;
       const files = await storage.getTranscriptFilesForReview(therapistId);
       res.json(files);
     } catch (error) {
@@ -382,10 +382,10 @@ export function registerTranscriptRoutes(app: Express): void {
   });
 
   // Get processing statistics
-  app.get('/api/transcripts/stats', async (req, res) => {
+  app.get('/api/transcripts/stats', async (req: any, res) => {
     try {
-      const therapistId = 'dr-jonathan-procter'; // Mock therapist ID
-      
+      const therapistId = req.therapistId;
+
       // You could implement these queries in storage for better performance
       const [batches, reviewFiles] = await Promise.all([
         storage.getTranscriptBatches(therapistId),
