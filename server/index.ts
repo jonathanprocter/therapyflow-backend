@@ -19,51 +19,81 @@ import { pdfService, getPdfServiceStatus } from './services/pdfService';
 import { reconcileCalendar } from './services/calendarReconciliation';
 import { initializeRealtimeVoice, getRealtimeVoiceService } from './services/realtimeVoice';
 
-// Global error handlers for unhandled promises and exceptions
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+// Error tracking for monitoring
+const errorCounts = new Map<string, { count: number; lastSeen: Date }>();
+const MAX_ERROR_LOG_INTERVAL_MS = 60000; // Only log same error once per minute
 
-  // Check if it's a recoverable error and handle gracefully
-  if (reason && typeof reason === 'object') {
-    const reasonStr = String(reason);
-    // Don't crash on Google Calendar, database, or network errors
-    if (reasonStr.includes('Google') ||
-        reasonStr.includes('calendar') ||
-        reasonStr.includes('oauth') ||
-        reasonStr.includes('neon') ||
-        reasonStr.includes('database') ||
-        reasonStr.includes('ECONNREFUSED') ||
-        reasonStr.includes('timeout')) {
-      console.log('Recoverable error - continuing operation');
-      return;
-    }
+function categorizeError(errorStr: string): { category: string; isRecoverable: boolean } {
+  const lowerError = errorStr.toLowerCase();
+
+  if (lowerError.includes('google') || lowerError.includes('calendar') || lowerError.includes('oauth')) {
+    return { category: 'google-calendar', isRecoverable: true };
+  }
+  if (lowerError.includes('neon') || lowerError.includes('database') || lowerError.includes('@neondatabase')) {
+    return { category: 'database', isRecoverable: true };
+  }
+  if (lowerError.includes('econnrefused') || lowerError.includes('timeout') || lowerError.includes('websocket')) {
+    return { category: 'network', isRecoverable: true };
+  }
+  if (lowerError.includes('errorevent') || lowerError.includes('getter')) {
+    return { category: 'internal-api', isRecoverable: true };
   }
 
-  // Don't crash the process for other errors, just log them
+  return { category: 'unknown', isRecoverable: false };
+}
+
+function shouldLogError(errorKey: string): boolean {
+  const now = new Date();
+  const existing = errorCounts.get(errorKey);
+
+  if (!existing) {
+    errorCounts.set(errorKey, { count: 1, lastSeen: now });
+    return true;
+  }
+
+  existing.count++;
+  const timeSinceLastLog = now.getTime() - existing.lastSeen.getTime();
+
+  if (timeSinceLastLog >= MAX_ERROR_LOG_INTERVAL_MS) {
+    console.warn(`[Error Monitor] ${errorKey} occurred ${existing.count} times in the last ${Math.round(timeSinceLastLog / 1000)}s`);
+    existing.count = 0;
+    existing.lastSeen = now;
+    return true;
+  }
+
+  return false;
+}
+
+// Global error handlers for unhandled promises and exceptions
+process.on('unhandledRejection', (reason, promise) => {
+  const reasonStr = String(reason);
+  const { category, isRecoverable } = categorizeError(reasonStr);
+  const errorKey = `rejection:${category}`;
+
+  if (shouldLogError(errorKey)) {
+    console.error(`[${new Date().toISOString()}] Unhandled Rejection (${category}):`, reasonStr.substring(0, 200));
+  }
+
+  if (!isRecoverable) {
+    console.error('[Error Monitor] Non-recoverable rejection detected - full details:', reason);
+  }
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error?.message || error);
-
-  // Check if it's a recoverable error - don't crash on these
-  const errorMsg = error?.message || '';
   const errorStr = String(error);
+  const errorMsg = error?.message || '';
+  const { category, isRecoverable } = categorizeError(errorStr + ' ' + errorMsg);
+  const errorKey = `exception:${category}`;
 
-  if (errorMsg.includes('Google') ||
-      errorMsg.includes('calendar') ||
-      errorMsg.includes('ErrorEvent') ||
-      errorMsg.includes('getter') ||
-      errorMsg.includes('neon') ||
-      errorMsg.includes('WebSocket') ||
-      errorStr.includes('ErrorEvent') ||
-      errorStr.includes('@neondatabase')) {
-    console.log('Database/API connection error - server continuing');
-    return;
+  if (shouldLogError(errorKey)) {
+    console.error(`[${new Date().toISOString()}] Uncaught Exception (${category}):`, errorMsg || errorStr.substring(0, 200));
   }
 
-  // Only exit on truly fatal errors
-  console.error('Fatal error - exiting');
-  process.exit(1);
+  if (!isRecoverable) {
+    console.error('[Error Monitor] Fatal uncaught exception - full stack:', error);
+    console.error('[Error Monitor] Exiting process due to unrecoverable error');
+    process.exit(1);
+  }
 });
 
 const app = express();
@@ -188,22 +218,31 @@ app.get("/api/health/routes", (req, res) => {
   });
 });
 
-// Debug endpoint to check database connection
+// Debug endpoint to check database connection - DEVELOPMENT ONLY
 app.get("/api/debug/db", async (req, res) => {
+  // Security: Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: "Not found" });
+  }
+
   try {
     const dbUrl = process.env.DATABASE_URL || "NOT SET";
-    // Mask password for security
-    const maskedUrl = dbUrl.replace(/:[^:@]+@/, ':****@');
+    // Mask password and sensitive parts for security
+    const maskedUrl = dbUrl
+      .replace(/:[^:@]+@/, ':****@')  // Mask password
+      .replace(/\?.*$/, '');  // Remove query params which might contain secrets
+
+    // Only show host, no other connection details
     const hostMatch = dbUrl.match(/@([^:/]+)/);
     const dbHost = hostMatch ? hostMatch[1] : "unknown";
 
     res.json({
       host: dbHost,
-      maskedUrl: maskedUrl,
+      environment: process.env.NODE_ENV || 'development',
       timestamp: new Date().toISOString()
     });
   } catch (e: any) {
-    res.status(500).json({ error: String(e) });
+    res.status(500).json({ error: "Database check failed" });  // Don't expose error details
   }
 });
 

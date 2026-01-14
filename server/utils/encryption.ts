@@ -1,11 +1,21 @@
 import * as crypto from 'crypto';
 
 // IMPORTANT: Set this in your environment variables
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || (() => {
-  // Generate a temporary key for development if not set
-  console.warn('[ENCRYPTION] No ENCRYPTION_KEY found, generating temporary key for development');
-  return crypto.randomBytes(32).toString('hex');
-})();
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+let ENCRYPTION_KEY: string;
+
+if (process.env.ENCRYPTION_KEY) {
+  ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+  console.log('[ENCRYPTION] Using configured encryption key');
+} else if (IS_PRODUCTION) {
+  console.error('[ENCRYPTION] CRITICAL: No ENCRYPTION_KEY in production! Data encryption will fail.');
+  ENCRYPTION_KEY = ''; // Will cause encryption to fail safely rather than use weak key
+} else {
+  // Generate a temporary key for development only
+  console.warn('[ENCRYPTION] WARNING: No ENCRYPTION_KEY found, generating temporary key for development');
+  console.warn('[ENCRYPTION] Data encrypted with this key will be LOST on server restart!');
+  ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
+}
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
@@ -90,17 +100,27 @@ export class ClinicalEncryption {
           let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
           decrypted += decipher.final('utf8');
           return decrypted;
-        } catch {
-          // If legacy decryption fails, return as-is (might be unencrypted)
+        } catch (legacyError) {
+          // If legacy decryption fails, log and return as-is (might be unencrypted)
+          console.warn('[ENCRYPTION] Legacy decryption failed, treating as plaintext:',
+            legacyError instanceof Error ? legacyError.message : 'Unknown error');
           return encryptedData;
         }
       }
 
-      // Return as-is if not encrypted (legacy unencrypted data)
+      // Data doesn't match encryption format - likely unencrypted plaintext
+      // Only log in development to avoid noise
+      if (!IS_PRODUCTION && encryptedData.length > 0) {
+        console.debug('[ENCRYPTION] Data does not appear to be encrypted, returning as-is');
+      }
       return encryptedData;
     } catch (error) {
-      console.error('[ENCRYPTION] Failed to decrypt clinical data:', error);
-      return encryptedData; // Return original data if decryption fails
+      console.error('[ENCRYPTION] Decryption error:', error instanceof Error ? error.message : 'Unknown error');
+      // In production, it's safer to throw than return potentially corrupted data
+      if (IS_PRODUCTION) {
+        throw new Error('Decryption failed - cannot safely return data');
+      }
+      return encryptedData; // Return original data in development for easier debugging
     }
   }
 

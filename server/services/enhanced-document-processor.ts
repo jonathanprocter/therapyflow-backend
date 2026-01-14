@@ -1052,9 +1052,13 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
         // Extract JSON from response
         const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          const analysisResult = JSON.parse(jsonMatch[0]);
-          console.log('✅ Anthropic analysis completed successfully');
-          return analysisResult;
+          try {
+            const analysisResult = JSON.parse(jsonMatch[0]);
+            console.log('✅ Anthropic analysis completed successfully');
+            return analysisResult;
+          } catch (parseError) {
+            console.warn('⚠️ Failed to parse JSON from Anthropic response:', parseError);
+          }
         }
       }
     } catch (error) {
@@ -1857,14 +1861,18 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
         const analysisText = content.text;
         const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          const result = JSON.parse(jsonMatch[0]);
-          return {
-            ...result,
-            confidence: Math.min(100, (result.confidence || 0) + 15)
-          };
+          try {
+            const result = JSON.parse(jsonMatch[0]);
+            return {
+              ...result,
+              confidence: Math.min(100, (result.confidence || 0) + 15)
+            };
+          } catch (parseError) {
+            console.warn('Failed to parse enhanced AI response JSON:', parseError);
+          }
         }
       }
-      
+
       return {
         ...previousAnalysis,
         confidence: Math.min(100, previousAnalysis.confidence + 10)

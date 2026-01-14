@@ -1,20 +1,22 @@
 import OpenAI from "openai";
 import Anthropic from '@anthropic-ai/sdk';
 import { anthropicService } from "./anthropicService";
+import { stripMarkdownCodeBlocks, safeJsonParse } from "../utils/text-utils";
 
 /**
- * Strip markdown code blocks from AI response text before JSON parsing.
- * Anthropic sometimes wraps JSON responses in ```json ... ``` markers.
+ * Safely extract content from OpenAI chat completion response
  */
-function stripMarkdownCodeBlocks(text: string): string {
-  if (!text) return text;
-  // Remove ```json or ``` markers at start and end
-  let cleaned = text.trim();
-  // Match opening code fence with optional language identifier
-  cleaned = cleaned.replace(/^```(?:json|JSON)?\s*\n?/i, '');
-  // Match closing code fence
-  cleaned = cleaned.replace(/\n?```\s*$/i, '');
-  return cleaned.trim();
+function getOpenAIContent(response: OpenAI.Chat.Completions.ChatCompletion): string | null {
+  if (!response?.choices?.length) {
+    console.warn('[AI Service] OpenAI response has no choices');
+    return null;
+  }
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    console.warn('[AI Service] OpenAI response choice has no content');
+    return null;
+  }
+  return content;
 }
 
 // Validate API keys at startup
@@ -160,7 +162,8 @@ export class AIService {
         response_format: { type: "json_object" },
       });
 
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+      const responseContent = getOpenAIContent(response);
+      const result = safeJsonParse<{ tags?: ClinicalTag[] }>(responseContent, { tags: [] });
       return result.tags || [];
     } catch (error) {
       console.error("OpenAI error generating clinical tags, trying Anthropic fallback:", error);
@@ -208,7 +211,8 @@ export class AIService {
         response_format: { type: "json_object" },
       });
 
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+      const responseContent = getOpenAIContent(response);
+      const result = safeJsonParse<{ insights?: ClinicalInsight[] }>(responseContent, { insights: [] });
       return result.insights || [];
     } catch (error) {
       console.error("OpenAI error generating clinical insights, trying Anthropic fallback:", error);
@@ -269,7 +273,8 @@ export class AIService {
         response_format: { type: "json_object" },
       });
 
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+      const responseContent = getOpenAIContent(response);
+      const result = safeJsonParse<Partial<SessionPreparation>>(responseContent, {});
       return {
         keyTopics: result.keyTopics || [],
         therapeuticQuestions: result.therapeuticQuestions || [],
@@ -326,7 +331,16 @@ export class AIService {
         response_format: { type: "json_object" },
       });
 
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+      const responseContent = getOpenAIContent(response);
+      interface CaseConceptualization {
+        presenting?: string;
+        predisposing?: string;
+        precipitating?: string;
+        perpetuating?: string;
+        protective?: string;
+        formulation?: string;
+      }
+      const result = safeJsonParse<CaseConceptualization>(responseContent, {});
       return {
         presenting: result.presenting || "",
         predisposing: result.predisposing || "",

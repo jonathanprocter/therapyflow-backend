@@ -28,9 +28,23 @@ registerJobHandler("smart-process", async (job) => {
     let buffer: Buffer | null = null;
     if (doc.filePath) {
       const resolvedPath = path.resolve(process.cwd(), doc.filePath.replace(/^\//, ""));
-      buffer = await fs.readFile(resolvedPath);
+      try {
+        // Check if file exists before attempting to read
+        await fs.access(resolvedPath);
+        buffer = await fs.readFile(resolvedPath);
+      } catch (fileError) {
+        console.error(`[Documents] Failed to read file at ${resolvedPath}:`, fileError instanceof Error ? fileError.message : 'Unknown error');
+        results.push({ documentId: id, error: "file not found or inaccessible" });
+        continue;
+      }
     } else if ((doc.metadata as any)?.buffer) {
-      buffer = Buffer.from((doc.metadata as any).buffer as number[]);
+      try {
+        buffer = Buffer.from((doc.metadata as any).buffer as number[]);
+      } catch (bufferError) {
+        console.error(`[Documents] Failed to create buffer from metadata:`, bufferError instanceof Error ? bufferError.message : 'Unknown error');
+        results.push({ documentId: id, error: "invalid buffer data in metadata" });
+        continue;
+      }
     }
 
     if (!buffer) {
