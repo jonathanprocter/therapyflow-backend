@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./vite";
 import { integrateTherapeuticFeatures } from "./integrate-therapeutic";
@@ -103,6 +104,9 @@ const app = express();
 // 50MB for URL-encoded (allows file uploads)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+
+// Serve uploaded documents for previews/downloads
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 // Apply standard rate limiting to all API endpoints
 app.use('/api', standardRateLimit);

@@ -205,6 +205,43 @@ export async function processDocumentWithAI(documentId: string) {
     confidence
   };
 
+  // Persist AI results for auditability and downstream linking
+  try {
+    const aiRecord = await storage.createAiDocumentResult({
+      documentId,
+      promptId: PROMPT_ID,
+      model,
+      entities,
+      extractions,
+      summary,
+      recommendations,
+      confidence: Math.round(confidence * 100),
+    });
+
+    if (doc?.id) {
+      const existingMetadata = (doc.metadata && typeof doc.metadata === "object")
+        ? (doc.metadata as Record<string, unknown>)
+        : {};
+      await storage.updateDocument(doc.id, {
+        metadata: {
+          ...existingMetadata,
+          aiResultId: aiRecord.id,
+          aiAnalysis: {
+            entities,
+            extractions,
+            summary,
+            recommendations,
+            confidence: Math.round(confidence * 100),
+            model,
+            analyzedAt: new Date().toISOString(),
+          },
+        },
+      });
+    }
+  } catch (error) {
+    console.warn("[AI] Failed to persist AI document results:", error);
+  }
+
   // upsert appointment link if entities.appointment exists and doc has clientId
   // Temporarily disabled - would use storage.upsertAppointment
   // if (doc.clientId && entities.appointment?.date) {

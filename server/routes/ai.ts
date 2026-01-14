@@ -23,7 +23,7 @@ aiRouter.post("/process-document", async (req, res) => {
       extractions: result.saved.extractions,
       summary: result.saved.summary,
       recommendations: result.saved.recommendations,
-      confidence: (result.saved.confidence || 0) / 100,
+      confidence: result.saved.confidence ?? 0,
       semanticEdges: result.edgesCount
     });
   } catch (e: any) {
@@ -34,13 +34,11 @@ aiRouter.post("/process-document", async (req, res) => {
 
 aiRouter.get("/results/:clientId", async (req, res) => {
   try {
-    const { clientId } = req.params;
+    const clientId = req.params.clientId?.trim();
     const { from, to } = req.query;
 
-    // Validate clientId format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(clientId)) {
-      return res.status(400).json({ error: "Invalid client ID format" });
+    if (!clientId) {
+      return res.status(400).json({ error: "clientId required" });
     }
 
     // Build query conditions

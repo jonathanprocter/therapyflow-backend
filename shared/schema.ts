@@ -571,6 +571,7 @@ export const insertCaseConceptualizationSchema = createInsertSchema(caseConceptu
 export const insertTreatmentPlanSchema = createInsertSchema(treatmentPlans);
 export const insertAllianceScoreSchema = createInsertSchema(allianceScores);
 export const insertDocumentSchema = createInsertSchema(documents);
+export const insertAiDocumentResultSchema = createInsertSchema(aiDocumentResults);
 export const insertAiInsightSchema = createInsertSchema(aiInsights);
 export const insertTranscriptBatchSchema = createInsertSchema(transcriptBatches);
 export const insertTranscriptFileSchema = createInsertSchema(transcriptFiles);
@@ -608,6 +609,9 @@ export type AllianceScore = typeof allianceScores.$inferSelect;
 
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type Document = typeof documents.$inferSelect;
+
+export type InsertAiDocumentResult = z.infer<typeof insertAiDocumentResultSchema>;
+export type AiDocumentResult = typeof aiDocumentResults.$inferSelect;
 
 export type InsertAiInsight = z.infer<typeof insertAiInsightSchema>;
 export type AiInsight = typeof aiInsights.$inferSelect;

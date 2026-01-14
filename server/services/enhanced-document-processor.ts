@@ -30,6 +30,7 @@ import path from 'path';
 import mammoth from 'mammoth';
 import { stripHtml } from 'string-strip-html';
 import { storage } from '../storage';
+import type { Document } from '@shared/schema';
 import { checkRiskEscalation } from './riskMonitor';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
@@ -226,6 +227,18 @@ export class EnhancedDocumentProcessor {
       }
       
       console.log(`📅 Date parsing result: ${parsedDate?.confidence || 0}/100`);
+
+      // Stage 4.5: Improve client name if AI returned "unknown" but name exists in content/title/filename
+      const improvedClientName = this.resolveClientName(
+        aiAnalysis.clientName,
+        cleanedText,
+        aiAnalysis.content,
+        fileName
+      );
+      if (improvedClientName && improvedClientName !== aiAnalysis.clientName) {
+        console.log(`🧭 Client name improved: "${aiAnalysis.clientName}" → "${improvedClientName}"`);
+        aiAnalysis.clientName = improvedClientName;
+      }
       
       // Stage 5: Enhanced Client Matching - prioritize filename extraction
       const filenameClientName = this.extractClientNameFromFilename(fileName);
@@ -345,7 +358,9 @@ export class EnhancedDocumentProcessor {
         extractionResult.text,
         progressNote.id,
         aiAnalysis,
-        documentId
+        documentId,
+        sessionMatch?.id,
+        parsedDate?.date
       );
       
       return {
@@ -1161,6 +1176,58 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
     }
     
     return null;
+  }
+
+  /**
+   * Extract client name from common title/header patterns in content
+   */
+  extractClientNameFromTitle(text: string): string | null {
+    if (!text) return null;
+
+    const titlePatterns = [
+      /progress\s+note\s+for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+      /clinical\s+progress\s+note\s+for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+      /session\s+with\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+      /client\s+name[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+      /title[:\s]+.*?for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+    ];
+
+    for (const pattern of titlePatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        const name = match[1].trim();
+        if (this.isValidClientName(name)) {
+          return name;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Resolve client name when AI returns "unknown" by re-scanning content and filename
+   */
+  resolveClientName(aiName?: string, cleanedText?: string, aiContent?: string, fileName?: string): string {
+    const normalized = (aiName || "").trim();
+    const looksUnknown = !normalized || /unknown/i.test(normalized);
+
+    if (!looksUnknown && this.isValidClientName(normalized)) {
+      return normalized;
+    }
+
+    const titleCandidate = this.extractClientNameFromTitle(aiContent || cleanedText || "");
+    if (titleCandidate) return titleCandidate;
+
+    const manualCandidate = this.extractClientNameManually(cleanedText || "");
+    if (manualCandidate && this.isValidClientName(manualCandidate)) {
+      return manualCandidate;
+    }
+
+    const filenameCandidate = fileName ? this.extractClientNameFromFilename(fileName) : null;
+    if (filenameCandidate) return filenameCandidate;
+
+    return normalized || 'Unknown Client';
   }
 
   /**
@@ -2280,8 +2347,10 @@ Return the same JSON structure but with enhanced clinical content and higher con
     extractedText: string,
     progressNoteId: string,
     aiAnalysis: ExtractedClinicalData,
-    documentId?: string
-  ): Promise<void> {
+    documentId?: string,
+    sessionId?: string,
+    sessionDate?: Date
+  ): Promise<Document> {
     // Clean the extracted text before saving
     const cleanedText = this.cleanTextForDatabase(extractedText);
     
@@ -2302,6 +2371,9 @@ Return the same JSON structure but with enhanced clinical content and higher con
       extractedText: cleanedText,
       fileSize: file.length,
       metadata: {
+        progressNoteId,
+        sessionId: sessionId || null,
+        sessionDate: sessionDate?.toISOString() || null,
         aiAnalysis: {
           documentType: aiAnalysis.documentType,
           themes: aiAnalysis.themes,
@@ -2316,11 +2388,40 @@ Return the same JSON structure but with enhanced clinical content and higher con
     };
 
     if (documentId) {
-      await storage.updateDocument(documentId, docPayload);
-      return;
+      const updated = await storage.updateDocument(documentId, docPayload);
+      await this.saveAiDocumentResult(updated.id, aiAnalysis);
+      return updated;
     }
 
-    await storage.createDocument(docPayload);
+    const created = await storage.createDocument(docPayload);
+    await this.saveAiDocumentResult(created.id, aiAnalysis);
+    return created;
+  }
+
+  private async saveAiDocumentResult(documentId: string, aiAnalysis: ExtractedClinicalData): Promise<void> {
+    try {
+      await storage.createAiDocumentResult({
+        documentId,
+        promptId: "enhanced_document_processor",
+        model: "multi-pass",
+        entities: {
+          clientName: aiAnalysis.clientName,
+          sessionDate: aiAnalysis.sessionDate,
+          sessionType: aiAnalysis.sessionType,
+        },
+        extractions: {
+          themes: aiAnalysis.themes,
+          emotions: aiAnalysis.emotions,
+          interventions: aiAnalysis.interventions,
+          nextSteps: aiAnalysis.nextSteps,
+        },
+        summary: aiAnalysis.content,
+        recommendations: aiAnalysis.nextSteps,
+        confidence: Math.round(aiAnalysis.confidence || 0),
+      });
+    } catch (error) {
+      console.warn("Failed to save AI document result:", error);
+    }
   }
 
   /**

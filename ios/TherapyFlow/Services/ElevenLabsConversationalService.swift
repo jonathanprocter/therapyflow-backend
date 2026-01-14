@@ -22,7 +22,12 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
     @Published private(set) var isAPIKeyConfigured = false
 
     // MARK: - Configuration
-    @Published var voiceId: String = "EXAVITQu4vr4xnSDxMaL" // Default: Sarah
+    private let voiceIdStorageKey = "elevenLabsSelectedVoiceId"
+    @Published var voiceId: String = "EXAVITQu4vr4xnSDxMaL" { // Default: Sarah
+        didSet {
+            UserDefaults.standard.set(voiceId, forKey: voiceIdStorageKey)
+        }
+    }
     @Published var autoSendOnSilence = true
     @Published var silenceThreshold: TimeInterval = 1.5 // seconds of silence before auto-send
     @Published var voiceEnabled = true
@@ -94,6 +99,9 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
     // MARK: - Initialization
     override private init() {
         super.init()
+        if let storedVoice = UserDefaults.standard.string(forKey: voiceIdStorageKey), !storedVoice.isEmpty {
+            voiceId = storedVoice
+        }
         speechRecognizer?.delegate = self
         checkAuthorization()
         setupWakeWordIntegration()
@@ -824,11 +832,15 @@ extension ElevenLabsConversationalService: AVAudioPlayerDelegate {
                     try? await Task.sleep(nanoseconds: 200_000_000)
                     self.stopListening()  // Stop barge-in listening
                     self.startListening()  // Start full listening with silence detection
+                    WakeWordDetector.shared.continueConversation()
                 }
             } else if speechWasInterrupted {
                 // Was interrupted - transition to full listening immediately
                 // The transcript should already have the user's interruption
                 self.startSilenceDetection()
+                if WakeWordDetector.shared.conversationMode == .activeConversation {
+                    WakeWordDetector.shared.continueConversation()
+                }
             }
         }
     }

@@ -3,6 +3,7 @@ import {
   treatmentPlans, allianceScores, documents, aiInsights, crossReferences,
   transcriptBatches, transcriptFiles, sessionPreps, longitudinalRecords,
   jobRuns, documentTextVersions, calendarSyncHistory, calendarEventAliases, oauthTokens,
+  aiDocumentResults,
   type User, type InsertUser, type Client, type InsertClient,
   type Session, type InsertSession, type ProgressNote, type InsertProgressNote,
   type CaseConceptualization, type InsertCaseConceptualization,
@@ -10,6 +11,7 @@ import {
   type AllianceScore, type InsertAllianceScore,
   type Document, type InsertDocument,
   type AiInsight, type InsertAiInsight,
+  type AiDocumentResult, type InsertAiDocumentResult,
   type TranscriptBatch, type InsertTranscriptBatch,
   type TranscriptFile, type InsertTranscriptFile,
   type LongitudinalRecord, type InsertLongitudinalRecord,
@@ -149,6 +151,11 @@ export interface IStorage {
   updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document>;
   getDocumentsByTherapist(therapistId: string): Promise<Document[]>;
   deleteDocument(id: string): Promise<Document | undefined>;
+  getDocumentsByProgressNoteId(progressNoteId: string): Promise<Document[]>;
+
+  // AI Document Results
+  createAiDocumentResult(result: InsertAiDocumentResult): Promise<AiDocumentResult>;
+  getAiDocumentResultsByDocumentIds(documentIds: string[]): Promise<AiDocumentResult[]>;
 
   // AI Insights
   getAiInsights(therapistId: string, limit?: number): Promise<AiInsight[]>;
@@ -767,6 +774,31 @@ export class DatabaseStorage implements IStorage {
 
     await db.delete(documents).where(eq(documents.id, id));
     return doc;
+  }
+
+  async getDocumentsByProgressNoteId(progressNoteId: string): Promise<Document[]> {
+    return await db
+      .select()
+      .from(documents)
+      .where(sql`${documents.metadata} ->> 'progressNoteId' = ${progressNoteId}`)
+      .orderBy(desc(documents.uploadedAt));
+  }
+
+  async createAiDocumentResult(result: InsertAiDocumentResult): Promise<AiDocumentResult> {
+    const [created] = await db
+      .insert(aiDocumentResults)
+      .values(result as any)
+      .returning();
+    return created;
+  }
+
+  async getAiDocumentResultsByDocumentIds(documentIds: string[]): Promise<AiDocumentResult[]> {
+    if (!documentIds.length) return [];
+    return await db
+      .select()
+      .from(aiDocumentResults)
+      .where(inArray(aiDocumentResults.documentId, documentIds))
+      .orderBy(desc(aiDocumentResults.createdAt));
   }
 
   async getAiInsights(therapistId: string, limit = 10): Promise<AiInsight[]> {

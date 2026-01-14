@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { clients, sessions, progressNotes, documents, sessionPreps, longitudinalRecords, treatmentPlans, allianceScores } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { aiService } from "./services/aiService";
 import { calendarService } from "./services/calendarService";
 import { pdfService } from "./services/pdfService";
@@ -643,9 +643,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const treatmentPlan = await storage.getTreatmentPlan(client.id);
       const notes = await storage.getProgressNotes(client.id);
-      const recentNotes = notes.slice(0, 5).map((note, idx) => {
+      const documents = await storage.getDocuments(client.id);
+      const noteIdSet = new Set(notes.map((note) => note.id));
+
+      const docsBySessionId = new Map<string, any[]>();
+      const docsByDate = new Map<string, any[]>();
+      for (const doc of documents) {
+        const metadata = (doc.metadata as Record<string, any>) || {};
+        const sessionIdFromDoc = metadata.sessionId || metadata.linkedSessionId;
+        const sessionDateFromDoc = metadata.sessionDate || metadata.appointmentDate;
+        if (sessionIdFromDoc) {
+          const list = docsBySessionId.get(sessionIdFromDoc) || [];
+          list.push(doc);
+          docsBySessionId.set(sessionIdFromDoc, list);
+        }
+        if (sessionDateFromDoc) {
+          const dateKey = new Date(sessionDateFromDoc).toISOString().split("T")[0];
+          const list = docsByDate.get(dateKey) || [];
+          list.push(doc);
+          docsByDate.set(dateKey, list);
+        }
+      }
+
+      const sessionDateKey = new Date(session.scheduledAt).toISOString().split("T")[0];
+      const recentNotes = notes
+        .filter((note) => new Date(note.sessionDate) <= new Date(session.scheduledAt))
+        .map((note, idx) => {
         const decrypted = safeDecrypt(note.content || "") || "";
         const soap = parseSoapSections(decrypted);
+        const sessionKey = note.sessionDate ? new Date(note.sessionDate).toISOString().split("T")[0] : "";
+        const linkedDocs = [
+          ...(note.sessionId ? docsBySessionId.get(note.sessionId) || [] : []),
+          ...(sessionKey ? docsByDate.get(sessionKey) || [] : []),
+        ];
         return {
           sessionDate: new Date(note.sessionDate).toISOString().split("T")[0],
           sessionNumber: idx + 1,
@@ -662,8 +692,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
           homeworkAssigned: [],
           interventionsUsed: note.aiTags || [],
           followUpItems: [],
+          linkedDocuments: linkedDocs.map((doc) => ({
+            id: doc.id,
+            fileName: doc.fileName,
+            fileType: doc.fileType,
+            summary: (doc.metadata as any)?.aiAnalysis?.summary || "",
+          }))
         };
       });
+
+      const docOnlyNotes = documents
+        .filter((doc) => {
+          const metadata = (doc.metadata as Record<string, any>) || {};
+          const progressNoteId = metadata.progressNoteId || metadata.linkedProgressNoteId;
+          if (progressNoteId && noteIdSet.has(progressNoteId)) {
+            return false;
+          }
+          const sessionDate = metadata.sessionDate || doc.uploadedAt;
+          return sessionDate ? new Date(sessionDate) <= new Date(session.scheduledAt) : true;
+        })
+        .map((doc) => {
+          const metadata = (doc.metadata as Record<string, any>) || {};
+          const sessionDate = metadata.sessionDate || doc.uploadedAt;
+          const dateKey = sessionDate ? new Date(sessionDate).toISOString().split("T")[0] : sessionDateKey;
+          const aiSummary = metadata.aiAnalysis?.summary || "";
+          const extractedText = doc.extractedText || "";
+          return {
+            sessionDate: dateKey,
+            sessionNumber: null,
+            subjective: aiSummary || extractedText.slice(0, 2000),
+            objective: "",
+            assessment: metadata.aiAnalysis?.clinicalNotes || "",
+            plan: "",
+            themes: metadata.aiAnalysis?.themes || [],
+            tonalAnalysis: "",
+            significantQuotes: [],
+            keywords: metadata.aiAnalysis?.themes || [],
+            riskLevel: (metadata.aiAnalysis?.riskLevel || "none") as any,
+            riskNotes: "",
+            homeworkAssigned: [],
+            interventionsUsed: metadata.aiAnalysis?.interventions || [],
+            followUpItems: [],
+            linkedDocuments: [
+              {
+                id: doc.id,
+                fileName: doc.fileName,
+                fileType: doc.fileType,
+                summary: aiSummary,
+              },
+            ],
+          };
+        });
+
+      const allPreviousNotes = [...recentNotes, ...docOnlyNotes]
+        .sort((a, b) => (a.sessionDate < b.sessionDate ? 1 : -1));
 
       const longitudinalRecord = await storage.getLatestLongitudinalRecord(client.id);
       const longitudinalContext = longitudinalRecord?.analysis
@@ -681,7 +763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           clinicalConsiderations: (client as any).clinicalConsiderations || [],
           medications: [],
         },
-        previousNotes: recentNotes,
+        previousNotes: allPreviousNotes,
         upcomingSessionDate: new Date(session.scheduledAt).toISOString().split("T")[0],
         includePatternAnalysis: true,
         longitudinalContext,
@@ -856,7 +938,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: note.content ? safeDecrypt(note.content) : null
       };
 
-      res.json(decryptedNote);
+      const linkedDocuments = await storage.getDocumentsByProgressNoteId(note.id);
+      const aiResults = await storage.getAiDocumentResultsByDocumentIds(linkedDocuments.map((doc) => doc.id));
+
+      res.json({
+        ...decryptedNote,
+        documents: linkedDocuments,
+        aiAnalysis: aiResults
+      });
     } catch (error) {
       console.error("Error fetching progress note:", error);
       res.status(500).json({ error: "Failed to fetch progress note" });
@@ -1363,7 +1452,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: noteContent,
         status: 'draft',
         riskLevel,
-        themes: aiAnalysis?.themes || [],
+        tags: aiAnalysis?.themes || [],
+        aiTags: aiAnalysis?.themes || [],
+        processingNotes: aiAnalysis?.summary || "Progress note created from document analysis",
         originalDocumentId: documentId,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -1372,9 +1463,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const progressNote = await storage.createProgressNote(progressNoteData);
 
       // Update document status to processed and link to note
+      const existingMetadata = (document.metadata && typeof document.metadata === 'object') ? document.metadata as Record<string, unknown> : {};
       await storage.updateDocument(documentId, {
-        status: 'processed',
-        linkedProgressNoteId: progressNote.id
+        metadata: {
+          ...existingMetadata,
+          progressNoteId: progressNote.id,
+          sessionDate: progressNote.sessionDate?.toISOString?.() || sessionDate || null
+        }
       });
 
       res.json({
@@ -2036,14 +2131,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const client = await storage.getClient(client_id);
           if (client) {
-            contextInfo = `Client: ${client.name}\nStatus: ${client.status}\n`;
-            const recentNotes = await storage.getProgressNotes(client_id);
-            if (recentNotes.length > 0) {
-              contextInfo += `Recent session themes: ${recentNotes.slice(0, 3).map(n => n.tags?.join(', ') || 'N/A').join('; ')}\n`;
-            }
+            const notes = await storage.getProgressNotes(client_id);
+            const documents = await storage.getDocuments(client_id);
+            const sessions = await storage.getSessions(client_id);
+            const decryptedNotes = notes.map(note => safeDecrypt(note.content || "") || "");
+            const docSummaries = documents.map(doc => {
+              const metadata = (doc.metadata as Record<string, any>) || {};
+              return metadata.aiAnalysis?.summary || doc.extractedText || "";
+            });
+
+            contextInfo = `Client: ${client.name}
+Status: ${client.status}
+Sessions: ${sessions.length}
+Documents: ${documents.length}
+Progress Notes: ${notes.length}
+
+All Notes:
+${decryptedNotes.join("\n---\n")}
+
+Documents:
+${docSummaries.join("\n---\n")}
+`;
           }
         } catch (e) {
           console.log('Could not load client context:', e);
+        }
+      } else if (include_context) {
+        try {
+          const clients = await storage.getClients(therapistId);
+          const allSessions = await storage.getAllHistoricalSessions(therapistId, true);
+          const allDocuments = await storage.getDocumentsByTherapist(therapistId);
+          const allNotes = await db
+            .select()
+            .from(progressNotes)
+            .where(eq(progressNotes.therapistId, therapistId))
+            .orderBy(desc(progressNotes.sessionDate));
+
+          contextInfo = `Practice Overview:
+Active clients: ${clients.filter(c => c.status === 'active').length}
+Total clients: ${clients.length}
+Total sessions: ${allSessions.length}
+Total documents: ${allDocuments.length}
+Total progress notes: ${allNotes.length}
+
+Clients:
+${clients.map(client => `- ${client.name} (${client.status})`).join("\n")}
+
+Recent Notes:
+${allNotes.slice(0, 50).map(note => safeDecrypt(note.content || "") || "").join("\n---\n")}
+`;
+        } catch (e) {
+          console.log("Could not load full practice context:", e);
         }
       }
 
@@ -2160,13 +2298,51 @@ ${contextInfo ? `\nCurrent context:\n${contextInfo}` : ''}`,
   // Voice assistant endpoint for iOS app with TTS support
   app.post("/api/voice/assistant", async (req: any, res) => {
     try {
-      const { query, voiceId = 'nova', context, includeTTS = true } = req.body;
+      const { query, voiceId, context, includeTTS = true } = req.body;
 
       if (!query || typeof query !== 'string') {
         return res.status(400).json({
           success: false,
           error: "Query is required"
         });
+      }
+
+      const preferences = await getAppSetting<Record<string, string>>("voice_preferences");
+      const storedVoiceId = preferences?.[req.therapistId] ?? "";
+      const effectiveVoiceId = voiceId || storedVoiceId || 'nova';
+
+      // Build full client context if provided
+      let contextInfo = "";
+      const clientId = context?.client_id;
+      if (clientId) {
+        try {
+          const client = await storage.getClient(clientId);
+          const notes = await storage.getProgressNotes(clientId);
+          const documents = await storage.getDocuments(clientId);
+          const sessions = await storage.getSessions(clientId);
+
+          const decryptedNotes = notes.map(note => safeDecrypt(note.content || "") || "");
+          const docSummaries = documents.map(doc => {
+            const metadata = (doc.metadata as Record<string, any>) || {};
+            return metadata.aiAnalysis?.summary || doc.extractedText || "";
+          });
+
+          contextInfo = `
+Client: ${client?.name || clientId}
+Status: ${client?.status || "unknown"}
+Sessions: ${sessions.length}
+Documents: ${documents.length}
+Progress Notes: ${notes.length}
+
+All Notes:
+${decryptedNotes.join("\n---\n")}
+
+Documents:
+${docSummaries.join("\n---\n")}
+`;
+        } catch (error) {
+          console.warn("Failed to load client context for voice assistant:", error);
+        }
       }
 
       // Use the chat endpoint logic for text response
@@ -2202,7 +2378,7 @@ IMPORTANT: Always respond in plain text only. Do NOT use any markdown formatting
 - No links or special formatting
 Responses must be natural speech, ready for text-to-speech conversion.`,
           messages: [
-            { role: 'user', content: query }
+            { role: 'user', content: contextInfo ? `${contextInfo}\n\nUser: ${query}` : query }
           ]
         })
       });
@@ -2221,14 +2397,15 @@ Responses must be natural speech, ready for text-to-speech conversion.`,
 
       // Generate TTS audio using OpenAI
       let audioBase64: string | null = null;
-      if (includeTTS && process.env.OPENAI_API_KEY) {
+      if (includeTTS) {
         try {
           const { getRealtimeVoiceService } = await import('./services/realtimeVoice');
           const voiceService = getRealtimeVoiceService();
 
           if (voiceService) {
-            const validVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'] as const;
-            const selectedVoice = validVoices.includes(voiceId as any) ? voiceId : 'nova';
+            const availableVoices = voiceService.getVoices() || [];
+            const validVoiceIds = new Set(availableVoices.map((voice) => voice.id));
+            const selectedVoice = validVoiceIds.has(effectiveVoiceId) ? effectiveVoiceId : (availableVoices[0]?.id || 'nova');
             const audioBuffer = await voiceService.generateSpeech(responseText, selectedVoice as any);
 
             if (audioBuffer) {
@@ -2249,7 +2426,7 @@ Responses must be natural speech, ready for text-to-speech conversion.`,
         text: responseText,
         audio: audioBase64,
         audioFormat: audioBase64 ? 'mp3' : null,
-        voiceId: voiceId
+        voiceId: effectiveVoiceId
       });
     } catch (error) {
       console.error("Error in voice assistant:", error);
@@ -2279,10 +2456,19 @@ Responses must be natural speech, ready for text-to-speech conversion.`,
 
       const client = await storage.getClient(session.clientId);
       const recentNotes = await storage.getProgressNotes(session.clientId);
+      const documents = await storage.getDocuments(session.clientId);
       const treatmentPlan = await storage.getTreatmentPlan(session.clientId);
 
-      const clientHistory = recentNotes.slice(0, 10).map(note => note.content).join('\n');
-      const lastSession = recentNotes[0]?.content || '';
+      const noteContents = recentNotes.map(note => safeDecrypt(note.content || "") || "");
+      const docSummaries = documents.map(doc => {
+        const metadata = (doc.metadata as Record<string, any>) || {};
+        const aiSummary = metadata.aiAnalysis?.summary || "";
+        const text = doc.extractedText || "";
+        return aiSummary || text;
+      });
+
+      const clientHistory = [...noteContents, ...docSummaries].join('\n');
+      const lastSession = noteContents[0] || '';
       const goals = treatmentPlan?.goals ? Object.values(treatmentPlan.goals as any).map((goal: any) => goal.description) : [];
 
       const preparation = await aiService.prepareSessionQuestions(

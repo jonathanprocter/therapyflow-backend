@@ -61,6 +61,12 @@ export class DocumentProcessor {
       
       // Use AI to analyze and extract structured data
       const extractedData = await this.analyzeProgressNote(preprocessedText);
+      // Improve client name if AI returned "unknown" but name exists in content/title/filename
+      extractedData.clientName = this.resolveClientName(
+        extractedData.clientName,
+        preprocessedText,
+        fileName
+      );
       
       // Find or create client
       const clientMatch = await this.findOrCreateClient(
@@ -249,6 +255,12 @@ First, extract the essential data needed for our clinical system:
   "confidence": "0-1 confidence score for extraction accuracy based on text clarity and completeness"
 }
 
+If clientName is unknown but present in the document, re-scan for headers/titles like:
+- "Progress Note for [Client Name]"
+- "Clinical Progress Note for [Client Name]"
+- "Session with [Client Name]"
+- "Client Name: [Client Name]"
+
 THEN, if this appears to be a raw session transcript (not already a formatted progress note), also generate a comprehensive clinical progress note following this structure:
 
 Create a comprehensive progress note with the following sections:
@@ -336,6 +348,68 @@ Return your analysis in JSON format with both the extracted data and the compreh
         clinicalSummary: 'Manual clinical documentation needed due to processing error'
       };
     }
+  }
+
+  private extractClientNameFromTitle(text: string): string | null {
+    const patterns = [
+      /progress\s+note\s+for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+      /clinical\s+progress\s+note\s+for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+      /session\s+with\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+      /client\s+name[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+      /title[:\s]+.*?for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+
+    return null;
+  }
+
+  private resolveClientName(clientName: string | undefined, text: string, fileName: string): string {
+    const normalized = (clientName || "").trim();
+    const looksUnknown = !normalized || /unknown/i.test(normalized);
+
+    if (!looksUnknown) {
+      return normalized;
+    }
+
+    const titleCandidate = this.extractClientNameFromTitle(text);
+    if (titleCandidate) return titleCandidate;
+
+    const manualCandidate = this.extractClientNameFallback(text);
+    if (manualCandidate && !/unknown/i.test(manualCandidate)) {
+      return manualCandidate;
+    }
+
+    const filenameCandidate = this.extractClientNameFromFileName(fileName);
+    if (filenameCandidate) return filenameCandidate;
+
+    return normalized || 'Unknown Client';
+  }
+
+  private extractClientNameFromFileName(fileName: string): string | null {
+    if (!fileName) return null;
+    const baseName = fileName.replace(/\.(pdf|docx?|txt|rtf)$/i, '');
+    const patterns = [
+      /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:appointment|session|therapy|note|transcript)/i,
+      /^(?:appointment|session|therapy|note|transcript)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+      /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*[-_]\s*\d/i,
+      /^\d+[-\/]\d+[-\/]\d+\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+      /^([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s|$)/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = baseName.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+
+    return null;
   }
 
   /**

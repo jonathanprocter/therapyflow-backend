@@ -116,11 +116,14 @@ interface ProgressNote {
 interface Document {
   id: string;
   clientId: string;
-  filename: string;
+  filename?: string;
+  fileName?: string;
   fileType: string;
+  filePath?: string;
   uploadedAt: string;
   url?: string;
   annotations?: Annotation[];
+  metadata?: Record<string, any>;
 }
 
 interface Annotation {
@@ -233,6 +236,7 @@ export default function ClientDetail() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [clinicalConsiderations, setClinicalConsiderations] = useState("");
   const [preferredModalities, setPreferredModalities] = useState("");
+  const [activeTab, setActiveTab] = useState<'sessions' | 'notes' | 'documents'>('sessions');
   const notificationRef = useRef<HTMLButtonElement>(null);
 
   // Parallel data fetching using useQueries
@@ -321,10 +325,63 @@ export default function ClientDetail() {
     [progressNotes, clientId]
   );
 
+  const normalizedDocuments = useMemo(() => (
+    documents.map((doc) => ({
+      ...doc,
+      filename: doc.filename || doc.fileName || "Untitled Document",
+      url: doc.url || doc.filePath || "",
+      metadata: doc.metadata || {},
+    }))
+  ), [documents]);
+
   const clientDocuments = useMemo(() => 
-    documents.filter(doc => doc.clientId === clientId),
-    [documents, clientId]
+    normalizedDocuments.filter(doc => doc.clientId === clientId),
+    [normalizedDocuments, clientId]
   );
+
+  const documentsBySessionId = useMemo(() => {
+    const map = new Map<string, Document[]>();
+    for (const doc of clientDocuments) {
+      const metadata = doc.metadata || {};
+      const sessionId = (metadata as any).sessionId || (metadata as any).linkedSessionId;
+      if (sessionId) {
+        const list = map.get(sessionId) || [];
+        list.push(doc);
+        map.set(sessionId, list);
+      }
+    }
+    return map;
+  }, [clientDocuments]);
+
+  const documentsByDate = useMemo(() => {
+    const map = new Map<string, Document[]>();
+    for (const doc of clientDocuments) {
+      const metadata = doc.metadata || {};
+      const sessionDate = (metadata as any).sessionDate || (metadata as any).appointmentDate;
+      if (sessionDate) {
+        const dateKey = new Date(sessionDate).toISOString().split('T')[0];
+        const list = map.get(dateKey) || [];
+        list.push(doc);
+        map.set(dateKey, list);
+      }
+    }
+    return map;
+  }, [clientDocuments]);
+
+  const getDocumentsForSession = useCallback((session: Session) => {
+    const docs: Document[] = [];
+    const bySession = documentsBySessionId.get(session.id) || [];
+    const dateKey = new Date(session.scheduledAt).toISOString().split('T')[0];
+    const byDate = documentsByDate.get(dateKey) || [];
+
+    for (const doc of [...bySession, ...byDate]) {
+      if (!docs.some(existing => existing.id === doc.id)) {
+        docs.push(doc);
+      }
+    }
+
+    return docs;
+  }, [documentsBySessionId, documentsByDate]);
 
   // Filter and search sessions
   const filteredAndSearchedSessions = useMemo(() => {
@@ -801,6 +858,61 @@ export default function ClientDetail() {
                   {session.notes && (
                     <div className="text-sm text-sepia mt-1">{session.notes}</div>
                   )}
+                  {getDocumentsForSession(session).length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-sepia/80">Documents</div>
+                      {getDocumentsForSession(session).map((doc) => {
+                        const metadata = doc.metadata || {};
+                        const progressNoteId = (metadata as any).progressNoteId || (metadata as any).linkedProgressNoteId;
+                        return (
+                          <div key={doc.id} className="flex items-center gap-2 text-xs">
+                            <FileText className="h-3 w-3 text-teal" />
+                            <button
+                              className="text-teal hover:underline"
+                              onClick={() => {
+                                if (progressNoteId) {
+                                  setActiveTab('notes');
+                                  setActiveNoteId(progressNoteId);
+                                } else if (doc.url) {
+                                  setShowDocumentPreview(doc.id);
+                                }
+                              }}
+                            >
+                              {doc.filename}
+                            </button>
+                            {progressNoteId && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setActiveTab('notes');
+                                  setActiveNoteId(progressNoteId);
+                                }}
+                              >
+                                Open Note
+                              </Button>
+                            )}
+                            {doc.url && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setShowDocumentPreview(doc.id)}
+                                  >
+                                    Preview
+                                  </Button>
+                                </DialogTrigger>
+                                {showDocumentPreview === doc.id && (
+                                  <DocumentPreview document={doc} />
+                                )}
+                              </Dialog>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -854,14 +966,16 @@ export default function ClientDetail() {
   // Document preview component
   const DocumentPreview = ({ document }: { document: Document }) => {
     const [annotations, setAnnotations] = useState<Annotation[]>(document.annotations || []);
+    const previewUrl = document.url || document.filePath || "";
+    const displayName = document.filename || document.fileName || "Document";
 
     return (
       <DialogContent className="max-w-5xl h-[80vh] flex">
         <div className="flex-1 relative">
           {document.fileType === 'pdf' ? (
-            <iframe src={document.url} className="w-full h-full" />
+            <iframe src={previewUrl} className="w-full h-full" />
           ) : document.fileType.startsWith('image') ? (
-            <img src={document.url} alt={document.filename} className="w-full h-full object-contain" />
+            <img src={previewUrl} alt={displayName} className="w-full h-full object-contain" />
           ) : (
             <div className="p-4">
               <p>Preview not available for this file type</p>
@@ -1407,7 +1521,7 @@ export default function ClientDetail() {
           )}
 
           {/* Tabs for different sections */}
-          <Tabs defaultValue="sessions" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="space-y-6">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="sessions" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
