@@ -97,6 +97,9 @@ export interface IStorage {
   updateClient(id: string, client: Partial<InsertClient>): Promise<Client>;
   deleteClient(id: string): Promise<void>;
 
+  // SECURITY: Therapist-scoped client access (prevents IDOR)
+  getClientForTherapist(id: string, therapistId: string): Promise<Client | undefined>;
+
   // Sessions
   getSessions(clientId: string): Promise<Session[]>;
   getAllHistoricalSessions(therapistId: string, includeCompleted?: boolean): Promise<Session[]>;
@@ -114,6 +117,10 @@ export interface IStorage {
   getSessionsWithoutProgressNotes(therapistId: string): Promise<Session[]>;
   getSimplePracticeSessions(therapistId: string): Promise<Session[]>;
 
+  // SECURITY: Therapist-scoped session access (prevents IDOR)
+  getSessionForTherapist(id: string, therapistId: string): Promise<Session | undefined>;
+  updateSessionForTherapist(id: string, therapistId: string, session: Partial<InsertSession>): Promise<Session | undefined>;
+
   // Progress Notes
   getProgressNotes(clientId: string): Promise<ProgressNote[]>;
   getRecentProgressNotes(therapistId: string, limit?: number): Promise<ProgressNote[]>;
@@ -127,6 +134,11 @@ export interface IStorage {
   getProgressNotesForManualReview(therapistId: string): Promise<ProgressNote[]>;
   getProgressNotePlaceholders(therapistId: string): Promise<ProgressNote[]>;
   createProgressNotePlaceholder(sessionId: string, clientId: string, therapistId: string, sessionDate: Date): Promise<ProgressNote>;
+
+  // SECURITY: Therapist-scoped progress note access (prevents IDOR)
+  getProgressNoteForTherapist(id: string, therapistId: string): Promise<ProgressNote | undefined>;
+  updateProgressNoteForTherapist(id: string, therapistId: string, note: Partial<InsertProgressNote>): Promise<ProgressNote | undefined>;
+  deleteProgressNoteForTherapist(id: string, therapistId: string): Promise<boolean>;
 
   // Case Conceptualizations
   getCaseConceptualization(clientId: string): Promise<CaseConceptualization | undefined>;
@@ -290,6 +302,21 @@ export class DatabaseStorage implements IStorage {
     return client || undefined;
   }
 
+  /**
+   * SECURITY: Get client with therapist ownership verification
+   * Prevents IDOR by requiring both client ID and therapist ID to match
+   */
+  async getClientForTherapist(id: string, therapistId: string): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(
+      and(
+        eq(clients.id, id),
+        eq(clients.therapistId, therapistId),
+        isNull(clients.deletedAt)
+      )
+    );
+    return client || undefined;
+  }
+
   async getClientsByIds(ids: string[]): Promise<Map<string, Client>> {
     if (ids.length === 0) return new Map();
     const uniqueIds = [...new Set(ids)];
@@ -446,6 +473,44 @@ export class DatabaseStorage implements IStorage {
     return session || undefined;
   }
 
+  /**
+   * SECURITY: Get session with therapist ownership verification
+   * Prevents IDOR by requiring both session ID and therapist ID to match
+   */
+  async getSessionForTherapist(id: string, therapistId: string): Promise<Session | undefined> {
+    const [session] = await db.select().from(sessions).where(
+      and(
+        eq(sessions.id, id),
+        eq(sessions.therapistId, therapistId)
+      )
+    );
+    return session || undefined;
+  }
+
+  /**
+   * SECURITY: Update session with therapist ownership verification
+   * Returns undefined if session doesn't exist or doesn't belong to therapist
+   */
+  async updateSessionForTherapist(id: string, therapistId: string, session: Partial<InsertSession>): Promise<Session | undefined> {
+    // First verify ownership
+    const existing = await this.getSessionForTherapist(id, therapistId);
+    if (!existing) {
+      return undefined; // Not found or not owned by therapist
+    }
+
+    const [updatedSession] = await db
+      .update(sessions)
+      .set({ ...session, updatedAt: new Date() } as any)
+      .where(
+        and(
+          eq(sessions.id, id),
+          eq(sessions.therapistId, therapistId)
+        )
+      )
+      .returning();
+    return updatedSession || undefined;
+  }
+
   async getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined> {
     const [session] = await db.select().from(sessions).where(eq(sessions.googleEventId, googleEventId));
     return session || undefined;
@@ -558,6 +623,76 @@ export class DatabaseStorage implements IStorage {
   async getProgressNote(id: string): Promise<ProgressNote | undefined> {
     const [note] = await db.select().from(progressNotes).where(eq(progressNotes.id, id));
     return note || undefined;
+  }
+
+  /**
+   * SECURITY: Get progress note with therapist ownership verification
+   * Prevents IDOR by requiring both note ID and therapist ID to match
+   */
+  async getProgressNoteForTherapist(id: string, therapistId: string): Promise<ProgressNote | undefined> {
+    const [note] = await db.select().from(progressNotes).where(
+      and(
+        eq(progressNotes.id, id),
+        eq(progressNotes.therapistId, therapistId)
+      )
+    );
+    return note || undefined;
+  }
+
+  /**
+   * SECURITY: Update progress note with therapist ownership verification
+   * Returns undefined if note doesn't exist or doesn't belong to therapist
+   */
+  async updateProgressNoteForTherapist(id: string, therapistId: string, note: Partial<InsertProgressNote>): Promise<ProgressNote | undefined> {
+    // First verify ownership
+    const existing = await this.getProgressNoteForTherapist(id, therapistId);
+    if (!existing) {
+      return undefined; // Not found or not owned by therapist
+    }
+
+    const noteData = note as any;
+    const cleanContent = noteData.content !== undefined ? stripMarkdown(noteData.content || '') : undefined;
+    const quality = cleanContent !== undefined ? calculateNoteQuality(cleanContent) : null;
+
+    const [updatedNote] = await db
+      .update(progressNotes)
+      .set({
+        ...noteData,
+        content: cleanContent !== undefined ? cleanContent : noteData.content,
+        qualityScore: quality ? quality.score : noteData.qualityScore,
+        qualityFlags: quality ? quality.flags : noteData.qualityFlags,
+        updatedAt: new Date()
+      } as any)
+      .where(
+        and(
+          eq(progressNotes.id, id),
+          eq(progressNotes.therapistId, therapistId)
+        )
+      )
+      .returning();
+    return updatedNote || undefined;
+  }
+
+  /**
+   * SECURITY: Delete progress note with therapist ownership verification
+   * Returns false if note doesn't exist or doesn't belong to therapist
+   */
+  async deleteProgressNoteForTherapist(id: string, therapistId: string): Promise<boolean> {
+    // First verify ownership
+    const existing = await this.getProgressNoteForTherapist(id, therapistId);
+    if (!existing) {
+      return false; // Not found or not owned by therapist
+    }
+
+    await db
+      .delete(progressNotes)
+      .where(
+        and(
+          eq(progressNotes.id, id),
+          eq(progressNotes.therapistId, therapistId)
+        )
+      );
+    return true;
   }
 
   async getProgressNotesBySession(sessionId: string): Promise<ProgressNote[]> {

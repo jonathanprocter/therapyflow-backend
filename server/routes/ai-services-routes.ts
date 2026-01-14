@@ -14,9 +14,13 @@ import { aiRouter } from "../services/ai-router";
 
 const router = Router();
 
-// Middleware to get therapist ID from session
+/**
+ * SECURITY: Get therapist ID from authenticated user only
+ * No header fallback - prevents identity spoofing
+ */
 const getTherapistId = (req: Request): string => {
-  return (req as any).user?.id || req.headers["x-therapist-id"] as string || "";
+  // SECURITY: Only use authenticated user ID, never trust headers
+  return (req as any).user?.id || "";
 };
 
 // ==================== AI Router Health ====================

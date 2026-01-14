@@ -14,6 +14,7 @@ import { sql, eq } from "drizzle-orm";
 
 // Import middleware
 import { standardRateLimit, aiProcessingRateLimit } from './middleware/rateLimit';
+import { authMiddleware, optionalAuthMiddleware } from './middleware/auth';
 
 // Import services
 import { pdfService, getPdfServiceStatus } from './services/pdfService';
@@ -111,13 +112,10 @@ app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 // Apply standard rate limiting to all API endpoints
 app.use('/api', standardRateLimit);
 
-// Single-therapist mode: automatically set therapistId for all requests
-// Using 'therapist-1' to match existing client data in the database
-app.use((req: any, res, next) => {
-  req.therapistId = 'therapist-1';
-  req.user = { id: 'therapist-1', role: 'therapist' };
-  next();
-});
+// SECURITY: Authentication middleware replaces hardcoded therapist-1
+// Production: Requires valid JWT token
+// Development: Set DEV_BYPASS_AUTH=true and optionally DEV_THERAPIST_ID
+app.use('/api', authMiddleware);
 
 // Apply stricter rate limiting to AI/document processing endpoints
 app.use('/api/ai', aiProcessingRateLimit);
@@ -324,11 +322,22 @@ app.get("/api/debug/db", async (req, res) => {
     log(`   POST /api/therapeutic/recall/:clientId`);
     log(`   GET  /api/therapeutic/insights/:clientId`);
     log(`   GET  /api/therapeutic/tags/:clientId`);
+    // Calendar reconciliation - uses configured therapist ID
     const shouldReconcile = process.env.ENABLE_CALENDAR_RECONCILIATION !== "false";
     if (shouldReconcile) {
       const runReconcile = async () => {
         try {
-          const therapistId = "therapist-1";
+          // Use environment variable for calendar reconciliation therapist
+          // Falls back to dev therapist ID for backwards compatibility in dev
+          const therapistId = process.env.CALENDAR_RECONCILE_THERAPIST_ID
+            || process.env.DEV_THERAPIST_ID
+            || (process.env.NODE_ENV !== "production" ? "therapist-1" : null);
+
+          if (!therapistId) {
+            console.warn("Calendar reconciliation skipped: no therapist ID configured");
+            return;
+          }
+
           const start = new Date();
           start.setMonth(start.getMonth() - 1);
           const end = new Date();
