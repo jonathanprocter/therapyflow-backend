@@ -115,7 +115,26 @@ app.use('/api', standardRateLimit);
 // SECURITY: Authentication middleware replaces hardcoded therapist-1
 // Production: Requires valid JWT token
 // Development: Set DEV_BYPASS_AUTH=true and optionally DEV_THERAPIST_ID
-app.use('/api', authMiddleware);
+//
+// OAuth callback routes are exempt - they use state parameter or store tokens post-auth
+const authExemptPaths = [
+  '/api/calendar/callback',
+  '/api/calendar/auth-url',
+  '/api/calendar-sync/callback',
+  '/api/calendar-sync/auth-url',
+  '/api/integrations/google/store-tokens',
+  '/api/integrations/google/status',
+  '/api/health',
+  '/api/debug'
+];
+
+app.use('/api', (req, res, next) => {
+  // Skip auth for OAuth and health check routes
+  if (authExemptPaths.some(path => req.path.startsWith(path.replace('/api', '')))) {
+    return next();
+  }
+  return authMiddleware(req, res, next);
+});
 
 // Apply stricter rate limiting to AI/document processing endpoints
 app.use('/api/ai', aiProcessingRateLimit);
