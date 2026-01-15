@@ -40,7 +40,7 @@ const upload = multer({
 const enhancedProcessor = new EnhancedDocumentProcessor();
 
 // Helper function to process a batch (extracted for reuse)
-async function processTranscriptBatch(batchId: string, fileBuffers?: { [filename: string]: Buffer }) {
+async function processTranscriptBatch(batchId: string, fileBuffers?: { [fileId: string]: Buffer }) {
   console.log(`🔄 Processing batch ${batchId}`);
   
   // Get all files in the batch
@@ -62,7 +62,7 @@ async function processTranscriptBatch(batchId: string, fileBuffers?: { [filename
       });
 
       // Get the file buffer if available (from memory during upload)
-      let fileBuffer = fileBuffers?.[file.fileName];
+      let fileBuffer = fileBuffers?.[file.id];
       if (!fileBuffer && file.filePath) {
         const resolvedPath = path.resolve(process.cwd(), file.filePath.replace(/^\//, ""));
         fileBuffer = await fs.readFile(resolvedPath);
@@ -208,14 +208,11 @@ export function registerTranscriptRoutes(app: Express): void {
 
       // Process each file and store buffers for processing
       const transcriptFiles = [];
-      const fileBuffers: { [filename: string]: Buffer } = {};
+      const fileBuffers: { [fileId: string]: Buffer } = {};
       const transcriptsDir = path.resolve(process.cwd(), "uploads", "transcripts", batch.id);
       await fs.mkdir(transcriptsDir, { recursive: true });
       
       for (const file of files) {
-        // Store file buffer in memory for processing
-        fileBuffers[file.originalname] = file.buffer;
-
         const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
         const storedName = `${Date.now()}-${Math.random().toString(16).slice(2)}-${safeName}`;
         const storedPath = path.join(transcriptsDir, storedName);
@@ -234,6 +231,9 @@ export function registerTranscriptRoutes(app: Express): void {
         const validatedFile = insertTranscriptFileSchema.parse(fileData);
         const transcriptFile = await storage.createTranscriptFile(validatedFile);
         transcriptFiles.push(transcriptFile);
+
+        // Store file buffer keyed by transcript file ID to avoid collisions on name
+        fileBuffers[transcriptFile.id] = file.buffer;
       }
 
       // Update batch status
@@ -271,27 +271,6 @@ export function registerTranscriptRoutes(app: Express): void {
     } catch (error) {
       console.error('Error fetching batch files:', error);
       res.status(500).json({ error: 'Failed to fetch batch files' });
-    }
-  });
-
-  // Get processing statistics for visualization
-  app.get('/api/transcripts/stats', async (req: any, res) => {
-    try {
-      const therapistId = req.therapistId;
-      const batches = await storage.getTranscriptBatches(therapistId);
-      
-      const stats = {
-        totalBatches: batches.length,
-        totalFiles: batches.reduce((sum, batch) => sum + batch.totalFiles, 0),
-        processedFiles: batches.reduce((sum, batch) => sum + (batch.processedFiles || 0), 0),
-        filesNeedingReview: batches.reduce((sum, batch) => sum + (batch.failedFiles || 0), 0),
-        recentBatches: batches.slice(0, 5) // Latest 5 batches
-      };
-      
-      res.json(stats);
-    } catch (error) {
-      console.error('Error fetching transcript stats:', error);
-      res.status(500).json({ error: 'Failed to fetch transcript stats' });
     }
   });
 

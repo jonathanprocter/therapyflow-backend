@@ -43,6 +43,7 @@ import { buildRetentionReport, applyRetention } from "./services/retentionServic
 import { reconcileCalendar } from "./services/calendarReconciliation";
 
 // Helper function to safely decrypt content (handles non-encrypted legacy data)
+// H6 FIX: Returns null on decryption failure instead of original content
 function safeDecrypt(content: string): string | null {
   if (!content) return null;
 
@@ -55,8 +56,9 @@ function safeDecrypt(content: string): string | null {
     // Return as-is if not encrypted (legacy data)
     return content;
   } catch (error: any) {
-    console.warn('[DECRYPTION] Failed to decrypt, returning original content:', error.message);
-    return content; // Return original content if decryption fails
+    // H6 FIX: Return null on failure instead of original content to prevent data corruption exposure
+    console.error('[DECRYPTION] Failed to decrypt content:', error.message);
+    return null; // Return null instead of potentially corrupted/tampered data
   }
 }
 
@@ -354,7 +356,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/settings/retention/report", async (req: any, res) => {
     try {
       const retentionDays = Number(req.query.retentionDays || 365);
-      const report = await buildRetentionReport(retentionDays);
+      // H5 FIX: Pass therapistId from authenticated session for tenant scoping
+      const therapistId = req.therapistId || req.user?.id || "";
+      const report = await buildRetentionReport(retentionDays, therapistId);
       res.json(report);
     } catch (error) {
       console.error("Error generating retention report:", error);
@@ -365,7 +369,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/settings/retention/apply", async (req: any, res) => {
     try {
       const { retentionDays } = req.body || {};
-      const result = await applyRetention(Number(retentionDays || 365));
+      // H5 FIX: Pass therapistId from authenticated session for tenant scoping
+      const therapistId = req.therapistId || req.user?.id || "";
+      const result = await applyRetention(Number(retentionDays || 365), therapistId);
       res.json(result);
     } catch (error) {
       console.error("Error applying retention policy:", error);

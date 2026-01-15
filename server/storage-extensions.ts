@@ -115,7 +115,7 @@ export class EnhancedDatabaseStorage extends DatabaseStorage {
     const { sessionTags } = await import('@shared/schema-extensions');
     const { sessions } = await import('@shared/schema');
     const { db } = await import('./db');
-    const { eq, and } = await import('drizzle-orm');
+    const { eq, and, sql } = await import('drizzle-orm');
 
     try {
       const conditions = [eq(sessions.clientId, clientId)];
@@ -126,7 +126,8 @@ export class EnhancedDatabaseStorage extends DatabaseStorage {
       const tags = await db
         .select()
         .from(sessionTags)
-        .innerJoin(sessions, eq(sessionTags.sessionId, sessions.id))
+        // session_tags.session_id is UUID, sessions.id is varchar; cast for join
+        .innerJoin(sessions, sql`${sessionTags.sessionId}::text = ${sessions.id}`)
         .where(and(...conditions));
 
       return tags;

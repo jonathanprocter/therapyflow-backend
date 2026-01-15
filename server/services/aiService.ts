@@ -151,7 +151,7 @@ export class AIService {
             - Risk factors and protective factors
             - Behavioral patterns and coping strategies
             
-            Return a JSON array of tags with format: [{"name": "tag_name", "category": "category", "confidence": 0.8}]
+            Return a JSON object with format: {"tags": [{"name": "tag_name", "category": "category", "confidence": 0.8}]}
             Categories should be: symptom, intervention, progress, risk, goal, behavior, emotion`
           },
           {

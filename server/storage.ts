@@ -90,12 +90,12 @@ export interface IStorage {
 
   // Clients
   getClients(therapistId: string): Promise<Client[]>;
-  getClient(id: string): Promise<Client | undefined>;
+  getClient(id: string, therapistId?: string): Promise<Client | undefined>;
   getClientsByIds(ids: string[]): Promise<Map<string, Client>>;
   getClientByName(name: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
-  updateClient(id: string, client: Partial<InsertClient>): Promise<Client>;
-  deleteClient(id: string): Promise<void>;
+  updateClient(id: string, client: Partial<InsertClient>, therapistId?: string): Promise<Client>;
+  deleteClient(id: string, therapistId?: string): Promise<void>;
 
   // SECURITY: Therapist-scoped client access (prevents IDOR)
   getClientForTherapist(id: string, therapistId: string): Promise<Client | undefined>;
@@ -107,11 +107,11 @@ export interface IStorage {
   getCompletedSessions(therapistId: string, clientId?: string): Promise<Session[]>;
   getUpcomingSessions(therapistId: string, date?: Date): Promise<Session[]>;
   getTodaysSessions(therapistId: string): Promise<Session[]>;
-  getSession(id: string): Promise<Session | undefined>;
+  getSession(id: string, therapistId?: string): Promise<Session | undefined>;
   getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined>;
   getRecentSessionsForClient(clientId: string, limit?: number): Promise<Session[]>;
   createSession(session: InsertSession): Promise<Session>;
-  updateSession(id: string, session: Partial<InsertSession>): Promise<Session>;
+  updateSession(id: string, session: Partial<InsertSession>, therapistId?: string): Promise<Session>;
   markPastSessionsAsCompleted(therapistId: string): Promise<number>;
   createProgressNotePlaceholdersForHistoricalSessions(therapistId: string): Promise<number>;
   getSessionsWithoutProgressNotes(therapistId: string): Promise<Session[]>;
@@ -124,11 +124,11 @@ export interface IStorage {
   // Progress Notes
   getProgressNotes(clientId: string): Promise<ProgressNote[]>;
   getRecentProgressNotes(therapistId: string, limit?: number): Promise<ProgressNote[]>;
-  getProgressNote(id: string): Promise<ProgressNote | undefined>;
+  getProgressNote(id: string, therapistId?: string): Promise<ProgressNote | undefined>;
   getProgressNotesBySession(sessionId: string): Promise<ProgressNote[]>;
   createProgressNote(note: InsertProgressNote): Promise<ProgressNote>;
-  updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote>;
-  deleteProgressNote(id: string): Promise<void>;
+  updateProgressNote(id: string, note: Partial<InsertProgressNote>, therapistId?: string): Promise<ProgressNote>;
+  deleteProgressNote(id: string, therapistId?: string): Promise<void>;
   searchProgressNotes(therapistId: string, query: string): Promise<ProgressNote[]>;
   getProgressNotesInDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<ProgressNote[]>;
   getProgressNotesForManualReview(therapistId: string): Promise<ProgressNote[]>;
@@ -295,10 +295,21 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(clients.createdAt));
   }
 
-  async getClient(id: string): Promise<Client | undefined> {
-    const [client] = await db.select().from(clients).where(
-      and(eq(clients.id, id), isNull(clients.deletedAt))
-    );
+  /**
+   * Get client by ID with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   * @param id - Client ID
+   * @param therapistId - Optional therapist ID for ownership verification (RECOMMENDED)
+   */
+  async getClient(id: string, therapistId?: string): Promise<Client | undefined> {
+    const conditions = [eq(clients.id, id), isNull(clients.deletedAt)];
+
+    // H7 FIX: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(clients.therapistId, therapistId));
+    }
+
+    const [client] = await db.select().from(clients).where(and(...conditions));
     return client || undefined;
   }
 
@@ -339,18 +350,38 @@ export class DatabaseStorage implements IStorage {
     return newClient;
   }
 
-  async updateClient(id: string, client: Partial<InsertClient>): Promise<Client> {
+  /**
+   * Update client with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async updateClient(id: string, client: Partial<InsertClient>, therapistId?: string): Promise<Client> {
+    const conditions = [eq(clients.id, id)];
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(clients.therapistId, therapistId));
+    }
+
     const [updatedClient] = await db
       .update(clients)
       .set({ ...client, updatedAt: new Date() } as any)
-      .where(eq(clients.id, id))
+      .where(and(...conditions))
       .returning();
     return updatedClient;
   }
 
-  async deleteClient(id: string): Promise<void> {
+  /**
+   * Soft delete client with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async deleteClient(id: string, therapistId?: string): Promise<void> {
     // Soft delete the client by setting deletedAt timestamp
     // This prevents calendar sync from recreating them
+    const conditions = [eq(clients.id, id)];
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(clients.therapistId, therapistId));
+    }
+
     await db
       .update(clients)
       .set({
@@ -358,7 +389,7 @@ export class DatabaseStorage implements IStorage {
         status: 'deleted',
         updatedAt: new Date()
       } as any)
-      .where(eq(clients.id, id));
+      .where(and(...conditions));
   }
 
   async getSessions(clientId: string): Promise<Session[]> {
@@ -468,8 +499,19 @@ export class DatabaseStorage implements IStorage {
       .orderBy(sessions.scheduledAt);
   }
 
-  async getSession(id: string): Promise<Session | undefined> {
-    const [session] = await db.select().from(sessions).where(eq(sessions.id, id));
+  /**
+   * Get session by ID with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async getSession(id: string, therapistId?: string): Promise<Session | undefined> {
+    const conditions = [eq(sessions.id, id)];
+
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(sessions.therapistId, therapistId));
+    }
+
+    const [session] = await db.select().from(sessions).where(and(...conditions));
     return session || undefined;
   }
 
@@ -533,11 +575,21 @@ export class DatabaseStorage implements IStorage {
     return newSession;
   }
 
-  async updateSession(id: string, session: Partial<InsertSession>): Promise<Session> {
+  /**
+   * Update session with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async updateSession(id: string, session: Partial<InsertSession>, therapistId?: string): Promise<Session> {
+    const conditions = [eq(sessions.id, id)];
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(sessions.therapistId, therapistId));
+    }
+
     const [updatedSession] = await db
       .update(sessions)
       .set({ ...session, updatedAt: new Date() } as any)
-      .where(eq(sessions.id, id))
+      .where(and(...conditions))
       .returning();
     return updatedSession;
   }
@@ -620,8 +672,19 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async getProgressNote(id: string): Promise<ProgressNote | undefined> {
-    const [note] = await db.select().from(progressNotes).where(eq(progressNotes.id, id));
+  /**
+   * Get progress note by ID with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async getProgressNote(id: string, therapistId?: string): Promise<ProgressNote | undefined> {
+    const conditions = [eq(progressNotes.id, id)];
+
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(progressNotes.therapistId, therapistId));
+    }
+
+    const [note] = await db.select().from(progressNotes).where(and(...conditions));
     return note || undefined;
   }
 
@@ -720,11 +783,22 @@ export class DatabaseStorage implements IStorage {
     return newNote;
   }
 
-  async updateProgressNote(id: string, note: Partial<InsertProgressNote>): Promise<ProgressNote> {
+  /**
+   * Update progress note with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async updateProgressNote(id: string, note: Partial<InsertProgressNote>, therapistId?: string): Promise<ProgressNote> {
     const noteData = note as any;
     // Strip markdown formatting from content before saving
     const cleanContent = noteData.content !== undefined ? stripMarkdown(noteData.content || '') : undefined;
     const quality = cleanContent !== undefined ? calculateNoteQuality(cleanContent) : null;
+
+    const conditions = [eq(progressNotes.id, id)];
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(progressNotes.therapistId, therapistId));
+    }
+
     const [updatedNote] = await db
       .update(progressNotes)
       .set({
@@ -734,15 +808,25 @@ export class DatabaseStorage implements IStorage {
         qualityFlags: quality ? quality.flags : noteData.qualityFlags,
         updatedAt: new Date()
       } as any)
-      .where(eq(progressNotes.id, id))
+      .where(and(...conditions))
       .returning();
     return updatedNote;
   }
 
-  async deleteProgressNote(id: string): Promise<void> {
+  /**
+   * Delete progress note with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async deleteProgressNote(id: string, therapistId?: string): Promise<void> {
+    const conditions = [eq(progressNotes.id, id)];
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(progressNotes.therapistId, therapistId));
+    }
+
     await db
       .delete(progressNotes)
-      .where(eq(progressNotes.id, id));
+      .where(and(...conditions));
   }
 
   async searchProgressNotes(therapistId: string, query: string): Promise<ProgressNote[]> {

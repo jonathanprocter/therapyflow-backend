@@ -64,17 +64,19 @@ export class ClinicalEncryption {
 
   /**
    * Decrypt sensitive clinical data using AES-256-GCM
+   * H6 FIX: Removed silent passthroughs - now throws on any decryption failure
+   * @throws Error if decryption fails or data integrity cannot be verified
    */
   static decrypt(encryptedData: string): string {
     if (!encryptedData) {
       return encryptedData;
     }
 
-    try {
-      // Check if it's in our new format (iv:authTag:data)
-      if (encryptedData.includes(':')) {
-        const parts = encryptedData.split(':');
-        if (parts.length === 3) {
+    // Check if it's in our new format (iv:authTag:data)
+    if (encryptedData.includes(':')) {
+      const parts = encryptedData.split(':');
+      if (parts.length === 3) {
+        try {
           const [ivHex, authTagHex, encrypted] = parts;
           const iv = Buffer.from(ivHex, 'hex');
           const authTag = Buffer.from(authTagHex, 'hex');
@@ -86,42 +88,50 @@ export class ClinicalEncryption {
           let decrypted = decipher.update(encrypted, 'hex', 'utf8');
           decrypted += decipher.final('utf8');
           return decrypted;
+        } catch (error) {
+          // H6 FIX: Always throw on decryption failure - no silent passthrough
+          console.error('[ENCRYPTION] Decryption failed:', error instanceof Error ? error.message : 'Unknown error');
+          throw new Error('Decryption failed - data integrity cannot be verified');
         }
       }
-
-      // Check if it's legacy encrypted data (plain hex string)
-      if (/^[0-9a-fA-F]+$/.test(encryptedData) && encryptedData.length > 32) {
-        // Attempt legacy decryption with deprecation warning
-        console.warn('[ENCRYPTION] Attempting legacy decryption - consider re-encrypting data');
-        try {
-          // Use scrypt to derive key for legacy compatibility
-          const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 24);
-          const decipher = crypto.createDecipheriv('aes-192-cbc', key, Buffer.alloc(16, 0));
-          let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
-          decrypted += decipher.final('utf8');
-          return decrypted;
-        } catch (legacyError) {
-          // If legacy decryption fails, log and return as-is (might be unencrypted)
-          console.warn('[ENCRYPTION] Legacy decryption failed, treating as plaintext:',
-            legacyError instanceof Error ? legacyError.message : 'Unknown error');
-          return encryptedData;
-        }
-      }
-
-      // Data doesn't match encryption format - likely unencrypted plaintext
-      // Only log in development to avoid noise
-      if (!IS_PRODUCTION && encryptedData.length > 0) {
-        console.debug('[ENCRYPTION] Data does not appear to be encrypted, returning as-is');
-      }
-      return encryptedData;
-    } catch (error) {
-      console.error('[ENCRYPTION] Decryption error:', error instanceof Error ? error.message : 'Unknown error');
-      // In production, it's safer to throw than return potentially corrupted data
-      if (IS_PRODUCTION) {
-        throw new Error('Decryption failed - cannot safely return data');
-      }
-      return encryptedData; // Return original data in development for easier debugging
     }
+
+    // Check if it's legacy encrypted data (plain hex string)
+    if (/^[0-9a-fA-F]+$/.test(encryptedData) && encryptedData.length > 32) {
+      // Attempt legacy decryption with deprecation warning
+      console.warn('[ENCRYPTION] Attempting legacy decryption - consider re-encrypting data');
+      try {
+        // Use scrypt to derive key for legacy compatibility
+        const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 24);
+        const decipher = crypto.createDecipheriv('aes-192-cbc', key, Buffer.alloc(16, 0));
+        let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return decrypted;
+      } catch (legacyError) {
+        // H6 FIX: Throw on legacy decryption failure - no silent passthrough
+        console.error('[ENCRYPTION] Legacy decryption failed:',
+          legacyError instanceof Error ? legacyError.message : 'Unknown error');
+        throw new Error('Legacy decryption failed - data integrity cannot be verified');
+      }
+    }
+
+    // H6 FIX: Data doesn't match any known encryption format
+    // This could be genuinely unencrypted data from before encryption was implemented
+    // Log a warning but return the data - this is the only acceptable "passthrough"
+    // for backwards compatibility with pre-encryption data
+    if (!IS_PRODUCTION && encryptedData.length > 0) {
+      console.debug('[ENCRYPTION] Data does not appear to be encrypted (pre-encryption legacy data)');
+    }
+
+    // For production safety, if the data LOOKS like it should be encrypted but isn't
+    // in a recognized format, throw an error
+    if (IS_PRODUCTION && encryptedData.length > 100) {
+      // Long strings in production should be encrypted - reject unrecognized formats
+      console.error('[ENCRYPTION] Unrecognized data format in production - rejecting for safety');
+      throw new Error('Data format unrecognized - cannot safely decrypt');
+    }
+
+    return encryptedData;
   }
 
   /**

@@ -320,7 +320,7 @@ documentsRouter.post("/ai-process", async (req, res) => {
       extractions: result.saved.extractions,
       summary: result.saved.summary,
       recommendations: result.saved.recommendations,
-      confidence: (result.saved.confidence || 0) / 100
+      confidence: result.saved.confidence || 0
     });
   } catch (e: any) {
     console.error("AI processing error:", e);

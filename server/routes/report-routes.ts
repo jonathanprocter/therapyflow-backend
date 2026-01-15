@@ -8,9 +8,11 @@ import { reportComposer, ReportType } from "../services/report-composer";
 
 const router = Router();
 
-// Get therapist ID from session or header
+// Middleware to get therapist ID from authenticated session only
+// H3 FIX: Removed x-therapist-id header fallback to prevent identity spoofing
 const getTherapistId = (req: Request): string => {
-  return (req as any).user?.id || req.headers["x-therapist-id"] as string || "therapist-1";
+  // SECURITY: Only accept therapistId from authenticated session, never from headers
+  return (req as any).user?.id || (req as any).therapistId || "";
 };
 
 /**

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../db';
 import { clients, progressNotes } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 
 // Extend Express Request to include authenticated user
 declare global {
@@ -68,13 +68,15 @@ export const verifyClientOwnership = async (
       });
     }
 
-    // CRITICAL: Verify this client belongs to this therapist
+    // CRITICAL: Verify this client belongs to this therapist AND is not soft-deleted
+    // H2 FIX: Added isNull(clients.deletedAt) to prevent access to deleted clients
     const client = await db
       .select()
       .from(clients)
       .where(and(
         eq(clients.id, clientId),
-        eq(clients.therapistId, therapistId)
+        eq(clients.therapistId, therapistId),
+        isNull(clients.deletedAt) // H2: Prevent access to soft-deleted clients
       ))
       .limit(1);
 
@@ -136,7 +138,8 @@ export const verifyClientOwnership = async (
  */
 export class SecureClientQueries {
   /**
-   * Get client safely - always verifies ownership
+   * Get client safely - always verifies ownership and excludes soft-deleted
+   * H2 FIX: Added isNull(clients.deletedAt) filter
    */
   static async getClient(clientId: string, therapistId: string) {
     return await db
@@ -144,7 +147,8 @@ export class SecureClientQueries {
       .from(clients)
       .where(and(
         eq(clients.id, clientId),
-        eq(clients.therapistId, therapistId)
+        eq(clients.therapistId, therapistId),
+        isNull(clients.deletedAt) // H2: Exclude soft-deleted clients
       ))
       .limit(1);
   }
@@ -167,12 +171,16 @@ export class SecureClientQueries {
   }
 
   /**
-   * Get all clients for a therapist safely
+   * Get all clients for a therapist safely - excludes soft-deleted
+   * H2 FIX: Added isNull(clients.deletedAt) filter
    */
   static async getTherapistClients(therapistId: string) {
     return await db
       .select()
       .from(clients)
-      .where(eq(clients.therapistId, therapistId));
+      .where(and(
+        eq(clients.therapistId, therapistId),
+        isNull(clients.deletedAt) // H2: Exclude soft-deleted clients
+      ));
   }
 }

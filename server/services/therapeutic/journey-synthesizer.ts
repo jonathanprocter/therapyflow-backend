@@ -67,7 +67,8 @@ export class JourneySynthesizer {
         sessionDate: sessions.scheduledAt,
       })
       .from(sessionTags)
-      .innerJoin(sessions, eq(sessionTags.sessionId, sessions.id))
+      // session_tags.session_id is UUID, sessions.id is varchar; cast for join
+      .innerJoin(sessions, sql`${sessionTags.sessionId}::text = ${sessions.id}`)
       .where(and(...conditions));
   }
 
