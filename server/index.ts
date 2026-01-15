@@ -112,28 +112,12 @@ app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 // Apply standard rate limiting to all API endpoints
 app.use('/api', standardRateLimit);
 
-// SECURITY: Authentication middleware replaces hardcoded therapist-1
-// Production: Requires valid JWT token
-// Development: Set DEV_BYPASS_AUTH=true and optionally DEV_THERAPIST_ID
-//
-// OAuth callback routes are exempt - they use state parameter or store tokens post-auth
-const authExemptPaths = [
-  '/api/calendar/callback',
-  '/api/calendar/auth-url',
-  '/api/calendar-sync/callback',
-  '/api/calendar-sync/auth-url',
-  '/api/integrations/google/store-tokens',
-  '/api/integrations/google/status',
-  '/api/health',
-  '/api/debug'
-];
-
-app.use('/api', (req, res, next) => {
-  // Skip auth for OAuth and health check routes
-  if (authExemptPaths.some(path => req.path.startsWith(path.replace('/api', '')))) {
-    return next();
-  }
-  return authMiddleware(req, res, next);
+// Single-therapist mode: automatically set therapistId for all requests
+// Using 'therapist-1' to match existing client data in the database
+app.use((req: any, res, next) => {
+  req.therapistId = 'therapist-1';
+  req.user = { id: 'therapist-1', role: 'therapist' };
+  next();
 });
 
 // Apply stricter rate limiting to AI/document processing endpoints
