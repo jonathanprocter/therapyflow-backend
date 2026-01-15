@@ -9,13 +9,14 @@ function extractKeywords(goalText: string): string[] {
     .filter((word) => word.length > 3);
 }
 
-export async function buildGoalSignals(clientId: string) {
+export async function buildGoalSignals(clientId: string, therapistId?: string) {
   const treatmentPlan = await storage.getTreatmentPlan(clientId);
   if (!treatmentPlan || !(treatmentPlan.goals as any[])?.length) {
     return [];
   }
 
-  const notes = await storage.getProgressNotes(clientId);
+  // SECURITY: Pass therapistId for tenant isolation
+  const notes = await storage.getProgressNotes(clientId, therapistId);
   const recentNotes = notes.slice(0, 12);
   const previousNotes = notes.slice(12, 24);
 

@@ -23,9 +23,10 @@ export async function getRiskThresholds() {
   };
 }
 
-export async function checkRiskEscalation(clientId: string) {
+export async function checkRiskEscalation(clientId: string, therapistId?: string) {
   const thresholds = await getRiskThresholds();
-  const notes = await storage.getProgressNotes(clientId);
+  // SECURITY: Pass therapistId for tenant isolation
+  const notes = await storage.getProgressNotes(clientId, therapistId);
   if (!notes || notes.length === 0) return null;
 
   const recent = notes.slice(0, thresholds.trendWindow || 3);

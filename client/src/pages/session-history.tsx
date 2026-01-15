@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, Clock, FileText, Users, CheckCircle, AlertCircle } from "lucide-react";
+import { CalendarDays, Clock, FileText, Users, CheckCircle, AlertCircle, Eye, ExternalLink, X } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
-import type { Session, Client } from "@shared/schema";
+import type { Session, Client, Document } from "@shared/schema";
 import SessionSummaryGenerator from "@/components/sessions/SessionSummaryGenerator";
 
 type SessionWithClient = Session & { client: Client };
@@ -19,7 +19,8 @@ export default function SessionHistory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<string>("all");
   const [selectedSessionForSummary, setSelectedSessionForSummary] = useState<SessionWithClient | null>(null);
-  
+  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -42,6 +43,67 @@ export default function SessionHistory() {
       return response.json();
     }
   });
+
+  // Fetch all documents for linking to sessions
+  const { data: allDocuments = [] } = useQuery<Document[]>({
+    queryKey: ["/api/documents"],
+    queryFn: async () => {
+      const response = await fetch("/api/documents");
+      if (!response.ok) throw new Error("Failed to fetch documents");
+      return response.json();
+    }
+  });
+
+  // Create maps for efficient document-session lookup
+  const documentsBySessionId = useMemo(() => {
+    const map = new Map<string, Document[]>();
+    allDocuments.forEach(doc => {
+      const metadata = doc.metadata as Record<string, any> | null;
+      const sessionId = metadata?.sessionId || metadata?.linkedSessionId;
+      if (sessionId) {
+        const existing = map.get(sessionId) || [];
+        existing.push(doc);
+        map.set(sessionId, existing);
+      }
+    });
+    return map;
+  }, [allDocuments]);
+
+  const documentsByDate = useMemo(() => {
+    const map = new Map<string, Document[]>();
+    allDocuments.forEach(doc => {
+      const metadata = doc.metadata as Record<string, any> | null;
+      const sessionDate = metadata?.sessionDate;
+      if (sessionDate) {
+        const dateKey = new Date(sessionDate).toISOString().split('T')[0];
+        const existing = map.get(dateKey) || [];
+        existing.push(doc);
+        map.set(dateKey, existing);
+      }
+    });
+    return map;
+  }, [allDocuments]);
+
+  // Get documents linked to a specific session
+  const getDocumentsForSession = useCallback((session: SessionWithClient) => {
+    const docs: Document[] = [];
+
+    // Get documents directly linked by session ID
+    const bySession = documentsBySessionId.get(session.id) || [];
+
+    // Get documents linked by date
+    const dateKey = new Date(session.scheduledAt).toISOString().split('T')[0];
+    const byDate = documentsByDate.get(dateKey) || [];
+
+    // Merge and deduplicate, filtering by client match
+    for (const doc of [...bySession, ...byDate]) {
+      if (doc.clientId === session.clientId && !docs.some(existing => existing.id === doc.id)) {
+        docs.push(doc);
+      }
+    }
+
+    return docs;
+  }, [documentsBySessionId, documentsByDate]);
 
   // Mark past sessions as completed
   const markPastCompletedMutation = useMutation({
@@ -322,59 +384,115 @@ export default function SessionHistory() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-3">
-                  {sessions.map(session => (
-                    <div
-                      key={session.id}
-                      className="flex items-center justify-between p-3 rounded-lg border transition-colors"
-                      style={{ 
-                        backgroundColor: '#FFFFFF',
-                        borderColor: 'rgba(115, 138, 110, 0.2)'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(242, 243, 241, 0.5)'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFFFF'}
-                      data-testid={`session-card-${session.id}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium" style={{ color: '#344C3D' }}>{session.client?.name || "Unknown Client"}</h4>
-                            <Badge 
-                              className="rounded"
-                              style={getStatusColor(session.status)}
-                            >
-                              {session.status}
-                            </Badge>
+                  {sessions.map(session => {
+                    const linkedDocs = getDocumentsForSession(session);
+                    return (
+                      <div
+                        key={session.id}
+                        className="p-3 rounded-lg border transition-colors"
+                        style={{
+                          backgroundColor: '#FFFFFF',
+                          borderColor: 'rgba(115, 138, 110, 0.2)'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(242, 243, 241, 0.5)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFFFF'}
+                        data-testid={`session-card-${session.id}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium" style={{ color: '#344C3D' }}>{session.client?.name || "Unknown Client"}</h4>
+                                <Badge
+                                  className="rounded"
+                                  style={getStatusColor(session.status)}
+                                >
+                                  {session.status}
+                                </Badge>
+                                {linkedDocs.length > 0 && (
+                                  <Badge variant="secondary" className="text-xs" style={{ backgroundColor: 'rgba(136, 165, 188, 0.2)', color: '#88A5BC' }}>
+                                    {linkedDocs.length} doc{linkedDocs.length !== 1 ? 's' : ''}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm" style={{ color: '#738A6E' }}>
+                                {formatInTimeZone(new Date(session.scheduledAt), 'America/New_York', 'MMM dd, yyyy • h:mm a')} • {session.duration} min • {session.sessionType}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-sm" style={{ color: '#738A6E' }}>
-                            {formatInTimeZone(new Date(session.scheduledAt), 'America/New_York', 'MMM dd, yyyy • h:mm a')} • {session.duration} min • {session.sessionType}
-                          </p>
+
+                          <div className="flex items-center gap-2">
+                            {session.hasProgressNotePlaceholder && (
+                              <FileText className="h-4 w-4" style={{ color: '#8EA58C' }} />
+                            )}
+                            {session.isSimplePracticeEvent && (
+                              <Badge variant="outline" className="text-xs" style={{ borderColor: '#88A5BC', color: '#88A5BC' }}>
+                                SimplePractice
+                              </Badge>
+                            )}
+                            {session.status === "completed" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSelectedSessionForSummary(session)}
+                                style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
+                                data-testid={`generate-summary-${session.id}`}
+                              >
+                                <i className="fas fa-magic mr-2 text-xs"></i>
+                                Summary
+                              </Button>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Linked Documents Section */}
+                        {linkedDocs.length > 0 && (
+                          <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(115, 138, 110, 0.15)' }}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="h-4 w-4" style={{ color: '#88A5BC' }} />
+                              <span className="text-sm font-medium" style={{ color: '#344C3D' }}>Linked Documents</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {linkedDocs.map(doc => (
+                                <div
+                                  key={doc.id}
+                                  className="flex items-center gap-2 px-3 py-1.5 rounded-md border"
+                                  style={{
+                                    backgroundColor: 'rgba(136, 165, 188, 0.08)',
+                                    borderColor: 'rgba(136, 165, 188, 0.2)'
+                                  }}
+                                >
+                                  <span className="text-sm" style={{ color: '#344C3D' }}>
+                                    {doc.fileName}
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0"
+                                      onClick={() => setPreviewDocument(doc)}
+                                      title="Preview document"
+                                    >
+                                      <Eye className="h-3.5 w-3.5" style={{ color: '#88A5BC' }} />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0"
+                                      onClick={() => window.open(`/documents/${doc.id}`, '_blank')}
+                                      title="Open document"
+                                    >
+                                      <ExternalLink className="h-3.5 w-3.5" style={{ color: '#8EA58C' }} />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {session.hasProgressNotePlaceholder && (
-                          <FileText className="h-4 w-4" style={{ color: '#8EA58C' }} />
-                        )}
-                        {session.isSimplePracticeEvent && (
-                          <Badge variant="outline" className="text-xs" style={{ borderColor: '#88A5BC', color: '#88A5BC' }}>
-                            SimplePractice
-                          </Badge>
-                        )}
-                        {session.status === "completed" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setSelectedSessionForSummary(session)}
-                            style={{ borderColor: '#8EA58C', color: '#8EA58C' }}
-                            data-testid={`generate-summary-${session.id}`}
-                          >
-                            <i className="fas fa-magic mr-2 text-xs"></i>
-                            Summary
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -405,6 +523,77 @@ export default function SessionHistory() {
               onClose={() => setSelectedSessionForSummary(null)}
             />
           </div>
+        </div>
+      )}
+
+      {/* Document Preview Modal */}
+      {previewDocument && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto bg-white">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle style={{ color: '#344C3D' }}>
+                  {previewDocument.fileName}
+                </CardTitle>
+                <CardDescription style={{ color: '#738A6E' }}>
+                  {previewDocument.fileType} • Uploaded {formatInTimeZone(new Date(previewDocument.uploadedAt), 'America/New_York', 'MMM dd, yyyy')}
+                </CardDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPreviewDocument(null)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" style={{ color: '#738A6E' }} />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {previewDocument.extractedText ? (
+                <div
+                  className="prose prose-sm max-w-none p-4 rounded-lg border"
+                  style={{
+                    backgroundColor: 'rgba(242, 243, 241, 0.5)',
+                    borderColor: 'rgba(115, 138, 110, 0.2)',
+                    color: '#344C3D'
+                  }}
+                >
+                  <pre className="whitespace-pre-wrap font-sans text-sm" style={{ color: '#344C3D' }}>
+                    {previewDocument.extractedText}
+                  </pre>
+                </div>
+              ) : (
+                <div className="text-center py-8" style={{ color: '#738A6E' }}>
+                  <FileText className="h-12 w-12 mx-auto mb-4" style={{ color: 'rgba(115, 138, 110, 0.3)' }} />
+                  <p>No preview available for this document.</p>
+                  <Button
+                    className="mt-4"
+                    onClick={() => window.open(`/documents/${previewDocument.id}`, '_blank')}
+                    style={{ backgroundColor: '#8EA58C', color: '#FFFFFF' }}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open Document
+                  </Button>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setPreviewDocument(null)}
+                  style={{ borderColor: '#738A6E', color: '#738A6E' }}
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={() => window.open(`/documents/${previewDocument.id}`, '_blank')}
+                  style={{ backgroundColor: '#8EA58C', color: '#FFFFFF' }}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open Full Document
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

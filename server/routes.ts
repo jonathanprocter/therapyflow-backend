@@ -465,7 +465,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients/:clientId/goal-signals", verifyClientOwnership, async (req: any, res) => {
     try {
       const clientId = req.params.clientId;
-      const signals = await buildGoalSignals(clientId);
+      // SECURITY: Pass therapistId for tenant isolation
+      const signals = await buildGoalSignals(clientId, req.therapistId);
       res.json({ signals });
     } catch (error) {
       console.error("Error fetching goal signals:", error);
@@ -1034,7 +1035,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       try {
-        const riskCheck = await checkRiskEscalation(noteData.clientId);
+        // SECURITY: Pass therapistId for tenant isolation
+        const riskCheck = await checkRiskEscalation(noteData.clientId, req.therapistId);
         if (riskCheck?.isEscalating) {
           await storage.createAiInsight({
             clientId: noteData.clientId,
@@ -2314,10 +2316,11 @@ ${contextInfo ? `\nCurrent context:\n${contextInfo}` : ''}`,
       const clientId = context?.client_id;
       if (clientId) {
         try {
-          const client = await storage.getClient(clientId);
-          const notes = await storage.getProgressNotes(clientId);
-          const documents = await storage.getDocuments(clientId);
-          const sessions = await storage.getSessions(clientId);
+          // SECURITY: Pass therapistId for tenant isolation
+          const client = await storage.getClient(clientId, req.therapistId);
+          const notes = await storage.getProgressNotes(clientId, req.therapistId);
+          const documents = await storage.getDocuments(clientId, req.therapistId);
+          const sessions = await storage.getSessions(clientId, req.therapistId);
 
           const decryptedNotes = notes.map(note => safeDecrypt(note.content || "") || "");
           const docSummaries = documents.map(doc => {

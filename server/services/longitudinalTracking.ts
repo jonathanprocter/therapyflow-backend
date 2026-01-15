@@ -192,13 +192,14 @@ function buildRecordSummary(options: {
 }
 
 export async function generateLongitudinalTracking(clientId: string, therapistId: string) {
-  const client = await storage.getClient(clientId);
+  // SECURITY: Pass therapistId for tenant isolation
+  const client = await storage.getClient(clientId, therapistId);
   if (!client) {
     throw new Error("Client not found");
   }
 
-  const sessions = await storage.getSessions(clientId);
-  const notes = await storage.getProgressNotes(clientId);
+  const sessions = await storage.getSessions(clientId, therapistId);
+  const notes = await storage.getProgressNotes(clientId, therapistId);
   const treatmentPlan = await storage.getTreatmentPlan(clientId);
   const allianceScores = await storage.getAllianceScores(clientId);
 

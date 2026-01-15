@@ -184,11 +184,12 @@ class ReportComposerService {
       console.log(`[Report Composer] Generating ${reportType} for client ${clientId}`);
 
       // Gather all client data
+      // SECURITY: Pass therapistId for tenant isolation
       const [client, sessions, treatmentPlan, progressNotes] = await Promise.all([
-        storage.getClient(clientId),
-        storage.getSessions(clientId),
+        storage.getClient(clientId, therapistId),
+        storage.getSessions(clientId, therapistId),
         storage.getTreatmentPlan(clientId),
-        storage.getProgressNotes(clientId)
+        storage.getProgressNotes(clientId, therapistId)
       ]);
 
       if (!client) {
@@ -668,10 +669,11 @@ Use professional clinical terminology. Base content on provided data only.`;
     recommendations: string[];
   }> {
     try {
+      // SECURITY: Pass therapistId for tenant isolation
       const [client, sessions, notes] = await Promise.all([
-        storage.getClient(clientId),
-        storage.getSessions(clientId),
-        storage.getProgressNotes(clientId)
+        storage.getClient(clientId, therapistId),
+        storage.getSessions(clientId, therapistId),
+        storage.getProgressNotes(clientId, therapistId)
       ]);
 
       if (!client) {

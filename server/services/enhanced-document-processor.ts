@@ -1787,9 +1787,10 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
     therapistId: string
   ): Promise<{ id: string; confidence: number } | null> {
     if (!sessionDate) return null;
-    
+
     try {
-      const sessions = await storage.getSessions(clientId);
+      // SECURITY: Pass therapistId for tenant isolation
+      const sessions = await storage.getSessions(clientId, therapistId);
       
       // Find sessions on exact date
       const exactMatches = sessions.filter(session => {
@@ -2253,7 +2254,8 @@ Return the same JSON structure but with enhanced clinical content and higher con
     });
 
     try {
-      const riskCheck = await checkRiskEscalation(clientId);
+      // SECURITY: Pass therapistId for tenant isolation
+      const riskCheck = await checkRiskEscalation(clientId, therapistId);
       if (riskCheck?.isEscalating) {
         await storage.createAiInsight({
           clientId,
@@ -2388,7 +2390,8 @@ Return the same JSON structure but with enhanced clinical content and higher con
     };
 
     if (documentId) {
-      const updated = await storage.updateDocument(documentId, docPayload);
+      // SECURITY: Pass therapistId for tenant isolation
+      const updated = await storage.updateDocument(documentId, docPayload, therapistId);
       await this.saveAiDocumentResult(updated.id, aiAnalysis);
       return updated;
     }

@@ -74,11 +74,12 @@ export class ExportService {
    */
   private async prepareExportData(request: ExportRequest, summaryResult: any) {
     const { storage } = await import('../storage.js');
-    
+
+    // SECURITY: Pass therapistId for tenant isolation
     // Get session details
-    const session = await storage.getSession(request.sessionId);
-    const client = await storage.getClient(request.clientId);
-    const progressNotes = await storage.getProgressNotesBySession(request.sessionId);
+    const session = await storage.getSession(request.sessionId, request.therapistId);
+    const client = await storage.getClient(request.clientId, request.therapistId);
+    const progressNotes = await storage.getProgressNotesBySession(request.sessionId, request.therapistId);
     
     // Format session timing in EDT
     const sessionTiming = session ? formatSessionTimeRange(session.scheduledAt, session.duration) : null;

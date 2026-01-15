@@ -105,25 +105,26 @@ export class SessionSummaryGenerator {
    */
   private async gatherSessionData(request: SessionSummaryRequest) {
     console.log('📊 Gathering session data...');
-    
+
     // Import storage here to avoid circular dependencies
     const { storage } = await import('../storage.js');
-    
+
+    // SECURITY: Pass therapistId for tenant isolation
     // Get session details
-    const session = await storage.getSession(request.sessionId);
+    const session = await storage.getSession(request.sessionId, request.therapistId);
     if (!session) {
       throw new Error('Session not found');
     }
-    
+
     // Get client information
-    const client = await storage.getClient(request.clientId);
+    const client = await storage.getClient(request.clientId, request.therapistId);
     if (!client) {
       throw new Error('Client not found');
     }
-    
+
     // Get progress notes for this session
-    const progressNotes = request.includeProgressNotes 
-      ? await storage.getProgressNotesBySession(request.sessionId)
+    const progressNotes = request.includeProgressNotes
+      ? await storage.getProgressNotesBySession(request.sessionId, request.therapistId)
       : [];
     
     // Get recent sessions for context
@@ -347,7 +348,7 @@ STANDARD SUMMARY INSTRUCTIONS:
   /**
    * Generate quick session insights for immediate use
    */
-  async generateQuickInsights(sessionId: string, clientId: string): Promise<{
+  async generateQuickInsights(sessionId: string, clientId: string, therapistId?: string): Promise<{
     keyTakeaways: string[];
     immediateActions: string[];
     riskFlags: string[];
@@ -355,9 +356,10 @@ STANDARD SUMMARY INSTRUCTIONS:
   }> {
     try {
       const { storage } = await import('../storage.js');
-      
-      const session = await storage.getSession(sessionId);
-      const progressNotes = await storage.getProgressNotesBySession(sessionId);
+
+      // SECURITY: Pass therapistId for tenant isolation
+      const session = await storage.getSession(sessionId, therapistId);
+      const progressNotes = await storage.getProgressNotesBySession(sessionId, therapistId);
       
       const prompt = `
 Generate quick clinical insights for session ${sessionId}:

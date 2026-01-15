@@ -160,8 +160,9 @@ function tryParseJSON(raw: string) {
   return JSON.parse(trimmed);
 }
 
-export async function processDocumentWithAI(documentId: string) {
-  const doc = await storage.getDocument(documentId);
+export async function processDocumentWithAI(documentId: string, therapistId?: string) {
+  // SECURITY: Pass therapistId for tenant isolation
+  const doc = await storage.getDocument(documentId, therapistId);
   if (!doc?.extractedText) throw new Error(`Document ${documentId} not parsed or empty`);
 
   console.log(`🤖 Processing document ${documentId} with AI...`);
@@ -236,7 +237,7 @@ export async function processDocumentWithAI(documentId: string) {
             analyzedAt: new Date().toISOString(),
           },
         },
-      });
+      }, therapistId);
     }
   } catch (error) {
     console.warn("[AI] Failed to persist AI document results:", error);
@@ -263,8 +264,9 @@ export async function processDocumentWithAI(documentId: string) {
   return { saved, edgesCount: edges.length };
 }
 
-export async function smartParseDocument(documentId: string) {
-  const doc = await storage.getDocument(documentId);
+export async function smartParseDocument(documentId: string, therapistId?: string) {
+  // SECURITY: Pass therapistId for tenant isolation
+  const doc = await storage.getDocument(documentId, therapistId);
   if (!doc?.extractedText) throw new Error(`Document ${documentId} not parsed or empty`);
 
   console.log(`🧠 Smart parsing document ${documentId}...`);

@@ -536,9 +536,10 @@ Return your analysis in JSON format with both the extracted data and the compreh
     therapistId: string
   ): Promise<any> {
     if (!sessionDate) return null;
-    
+
+    // SECURITY: Pass therapistId for tenant isolation
     // Get all sessions for the client
-    const sessions = await storage.getSessions(clientId);
+    const sessions = await storage.getSessions(clientId, therapistId);
     
     // Find session on the same date (within 24 hours)
     const targetDate = new Date(sessionDate);

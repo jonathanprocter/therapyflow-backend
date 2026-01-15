@@ -163,7 +163,8 @@ export class InsightsAggregator {
 
     for (const client of clients) {
       try {
-        const notes = await storage.getProgressNotes(client.id);
+        // SECURITY: Pass therapistId for tenant isolation
+        const notes = await storage.getProgressNotes(client.id, therapistId);
 
         if (notes.length === 0) {
           results.push({
@@ -424,13 +425,14 @@ export class InsightsAggregator {
     clientId: string,
     therapistId: string
   ): Promise<ClientInsightSummary> {
-    const client = await storage.getClient(clientId);
+    // SECURITY: Pass therapistId for tenant isolation
+    const client = await storage.getClient(clientId, therapistId);
     if (!client) {
       throw new Error(`Client ${clientId} not found`);
     }
 
-    const notes = await storage.getProgressNotes(clientId);
-    const sessions = await storage.getSessions(clientId);
+    const notes = await storage.getProgressNotes(clientId, therapistId);
+    const sessions = await storage.getSessions(clientId, therapistId);
 
     const insights: AggregatedInsight[] = [];
     const now = new Date();

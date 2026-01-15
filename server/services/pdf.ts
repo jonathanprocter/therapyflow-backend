@@ -17,8 +17,9 @@ function cleanFallback(raw: Buffer | string) {
   return text;
 }
 
-export async function parsePDF(documentId: string) {
-  const doc = await storage.getDocument(documentId);
+export async function parsePDF(documentId: string, therapistId?: string) {
+  // SECURITY: Pass therapistId for tenant isolation
+  const doc = await storage.getDocument(documentId, therapistId);
   if (!doc) throw new Error(`Document not found: ${documentId}`);
   
   let data: Buffer | null = null;
@@ -88,7 +89,7 @@ export async function parsePDF(documentId: string) {
   }
 
   // Update document with parsed text
-  await storage.updateDocument(documentId, { extractedText: text });
-  
+  await storage.updateDocument(documentId, { extractedText: text }, therapistId);
+
   return { text, meta, qualityScore };
 }

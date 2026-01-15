@@ -88,7 +88,8 @@ export async function bulkImportProgressNotes(
   const dateToleranceDays = options?.dateToleranceDays ?? 0;
   const includeIndices = options?.includeIndices ?? null;
   const chunks = splitIntoChunks(rawText);
-  const sessions = await storage.getSessions(clientId);
+  // SECURITY: Pass therapistId for tenant isolation
+  const sessions = await storage.getSessions(clientId, therapistId);
   const results: any[] = [];
 
   for (const chunk of chunks) {
@@ -124,7 +125,8 @@ ${chunk.text}
     const sessionId = findSessionIdByDate(sessions, sessionDate, dateToleranceDays);
 
     if (sessionId) {
-      const existing = await storage.getProgressNotesBySession(sessionId);
+      // SECURITY: Pass therapistId for tenant isolation
+      const existing = await storage.getProgressNotesBySession(sessionId, therapistId);
       if (existing.length > 0) {
         results.push({
           index: chunk.index,
@@ -183,7 +185,8 @@ ${chunk.text}
       );
 
       for (const session of matches) {
-        const existingNotes = await storage.getProgressNotesBySession(session.id);
+        // SECURITY: Pass therapistId for tenant isolation
+        const existingNotes = await storage.getProgressNotesBySession(session.id, therapistId);
         if (existingNotes.length > 0) continue;
         await storage.createProgressNotePlaceholder(
           session.id,
@@ -194,7 +197,7 @@ ${chunk.text}
         await storage.updateSession(session.id, {
           hasProgressNotePlaceholder: true,
           progressNoteStatus: 'placeholder'
-        });
+        }, therapistId);
       }
     }
   }

@@ -101,7 +101,8 @@ export interface IStorage {
   getClientForTherapist(id: string, therapistId: string): Promise<Client | undefined>;
 
   // Sessions
-  getSessions(clientId: string): Promise<Session[]>;
+  // SECURITY: Optional therapistId for tenant isolation
+  getSessions(clientId: string, therapistId?: string): Promise<Session[]>;
   getAllHistoricalSessions(therapistId: string, includeCompleted?: boolean): Promise<Session[]>;
   getSessionsInDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<Session[]>;
   getCompletedSessions(therapistId: string, clientId?: string): Promise<Session[]>;
@@ -122,10 +123,11 @@ export interface IStorage {
   updateSessionForTherapist(id: string, therapistId: string, session: Partial<InsertSession>): Promise<Session | undefined>;
 
   // Progress Notes
-  getProgressNotes(clientId: string): Promise<ProgressNote[]>;
+  // SECURITY: Optional therapistId for tenant isolation
+  getProgressNotes(clientId: string, therapistId?: string): Promise<ProgressNote[]>;
   getRecentProgressNotes(therapistId: string, limit?: number): Promise<ProgressNote[]>;
   getProgressNote(id: string, therapistId?: string): Promise<ProgressNote | undefined>;
-  getProgressNotesBySession(sessionId: string): Promise<ProgressNote[]>;
+  getProgressNotesBySession(sessionId: string, therapistId?: string): Promise<ProgressNote[]>;
   createProgressNote(note: InsertProgressNote): Promise<ProgressNote>;
   updateProgressNote(id: string, note: Partial<InsertProgressNote>, therapistId?: string): Promise<ProgressNote>;
   deleteProgressNote(id: string, therapistId?: string): Promise<void>;
@@ -157,7 +159,7 @@ export interface IStorage {
   createAllianceScore(score: InsertAllianceScore): Promise<AllianceScore>;
 
   // Documents
-  getDocuments(clientId: string): Promise<Document[]>;
+  getDocuments(clientId: string, therapistId?: string): Promise<Document[]>;
   getDocument(id: string, therapistId?: string): Promise<Document | undefined>;
   createDocument(document: InsertDocument): Promise<Document>;
   updateDocument(id: string, updates: Partial<InsertDocument>, therapistId?: string): Promise<Document>;
@@ -392,11 +394,16 @@ export class DatabaseStorage implements IStorage {
       .where(and(...conditions));
   }
 
-  async getSessions(clientId: string): Promise<Session[]> {
+  async getSessions(clientId: string, therapistId?: string): Promise<Session[]> {
+    // SECURITY: Optional therapistId for tenant isolation
+    const conditions = [eq(sessions.clientId, clientId)];
+    if (therapistId) {
+      conditions.push(eq(sessions.therapistId, therapistId));
+    }
     return await db
       .select()
       .from(sessions)
-      .where(eq(sessions.clientId, clientId))
+      .where(and(...conditions))
       .orderBy(desc(sessions.scheduledAt));
   }
 
@@ -655,11 +662,16 @@ export class DatabaseStorage implements IStorage {
     return placeholderNotes.length;
   }
 
-  async getProgressNotes(clientId: string): Promise<ProgressNote[]> {
+  async getProgressNotes(clientId: string, therapistId?: string): Promise<ProgressNote[]> {
+    // SECURITY: Optional therapistId for tenant isolation
+    const conditions = [eq(progressNotes.clientId, clientId)];
+    if (therapistId) {
+      conditions.push(eq(progressNotes.therapistId, therapistId));
+    }
     return await db
       .select()
       .from(progressNotes)
-      .where(eq(progressNotes.clientId, clientId))
+      .where(and(...conditions))
       .orderBy(desc(progressNotes.sessionDate));
   }
 
@@ -758,11 +770,16 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
-  async getProgressNotesBySession(sessionId: string): Promise<ProgressNote[]> {
+  async getProgressNotesBySession(sessionId: string, therapistId?: string): Promise<ProgressNote[]> {
+    // SECURITY: Optional therapistId for tenant isolation
+    const conditions = [eq(progressNotes.sessionId, sessionId)];
+    if (therapistId) {
+      conditions.push(eq(progressNotes.therapistId, therapistId));
+    }
     return await db
       .select()
       .from(progressNotes)
-      .where(eq(progressNotes.sessionId, sessionId))
+      .where(and(...conditions))
       .orderBy(desc(progressNotes.createdAt));
   }
 
@@ -945,11 +962,16 @@ export class DatabaseStorage implements IStorage {
     return newScore;
   }
 
-  async getDocuments(clientId: string): Promise<Document[]> {
+  async getDocuments(clientId: string, therapistId?: string): Promise<Document[]> {
+    // SECURITY: Optional therapistId for tenant isolation
+    const conditions = [eq(documents.clientId, clientId)];
+    if (therapistId) {
+      conditions.push(eq(documents.therapistId, therapistId));
+    }
     return await db
       .select()
       .from(documents)
-      .where(eq(documents.clientId, clientId))
+      .where(and(...conditions))
       .orderBy(desc(documents.uploadedAt));
   }
 
