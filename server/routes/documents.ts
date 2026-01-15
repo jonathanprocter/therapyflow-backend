@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request } from "express";
 import multer from "multer";
 import path from "path";
 import { promises as fs } from "fs";
@@ -9,17 +9,25 @@ import { enhancedDocumentProcessor } from "../services/enhanced-document-process
 import { enqueueJob, registerJobHandler } from "../services/jobQueue";
 
 
-const upload = multer({ 
+const upload = multer({
   storage: multer.memoryStorage()
 });
 
 export const documentsRouter = express.Router();
 
+// Helper to get therapist ID from authenticated session only
+// SECURITY: Only accept therapistId from authenticated session, never from headers
+const getTherapistId = (req: Request): string => {
+  return (req as any).user?.id || (req as any).therapistId || "";
+};
+
 registerJobHandler("smart-process", async (job) => {
   const documentIds = job.payload?.documentIds || [];
+  const therapistId = job.therapistId || "";
   const results: any[] = [];
   for (const id of documentIds) {
-    const doc = await storage.getDocument(id);
+    // SECURITY: Pass therapistId for tenant isolation
+    const doc = await storage.getDocument(id, therapistId);
     if (!doc) {
       results.push({ documentId: id, error: "not found" });
       continue;
@@ -122,7 +130,11 @@ documentsRouter.post("/smart-upload", (req, res) => {
         return res.status(400).json({ error: "clientId and appointmentDate required" });
       }
 
-      const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+      // SECURITY: Use proper therapist ID from session
+      const therapistId = getTherapistId(req);
+      if (!therapistId) {
+        return res.status(401).json({ error: "Therapist ID required" });
+      }
 
       // For smart-parsing, use the first available client
       let actualClientId = clientId;
@@ -187,7 +199,9 @@ documentsRouter.post("/parse", async (req, res) => {
       return res.status(400).json({ error: "documentId required" });
     }
 
-    const doc = await storage.getDocument(documentId);
+    // SECURITY: Verify document belongs to therapist
+    const therapistId = getTherapistId(req);
+    const doc = await storage.getDocument(documentId, therapistId);
     if (!doc) {
       return res.status(404).json({ error: "Document not found" });
     }
@@ -219,6 +233,14 @@ documentsRouter.post("/parse", async (req, res) => {
 documentsRouter.get("/:id/text-versions", async (req, res) => {
   try {
     const { id } = req.params;
+
+    // SECURITY: Verify document belongs to therapist before returning versions
+    const therapistId = getTherapistId(req);
+    const doc = await storage.getDocument(id, therapistId);
+    if (!doc) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
     const versions = await storage.getDocumentTextVersions(id);
     res.json({ versions });
   } catch (error) {
@@ -232,19 +254,22 @@ documentsRouter.post("/process-batch", async (req, res) => {
     const { clientId, appointmentDate, documentIds, promptId = "care_notes_v1", force = false } = req.body;
 
     if (!clientId || !appointmentDate || !Array.isArray(documentIds)) {
-      return res.status(400).json({ 
-        error: "clientId, appointmentDate, documentIds required" 
+      return res.status(400).json({
+        error: "clientId, appointmentDate, documentIds required"
       });
     }
 
+    // SECURITY: Get therapist ID for document ownership verification
+    const therapistId = getTherapistId(req);
     const results: any[] = [];
 
     for (const id of documentIds) {
       try {
-        const doc = await storage.getDocument(id);
-        if (!doc) { 
-          results.push({ documentId: id, error: "not found" }); 
-          continue; 
+        // SECURITY: Verify document belongs to therapist
+        const doc = await storage.getDocument(id, therapistId);
+        if (!doc) {
+          results.push({ documentId: id, error: "not found" });
+          continue;
         }
 
         // Parse if needed
@@ -309,6 +334,13 @@ documentsRouter.post("/ai-process", async (req, res) => {
       return res.status(400).json({ error: "documentId required" });
     }
 
+    // SECURITY: Verify document belongs to therapist before AI processing
+    const therapistId = getTherapistId(req);
+    const doc = await storage.getDocument(documentId, therapistId);
+    if (!doc) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
     const result = await processDocumentWithAI(documentId);
 
     res.json({
@@ -334,19 +366,22 @@ documentsRouter.post("/smart-process", async (req, res) => {
     const { documentIds } = req.body;
 
     if (!Array.isArray(documentIds)) {
-      return res.status(400).json({ 
-        error: "documentIds array required" 
+      return res.status(400).json({
+        error: "documentIds array required"
       });
     }
 
+    // SECURITY: Get therapist ID for document ownership verification
+    const therapistId = getTherapistId(req);
     const results: any[] = [];
 
     for (const id of documentIds) {
       try {
-        const doc = await storage.getDocument(id);
-        if (!doc) { 
-          results.push({ documentId: id, error: "not found" }); 
-          continue; 
+        // SECURITY: Verify document belongs to therapist
+        const doc = await storage.getDocument(id, therapistId);
+        if (!doc) {
+          results.push({ documentId: id, error: "not found" });
+          continue;
         }
 
         let buffer: Buffer | null = null;
@@ -380,7 +415,7 @@ documentsRouter.post("/smart-process", async (req, res) => {
           ? new Date(processingResult.extractedData.sessionDate).toISOString().split("T")[0]
           : "";
 
-        const updatedDoc = await storage.getDocument(id);
+        const updatedDoc = await storage.getDocument(id, therapistId);
 
         results.push({
           documentId: id,
@@ -418,7 +453,12 @@ documentsRouter.post("/smart-process-async", async (req, res) => {
     return res.status(400).json({ error: "documentIds array required" });
   }
 
-  const therapistId = (req as any).therapistId || 'dr-jonathan-procter';
+  // SECURITY: Use proper therapist ID from session
+  const therapistId = getTherapistId(req);
+  if (!therapistId) {
+    return res.status(401).json({ error: "Therapist ID required" });
+  }
+
   const job = await enqueueJob("smart-process", { documentIds }, undefined, therapistId, 3);
 
   res.json({ jobId: job.id, status: job.status });
@@ -427,7 +467,10 @@ documentsRouter.post("/smart-process-async", async (req, res) => {
 documentsRouter.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const doc = await storage.deleteDocument(id);
+
+    // SECURITY: Pass therapist ID for ownership verification
+    const therapistId = getTherapistId(req);
+    const doc = await storage.deleteDocument(id, therapistId);
     if (!doc) {
       return res.status(404).json({ error: "Document not found" });
     }

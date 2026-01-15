@@ -1320,12 +1320,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/documents/:id", async (req: any, res) => {
     try {
       const therapistId = req.therapistId || 'therapist-1';
-      const document = await storage.getDocument(req.params.id);
+      // SECURITY: Pass therapistId to verify ownership in storage layer
+      const document = await storage.getDocument(req.params.id, therapistId);
       if (!document) {
         return res.status(404).json({ error: "Document not found" });
-      }
-      if (document.therapistId && document.therapistId !== therapistId) {
-        return res.status(403).json({ error: "Access denied" });
       }
       res.json(document);
     } catch (error) {
@@ -1340,13 +1338,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const therapistId = req.therapistId || 'therapist-1';
       const documentId = req.params.id;
 
-      // Verify document ownership
-      const existing = await storage.getDocument(documentId);
+      // SECURITY: Verify document ownership via storage layer
+      const existing = await storage.getDocument(documentId, therapistId);
       if (!existing) {
         return res.status(404).json({ error: "Document not found" });
-      }
-      if (existing.therapistId && existing.therapistId !== therapistId) {
-        return res.status(403).json({ error: "Access denied" });
       }
 
       const {
@@ -1389,7 +1384,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       }
 
-      const updated = await storage.updateDocument(documentId, updateData);
+      const updated = await storage.updateDocument(documentId, updateData, therapistId);
       res.json(updated);
     } catch (error) {
       console.error("Error updating document:", error);
@@ -1403,13 +1398,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const therapistId = req.therapistId || 'therapist-1';
       const documentId = req.params.id;
 
-      // Verify document ownership
-      const document = await storage.getDocument(documentId);
+      // SECURITY: Verify document ownership via storage layer
+      const document = await storage.getDocument(documentId, therapistId);
       if (!document) {
         return res.status(404).json({ error: "Document not found" });
-      }
-      if (document.therapistId && document.therapistId !== therapistId) {
-        return res.status(403).json({ error: "Access denied" });
       }
 
       const { clientId, sessionDate, aiAnalysis } = req.body;
@@ -1476,7 +1468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           progressNoteId: progressNote.id,
           sessionDate: progressNote.sessionDate?.toISOString?.() || sessionDate || null
         }
-      });
+      }, therapistId);
 
       res.json({
         success: true,
@@ -1680,7 +1672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               };
             }
 
-            await storage.updateDocument(doc.id, updateData);
+            await storage.updateDocument(doc.id, updateData, therapistId);
             results.linked++;
             console.log(`Linked document ${doc.fileName} to client ${matchedClient.name}`);
           } else {
@@ -1877,7 +1869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 sessionId: matchingSession.id,
                 sessionDate: matchingSession.scheduledAt
               }
-            });
+            }, therapistId);
             results.linked++;
             console.log(`Linked "${doc.fileName}" to session on ${new Date(matchingSession.scheduledAt).toLocaleDateString()}`);
           } else {
@@ -2027,7 +2019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               sessionId: sessionId,
               sessionDate: extractedDate.toISOString()
             }
-          });
+          }, therapistId);
 
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : 'Unknown error';

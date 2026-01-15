@@ -158,11 +158,11 @@ export interface IStorage {
 
   // Documents
   getDocuments(clientId: string): Promise<Document[]>;
-  getDocument(id: string): Promise<Document | undefined>;
+  getDocument(id: string, therapistId?: string): Promise<Document | undefined>;
   createDocument(document: InsertDocument): Promise<Document>;
-  updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document>;
+  updateDocument(id: string, updates: Partial<InsertDocument>, therapistId?: string): Promise<Document>;
   getDocumentsByTherapist(therapistId: string): Promise<Document[]>;
-  deleteDocument(id: string): Promise<Document | undefined>;
+  deleteDocument(id: string, therapistId?: string): Promise<Document | undefined>;
   getDocumentsByProgressNoteId(progressNoteId: string): Promise<Document[]>;
 
   // AI Document Results
@@ -953,11 +953,22 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(documents.uploadedAt));
   }
 
-  async getDocument(id: string): Promise<Document | undefined> {
+  /**
+   * Get document by ID with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async getDocument(id: string, therapistId?: string): Promise<Document | undefined> {
+    const conditions = [eq(documents.id, id)];
+
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(documents.therapistId, therapistId));
+    }
+
     const result = await db
       .select()
       .from(documents)
-      .where(eq(documents.id, id))
+      .where(and(...conditions))
       .limit(1);
     return result[0];
   }
@@ -970,11 +981,22 @@ export class DatabaseStorage implements IStorage {
     return newDocument;
   }
 
-  async updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document> {
+  /**
+   * Update document with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async updateDocument(id: string, updates: Partial<InsertDocument>, therapistId?: string): Promise<Document> {
+    const conditions = [eq(documents.id, id)];
+
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(documents.therapistId, therapistId));
+    }
+
     const [updatedDocument] = await db
       .update(documents)
       .set({ ...updates, uploadedAt: new Date() } as any)
-      .where(eq(documents.id, id))
+      .where(and(...conditions))
       .returning();
     return updatedDocument;
   }
@@ -987,11 +1009,22 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(documents.uploadedAt));
   }
 
-  async deleteDocument(id: string): Promise<Document | undefined> {
-    const [doc] = await db.select().from(documents).where(eq(documents.id, id));
+  /**
+   * Delete document with optional therapist ownership verification
+   * H7 FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async deleteDocument(id: string, therapistId?: string): Promise<Document | undefined> {
+    const conditions = [eq(documents.id, id)];
+
+    // H7 FIX: Add therapistId filter when provided
+    if (therapistId) {
+      conditions.push(eq(documents.therapistId, therapistId));
+    }
+
+    const [doc] = await db.select().from(documents).where(and(...conditions));
     if (!doc) return undefined;
 
-    await db.delete(documents).where(eq(documents.id, id));
+    await db.delete(documents).where(and(...conditions));
     return doc;
   }
 
