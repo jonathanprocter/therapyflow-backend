@@ -26,6 +26,10 @@ import { calculateNoteQuality } from "./utils/noteQuality";
 import { ClinicalEncryption } from "./utils/encryption";
 import { eq, desc, and, or, like, sql, isNull, ne, inArray } from "drizzle-orm";
 
+// SECURITY FIX: Configurable timezone instead of hardcoded value
+// Defaults to America/New_York for backwards compatibility
+const CALENDAR_TIMEZONE = process.env.CALENDAR_TIMEZONE || 'America/New_York';
+
 /**
  * Strip markdown formatting from text before saving to database
  */
@@ -92,7 +96,8 @@ export interface IStorage {
   getClients(therapistId: string): Promise<Client[]>;
   getClient(id: string, therapistId?: string): Promise<Client | undefined>;
   getClientsByIds(ids: string[]): Promise<Map<string, Client>>;
-  getClientByName(name: string): Promise<Client | undefined>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  getClientByName(name: string, therapistId?: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: string, client: Partial<InsertClient>, therapistId?: string): Promise<Client>;
   deleteClient(id: string, therapistId?: string): Promise<void>;
@@ -109,8 +114,10 @@ export interface IStorage {
   getUpcomingSessions(therapistId: string, date?: Date): Promise<Session[]>;
   getTodaysSessions(therapistId: string): Promise<Session[]>;
   getSession(id: string, therapistId?: string): Promise<Session | undefined>;
-  getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined>;
-  getRecentSessionsForClient(clientId: string, limit?: number): Promise<Session[]>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  getSessionByGoogleEventId(googleEventId: string, therapistId?: string): Promise<Session | undefined>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  getRecentSessionsForClient(clientId: string, limit?: number, therapistId?: string): Promise<Session[]>;
   createSession(session: InsertSession): Promise<Session>;
   updateSession(id: string, session: Partial<InsertSession>, therapistId?: string): Promise<Session>;
   markPastSessionsAsCompleted(therapistId: string): Promise<number>;
@@ -143,19 +150,25 @@ export interface IStorage {
   deleteProgressNoteForTherapist(id: string, therapistId: string): Promise<boolean>;
 
   // Case Conceptualizations
-  getCaseConceptualization(clientId: string): Promise<CaseConceptualization | undefined>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  getCaseConceptualization(clientId: string, therapistId?: string): Promise<CaseConceptualization | undefined>;
   createCaseConceptualization(conceptualization: InsertCaseConceptualization): Promise<CaseConceptualization>;
-  updateCaseConceptualization(id: string, conceptualization: Partial<InsertCaseConceptualization>): Promise<CaseConceptualization>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  updateCaseConceptualization(id: string, conceptualization: Partial<InsertCaseConceptualization>, therapistId?: string): Promise<CaseConceptualization>;
 
   // Treatment Plans
-  getTreatmentPlan(clientId: string): Promise<TreatmentPlan | undefined>;
-  getTreatmentPlanByClient(clientId: string): Promise<TreatmentPlan | undefined>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  getTreatmentPlan(clientId: string, therapistId?: string): Promise<TreatmentPlan | undefined>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  getTreatmentPlanByClient(clientId: string, therapistId?: string): Promise<TreatmentPlan | undefined>;
   getAllTreatmentPlans(therapistId: string): Promise<TreatmentPlan[]>;
   createTreatmentPlan(plan: InsertTreatmentPlan): Promise<TreatmentPlan>;
-  updateTreatmentPlan(id: string, plan: Partial<InsertTreatmentPlan>): Promise<TreatmentPlan>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  updateTreatmentPlan(id: string, plan: Partial<InsertTreatmentPlan>, therapistId?: string): Promise<TreatmentPlan>;
 
   // Alliance Scores
-  getAllianceScores(clientId: string): Promise<AllianceScore[]>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  getAllianceScores(clientId: string, therapistId?: string): Promise<AllianceScore[]>;
   createAllianceScore(score: InsertAllianceScore): Promise<AllianceScore>;
 
   // Documents
@@ -165,7 +178,8 @@ export interface IStorage {
   updateDocument(id: string, updates: Partial<InsertDocument>, therapistId?: string): Promise<Document>;
   getDocumentsByTherapist(therapistId: string): Promise<Document[]>;
   deleteDocument(id: string, therapistId?: string): Promise<Document | undefined>;
-  getDocumentsByProgressNoteId(progressNoteId: string): Promise<Document[]>;
+  // SECURITY: Added optional therapistId for tenant isolation
+  getDocumentsByProgressNoteId(progressNoteId: string, therapistId?: string): Promise<Document[]>;
 
   // AI Document Results
   createAiDocumentResult(result: InsertAiDocumentResult): Promise<AiDocumentResult>;
@@ -174,7 +188,8 @@ export interface IStorage {
   // AI Insights
   getAiInsights(therapistId: string, limit?: number): Promise<AiInsight[]>;
   createAiInsight(insight: InsertAiInsight): Promise<AiInsight>;
-  markInsightAsRead(id: string): Promise<void>;
+  // SECURITY: Added optional therapistId for ownership verification
+  markInsightAsRead(id: string, therapistId?: string): Promise<void>;
   // Session Preps
   createSessionPrep(sessionId: string, clientId: string, therapistId: string, prep: any): Promise<any>;
   getLatestSessionPrep(sessionId: string): Promise<any | undefined>;
@@ -339,8 +354,19 @@ export class DatabaseStorage implements IStorage {
     return new Map(result.map(client => [client.id, client]));
   }
 
-  async getClientByName(name: string): Promise<Client | undefined> {
-    const [client] = await db.select().from(clients).where(eq(clients.name, name));
+  /**
+   * Get client by name with optional therapist ownership verification
+   * SECURITY FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async getClientByName(name: string, therapistId?: string): Promise<Client | undefined> {
+    const conditions = [eq(clients.name, name), isNull(clients.deletedAt)];
+
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(clients.therapistId, therapistId));
+    }
+
+    const [client] = await db.select().from(clients).where(and(...conditions));
     return client || undefined;
   }
 
@@ -442,8 +468,8 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(sessions.therapistId, therapistId),
-          // Filter sessions for the specific date (in America/New_York timezone)
-          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = DATE(${targetDate} AT TIME ZONE 'America/New_York')`
+          // Filter sessions for the specific date (in configurable timezone)
+          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'UTC' AT TIME ZONE ${CALENDAR_TIMEZONE}) = DATE(${targetDate} AT TIME ZONE ${CALENDAR_TIMEZONE})`
         )
       )
       .orderBy(sessions.scheduledAt);
@@ -480,8 +506,8 @@ export class DatabaseStorage implements IStorage {
           eq(sessions.isSimplePracticeEvent, true),
           // Filter out non-therapy events like birthdays
           sql`${sessions.duration} < 1440`, // Exclude all-day events (1440 min = 24 hours)
-          // Filter sessions for the specific date (in America/New_York timezone)
-          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') >= DATE(${targetDate} AT TIME ZONE 'America/New_York')`
+          // Filter sessions for the specific date (in configurable timezone)
+          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'UTC' AT TIME ZONE ${CALENDAR_TIMEZONE}) >= DATE(${targetDate} AT TIME ZONE ${CALENDAR_TIMEZONE})`
         )
       )
       .orderBy(sessions.scheduledAt);
@@ -499,8 +525,8 @@ export class DatabaseStorage implements IStorage {
           eq(sessions.isSimplePracticeEvent, true),
           // Filter out non-therapy events like birthdays
           sql`${sessions.duration} < 1440`, // Exclude all-day events (1440 min = 24 hours)
-          // Filter sessions for today only - proper timezone conversion using America/New_York
-          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = DATE(NOW() AT TIME ZONE 'America/New_York')`
+          // Filter sessions for today only - proper timezone conversion using configurable timezone
+          sql`DATE(${sessions.scheduledAt} AT TIME ZONE 'UTC' AT TIME ZONE ${CALENDAR_TIMEZONE}) = DATE(NOW() AT TIME ZONE ${CALENDAR_TIMEZONE})`
         )
       )
       .orderBy(sessions.scheduledAt);
@@ -560,16 +586,38 @@ export class DatabaseStorage implements IStorage {
     return updatedSession || undefined;
   }
 
-  async getSessionByGoogleEventId(googleEventId: string): Promise<Session | undefined> {
-    const [session] = await db.select().from(sessions).where(eq(sessions.googleEventId, googleEventId));
+  /**
+   * Get session by Google Event ID with optional therapist ownership verification
+   * SECURITY FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async getSessionByGoogleEventId(googleEventId: string, therapistId?: string): Promise<Session | undefined> {
+    const conditions = [eq(sessions.googleEventId, googleEventId)];
+
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(sessions.therapistId, therapistId));
+    }
+
+    const [session] = await db.select().from(sessions).where(and(...conditions));
     return session || undefined;
   }
 
-  async getRecentSessionsForClient(clientId: string, limit: number = 5): Promise<Session[]> {
+  /**
+   * Get recent sessions for a client with optional therapist ownership verification
+   * SECURITY FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async getRecentSessionsForClient(clientId: string, limit: number = 5, therapistId?: string): Promise<Session[]> {
+    const conditions = [eq(sessions.clientId, clientId)];
+
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(sessions.therapistId, therapistId));
+    }
+
     return await db
       .select()
       .from(sessions)
-      .where(eq(sessions.clientId, clientId))
+      .where(and(...conditions))
       .orderBy(desc(sessions.scheduledAt))
       .limit(limit);
   }
@@ -877,11 +925,22 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(progressNotes.sessionDate));
   }
 
-  async getCaseConceptualization(clientId: string): Promise<CaseConceptualization | undefined> {
+  /**
+   * Get case conceptualization with optional therapist ownership verification
+   * SECURITY FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async getCaseConceptualization(clientId: string, therapistId?: string): Promise<CaseConceptualization | undefined> {
+    const conditions = [eq(caseConceptualizations.clientId, clientId)];
+
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(caseConceptualizations.therapistId, therapistId));
+    }
+
     const [conceptualization] = await db
       .select()
       .from(caseConceptualizations)
-      .where(eq(caseConceptualizations.clientId, clientId))
+      .where(and(...conditions))
       .orderBy(desc(caseConceptualizations.createdAt));
     return conceptualization || undefined;
   }
@@ -894,31 +953,55 @@ export class DatabaseStorage implements IStorage {
     return newConceptualization;
   }
 
-  async updateCaseConceptualization(id: string, conceptualization: Partial<InsertCaseConceptualization>): Promise<CaseConceptualization> {
+  /**
+   * Update case conceptualization with optional therapist ownership verification
+   * SECURITY FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async updateCaseConceptualization(id: string, conceptualization: Partial<InsertCaseConceptualization>, therapistId?: string): Promise<CaseConceptualization> {
+    const conditions = [eq(caseConceptualizations.id, id)];
+
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(caseConceptualizations.therapistId, therapistId));
+    }
+
     const [updatedConceptualization] = await db
       .update(caseConceptualizations)
       .set({ ...conceptualization, updatedAt: new Date() } as any)
-      .where(eq(caseConceptualizations.id, id))
+      .where(and(...conditions))
       .returning();
     return updatedConceptualization;
   }
 
-  async getTreatmentPlan(clientId: string): Promise<TreatmentPlan | undefined> {
+  /**
+   * Get treatment plan with optional therapist ownership verification
+   * SECURITY FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async getTreatmentPlan(clientId: string, therapistId?: string): Promise<TreatmentPlan | undefined> {
+    const conditions = [
+      eq(treatmentPlans.clientId, clientId),
+      eq(treatmentPlans.isActive, true)
+    ];
+
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(treatmentPlans.therapistId, therapistId));
+    }
+
     const [plan] = await db
       .select()
       .from(treatmentPlans)
-      .where(
-        and(
-          eq(treatmentPlans.clientId, clientId),
-          eq(treatmentPlans.isActive, true)
-        )
-      )
+      .where(and(...conditions))
       .orderBy(desc(treatmentPlans.createdAt));
     return plan || undefined;
   }
 
-  async getTreatmentPlanByClient(clientId: string): Promise<TreatmentPlan | undefined> {
-    return this.getTreatmentPlan(clientId);
+  /**
+   * Get treatment plan by client with optional therapist ownership verification
+   * SECURITY FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async getTreatmentPlanByClient(clientId: string, therapistId?: string): Promise<TreatmentPlan | undefined> {
+    return this.getTreatmentPlan(clientId, therapistId);
   }
 
   async getAllTreatmentPlans(therapistId: string): Promise<TreatmentPlan[]> {
@@ -937,20 +1020,36 @@ export class DatabaseStorage implements IStorage {
     return newPlan;
   }
 
-  async updateTreatmentPlan(id: string, plan: Partial<InsertTreatmentPlan>): Promise<TreatmentPlan> {
+  /**
+   * Update treatment plan with optional therapist ownership verification
+   * SECURITY FIX: Added optional therapistId parameter for tenant isolation
+   */
+  async updateTreatmentPlan(id: string, plan: Partial<InsertTreatmentPlan>, therapistId?: string): Promise<TreatmentPlan> {
+    const conditions = [eq(treatmentPlans.id, id)];
+
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(treatmentPlans.therapistId, therapistId));
+    }
+
     const [updatedPlan] = await db
       .update(treatmentPlans)
       .set({ ...plan, updatedAt: new Date() } as any)
-      .where(eq(treatmentPlans.id, id))
+      .where(and(...conditions))
       .returning();
     return updatedPlan;
   }
 
-  async getAllianceScores(clientId: string): Promise<AllianceScore[]> {
+  async getAllianceScores(clientId: string, therapistId?: string): Promise<AllianceScore[]> {
+    const conditions = [eq(allianceScores.clientId, clientId)];
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(allianceScores.therapistId, therapistId));
+    }
     return await db
       .select()
       .from(allianceScores)
-      .where(eq(allianceScores.clientId, clientId))
+      .where(and(...conditions))
       .orderBy(desc(allianceScores.assessmentDate));
   }
 
@@ -1050,11 +1149,16 @@ export class DatabaseStorage implements IStorage {
     return doc;
   }
 
-  async getDocumentsByProgressNoteId(progressNoteId: string): Promise<Document[]> {
+  async getDocumentsByProgressNoteId(progressNoteId: string, therapistId?: string): Promise<Document[]> {
+    const baseCondition = sql`${documents.metadata} ->> 'progressNoteId' = ${progressNoteId}`;
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    const whereClause = therapistId
+      ? and(baseCondition, eq(documents.therapistId, therapistId))
+      : baseCondition;
     return await db
       .select()
       .from(documents)
-      .where(sql`${documents.metadata} ->> 'progressNoteId' = ${progressNoteId}`)
+      .where(whereClause)
       .orderBy(desc(documents.uploadedAt));
   }
 
@@ -1092,11 +1196,16 @@ export class DatabaseStorage implements IStorage {
     return newInsight;
   }
 
-  async markInsightAsRead(id: string): Promise<void> {
+  async markInsightAsRead(id: string, therapistId?: string): Promise<void> {
+    const conditions = [eq(aiInsights.id, id)];
+    // SECURITY: Add therapistId filter when provided for tenant isolation
+    if (therapistId) {
+      conditions.push(eq(aiInsights.therapistId, therapistId));
+    }
     await db
       .update(aiInsights)
       .set({ isRead: true } as any)
-      .where(eq(aiInsights.id, id));
+      .where(and(...conditions));
   }
 
   async createSessionPrep(sessionId: string, clientId: string, therapistId: string, prep: any) {

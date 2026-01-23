@@ -606,11 +606,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const recentNotes = await storage.getProgressNotes(client.id);
       const lastThreeNotes = recentNotes.slice(0, 3);
 
-      // Get case conceptualization
-      const caseConceptualization = await storage.getCaseConceptualization(client.id);
+      // Get case conceptualization (SECURITY: pass therapistId for tenant isolation)
+      const caseConceptualization = await storage.getCaseConceptualization(client.id, req.therapistId);
 
-      // Get treatment plan
-      const treatmentPlan = await storage.getTreatmentPlan(client.id);
+      // Get treatment plan (SECURITY: pass therapistId for tenant isolation)
+      const treatmentPlan = await storage.getTreatmentPlan(client.id, req.therapistId);
 
       // Get recent completed sessions
       const completedSessions = await storage.getCompletedSessions(req.therapistId, client.id);
@@ -648,9 +648,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Client not found" });
       }
 
-      const treatmentPlan = await storage.getTreatmentPlan(client.id);
+      // SECURITY: pass therapistId for tenant isolation
+      const treatmentPlan = await storage.getTreatmentPlan(client.id, req.therapistId);
       const notes = await storage.getProgressNotes(client.id);
-      const documents = await storage.getDocuments(client.id);
+      const documents = await storage.getDocuments(client.id, req.therapistId);
       const noteIdSet = new Set(notes.map((note) => note.id));
 
       const docsBySessionId = new Map<string, any[]>();
@@ -945,7 +946,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: note.content ? safeDecrypt(note.content) : null
       };
 
-      const linkedDocuments = await storage.getDocumentsByProgressNoteId(note.id);
+      // SECURITY: pass therapistId for tenant isolation
+      const linkedDocuments = await storage.getDocumentsByProgressNoteId(note.id, req.therapistId);
       const aiResults = await storage.getAiDocumentResultsByDocumentIds(linkedDocuments.map((doc) => doc.id));
 
       res.json({
@@ -2085,9 +2087,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Case Conceptualization endpoints
-  app.get("/api/case-conceptualization/:clientId", async (req, res) => {
+  app.get("/api/case-conceptualization/:clientId", async (req: any, res) => {
     try {
-      const conceptualization = await storage.getCaseConceptualization(req.params.clientId);
+      // SECURITY: pass therapistId for tenant isolation
+      const conceptualization = await storage.getCaseConceptualization(req.params.clientId, req.therapistId);
       res.json(conceptualization);
     } catch (error) {
       console.error("Error fetching case conceptualization:", error);
@@ -2457,8 +2460,9 @@ Responses must be natural speech, ready for text-to-speech conversion.`,
 
       const client = await storage.getClient(session.clientId);
       const recentNotes = await storage.getProgressNotes(session.clientId);
-      const documents = await storage.getDocuments(session.clientId);
-      const treatmentPlan = await storage.getTreatmentPlan(session.clientId);
+      // SECURITY: pass therapistId for tenant isolation
+      const documents = await storage.getDocuments(session.clientId, req.therapistId);
+      const treatmentPlan = await storage.getTreatmentPlan(session.clientId, req.therapistId);
 
       const noteContents = recentNotes.map(note => safeDecrypt(note.content || "") || "");
       const docSummaries = documents.map(doc => {
@@ -2714,9 +2718,10 @@ ${sourceText}
     }
   });
 
-  app.get("/api/treatment-plan/:clientId", async (req, res) => {
+  app.get("/api/treatment-plan/:clientId", async (req: any, res) => {
     try {
-      const plan = await storage.getTreatmentPlan(req.params.clientId);
+      // SECURITY: pass therapistId for tenant isolation
+      const plan = await storage.getTreatmentPlan(req.params.clientId, req.therapistId);
       res.json(plan);
     } catch (error) {
       console.error("Error fetching treatment plan:", error);
@@ -2740,9 +2745,10 @@ ${sourceText}
   });
 
   // Alliance Scores endpoints
-  app.get("/api/alliance-scores/:clientId", async (req, res) => {
+  app.get("/api/alliance-scores/:clientId", async (req: any, res) => {
     try {
-      const scores = await storage.getAllianceScores(req.params.clientId);
+      // SECURITY: pass therapistId for tenant isolation
+      const scores = await storage.getAllianceScores(req.params.clientId, req.therapistId);
       res.json(scores);
     } catch (error) {
       console.error("Error fetching alliance scores:", error);
@@ -2925,7 +2931,8 @@ ${sourceText}
       for (const session of syncedSessions) {
         try {
           // Check if session already exists (by googleEventId)
-          const existingSession = await storage.getSessionByGoogleEventId(session.googleEventId!);
+          // SECURITY: pass therapistId for tenant isolation
+          const existingSession = await storage.getSessionByGoogleEventId(session.googleEventId!, req.therapistId);
 
           if (!existingSession) {
             // Extract client name from the session (stored as temporary field)
@@ -3435,7 +3442,8 @@ ${sourceText}
       for (const event of events) {
         try {
           // Check if session already exists by external ID
-          const existingSession = await storage.getSessionByGoogleEventId(event.externalId);
+          // SECURITY: pass therapistId for tenant isolation
+          const existingSession = await storage.getSessionByGoogleEventId(event.externalId, therapistId);
 
           if (existingSession) {
             // Update existing session

@@ -112,13 +112,21 @@ app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 // Apply standard rate limiting to all API endpoints
 app.use('/api', standardRateLimit);
 
-// Single-therapist mode: automatically set therapistId for all requests
-// Using 'therapist-1' to match existing client data in the database
-app.use((req: any, res, next) => {
-  req.therapistId = 'therapist-1';
-  req.user = { id: 'therapist-1', role: 'therapist' };
-  next();
-});
+// Authentication: In production, enforce proper JWT auth; in development, use hardcoded therapist
+if (process.env.NODE_ENV === 'production' && process.env.ENABLE_AUTH !== 'false') {
+  // Production: Apply JWT authentication middleware to protected routes
+  app.use('/api', authMiddleware);
+  console.log('[Auth] Production mode: JWT authentication enabled');
+} else {
+  // Development/Testing: Single-therapist mode with automatic auth bypass
+  // Using 'therapist-1' to match existing client data in the database
+  app.use((req: any, res, next) => {
+    req.therapistId = 'therapist-1';
+    req.user = { id: 'therapist-1', role: 'therapist' };
+    next();
+  });
+  console.log('[Auth] Development mode: Using hardcoded therapist-1');
+}
 
 // Apply stricter rate limiting to AI/document processing endpoints
 app.use('/api/ai', aiProcessingRateLimit);

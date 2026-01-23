@@ -2,11 +2,17 @@ import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import type { Session } from '@shared/schema';
 
+// Configurable timezone - defaults to America/New_York (Eastern Time)
+const DEFAULT_TIMEZONE = process.env.CALENDAR_TIMEZONE || 'America/New_York';
+
 export class GoogleCalendarService {
   private oauth2Client: OAuth2Client;
   private calendar: any;
+  private timezone: string;
 
   constructor() {
+    this.timezone = DEFAULT_TIMEZONE;
+
     // Use Render URL in production, Replit domain, or localhost for dev
     const redirectUri = process.env.RENDER_EXTERNAL_URL
       ? `${process.env.RENDER_EXTERNAL_URL}/api/calendar/callback`
@@ -532,11 +538,11 @@ export class GoogleCalendarService {
         description: `Therapy session with ${clientName}\n\nSession Type: ${session.sessionType}\nNotes: ${session.notes || 'No notes'}`,
         start: {
           dateTime: session.scheduledAt.toISOString(),
-          timeZone: 'America/New_York', // EDT timezone
+          timeZone: this.timezone,
         },
         end: {
           dateTime: new Date(session.scheduledAt.getTime() + session.duration * 60000).toISOString(),
-          timeZone: 'America/New_York',
+          timeZone: this.timezone,
         },
         location: 'Office',
         reminders: {
@@ -567,11 +573,11 @@ export class GoogleCalendarService {
         description: `Therapy session with ${clientName}\n\nSession Type: ${session.sessionType}\nNotes: ${session.notes || 'No notes'}`,
         start: {
           dateTime: session.scheduledAt.toISOString(),
-          timeZone: 'America/New_York',
+          timeZone: this.timezone,
         },
         end: {
           dateTime: new Date(session.scheduledAt.getTime() + session.duration * 60000).toISOString(),
-          timeZone: 'America/New_York',
+          timeZone: this.timezone,
         },
         location: 'Office',
       };

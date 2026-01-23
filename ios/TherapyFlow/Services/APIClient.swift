@@ -16,6 +16,10 @@ actor APIClient {
     private var lastRequestTime: Date?
     private let minRequestInterval: TimeInterval = 0.1 // 100ms between requests
 
+    // Retry configuration
+    private let maxRetries: Int = 3
+    private let retryDelayBase: TimeInterval = 1.0 // Base delay for exponential backoff
+
     // Environment detection
     private static var isDevelopment: Bool {
         #if DEBUG
@@ -201,6 +205,45 @@ actor APIClient {
             }
         }
         lastRequestTime = Date()
+    }
+
+    /// Execute a request with automatic retry for transient errors
+    private func withRetry<T>(
+        operation: @escaping () async throws -> T
+    ) async throws -> T {
+        var lastError: Error?
+
+        for attempt in 0..<maxRetries {
+            do {
+                return try await operation()
+            } catch let error as APIError {
+                lastError = error
+
+                // Only retry for specific transient errors
+                guard error.isRetryable else {
+                    throw error
+                }
+
+                // Exponential backoff with jitter
+                let delay = retryDelayBase * pow(2.0, Double(attempt))
+                let jitter = Double.random(in: 0...0.5)
+                let totalDelay = delay + jitter
+
+                print("Request failed (attempt \(attempt + 1)/\(maxRetries)), retrying in \(String(format: "%.1f", totalDelay))s: \(error.localizedDescription)")
+
+                try await Task.sleep(nanoseconds: UInt64(totalDelay * 1_000_000_000))
+            } catch {
+                // For non-APIError errors (like network errors), wrap and potentially retry
+                lastError = error
+
+                if attempt < maxRetries - 1 {
+                    let delay = retryDelayBase * pow(2.0, Double(attempt))
+                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                }
+            }
+        }
+
+        throw lastError ?? APIError.networkError(NSError(domain: "APIClient", code: -1, userInfo: [NSLocalizedDescriptionKey: "Max retries exceeded"]))
     }
 
     func request<T: Decodable>(
