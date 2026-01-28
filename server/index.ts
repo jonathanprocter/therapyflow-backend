@@ -112,20 +112,81 @@ app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 // Apply standard rate limiting to all API endpoints
 app.use('/api', standardRateLimit);
 
+// Health endpoints - MUST be before auth middleware (public endpoints for monitoring)
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    version: process.env.APP_VERSION || "dev",
+    time: new Date().toISOString(),
+    services: {
+      pdf: getPdfServiceStatus(),
+    },
+  });
+});
+
+app.get('/api/ai/health', (req, res) => {
+  res.json({
+    openai: !!process.env.OPENAI_API_KEY,
+    anthropic: !!process.env.ANTHROPIC_API_KEY,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get("/api/health/deep", async (req, res) => {
+  const start = Date.now();
+  try {
+    const nowResult = await db.execute(sql`SELECT now() as now`);
+    const now = nowResult.rows[0]?.now;
+    const docsResult = await db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
+    const docsCount = docsResult.rows[0]?.count || 0;
+    const aiResult = await db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
+    const aiCount = aiResult.rows[0]?.count || 0;
+    const edgesResult = await db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
+    const edgesCount = edgesResult.rows[0]?.count || 0;
+
+    res.json({
+      ok: true,
+      time: new Date().toISOString(),
+      dbTime: now,
+      metrics: { documents: docsCount, aiResults: aiCount, edges: edgesCount },
+      took_ms: Date.now() - start,
+    });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: String(e), took_ms: Date.now() - start });
+  }
+});
+
+app.get("/api/health/ready", async (req, res) => {
+  try {
+    await db.execute(sql`SELECT 1`);
+    res.json({ status: "ready", timestamp: new Date().toISOString() });
+  } catch (e: any) {
+    res.status(503).json({ status: "not ready", error: String(e) });
+  }
+});
+
+app.get("/api/health/routes", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "Routes endpoint - use for debugging route registration",
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Authentication: In production, enforce proper JWT auth; in development, use hardcoded therapist
 if (process.env.NODE_ENV === 'production' && process.env.ENABLE_AUTH !== 'false') {
   // Production: Apply JWT authentication middleware to protected routes
   app.use('/api', authMiddleware);
   console.log('[Auth] Production mode: JWT authentication enabled');
 } else {
-  // Development/Testing: Single-therapist mode with automatic auth bypass
+  // Development/Testing OR production with ENABLE_AUTH=false: Single-therapist mode
   // Using 'therapist-1' to match existing client data in the database
   app.use((req: any, res, next) => {
     req.therapistId = 'therapist-1';
     req.user = { id: 'therapist-1', role: 'therapist' };
     next();
   });
-  console.log('[Auth] Development mode: Using hardcoded therapist-1');
+  console.log('[Auth] Single-therapist mode: Using hardcoded therapist-1');
 }
 
 // Apply stricter rate limiting to AI/document processing endpoints
@@ -150,85 +211,6 @@ app.use((req, res, next) => {
   });
 
   next();
-});
-
-// Health endpoints for CareNotesAI pipeline monitoring
-app.get("/api/health", (req, res) => {
-  res.json({
-    ok: true,
-    version: process.env.APP_VERSION || "dev",
-    time: new Date().toISOString(),
-    services: {
-      pdf: getPdfServiceStatus(),
-    },
-  });
-});
-
-// AI Health endpoint
-app.get('/api/ai/health', (req, res) => {
-  res.json({
-    openai: !!process.env.OPENAI_API_KEY,
-    anthropic: !!process.env.ANTHROPIC_API_KEY,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Deep health: DB connectivity + key metrics
-app.get("/api/health/deep", async (req, res) => {
-  const start = Date.now();
-  try {
-    // Minimal DB check: run a simple NOW()
-    const nowResult = await db.execute(sql`SELECT now() as now`);
-    const now = nowResult.rows[0]?.now;
-
-    // Count documents and AI results
-    const docsResult = await db.execute(sql`SELECT COUNT(*)::int as count FROM documents`);
-    const docsCount = docsResult.rows[0]?.count || 0;
-
-    const aiResult = await db.execute(sql`SELECT COUNT(*)::int as count FROM ai_document_results`);
-    const aiCount = aiResult.rows[0]?.count || 0;
-
-    const edgesResult = await db.execute(sql`SELECT COUNT(*)::int as count FROM semantic_edges`);
-    const edgesCount = edgesResult.rows[0]?.count || 0;
-
-    res.json({
-      ok: true,
-      time: new Date().toISOString(),
-      dbTime: now,
-      metrics: {
-        documents: docsCount,
-        aiResults: aiCount,
-        edges: edgesCount,
-      },
-      took_ms: Date.now() - start,
-    });
-  } catch (e: any) {
-    res.status(500).json({
-      ok: false,
-      error: String(e),
-      took_ms: Date.now() - start,
-    });
-  }
-});
-
-// Readiness check for Render/K8s health probes
-app.get("/api/health/ready", async (req, res) => {
-  try {
-    // Quick DB connectivity check
-    await db.execute(sql`SELECT 1`);
-    res.json({ status: "ready", timestamp: new Date().toISOString() });
-  } catch (e: any) {
-    res.status(503).json({ status: "not ready", error: String(e) });
-  }
-});
-
-// Routes info endpoint for debugging
-app.get("/api/health/routes", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "Routes endpoint - use for debugging route registration",
-    timestamp: new Date().toISOString()
-  });
 });
 
 // Debug endpoint to check database connection - DEVELOPMENT ONLY
