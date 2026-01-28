@@ -89,17 +89,25 @@ export class RealtimeVoiceService extends EventEmitter {
     super();
     this.config = config;
 
+    // Initialize OpenAI first (preferred provider)
     if (config.openaiApiKey) {
       this.openai = new OpenAI({ apiKey: config.openaiApiKey });
       this.isInitialized = true;
-      devLog('[RealtimeVoice] Service initialized with OpenAI');
+      this.defaultProvider = 'openai'; // OpenAI is always preferred when available
+      devLog('[RealtimeVoice] Service initialized with OpenAI (primary)');
     }
 
+    // Initialize ElevenLabs as fallback
     if (config.elevenlabsApiKey) {
       this.elevenlabs = new ElevenLabsClient({ apiKey: config.elevenlabsApiKey });
       this.isInitialized = true;
-      this.defaultProvider = config.defaultProvider || 'elevenlabs';
-      devLog('[RealtimeVoice] Service initialized with ElevenLabs');
+      // Only use ElevenLabs as default if OpenAI is not available
+      if (!this.openai) {
+        this.defaultProvider = 'elevenlabs';
+        devLog('[RealtimeVoice] Service initialized with ElevenLabs (primary - OpenAI not available)');
+      } else {
+        devLog('[RealtimeVoice] ElevenLabs initialized as fallback');
+      }
     }
 
     if (!this.isInitialized) {
@@ -108,20 +116,37 @@ export class RealtimeVoiceService extends EventEmitter {
   }
 
   /**
-   * Generate audio from text using OpenAI or ElevenLabs TTS
+   * Generate audio from text using OpenAI (primary) or ElevenLabs (fallback) TTS
+   * OpenAI Whisper/TTS is preferred for consistency and quality
    */
   async generateSpeech(text: string, voiceId: VoiceId = 'nova', provider?: TTSProvider): Promise<Buffer | null> {
-    // Determine which provider to use
+    // Determine which provider to use - default to OpenAI
     const voiceOption = VOICE_OPTIONS.find(v => v.id === voiceId);
-    const useProvider = provider || (voiceOption?.provider as TTSProvider) || this.defaultProvider;
+    const requestedProvider = provider || this.defaultProvider;
 
-    if (useProvider === 'elevenlabs' && this.elevenlabs) {
-      return this.generateElevenLabsSpeech(text, voiceId);
-    } else if (this.openai) {
-      return this.generateOpenAISpeech(text, voiceId);
+    // Check if voice is specifically an ElevenLabs voice
+    const isElevenLabsVoice = voiceOption?.provider === 'elevenlabs';
+
+    // If OpenAI is available and (no specific ElevenLabs voice requested OR OpenAI explicitly requested)
+    if (this.openai && (!isElevenLabsVoice || requestedProvider === 'openai')) {
+      try {
+        const result = await this.generateOpenAISpeech(text, voiceId);
+        if (result) return result;
+      } catch (error) {
+        console.warn('[RealtimeVoice] OpenAI TTS failed, trying ElevenLabs fallback:', error);
+      }
     }
 
-    console.error('[RealtimeVoice] No TTS provider available');
+    // Fallback to ElevenLabs
+    if (this.elevenlabs) {
+      try {
+        return await this.generateElevenLabsSpeech(text, voiceId);
+      } catch (error) {
+        console.error('[RealtimeVoice] ElevenLabs TTS also failed:', error);
+      }
+    }
+
+    console.error('[RealtimeVoice] No TTS provider available or all failed');
     return null;
   }
 

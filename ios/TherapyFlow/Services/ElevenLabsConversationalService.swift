@@ -23,14 +23,26 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
 
     // MARK: - Configuration
     private let voiceIdStorageKey = "elevenLabsSelectedVoiceId"
-    @Published var voiceId: String = "EXAVITQu4vr4xnSDxMaL" { // Default: Sarah
+    private let openAIVoiceStorageKey = "openAISelectedVoiceId"
+    private let ttsProviderStorageKey = "preferredTTSProvider"
+
+    @Published var voiceId: String = "EXAVITQu4vr4xnSDxMaL" { // Default: Sarah (ElevenLabs)
         didSet {
             UserDefaults.standard.set(voiceId, forKey: voiceIdStorageKey)
         }
     }
+    @Published var openAIVoiceId: String = "nova" { // Default: Nova (OpenAI)
+        didSet {
+            UserDefaults.standard.set(openAIVoiceId, forKey: openAIVoiceStorageKey)
+        }
+    }
+    @Published var preferOpenAI: Bool = true // Prefer OpenAI TTS over ElevenLabs
     @Published var autoSendOnSilence = true
     @Published var silenceThreshold: TimeInterval = 1.5 // seconds of silence before auto-send
     @Published var voiceEnabled = true
+
+    // OpenAI Voice options
+    static let openAIVoices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
 
     // MARK: - Private Properties
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
@@ -51,7 +63,10 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
 
     // API Configuration
     private let elevenLabsBaseURL = "https://api.elevenlabs.io/v1"
-    private var apiKey: String {
+    private let openAIBaseURL = "https://api.openai.com/v1"
+
+    /// ElevenLabs API key (fallback TTS provider)
+    private var elevenLabsApiKey: String {
         // Use unified IntegrationsService for ElevenLabs key retrieval
         if let key = IntegrationsService.shared.getElevenLabsAPIKey(), !key.isEmpty {
             return key
@@ -63,6 +78,15 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
         }
         return ""
     }
+
+    /// OpenAI API key (primary TTS/STT provider)
+    private var openAIApiKey: String {
+        let key = IntegrationsService.shared.getAPIKey(for: .openAI)
+        return key.isEmpty ? "" : key
+    }
+
+    /// Legacy alias for backwards compatibility
+    private var apiKey: String { elevenLabsApiKey }
 
     // MARK: - Types
     struct ConversationMessage: Identifiable, Codable {
@@ -246,7 +270,18 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
     }
 
     func hasAPIKey() -> Bool {
-        return isAPIKeyConfigured || IntegrationsService.shared.hasElevenLabsKey() || !apiKey.isEmpty
+        // Check OpenAI first (preferred), then ElevenLabs
+        return !openAIApiKey.isEmpty || isAPIKeyConfigured || IntegrationsService.shared.hasElevenLabsKey() || !elevenLabsApiKey.isEmpty
+    }
+
+    /// Check if OpenAI TTS is available (preferred provider)
+    func hasOpenAIKey() -> Bool {
+        return !openAIApiKey.isEmpty
+    }
+
+    /// Check if ElevenLabs TTS is available (fallback provider)
+    func hasElevenLabsKey() -> Bool {
+        return isAPIKeyConfigured || IntegrationsService.shared.hasElevenLabsKey() || !elevenLabsApiKey.isEmpty
     }
 
     func removeAPIKey() throws {
@@ -456,6 +491,68 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
+    // MARK: - OpenAI Whisper Transcription (for audio files)
+
+    /// Transcribe audio data using OpenAI Whisper API
+    /// Use this for high-accuracy transcription of recorded audio
+    func transcribeWithWhisper(audioData: Data, filename: String = "audio.m4a") async throws -> String {
+        guard hasOpenAIKey() else {
+            throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: "OpenAI API key not configured"])
+        }
+
+        let url = URL(string: "\(openAIBaseURL)/audio/transcriptions")!
+
+        // Create multipart form data
+        let boundary = UUID().uuidString
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(openAIApiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+
+        // Add the audio file
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: audio/m4a\r\n\r\n".data(using: .utf8)!)
+        body.append(audioData)
+        body.append("\r\n".data(using: .utf8)!)
+
+        // Add the model parameter
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
+        body.append("whisper-1\r\n".data(using: .utf8)!)
+
+        // Add language hint for better accuracy
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"language\"\r\n\r\n".data(using: .utf8)!)
+        body.append("en\r\n".data(using: .utf8)!)
+
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+        request.httpBody = body
+
+        let (data, urlResponse) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = urlResponse as? HTTPURLResponse else {
+            throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw NSError(domain: "OpenAI", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Whisper error: \(errorMessage)"])
+        }
+
+        // Parse JSON response
+        struct WhisperResponse: Codable {
+            let text: String
+        }
+
+        let response = try JSONDecoder().decode(WhisperResponse.self, from: data)
+        print("Cipher: Transcribed audio using OpenAI Whisper: \(response.text.prefix(50))...")
+        return response.text
+    }
+
     // MARK: - Silence Detection
     private func startSilenceDetection() {
         guard autoSendOnSilence else { return }
@@ -645,16 +742,18 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
         return context
     }
 
-    // MARK: - ElevenLabs Text-to-Speech
+    // MARK: - Text-to-Speech (OpenAI primary, ElevenLabs fallback)
+
+    /// Synthesize speech using OpenAI (primary) or ElevenLabs (fallback)
     private func synthesizeAndPlaySpeech(_ text: String) async throws {
-        guard !apiKey.isEmpty else {
-            print("ElevenLabs API key not configured")
+        guard hasAPIKey() else {
+            print("Cipher: No TTS API key configured (OpenAI or ElevenLabs)")
             return
         }
 
         // Check if this is a repeat of the last response (avoid repetition)
         if text == lastSpokenResponse {
-            print("ElevenLabs: Skipping duplicate response")
+            print("Cipher: Skipping duplicate response")
             return
         }
 
@@ -673,18 +772,77 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
         }
 
         // Start listening while speaking to detect barge-in
-        // This allows us to detect when user starts talking
         if isBargeInEnabled && !isListening {
             await MainActor.run {
                 self.startListeningForBargeIn()
             }
         }
 
+        // Try OpenAI TTS first (preferred provider)
+        if hasOpenAIKey() {
+            do {
+                let audioData = try await synthesizeWithOpenAI(text)
+                await playAudio(data: audioData)
+                return
+            } catch {
+                print("Cipher: OpenAI TTS failed, trying ElevenLabs fallback: \(error.localizedDescription)")
+            }
+        }
+
+        // Fall back to ElevenLabs TTS
+        if hasElevenLabsKey() {
+            let audioData = try await synthesizeWithElevenLabs(text)
+            await playAudio(data: audioData)
+            return
+        }
+
+        print("Cipher: No TTS provider available")
+    }
+
+    // MARK: - OpenAI Text-to-Speech (Primary Provider)
+
+    /// Generate speech using OpenAI TTS API
+    private func synthesizeWithOpenAI(_ text: String) async throws -> Data {
+        let url = URL(string: "\(openAIBaseURL)/audio/speech")!
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(openAIApiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "model": "tts-1",
+            "input": text,
+            "voice": openAIVoiceId,
+            "response_format": "mp3"
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, urlResponse) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = urlResponse as? HTTPURLResponse else {
+            throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw NSError(domain: "OpenAI", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "OpenAI TTS error: \(errorMessage)"])
+        }
+
+        print("Cipher: Generated \(data.count) bytes of audio using OpenAI TTS")
+        return data
+    }
+
+    // MARK: - ElevenLabs Text-to-Speech (Fallback Provider)
+
+    /// Generate speech using ElevenLabs TTS API
+    private func synthesizeWithElevenLabs(_ text: String) async throws -> Data {
         let url = URL(string: "\(elevenLabsBaseURL)/text-to-speech/\(voiceId)")!
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue(apiKey, forHTTPHeaderField: "xi-api-key")
+        request.setValue(elevenLabsApiKey, forHTTPHeaderField: "xi-api-key")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("audio/mpeg", forHTTPHeaderField: "Accept")
 
@@ -712,8 +870,8 @@ class ElevenLabsConversationalService: NSObject, ObservableObject {
             throw NSError(domain: "ElevenLabs", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "ElevenLabs error: \(errorMessage)"])
         }
 
-        // Play the audio
-        await playAudio(data: data)
+        print("Cipher: Generated \(data.count) bytes of audio using ElevenLabs TTS")
+        return data
     }
 
     private func playAudio(data: Data) async {
