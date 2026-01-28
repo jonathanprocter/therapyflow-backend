@@ -268,10 +268,15 @@ extension Date {
 
     static func datesInMonth(for date: Date) -> [Date] {
         let calendar = mondayFirstCalendar
-        let range = calendar.range(of: .day, in: .month, for: date)!
+
+        // Use consistent calendar for startOfMonth calculation
+        let components = calendar.dateComponents([.year, .month], from: date)
+        guard let monthStart = calendar.date(from: components) else { return [] }
+
+        let range = calendar.range(of: .day, in: .month, for: monthStart)!
 
         return range.compactMap { day in
-            calendar.date(bySetting: .day, value: day, of: date.startOfMonth)
+            calendar.date(bySetting: .day, value: day, of: monthStart)
         }
     }
 
