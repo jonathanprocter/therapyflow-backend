@@ -1063,14 +1063,16 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
       const content = response.content[0];
       if (content.type === 'text') {
         const analysisText = content.text;
-        
-        // Extract JSON from response
-        const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+
+        // Extract JSON from response - use non-greedy match for first complete JSON object
+        const jsonMatch = analysisText.match(/\{[\s\S]*?\}(?=\s*$|\s*\n|$)/);
         if (jsonMatch) {
           try {
             const analysisResult = JSON.parse(jsonMatch[0]);
+            // Validate required fields exist
+            const validatedResult = this.validateAndFixAnalysisResult(analysisResult, text, fileName);
             console.log('✅ Anthropic analysis completed successfully');
-            return analysisResult;
+            return validatedResult;
           } catch (parseError) {
             console.warn('⚠️ Failed to parse JSON from Anthropic response:', parseError);
           }
@@ -1102,8 +1104,11 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
 
       const result = response.choices[0]?.message?.content;
       if (result) {
+        const analysisResult = JSON.parse(result);
+        // Validate required fields exist
+        const validatedResult = this.validateAndFixAnalysisResult(analysisResult, text, fileName);
         console.log('✅ OpenAI analysis completed successfully');
-        return JSON.parse(result);
+        return validatedResult;
       }
     } catch (error) {
       console.error('❌ Both AI providers failed:', error);
@@ -1111,6 +1116,39 @@ Demonstrate clinical sophistication, therapeutic wisdom, and professional docume
 
     // Manual fallback if AI fails
     return this.performManualFallbackAnalysis(text, fileName);
+  }
+
+  /**
+   * Validate and fix AI analysis result to ensure all required fields exist
+   */
+  validateAndFixAnalysisResult(result: any, originalText: string, fileName: string): ExtractedClinicalData {
+    const validated: ExtractedClinicalData = {
+      documentType: result.documentType || 'raw_content',
+      clientName: result.clientName || this.extractClientNameFromFilename(fileName) || this.extractClientNameManually(originalText) || 'Unknown Client',
+      sessionDate: result.sessionDate || this.extractDateManually(originalText, fileName) || new Date().toISOString().split('T')[0],
+      sessionType: result.sessionType || 'individual',
+      content: result.content || originalText.substring(0, 2000),
+      themes: Array.isArray(result.themes) ? result.themes : [],
+      emotions: Array.isArray(result.emotions) ? result.emotions : [],
+      interventions: Array.isArray(result.interventions) ? result.interventions : [],
+      riskLevel: ['low', 'moderate', 'high', 'critical'].includes(result.riskLevel) ? result.riskLevel : 'low',
+      progressRating: typeof result.progressRating === 'number' && result.progressRating >= 1 && result.progressRating <= 10 ? result.progressRating : 5,
+      nextSteps: Array.isArray(result.nextSteps) ? result.nextSteps : [],
+      clinicalNotes: result.clinicalNotes || '',
+      confidence: typeof result.confidence === 'number' ? Math.min(100, Math.max(0, result.confidence)) : 70,
+      alternativeInterpretations: result.alternativeInterpretations || { clientName: [], sessionDate: [], reasoning: '' }
+    };
+
+    // Log any fields that were missing and had to be filled in
+    const missingFields: string[] = [];
+    if (!result.clientName) missingFields.push('clientName');
+    if (!result.sessionDate) missingFields.push('sessionDate');
+    if (!result.content) missingFields.push('content');
+    if (missingFields.length > 0) {
+      console.warn(`⚠️ AI analysis missing fields (filled with fallbacks): ${missingFields.join(', ')}`);
+    }
+
+    return validated;
   }
 
   /**

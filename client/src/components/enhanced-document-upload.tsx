@@ -137,6 +137,10 @@ export default function EnhancedDocumentUpload() {
           
           // Invalidate relevant queries
           queryClient.invalidateQueries({ queryKey: ['/api/progress-notes'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/placeholders'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/manual-review'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/sessions'] });
           queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
         } else {
           toast({

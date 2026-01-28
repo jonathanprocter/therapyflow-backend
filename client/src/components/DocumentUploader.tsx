@@ -77,6 +77,8 @@ export function DocumentUploader({
       
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/placeholders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/progress-notes/manual-review'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/progress-notes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       
       toast({
         title: "Upload Complete",

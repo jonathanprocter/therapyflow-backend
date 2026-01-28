@@ -9,10 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarDays, Clock, FileText, Users, CheckCircle, AlertCircle, Eye, ExternalLink, X } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
-import type { Session, Client, Document } from "@shared/schema";
+import type { Session, Client, Document, ProgressNote } from "@shared/schema";
 import SessionSummaryGenerator from "@/components/sessions/SessionSummaryGenerator";
 
 type SessionWithClient = Session & { client: Client };
+type ProgressNoteWithSession = ProgressNote & { sessionId?: string };
 
 export default function SessionHistory() {
   const [filterType, setFilterType] = useState<"all" | "completed" | "scheduled">("all");
@@ -54,6 +55,16 @@ export default function SessionHistory() {
     }
   });
 
+  // Fetch all progress notes for linking to sessions
+  const { data: allProgressNotes = [] } = useQuery<ProgressNoteWithSession[]>({
+    queryKey: ["/api/progress-notes"],
+    queryFn: async () => {
+      const response = await fetch("/api/progress-notes");
+      if (!response.ok) throw new Error("Failed to fetch progress notes");
+      return response.json();
+    }
+  });
+
   // Create maps for efficient document-session lookup
   const documentsBySessionId = useMemo(() => {
     const map = new Map<string, Document[]>();
@@ -84,6 +95,32 @@ export default function SessionHistory() {
     return map;
   }, [allDocuments]);
 
+  // Create maps for progress notes by session ID and by date
+  const progressNotesBySessionId = useMemo(() => {
+    const map = new Map<string, ProgressNoteWithSession[]>();
+    allProgressNotes.forEach(note => {
+      if (note.sessionId) {
+        const existing = map.get(note.sessionId) || [];
+        existing.push(note);
+        map.set(note.sessionId, existing);
+      }
+    });
+    return map;
+  }, [allProgressNotes]);
+
+  const progressNotesByDate = useMemo(() => {
+    const map = new Map<string, ProgressNoteWithSession[]>();
+    allProgressNotes.forEach(note => {
+      if (note.sessionDate) {
+        const dateKey = new Date(note.sessionDate).toISOString().split('T')[0];
+        const existing = map.get(dateKey) || [];
+        existing.push(note);
+        map.set(dateKey, existing);
+      }
+    });
+    return map;
+  }, [allProgressNotes]);
+
   // Get documents linked to a specific session
   const getDocumentsForSession = useCallback((session: SessionWithClient) => {
     const docs: Document[] = [];
@@ -104,6 +141,30 @@ export default function SessionHistory() {
 
     return docs;
   }, [documentsBySessionId, documentsByDate]);
+
+  // Get progress notes linked to a specific session
+  const getProgressNotesForSession = useCallback((session: SessionWithClient) => {
+    const notes: ProgressNoteWithSession[] = [];
+
+    // Get notes directly linked by session ID
+    const bySession = progressNotesBySessionId.get(session.id) || [];
+
+    // Get notes linked by date (for orphaned notes)
+    const dateKey = new Date(session.scheduledAt).toISOString().split('T')[0];
+    const byDate = progressNotesByDate.get(dateKey) || [];
+
+    // Merge and deduplicate, filtering by client match
+    for (const note of [...bySession, ...byDate]) {
+      if (note.clientId === session.clientId && !notes.some(existing => existing.id === note.id)) {
+        // Skip placeholder notes with no content
+        if (!note.isPlaceholder || note.content) {
+          notes.push(note);
+        }
+      }
+    }
+
+    return notes;
+  }, [progressNotesBySessionId, progressNotesByDate]);
 
   // Mark past sessions as completed
   const markPastCompletedMutation = useMutation({
@@ -386,6 +447,7 @@ export default function SessionHistory() {
                 <div className="grid gap-3">
                   {sessions.map(session => {
                     const linkedDocs = getDocumentsForSession(session);
+                    const linkedNotes = getProgressNotesForSession(session);
                     return (
                       <div
                         key={session.id}
@@ -409,6 +471,11 @@ export default function SessionHistory() {
                                 >
                                   {session.status}
                                 </Badge>
+                                {linkedNotes.length > 0 && (
+                                  <Badge variant="secondary" className="text-xs" style={{ backgroundColor: 'rgba(142, 165, 140, 0.2)', color: '#8EA58C' }}>
+                                    {linkedNotes.length} note{linkedNotes.length !== 1 ? 's' : ''}
+                                  </Badge>
+                                )}
                                 {linkedDocs.length > 0 && (
                                   <Badge variant="secondary" className="text-xs" style={{ backgroundColor: 'rgba(136, 165, 188, 0.2)', color: '#88A5BC' }}>
                                     {linkedDocs.length} doc{linkedDocs.length !== 1 ? 's' : ''}
@@ -444,6 +511,88 @@ export default function SessionHistory() {
                             )}
                           </div>
                         </div>
+
+                        {/* Linked Progress Notes Section */}
+                        {linkedNotes.length > 0 && (
+                          <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(115, 138, 110, 0.15)' }}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="h-4 w-4" style={{ color: '#8EA58C' }} />
+                              <span className="text-sm font-medium" style={{ color: '#344C3D' }}>Progress Notes</span>
+                            </div>
+                            <div className="space-y-2">
+                              {linkedNotes.map(note => (
+                                <div
+                                  key={note.id}
+                                  className="p-3 rounded-md border cursor-pointer hover:bg-gray-50"
+                                  style={{
+                                    backgroundColor: 'rgba(142, 165, 140, 0.05)',
+                                    borderColor: 'rgba(142, 165, 140, 0.2)'
+                                  }}
+                                  onClick={() => window.location.href = `/progress-notes?noteId=${note.id}`}
+                                >
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-medium" style={{ color: '#344C3D' }}>
+                                        {formatInTimeZone(new Date(note.sessionDate), 'America/New_York', 'MMM dd, yyyy')}
+                                      </span>
+                                      {note.riskLevel && note.riskLevel !== 'low' && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs"
+                                          style={{
+                                            backgroundColor: note.riskLevel === 'high' || note.riskLevel === 'critical'
+                                              ? 'rgba(239, 68, 68, 0.1)'
+                                              : 'rgba(234, 179, 8, 0.1)',
+                                            color: note.riskLevel === 'high' || note.riskLevel === 'critical'
+                                              ? '#dc2626'
+                                              : '#ca8a04'
+                                          }}
+                                        >
+                                          {note.riskLevel} risk
+                                        </Badge>
+                                      )}
+                                      {note.progressRating && (
+                                        <span className="text-xs" style={{ color: '#738A6E' }}>
+                                          Progress: {note.progressRating}/10
+                                        </span>
+                                      )}
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(`/progress-notes?noteId=${note.id}`, '_blank');
+                                      }}
+                                      title="Open note in new tab"
+                                    >
+                                      <ExternalLink className="h-3.5 w-3.5" style={{ color: '#8EA58C' }} />
+                                    </Button>
+                                  </div>
+                                  {note.content && (
+                                    <p className="text-sm line-clamp-2" style={{ color: '#738A6E' }}>
+                                      {note.content.substring(0, 200)}{note.content.length > 200 ? '...' : ''}
+                                    </p>
+                                  )}
+                                  {note.aiTags && note.aiTags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                      {note.aiTags.slice(0, 3).map((tag, idx) => (
+                                        <span
+                                          key={idx}
+                                          className="text-xs px-2 py-0.5 rounded"
+                                          style={{ backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' }}
+                                        >
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Linked Documents Section */}
                         {linkedDocs.length > 0 && (

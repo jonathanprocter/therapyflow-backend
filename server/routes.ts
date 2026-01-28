@@ -907,7 +907,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ error: "Access denied" });
         }
 
-        const notes = await storage.getProgressNotes(effectiveClientId);
+        // SECURITY: Pass therapistId for tenant isolation
+        const notes = await storage.getProgressNotes(effectiveClientId, req.therapistId);
         const client = clientCheck[0];
         const decryptedNotes = notes.slice(0, maxLimit).map(note => ({
           ...note,
@@ -1524,6 +1525,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (result.success) {
         console.log(`✅ Enhanced processing completed: ${result.confidence}% confidence`);
         console.log(`📊 Validation scores: Text:${result.validationDetails?.textExtractionScore}% AI:${result.validationDetails?.aiAnalysisScore}% Date:${result.validationDetails?.dateValidationScore}% Client:${result.validationDetails?.clientMatchScore}%`);
+
+        // If no session was linked during processing, try to link orphaned notes
+        if (!result.sessionId && result.progressNoteId) {
+          console.log(`🔗 No session found during processing, attempting orphaned note linking...`);
+          const { linkOrphanedProgressNotes } = await import("./services/calendarReconciliation");
+          const linkingResult = await linkOrphanedProgressNotes(req.therapistId);
+          if (linkingResult.linked > 0) {
+            console.log(`✅ Linked ${linkingResult.linked} orphaned progress notes to sessions`);
+            // Update result with linked session if this note was linked
+            const linkedNote = linkingResult.details.find(d => d.noteId === result.progressNoteId);
+            if (linkedNote) {
+              result.sessionId = linkedNote.sessionId;
+              console.log(`✅ Progress note ${result.progressNoteId} linked to session ${linkedNote.sessionId}`);
+            }
+          }
+        }
       } else {
         console.log(`❌ Enhanced processing failed: ${result.processingNotes}`);
       }
@@ -2053,11 +2070,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No files uploaded' });
       }
 
+      // Supported file types for enhanced processing
+      const supportedMimeTypes = [
+        'text/plain',
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+        'text/rtf',
+        'application/rtf'
+      ];
+
       const results = [];
       for (const file of req.files) {
-        if (file.mimetype === 'application/pdf') {
+        // Process all supported file types, not just PDFs
+        if (supportedMimeTypes.includes(file.mimetype)) {
           try {
-            const result = await documentProcessor.processDocument(
+            // Use enhanced processor instead of legacy processor
+            const result = await enhancedDocumentProcessor.processDocument(
               file.buffer,
               file.originalname,
               req.therapistId
@@ -2070,19 +2099,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
               error: (error as Error).message
             });
           }
+        } else {
+          results.push({
+            success: false,
+            fileName: file.originalname,
+            error: `Unsupported file type: ${file.mimetype}. Supported: TXT, PDF, DOCX, DOC, RTF`
+          });
         }
       }
 
       const successful = results.filter(r => r.success).length;
       const failed = results.length - successful;
 
+      // Link orphaned progress notes after batch processing
+      let orphanedNotesLinked = 0;
+      if (successful > 0) {
+        const { linkOrphanedProgressNotes } = await import("./services/calendarReconciliation");
+        const linkingResult = await linkOrphanedProgressNotes(req.therapistId);
+        orphanedNotesLinked = linkingResult.linked;
+        console.log(`🔗 Linked ${orphanedNotesLinked} orphaned progress notes after batch processing`);
+      }
+
       res.json({
         success: true,
         processed: results.length,
         successful,
         failed,
+        orphanedNotesLinked,
         results,
-        message: `Processed ${successful} documents successfully, ${failed} failed`
+        message: `Processed ${successful} documents successfully, ${failed} failed, ${orphanedNotesLinked} notes linked`
       });
     } catch (error) {
       console.error('Error processing batch documents:', error);

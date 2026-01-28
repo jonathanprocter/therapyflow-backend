@@ -104,9 +104,14 @@ interface Session {
 interface ProgressNote {
   id: string;
   clientId: string;
+  sessionId?: string;
   sessionDate: string;
   content: string;
   tags?: string[];
+  aiTags?: string[];
+  riskLevel?: string;
+  progressRating?: number;
+  isPlaceholder?: boolean;
   createdAt: string;
   editedAt?: string;
   editedBy?: string;
@@ -368,6 +373,32 @@ export default function ClientDetail() {
     return map;
   }, [clientDocuments]);
 
+  // Map progress notes to sessions
+  const notesBySessionId = useMemo(() => {
+    const map = new Map<string, ProgressNote[]>();
+    for (const note of clientNotes) {
+      if (note.sessionId) {
+        const list = map.get(note.sessionId) || [];
+        list.push(note);
+        map.set(note.sessionId, list);
+      }
+    }
+    return map;
+  }, [clientNotes]);
+
+  const notesByDate = useMemo(() => {
+    const map = new Map<string, ProgressNote[]>();
+    for (const note of clientNotes) {
+      if (note.sessionDate) {
+        const dateKey = new Date(note.sessionDate).toISOString().split('T')[0];
+        const list = map.get(dateKey) || [];
+        list.push(note);
+        map.set(dateKey, list);
+      }
+    }
+    return map;
+  }, [clientNotes]);
+
   const getDocumentsForSession = useCallback((session: Session) => {
     const docs: Document[] = [];
     const bySession = documentsBySessionId.get(session.id) || [];
@@ -382,6 +413,24 @@ export default function ClientDetail() {
 
     return docs;
   }, [documentsBySessionId, documentsByDate]);
+
+  const getProgressNotesForSession = useCallback((session: Session) => {
+    const notes: ProgressNote[] = [];
+    const bySession = notesBySessionId.get(session.id) || [];
+    const dateKey = new Date(session.scheduledAt).toISOString().split('T')[0];
+    const byDate = notesByDate.get(dateKey) || [];
+
+    for (const note of [...bySession, ...byDate]) {
+      if (!notes.some(existing => existing.id === note.id)) {
+        // Skip placeholder notes with no content
+        if (!note.isPlaceholder || note.content) {
+          notes.push(note);
+        }
+      }
+    }
+
+    return notes;
+  }, [notesBySessionId, notesByDate]);
 
   // Filter and search sessions
   const filteredAndSearchedSessions = useMemo(() => {
@@ -858,7 +907,34 @@ export default function ClientDetail() {
                   {session.notes && (
                     <div className="text-sm text-sepia mt-1">{session.notes}</div>
                   )}
-                  {getDocumentsForSession(session).length > 0 && (
+                  {getProgressNotesForSession(session).length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-sepia/80">Progress Notes</div>
+                      {getProgressNotesForSession(session).map((note) => (
+                        <div key={note.id} className="flex items-center gap-2 text-xs">
+                          <MessageSquare className="h-3 w-3 text-teal" />
+                          <button
+                            className="text-teal hover:underline"
+                            onClick={() => {
+                              setActiveTab('notes');
+                              setActiveNoteId(note.id);
+                            }}
+                          >
+                            {formatEDTDateShort(note.sessionDate)} Note
+                          </button>
+                          {note.riskLevel && note.riskLevel !== 'low' && (
+                            <Badge variant="secondary" className="text-xs">
+                              {note.riskLevel} risk
+                            </Badge>
+                          )}
+                          {note.progressRating && (
+                            <span className="text-sepia/60">Progress: {note.progressRating}/10</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                {getDocumentsForSession(session).length > 0 && (
                     <div className="mt-3 space-y-2">
                       <div className="text-xs text-sepia/80">Documents</div>
                       {getDocumentsForSession(session).map((doc) => {
@@ -1979,7 +2055,15 @@ export default function ClientDetail() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Client Documents</CardTitle>
+                    <div>
+                      <CardTitle>Client Documents</CardTitle>
+                      <p className="text-sm text-sepia/80 mt-1">
+                        {clientDocuments.filter(d => {
+                          const m = (d.metadata || {}) as any;
+                          return m.progressNoteId || m.linkedProgressNoteId;
+                        }).length} of {clientDocuments.length} documents processed into notes
+                      </p>
+                    </div>
                     <Button size="sm">
                       <Plus className="h-4 w-4 mr-2" />
                       Upload Document
@@ -2006,21 +2090,55 @@ export default function ClientDetail() {
                     </div>
                   ) : (
                     <div className="space-y-4" role="list" aria-label="Documents list">
-                      {clientDocuments.map((document) => (
-                        <div 
-                          key={document.id} 
+                      {clientDocuments.map((document) => {
+                        const metadata = document.metadata || {};
+                        const progressNoteId = (metadata as any).progressNoteId || (metadata as any).linkedProgressNoteId;
+                        const isProcessed = !!progressNoteId;
+
+                        return (
+                        <div
+                          key={document.id}
                           className="border rounded-lg p-4 hover:bg-parchment/80 transition-colors"
                           role="listitem"
+                          style={{
+                            borderColor: isProcessed ? 'rgba(142, 165, 140, 0.3)' : undefined,
+                            backgroundColor: isProcessed ? 'rgba(142, 165, 140, 0.03)' : undefined
+                          }}
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <h4 className="font-medium text-ink">{document.filename}</h4>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-ink">{document.filename}</h4>
+                                {isProcessed && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                    style={{ backgroundColor: 'rgba(142, 165, 140, 0.2)', color: '#8EA58C' }}
+                                  >
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Processed
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-sepia/80">
                                 Uploaded on {formatEDTDateShort(document.uploadedAt)}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="outline">{document.fileType}</Badge>
+                              {isProcessed && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setActiveTab('notes');
+                                    setActiveNoteId(progressNoteId);
+                                  }}
+                                >
+                                  <MessageSquare className="h-4 w-4 mr-2" />
+                                  View Note
+                                </Button>
+                              )}
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button variant="outline" size="sm" onClick={() => setShowDocumentPreview(document.id)}>
@@ -2039,7 +2157,8 @@ export default function ClientDetail() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   )}
                 </CardContent>
