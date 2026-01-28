@@ -289,18 +289,13 @@ struct SessionPrep: Identifiable, Codable, Equatable {
     var prep: SessionPrepContent
     let createdAt: Date
 
-    enum CodingKeys: String, CodingKey {
-        case id
-        case sessionId = "session_id"
-        case clientId = "client_id"
-        case therapistId = "therapist_id"
-        case prep
-        case createdAt = "created_at"
-    }
+    // API returns camelCase, so no custom CodingKeys needed for these fields
+    // The prep field contains the structured clinical content
 }
 
-// MARK: - Session Prep Content
+// MARK: - Session Prep Content (Redesigned for Clinical Utility)
 struct SessionPrepContent: Codable, Equatable {
+    // Legacy fields for backward compatibility
     var summary: String?
     var keyThemes: [String]?
     var suggestedTopics: [String]?
@@ -308,6 +303,14 @@ struct SessionPrepContent: Codable, Equatable {
     var riskFactors: [String]?
     var treatmentGoalUpdates: [String]?
     var recommendedInterventions: [String]?
+
+    // New structured format
+    var clientName: String?
+    var sessionInfo: SessionPrepSessionInfo?
+    var priorityFocusAreas: [PriorityFocusArea]?
+    var lastSessionSummary: LastSessionSummary?
+    var themeClusters: [ThemeCluster]?
+    var clinicalConsiderations: [String]?
 
     enum CodingKeys: String, CodingKey {
         case summary
@@ -317,5 +320,66 @@ struct SessionPrepContent: Codable, Equatable {
         case riskFactors = "risk_factors"
         case treatmentGoalUpdates = "treatment_goal_updates"
         case recommendedInterventions = "recommended_interventions"
+        case clientName = "client_name"
+        case sessionInfo = "session_info"
+        case priorityFocusAreas = "priority_focus_areas"
+        case lastSessionSummary = "last_session_summary"
+        case themeClusters = "theme_clusters"
+        case clinicalConsiderations = "clinical_considerations"
+    }
+}
+
+// MARK: - Session Prep Supporting Types
+struct SessionPrepSessionInfo: Codable, Equatable {
+    var date: String?
+    var sessionType: String?
+    var duration: Int?
+    var sessionNumber: Int?
+    var clientStatus: String?
+
+    enum CodingKeys: String, CodingKey {
+        case date
+        case sessionType = "session_type"
+        case duration
+        case sessionNumber = "session_number"
+        case clientStatus = "client_status"
+    }
+}
+
+struct PriorityFocusArea: Codable, Equatable, Identifiable {
+    var id: String { title }
+    var title: String
+    var clinicalQuestion: String?
+    var rationale: String?
+
+    enum CodingKeys: String, CodingKey {
+        case title
+        case clinicalQuestion = "clinical_question"
+        case rationale
+    }
+}
+
+struct LastSessionSummary: Codable, Equatable {
+    var summary: String?
+    var whereWeLeftOff: String?
+    var homeworkAssigned: [String]?
+    var unfinishedThreads: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case summary
+        case whereWeLeftOff = "where_we_left_off"
+        case homeworkAssigned = "homework_assigned"
+        case unfinishedThreads = "unfinished_threads"
+    }
+}
+
+struct ThemeCluster: Codable, Equatable, Identifiable {
+    var id: String { category }
+    var category: String
+    var themes: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case category
+        case themes
     }
 }

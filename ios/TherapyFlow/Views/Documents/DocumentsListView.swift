@@ -8,6 +8,10 @@ struct DocumentsListView: View {
     @State private var showingUpload = false
     @State private var selectedFilter: DocumentFilter = .all
     @State private var needsRefresh = false
+    @State private var isProcessingAll = false
+    @State private var processingResult: BatchProcessingResult?
+    @State private var showingProcessingAlert = false
+    @State private var showingDeleteConfirmation = false
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.scenePhase) private var scenePhase
@@ -105,8 +109,28 @@ struct DocumentsListView: View {
         .searchable(text: $searchText, prompt: "Search documents...")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button(action: { showingUpload = true }) {
-                    Image(systemName: "plus")
+                Menu {
+                    Button(action: { showingUpload = true }) {
+                        Label("Upload Document", systemImage: "plus")
+                    }
+
+                    Divider()
+
+                    Button(action: { processAllDocuments(deleteAfter: false) }) {
+                        Label("Process All with AI", systemImage: "sparkles")
+                    }
+                    .disabled(isProcessingAll)
+
+                    Button(action: { showingDeleteConfirmation = true }) {
+                        Label("Process & Delete", systemImage: "sparkles.rectangle.stack")
+                    }
+                    .disabled(isProcessingAll)
+                } label: {
+                    if isProcessingAll {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "ellipsis.circle")
+                    }
                 }
             }
         }
@@ -143,6 +167,44 @@ struct DocumentsListView: View {
             // Mark for refresh when navigating away
             needsRefresh = true
         }
+        .alert("Process & Delete Documents", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Process & Delete", role: .destructive) {
+                processAllDocuments(deleteAfter: true)
+            }
+        } message: {
+            Text("This will process all documents with AI, extract themes and link to sessions, then delete the original documents. This cannot be undone.")
+        }
+        .alert("Processing Complete", isPresented: $showingProcessingAlert) {
+            Button("OK") { }
+        } message: {
+            if let result = processingResult {
+                Text("Processed: \(result.processed)\nLinked to sessions: \(result.linked)\nNotes created: \(result.notesCreated)\nDeleted: \(result.deleted)")
+            }
+        }
+    }
+
+    // MARK: - Batch Processing
+    private func processAllDocuments(deleteAfter: Bool) {
+        isProcessingAll = true
+
+        Task {
+            do {
+                let result = try await APIClient.shared.batchProcessDocuments(deleteAfterProcess: deleteAfter)
+                await MainActor.run {
+                    processingResult = result
+                    showingProcessingAlert = true
+                    isProcessingAll = false
+                }
+                // Refresh document list
+                await loadDocumentsAsync()
+            } catch {
+                await MainActor.run {
+                    self.error = error
+                    isProcessingAll = false
+                }
+            }
+        }
     }
 
     // MARK: - Data Loading
@@ -174,6 +236,18 @@ struct DocumentsListView: View {
 // MARK: - Notification Extension
 extension Notification.Name {
     static let documentLinked = Notification.Name("documentLinked")
+}
+
+// MARK: - Batch Processing Result
+struct BatchProcessingResult: Codable {
+    let success: Bool
+    let processed: Int
+    let successful: Int
+    let linked: Int
+    let notesCreated: Int
+    let notesUpdated: Int
+    let deleted: Int
+    let errors: [String]
 }
 
 #Preview {

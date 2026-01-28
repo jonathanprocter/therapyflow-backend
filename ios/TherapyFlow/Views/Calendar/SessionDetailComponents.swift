@@ -103,9 +103,24 @@ struct SessionDetailDetailsView: View {
                             .font(.subheadline)
                             .foregroundColor(Color.theme.secondaryText)
 
-                        Text(notes)
-                            .font(.body)
-                            .foregroundColor(Color.theme.primaryText)
+                        if notes.lowercased().contains("client deactivated") {
+                            // Show auto-generated deactivation notes with warning style
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(Color.theme.warning)
+                                Text(notes)
+                                    .font(.body)
+                                    .foregroundColor(Color.theme.warning)
+                                    .italic()
+                            }
+                            Text("This note was auto-generated when the client status changed. Edit the session to update.")
+                                .font(.caption)
+                                .foregroundColor(Color.theme.tertiaryText)
+                        } else {
+                            Text(notes)
+                                .font(.body)
+                                .foregroundColor(Color.theme.primaryText)
+                        }
                     }
                     .padding(.top, 8)
                 }
@@ -254,6 +269,7 @@ struct SessionDetailActionsView: View {
     var onMarkComplete: (() -> Void)?
     var onMarkNoShow: (() -> Void)?
     var onCancelSession: (() -> Void)?
+    var onReschedule: (() -> Void)?
     var onCreateNote: (() -> Void)?
 
     var body: some View {
@@ -278,6 +294,12 @@ struct SessionDetailActionsView: View {
 
                     ActionButton(icon: "xmark.circle", title: "Cancel Session", color: .orange) {
                         onCancelSession?()
+                    }
+                }
+
+                if session.status == .cancelled || session.status == .noShow {
+                    ActionButton(icon: "calendar.badge.plus", title: "Reschedule Session", color: Color.theme.success) {
+                        onReschedule?()
                     }
                 }
             }

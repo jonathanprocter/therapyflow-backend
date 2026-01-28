@@ -616,6 +616,18 @@ struct SessionListRow: View {
         session.status == .noShow
     }
 
+    /// Whether this session should show strikethrough (cancelled or no-show)
+    private var showStrikethrough: Bool {
+        isCancelled || isNoShow
+    }
+
+    /// Status icon for inactive sessions
+    private var statusIcon: String? {
+        if isCancelled { return "xmark.circle.fill" }
+        if isNoShow { return "person.fill.xmark" }
+        return nil
+    }
+
     /// Background color based on session status
     private var rowBackgroundColor: Color {
         if isNoShow {
@@ -662,13 +674,13 @@ struct SessionListRow: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(primaryTextColor)
-                        .strikethrough(isCancelled, color: Color.theme.warning)
+                        .strikethrough(showStrikethrough, color: primaryTextColor)
 
                     if showDate {
                         Text(session.scheduledAt.monthDay)
                             .font(.caption2)
                             .foregroundColor(secondaryTextColor)
-                            .strikethrough(isCancelled, color: Color.theme.warning)
+                            .strikethrough(showStrikethrough, color: secondaryTextColor)
                     }
                 }
                 .frame(width: 60)
@@ -679,18 +691,27 @@ struct SessionListRow: View {
                     .cornerRadius(2)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(session.client?.name ?? "Client")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(primaryTextColor)
-                        .strikethrough(isCancelled, color: Color.theme.warning)
+                    HStack(spacing: 6) {
+                        Text(session.client?.name ?? "Client")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(primaryTextColor)
+                            .strikethrough(showStrikethrough, color: primaryTextColor)
+
+                        // Status icon for cancelled/no-show
+                        if let icon = statusIcon {
+                            Image(systemName: icon)
+                                .font(.caption)
+                                .foregroundColor(primaryTextColor)
+                        }
+                    }
 
                     HStack(spacing: 8) {
                         SessionTypeBadge(type: session.sessionType)
                         Text("\(session.duration) min")
                             .font(.caption)
                             .foregroundColor(secondaryTextColor)
-                            .strikethrough(isCancelled, color: Color.theme.warning)
+                            .strikethrough(showStrikethrough, color: secondaryTextColor)
 
                         if !reminders.isEmpty {
                             HStack(spacing: 2) {

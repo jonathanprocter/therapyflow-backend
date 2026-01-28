@@ -936,6 +936,19 @@ extension APIClient {
         )
     }
 
+    /// Batch process all documents with AI, extract themes, link to sessions, and optionally delete
+    func batchProcessDocuments(deleteAfterProcess: Bool = false, limit: Int = 50) async throws -> BatchProcessingResult {
+        struct BatchAIRequest: Encodable {
+            let deleteAfterProcess: Bool
+            let limit: Int
+        }
+        return try await request(
+            endpoint: "/api/documents/batch-ai-process",
+            method: .post,
+            body: BatchAIRequest(deleteAfterProcess: deleteAfterProcess, limit: limit)
+        )
+    }
+
     /// Link a document to a specific client and date
     func linkDocument(documentId: String, clientId: String, sessionDate: Date?) async throws -> Document {
         struct LinkRequest: Encodable {

@@ -1,5 +1,10 @@
 import SwiftUI
 
+// Notification for when a session is updated (status changed, etc.)
+extension Notification.Name {
+    static let sessionUpdated = Notification.Name("sessionUpdated")
+}
+
 struct SessionDetailView: View {
     @State private var session: Session
 
@@ -43,6 +48,7 @@ struct SessionDetailView: View {
                             onMarkComplete: markComplete,
                             onMarkNoShow: { showingNoShowConfirmation = true },
                             onCancelSession: { showingCancelConfirmation = true },
+                            onReschedule: rescheduleSession,
                             onCreateNote: createNote
                         )
                         .frame(width: 300)
@@ -59,6 +65,7 @@ struct SessionDetailView: View {
                         onMarkComplete: markComplete,
                         onMarkNoShow: { showingNoShowConfirmation = true },
                         onCancelSession: { showingCancelConfirmation = true },
+                        onReschedule: rescheduleSession,
                         onCreateNote: createNote
                     )
                 }
@@ -92,6 +99,14 @@ struct SessionDetailView: View {
 
                         Button(role: .destructive, action: { showingCancelConfirmation = true }) {
                             Label("Cancel Session", systemImage: "xmark.circle")
+                        }
+                    }
+
+                    if session.status == .cancelled || session.status == .noShow {
+                        Divider()
+
+                        Button(action: rescheduleSession) {
+                            Label("Reschedule Session", systemImage: "calendar.badge.plus")
                         }
                     }
                 } label: {
@@ -184,7 +199,11 @@ struct SessionDetailView: View {
                     isUpdatingStatus = false
 
                     // Provide haptic feedback
-                    HapticManager.shared.notification( .success)
+                    HapticManager.shared.notification(.success)
+
+                    // Notify other views that a session was updated
+                    print("[SessionDetailView] Posting session update notification: \(updatedSession.client?.name ?? "Unknown") -> \(updatedSession.status)")
+                    NotificationCenter.default.post(name: .sessionUpdated, object: updatedSession)
                 }
             } catch {
                 await MainActor.run {
@@ -192,7 +211,37 @@ struct SessionDetailView: View {
                     isUpdatingStatus = false
 
                     // Provide error haptic feedback
-                    HapticManager.shared.notification( .error)
+                    HapticManager.shared.notification(.error)
+                }
+            }
+        }
+    }
+
+    private func rescheduleSession() {
+        isUpdatingStatus = true
+
+        Task {
+            do {
+                // Reset status to scheduled and clear auto-generated notes
+                var input = UpdateSessionInput(status: .scheduled)
+
+                // If notes contain "Client deactivated", clear them
+                if let notes = session.notes, notes.lowercased().contains("client deactivated") {
+                    input.notes = ""
+                }
+
+                let updatedSession = try await APIClient.shared.updateSession(id: session.id, input)
+                await MainActor.run {
+                    session = updatedSession
+                    isUpdatingStatus = false
+                    HapticManager.shared.notification(.success)
+                    NotificationCenter.default.post(name: .sessionUpdated, object: updatedSession)
+                }
+            } catch {
+                await MainActor.run {
+                    statusUpdateError = error
+                    isUpdatingStatus = false
+                    HapticManager.shared.notification(.error)
                 }
             }
         }

@@ -155,6 +155,14 @@ struct CalendarView: View {
             loadTask?.cancel()
             loadTask = nil
         }
+        .onReceive(NotificationCenter.default.publisher(for: .sessionUpdated)) { _ in
+            // Reload all sessions from the API when any session is updated
+            // This ensures the calendar view always shows the latest data
+            loadTask?.cancel()
+            loadTask = Task {
+                await loadSessionsAsync()
+            }
+        }
     }
 
     // MARK: - Day View
