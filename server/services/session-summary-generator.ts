@@ -165,16 +165,21 @@ export class SessionSummaryGenerator {
       ],
     });
 
-    const content = response.content[0];
-    if (content.type === 'text') {
+    const content = response.content?.[0];
+    if (content?.type === 'text' && content.text) {
       const summaryText = content.text;
       const jsonMatch = summaryText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        try {
+          return JSON.parse(jsonMatch[0]);
+        } catch (parseError) {
+          console.error('[Session Summary] Failed to parse JSON from AI response:', parseError);
+          throw new Error('Invalid JSON in AI summary response');
+        }
       }
     }
-    
-    throw new Error('Failed to parse AI summary response');
+
+    throw new Error('Failed to parse AI summary response - no valid content');
   }
 
   /**
