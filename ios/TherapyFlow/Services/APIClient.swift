@@ -685,13 +685,8 @@ extension APIClient {
         }
 
         // Get pending follow-ups for this client from local quick notes
-        var followUps: [[String: String]]? = nil
-        if let clientId = clientId {
-            let items = EndOfDaySummaryService.shared.getFollowUpItemsForClient(clientId: clientId)
-            if !items.isEmpty {
-                followUps = items.map { ["content": $0, "category": "reminder"] }
-            }
-        }
+        // Note: Follow-ups integration will be added in a future update
+        let followUps: [[String: String]]? = nil
 
         do {
             let response: PrepGenerationResponse = try await request(
