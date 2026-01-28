@@ -1,5 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { promises as fs } from "fs";
+import path from "path";
 import { storage } from "./storage";
 import { clients, sessions, progressNotes, documents, sessionPreps, longitudinalRecords, treatmentPlans, allianceScores } from "@shared/schema";
 import { db } from "./db";
@@ -1934,6 +1936,195 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error linking documents to sessions:", error);
       res.status(500).json({ error: "Failed to link documents to sessions" });
+    }
+  });
+
+  // Batch process all documents with AI, link to sessions, and optionally delete
+  app.post("/api/documents/batch-ai-process", async (req: any, res) => {
+    try {
+      const therapistId = req.therapistId || 'therapist-1';
+      const { deleteAfterProcess = false, limit = 50 } = req.body;
+
+      // Get all documents that need processing
+      const allDocuments = await storage.getDocumentsByTherapist(therapistId);
+      const documentsToProcess = allDocuments
+        .filter(doc => !doc.processingStatus || doc.processingStatus === 'pending' || doc.processingStatus === null)
+        .slice(0, limit);
+
+      console.log(`[BatchAI] Processing ${documentsToProcess.length} documents with AI...`);
+
+      if (documentsToProcess.length === 0) {
+        return res.json({
+          success: true,
+          message: "No documents need processing",
+          processed: 0,
+          linked: 0,
+          deleted: 0
+        });
+      }
+
+      // Get all clients and sessions for matching
+      const clients = await storage.getClients(therapistId);
+      const sessions = await storage.getAllHistoricalSessions(therapistId, true);
+
+      const results = {
+        processed: 0,
+        successful: 0,
+        linked: 0,
+        notesCreated: 0,
+        notesUpdated: 0,
+        deleted: 0,
+        errors: [] as string[]
+      };
+
+      for (const doc of documentsToProcess) {
+        try {
+          results.processed++;
+          console.log(`[BatchAI] Processing: ${doc.fileName}`);
+
+          // Read file content
+          let buffer: Buffer | null = null;
+          if (doc.filePath) {
+            try {
+              const resolvedPath = path.resolve(process.cwd(), doc.filePath.replace(/^\//, ''));
+              await fs.promises.access(resolvedPath);
+              buffer = await fs.promises.readFile(resolvedPath);
+            } catch (fileError) {
+              console.warn(`[BatchAI] File not found: ${doc.filePath}`);
+            }
+          }
+
+          if (!buffer && (doc.metadata as any)?.buffer) {
+            buffer = Buffer.from((doc.metadata as any).buffer as number[]);
+          }
+
+          if (!buffer) {
+            results.errors.push(`${doc.fileName}: No file data available`);
+            continue;
+          }
+
+          // Process with AI
+          const processingResult = await enhancedDocumentProcessor.processDocument(
+            buffer,
+            doc.fileName || "document",
+            therapistId,
+            doc.id
+          );
+
+          if (!processingResult.success) {
+            results.errors.push(`${doc.fileName}: AI processing failed`);
+            continue;
+          }
+
+          results.successful++;
+
+          // Extract session date from filename or AI analysis
+          let sessionDate: Date | null = null;
+          if (processingResult.extractedData?.sessionDate) {
+            sessionDate = new Date(processingResult.extractedData.sessionDate);
+          }
+
+          // Match to client
+          let matchedClient = clients.find(c => c.id === doc.clientId);
+          if (!matchedClient && processingResult.extractedData?.clientName) {
+            const extractedName = processingResult.extractedData.clientName.toLowerCase();
+            matchedClient = clients.find(c =>
+              c.name.toLowerCase().includes(extractedName) ||
+              extractedName.includes(c.name.toLowerCase())
+            );
+          }
+
+          // Find matching session
+          let matchedSession = null;
+          if (matchedClient && sessionDate) {
+            const dateStr = sessionDate.toISOString().split('T')[0];
+            matchedSession = sessions.find(s =>
+              s.clientId === matchedClient!.id &&
+              s.scheduledAt.toISOString().split('T')[0] === dateStr
+            );
+          }
+
+          // Update document with processing results
+          await storage.updateDocument(doc.id, {
+            processingStatus: 'completed',
+            status: 'processed',
+            clientId: matchedClient?.id || doc.clientId,
+            metadata: {
+              ...(doc.metadata as object || {}),
+              aiProcessed: true,
+              processedAt: new Date().toISOString(),
+              linkedSessionId: matchedSession?.id,
+              extractedThemes: processingResult.extractedData?.clinicalThemes || [],
+              extractedEmotions: processingResult.extractedData?.emotions || [],
+              extractedInterventions: processingResult.extractedData?.interventions || [],
+              riskLevel: processingResult.extractedData?.riskLevel,
+              confidence: processingResult.confidence
+            }
+          }, therapistId);
+
+          if (matchedSession) {
+            results.linked++;
+
+            // Create or update progress note with extracted themes
+            const existingNote = await storage.getProgressNoteBySession(matchedSession.id);
+
+            const noteData = {
+              clientId: matchedClient!.id,
+              therapistId,
+              sessionId: matchedSession.id,
+              sessionDate: sessionDate || matchedSession.scheduledAt,
+              themes: processingResult.extractedData?.clinicalThemes || [],
+              content: processingResult.extractedData?.content || '',
+              status: 'processed' as const,
+              aiGenerated: true,
+              metadata: {
+                sourceDocumentId: doc.id,
+                emotions: processingResult.extractedData?.emotions,
+                interventions: processingResult.extractedData?.interventions,
+                riskLevel: processingResult.extractedData?.riskLevel,
+                nextSteps: processingResult.extractedData?.nextSteps,
+                confidence: processingResult.confidence
+              }
+            };
+
+            if (existingNote) {
+              // Update existing note with extracted themes
+              await storage.updateProgressNote(existingNote.id, {
+                themes: [...new Set([...(existingNote.themes || []), ...(noteData.themes || [])])],
+                metadata: {
+                  ...(existingNote.metadata as object || {}),
+                  ...noteData.metadata
+                }
+              });
+              results.notesUpdated++;
+            } else {
+              // Create new progress note
+              await storage.createProgressNote(noteData);
+              results.notesCreated++;
+            }
+          }
+
+          // Delete document if requested
+          if (deleteAfterProcess && processingResult.success) {
+            await storage.deleteDocument(doc.id, therapistId);
+            results.deleted++;
+          }
+
+        } catch (docError) {
+          const errMsg = docError instanceof Error ? docError.message : 'Unknown error';
+          results.errors.push(`${doc.fileName}: ${errMsg}`);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Processed ${results.successful}/${results.processed} documents`,
+        ...results
+      });
+
+    } catch (error) {
+      console.error("Error in batch AI processing:", error);
+      res.status(500).json({ error: "Failed to batch process documents" });
     }
   });
 
