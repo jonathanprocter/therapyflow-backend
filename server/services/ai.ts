@@ -110,6 +110,10 @@ async function callLLM(prompt: string): Promise<{ raw: string; model: string }> 
   
   // Try OpenAI first
   if (openaiKey) {
+    // Add timeout to prevent hanging connections
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -122,9 +126,10 @@ async function callLLM(prompt: string): Promise<{ raw: string; model: string }> 
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 4096,
           temperature: 0.1
-        })
+        }),
+        signal: controller.signal
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const content = data.choices?.[0]?.message?.content || "";
@@ -132,6 +137,8 @@ async function callLLM(prompt: string): Promise<{ raw: string; model: string }> 
       }
     } catch (error) {
       console.warn('OpenAI failed, trying Anthropic:', error);
+    } finally {
+      clearTimeout(timeout);
     }
   }
   

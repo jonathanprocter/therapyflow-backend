@@ -119,11 +119,25 @@ function buildRecordSummary(options: {
   allianceScores: any[];
 }) {
   const { client, sessions, notes, treatmentPlan, allianceScores } = options;
-  const sortedNotes = [...notes].sort((a, b) => new Date(b.sessionDate).getTime() - new Date(a.sessionDate).getTime());
+
+  // Sort notes by date, handling invalid dates gracefully
+  const sortedNotes = [...notes].sort((a, b) => {
+    const timeA = new Date(a.sessionDate).getTime();
+    const timeB = new Date(b.sessionDate).getTime();
+    // If either date is invalid, push it to the end
+    if (isNaN(timeA) && isNaN(timeB)) return 0;
+    if (isNaN(timeA)) return 1;
+    if (isNaN(timeB)) return -1;
+    return timeB - timeA;
+  });
+
   const completedSessions = sessions.filter((session) => session.status === "completed");
   const cancelledSessions = sessions.filter((session) => session.status === "cancelled");
   const noShowSessions = sessions.filter((session) => session.status === "no-show");
-  const upcomingSessions = sessions.filter((session) => new Date(session.scheduledAt).getTime() > Date.now());
+  const upcomingSessions = sessions.filter((session) => {
+    const scheduledTime = new Date(session.scheduledAt).getTime();
+    return !isNaN(scheduledTime) && scheduledTime > Date.now();
+  });
 
   const riskLevels = sortedNotes.map((note) => note.riskLevel || "none");
   const progressRatings = sortedNotes.map((note) => note.progressRating).filter((value) => typeof value === "number");
@@ -214,7 +228,14 @@ export async function generateLongitudinalTracking(clientId: string, therapistId
   const prompt = `${LONGITUDINAL_ANALYSIS_PROMPT}\n\n## Client Longitudinal Record (JSON)\n${JSON.stringify(record, null, 2)}\n\n## Output Schema Reference\n${LONGITUDINAL_OUTPUT_SCHEMA}\n\nReturn valid JSON only.`;
 
   const response = await aiService.processTherapyDocument("", prompt);
-  const analysis = JSON.parse(response);
+
+  let analysis;
+  try {
+    analysis = JSON.parse(response);
+  } catch (parseError) {
+    console.error('[Longitudinal] Failed to parse AI response:', parseError);
+    throw new Error('Invalid AI response format for longitudinal analysis');
+  }
 
   const saved = await storage.createLongitudinalRecord({
     clientId,

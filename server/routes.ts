@@ -2213,17 +2213,23 @@ ${allNotes.slice(0, 50).map(note => safeDecrypt(note.content || "") || "").join(
       }
 
       const fetch = (await import('node-fetch')).default;
-      const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicApiKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          system: `${caseloadContext}
+      const AbortController = globalThis.AbortController;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      let anthropicResponse;
+      try {
+        anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicApiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            system: `${caseloadContext}
 
 You are an AI assistant for TherapyFlow, a mental health practice management app.
 Help the therapist with:
@@ -2234,11 +2240,15 @@ Help the therapist with:
 
 Be conversational, warm, and professional. Keep responses concise but helpful.
 ${contextInfo ? `\nCurrent context:\n${contextInfo}` : ''}`,
-          messages: [
-            { role: 'user', content: message }
-          ]
-        })
-      });
+            messages: [
+              { role: 'user', content: message }
+            ]
+          }),
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
 
       if (!anthropicResponse.ok) {
         const errorText = await anthropicResponse.text();
@@ -2364,17 +2374,22 @@ ${docSummaries.join("\n---\n")}
       }
 
       const fetch = (await import('node-fetch')).default;
-      const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicApiKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 512,
-          system: `You are a voice assistant for TherapyFlow, a mental health practice app.
+      const voiceController = new AbortController();
+      const voiceTimeout = setTimeout(() => voiceController.abort(), 30000); // 30 second timeout
+
+      let anthropicResponse;
+      try {
+        anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicApiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 512,
+            system: `You are a voice assistant for TherapyFlow, a mental health practice app.
 Keep responses brief and conversational - suitable for spoken delivery.
 Help with practice management, client insights, and clinical questions.
 
@@ -2385,11 +2400,15 @@ IMPORTANT: Always respond in plain text only. Do NOT use any markdown formatting
 - No code blocks or backticks
 - No links or special formatting
 Responses must be natural speech, ready for text-to-speech conversion.`,
-          messages: [
-            { role: 'user', content: contextInfo ? `${contextInfo}\n\nUser: ${query}` : query }
-          ]
-        })
-      });
+            messages: [
+              { role: 'user', content: contextInfo ? `${contextInfo}\n\nUser: ${query}` : query }
+            ]
+          }),
+          signal: voiceController.signal
+        });
+      } finally {
+        clearTimeout(voiceTimeout);
+      }
 
       if (!anthropicResponse.ok) {
         return res.json({

@@ -173,5 +173,18 @@ Return valid JSON matching this schema:
 export async function generateSessionPrep(request: SessionPrepInput) {
   const prompt = buildSessionPrepPrompt(request);
   const response = await aiService.processTherapyDocument("", `${SESSION_PREP_SYSTEM_PROMPT}\n\n${prompt}`);
-  return JSON.parse(response);
+
+  try {
+    return JSON.parse(response);
+  } catch (parseError) {
+    console.error('[SessionPrep] Failed to parse AI response:', parseError);
+    // Return a safe default structure instead of crashing
+    return {
+      keyThemes: [],
+      suggestedApproaches: [],
+      riskConsiderations: [],
+      questionPrompts: [],
+      previousSessionSummary: 'Unable to generate - AI response format error'
+    };
+  }
 }

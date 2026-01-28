@@ -207,7 +207,13 @@ export class ClinicalAIService {
       throw new Error('Empty response from OpenAI');
     }
 
-    const parsedResponse = JSON.parse(rawResponse);
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(rawResponse);
+    } catch (parseError) {
+      console.error('[AI] Failed to parse OpenAI JSON response:', parseError);
+      throw new Error('Invalid JSON in OpenAI response');
+    }
     return this.validateAIResponse(parsedResponse);
   }
 
@@ -241,7 +247,13 @@ export class ClinicalAIService {
       throw new Error('No valid JSON found in Anthropic response');
     }
 
-    const parsedResponse = JSON.parse(jsonMatch[0]);
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(jsonMatch[0]);
+    } catch (parseError) {
+      console.error('[AI] Failed to parse Anthropic JSON response:', parseError);
+      throw new Error('Invalid JSON in Anthropic response');
+    }
     return this.validateAIResponse(parsedResponse);
   }
 

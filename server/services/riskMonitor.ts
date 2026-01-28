@@ -29,10 +29,16 @@ export async function checkRiskEscalation(clientId: string, therapistId?: string
   const notes = await storage.getProgressNotes(clientId, therapistId);
   if (!notes || notes.length === 0) return null;
 
-  const recent = notes.slice(0, thresholds.trendWindow || 3);
+  // Ensure trendWindow is at least 1 to prevent division by zero
+  const trendWindow = Math.max(1, thresholds.trendWindow || 3);
+  const recent = notes.slice(0, trendWindow);
+  if (recent.length === 0) return null; // Extra safety check
+
   const scores = recent.map((note) => RISK_SCORE[note.riskLevel || "none"] ?? 0);
-  const average = scores.reduce((sum, value) => sum + value, 0) / scores.length;
-  const latest = scores[0];
+  const average = scores.length > 0
+    ? scores.reduce((sum, value) => sum + value, 0) / scores.length
+    : 0;
+  const latest = scores[0] ?? 0;
 
   const alertAtScore = RISK_SCORE[thresholds.alertAt] ?? 3;
   const isEscalating = latest >= alertAtScore || average >= alertAtScore;
