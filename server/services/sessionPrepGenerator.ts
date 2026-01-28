@@ -13,6 +13,13 @@ export interface SessionPrepInput {
     clinicalConsiderations?: string[];
     medications?: string[];
   };
+  // Pending reminders/notes to follow up on (from quick notes, external events, etc.)
+  pendingFollowUps?: Array<{
+    content: string;
+    dueDate?: string | null;
+    category?: string; // e.g., "appointment", "life_event", "homework", "reminder"
+    recordedAt?: string;
+  }>;
   previousNotes: Array<{
     sessionDate: string;
     sessionNumber?: number | null;
@@ -115,6 +122,19 @@ ${considerations.map((note) => `  - ${note}`).join("\n")}
 - **Medications**: ${meds.join(", ")}
 
 ${request.longitudinalContext ? `## Longitudinal Context (Treatment Arc)\n${request.longitudinalContext}\n` : ""}
+
+${request.pendingFollowUps?.length ? `## Pending Follow-Ups & Reminders
+These items were noted by the clinician and should be addressed in this session:
+${request.pendingFollowUps.map((item, idx) => {
+  let line = `${idx + 1}. ${item.content}`;
+  if (item.category) line += ` [${item.category}]`;
+  if (item.dueDate) line += ` (due: ${item.dueDate})`;
+  if (item.recordedAt) line += ` (noted: ${item.recordedAt})`;
+  return line;
+}).join('\n')}
+
+**Important**: Include these follow-up items in the "clinician_reminders" section and consider them when suggesting session openers.
+` : ""}
 
 ## Previous Session Notes
 ${notesSection || "No prior notes available."}

@@ -670,15 +670,34 @@ extension APIClient {
         }
     }
 
-    func generateSessionPrep(sessionId: String) async throws -> SessionPrep {
+    /// Generate session prep with optional pending follow-ups
+    /// - Parameters:
+    ///   - sessionId: The session to generate prep for
+    ///   - clientId: Optional client ID to fetch pending reminders
+    /// - Returns: Generated SessionPrep
+    func generateSessionPrep(sessionId: String, clientId: String? = nil) async throws -> SessionPrep {
+        struct PrepGenerationRequest: Encodable {
+            let pendingFollowUps: [[String: String]]?
+        }
+
         struct PrepGenerationResponse: Decodable {
             let success: Bool
+        }
+
+        // Get pending follow-ups for this client from local quick notes
+        var followUps: [[String: String]]? = nil
+        if let clientId = clientId {
+            let items = EndOfDaySummaryService.shared.getFollowUpItemsForClient(clientId: clientId)
+            if !items.isEmpty {
+                followUps = items.map { ["content": $0, "category": "reminder"] }
+            }
         }
 
         do {
             let response: PrepGenerationResponse = try await request(
                 endpoint: "/api/sessions/\(sessionId)/prep-ai",
-                method: .post
+                method: .post,
+                body: PrepGenerationRequest(pendingFollowUps: followUps)
             )
 
             guard response.success else {

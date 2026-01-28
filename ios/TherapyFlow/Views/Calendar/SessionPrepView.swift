@@ -181,7 +181,15 @@ struct SessionPrepView: View {
         isRegenerating = true
         Task {
             do {
-                prepData = try await APIClient.shared.generateSessionPrep(sessionId: sessionId)
+                // Fetch session to get clientId for follow-up items
+                let sessionInfo = try? await APIClient.shared.getSession(id: sessionId)
+                let clientId = sessionInfo?.clientId
+
+                // Generate prep with pending follow-ups for this client
+                prepData = try await APIClient.shared.generateSessionPrep(
+                    sessionId: sessionId,
+                    clientId: clientId
+                )
                 isRegenerating = false
             } catch {
                 self.error = error

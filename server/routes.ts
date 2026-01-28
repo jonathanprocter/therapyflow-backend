@@ -762,6 +762,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? formatLongitudinalContext(longitudinalRecord.analysis)
         : null;
 
+      // Get pending follow-ups from request body (sent from iOS quick notes)
+      // These include reminders like "doctor's appt", "funeral", "wedding", etc.
+      const pendingFollowUps = (req.body.pendingFollowUps || []).map((item: any) => ({
+        content: item.content || item.text || '',
+        dueDate: item.dueDate || item.sessionDate || null,
+        category: item.category || 'reminder',
+        recordedAt: item.recordedAt || null,
+      })).filter((item: any) => item.content);
+
       const prep = await generateSessionPrep({
         client: {
           firstName: client.name.split(" ")[0],
@@ -773,6 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           clinicalConsiderations: (client as any).clinicalConsiderations || [],
           medications: [],
         },
+        pendingFollowUps: pendingFollowUps.length > 0 ? pendingFollowUps : undefined,
         previousNotes: allPreviousNotes,
         upcomingSessionDate: new Date(session.scheduledAt).toISOString().split("T")[0],
         includePatternAnalysis: true,

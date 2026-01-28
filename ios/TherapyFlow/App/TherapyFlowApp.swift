@@ -1,5 +1,6 @@
 import SwiftUI
 import BackgroundTasks
+import UserNotifications
 
 @main
 struct TherapyFlowApp: App {
@@ -7,9 +8,13 @@ struct TherapyFlowApp: App {
     @StateObject private var appState: AppState = .shared
     @StateObject private var networkMonitor: NetworkMonitor = .shared
     @StateObject private var authService: AuthService = .shared
+    @StateObject private var endOfDaySummary: EndOfDaySummaryService = .shared
 
     // MARK: - Environment
     @Environment(\.scenePhase) private var scenePhase
+
+    // MARK: - State
+    @State private var showEndOfDaySummary = false
 
     // MARK: - Core Data
     let persistenceController = PersistenceController.shared
@@ -23,6 +28,22 @@ struct TherapyFlowApp: App {
 
         // Initialize Cipher wake word detector
         initializeCipher()
+
+        // Initialize end-of-day notifications
+        initializeEndOfDayNotifications()
+    }
+
+    private func initializeEndOfDayNotifications() {
+        // Set up notification delegate
+        UNUserNotificationCenter.current().delegate = EndOfDaySummaryService.shared
+
+        // Schedule end-of-day notification if authorized
+        Task {
+            let granted = await EndOfDaySummaryService.shared.requestNotificationPermission()
+            if granted {
+                EndOfDaySummaryService.shared.scheduleEndOfDayNotification()
+            }
+        }
     }
 
     private func initializeCipher() {
@@ -57,9 +78,17 @@ struct TherapyFlowApp: App {
                 .environmentObject(appState)
                 .environmentObject(networkMonitor)
                 .environmentObject(authService)
+                .environmentObject(endOfDaySummary)
                 .preferredColorScheme(appState.darkModeEnabled ? .dark : .light)
                 .onOpenURL { url in
                     handleIncomingURL(url)
+                }
+                .sheet(isPresented: $showEndOfDaySummary) {
+                    EndOfDaySummaryView()
+                        .environmentObject(endOfDaySummary)
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .showEndOfDaySummary)) { _ in
+                    showEndOfDaySummary = true
                 }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -185,6 +214,14 @@ struct TherapyFlowApp: App {
             // Resume Cipher wake word listening if enabled
             if WakeWordDetector.shared.wakeWordEnabled && !WakeWordDetector.shared.isActivated {
                 WakeWordDetector.shared.startListening()
+            }
+
+            // Check if we should show end-of-day summary
+            Task { @MainActor in
+                EndOfDaySummaryService.shared.checkAndShowSummaryIfNeeded()
+                if EndOfDaySummaryService.shared.pendingSummary != nil {
+                    showEndOfDaySummary = true
+                }
             }
 
         case .inactive:
