@@ -43,14 +43,18 @@ export interface SessionPrepInput {
   longitudinalContext?: string | null;
 }
 
-const SESSION_PREP_SYSTEM_PROMPT = `You are a clinical documentation assistant supporting a licensed mental health counselor (Ph.D., LMHC) in preparing for an upcoming therapy session. Your role is to synthesize previous session notes into an actionable, clinically-informed prep document.
+const SESSION_PREP_SYSTEM_PROMPT = `You are a clinical documentation assistant supporting a licensed mental health counselor (Ph.D., LMHC) in preparing for an upcoming therapy session. Your role is to synthesize previous session notes into an actionable, clinically-informed prep document that is visually scannable and prioritized for clinical utility.
 
 ## Your Approach
 - Write from a collegial, clinician-to-clinician perspective
 - Be concise but clinically thorough
+- PRIORITIZE: Identify 3-5 themes most relevant for the upcoming session based on recency, frequency, or clinical urgency
+- Group related themes into clinical categories rather than flat lists
+- Frame themes as potential session focus areas or clinical questions when possible
 - Flag anything requiring immediate attention
 - Offer suggestions, not prescriptions—the clinician knows their client best
 - Use the client's first name to maintain therapeutic warmth
+- IMPORTANT: Never include unrelated content (video editing notes, non-clinical material, etc.)
 
 ## Clinical Frameworks to Consider
 When relevant, reference these modalities the clinician uses:
@@ -60,8 +64,20 @@ When relevant, reference these modalities the clinician uses:
 - Existential: Meaning-making, mortality, freedom/responsibility, isolation
 - Sex Therapy: Desire discrepancy, intimacy, sexual functioning
 
+## Theme Categories (use these for grouping)
+- Family System & Boundaries
+- Identity & Life Transitions
+- Emotional Regulation
+- Interpersonal Patterns
+- Self-Perception & Coping
+- Somatic/Body-Based
+- Cognitive Patterns
+- Relational/Attachment
+- Trauma & Safety
+- Values & Meaning
+
 ## Output Requirements
-Generate a structured JSON response matching the SessionPrepOutput schema. Ensure all fields are populated with clinically relevant content based on the notes provided.`;
+Generate a structured JSON response designed for quick clinical scanning. Ensure hierarchical organization and actionable framing.`;
 
 export function buildSessionPrepPrompt(request: SessionPrepInput): string {
   const client = request.client;
@@ -144,48 +160,41 @@ ${notesSection || "No prior notes available."}
 - **Include Pattern Analysis**: ${request.includePatternAnalysis ? "true" : "false"}
 ${request.prepFocus ? `- **Specific Prep Focus**: ${request.prepFocus}` : ""}
 
-Return valid JSON matching this schema:
+Return valid JSON matching this schema (designed for quick clinical scanning):
 {
-  "client_name": "string",
-  "prep_generated": "ISO datetime",
-  "upcoming_session": "ISO date",
-  "where_we_left_off": {
-    "key_themes": ["string"],
-    "emotional_tone": "string",
-    "unresolved_threads": ["string"],
-    "session_ending_note": "string"
+  "client_name": "string (client's first name)",
+  "session_info": {
+    "date": "string (formatted date)",
+    "session_type": "Individual|Couples|Family|Group",
+    "duration": 60,
+    "session_number": int,
+    "client_status": "Active|Maintenance|Terminating"
   },
-  "homework_follow_up": {
-    "assignments": ["string"],
-    "follow_up_questions": ["string"],
-    "days_since_assignment": int
+  "priority_focus_areas": [
+    {
+      "title": "string (concise theme, e.g., 'Fear of abandonment through authentic self-expression')",
+      "clinical_question": "string (actionable question, e.g., 'How might this show up in the therapeutic relationship?')",
+      "rationale": "string (brief explanation of why this is priority, e.g., 'Mentioned in last 2 sessions, connected to presenting concern')"
+    }
+  ],
+  "last_session_summary": {
+    "summary": "string (2-4 sentences of what happened)",
+    "where_we_left_off": "string (specific point where session ended)",
+    "homework_assigned": ["string (any between-session tasks)"],
+    "unfinished_threads": ["string (topics to revisit)"]
   },
-  "treatment_plan_status": {
-    "goals_addressed_recently": ["string"],
-    "goals_needing_attention": ["string"],
-    "progress_indicators": ["string"],
-    "setback_indicators": ["string"]
-  },
-  "clinical_flags": {
-    "risk_level": "none|low|moderate|high|acute",
-    "risk_factors": ["string"],
-    "somatic_complaints": ["string"],
-    "sleep_appetite_changes": "string",
-    "requires_assessment": ["string"]
-  },
-  "pattern_analysis": {
-    "recurring_themes": ["string"],
-    "emotional_trajectory": "string",
-    "therapeutic_alliance_notes": "string",
-    "modality_effectiveness": {"modality": "observation"}
-  },
-  "suggested_openers": {
-    "warm_openers": ["string"],
-    "content_openers": ["string"],
-    "homework_openers": ["string"]
-  },
-  "session_focus_suggestions": ["string"],
-  "clinician_reminders": ["string"]
+  "theme_clusters": [
+    {
+      "category": "string (e.g., 'Family System & Boundaries', 'Identity & Life Transitions', 'Emotional Regulation', 'Interpersonal Patterns', 'Self-Perception & Coping')",
+      "themes": ["string (specific theme within category)"]
+    }
+  ],
+  "clinical_considerations": [
+    "string (clinical notes, e.g., 'Client may benefit from slower pacing given introversion')",
+    "string (e.g., 'Watch for: defensiveness or withdrawal as protective responses')"
+  ],
+  "risk_factors": ["string (if any active risk factors)"],
+  "recommended_interventions": ["string (suggested techniques or approaches)"]
 }
 `;
 }
