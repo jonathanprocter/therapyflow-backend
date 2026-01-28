@@ -281,6 +281,86 @@ struct SessionsPanelView: View {
     }
 }
 
+// MARK: - Week Day Section View
+struct WeekDaySectionView: View {
+    let date: Date
+    let sessions: [Session]
+    let events: [SyncedCalendarEvent]
+    let isSelected: Bool
+    let onTap: () -> Void
+    let onCreateSession: () -> Void
+
+    private var totalEvents: Int {
+        sessions.count + events.count
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Day Header
+            Button(action: onTap) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(date.dayOfWeek)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(date.isToday ? Color.theme.primary : Color.theme.primaryText)
+
+                        Text(date.monthDay)
+                            .font(.caption)
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+
+                    Spacer()
+
+                    if totalEvents > 0 {
+                        Text("\(totalEvents) \(totalEvents == 1 ? "event" : "events")")
+                            .font(.caption)
+                            .foregroundColor(Color.theme.secondaryText)
+                    }
+
+                    Image(systemName: isSelected ? "chevron.down" : "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(Color.theme.tertiaryText)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(date.isToday ? Color.theme.primaryLight.opacity(0.1) : Color.theme.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(date.isToday ? Color.theme.primary.opacity(0.3) : Color.clear, lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+
+            // Sessions (show if selected or always show if has events)
+            if isSelected || totalEvents > 0 {
+                if sessions.isEmpty && events.isEmpty {
+                    Text("No events")
+                        .font(.caption)
+                        .foregroundColor(Color.theme.tertiaryText)
+                        .padding(.leading, 16)
+                } else {
+                    VStack(spacing: 6) {
+                        ForEach(sessions) { session in
+                            NavigationLink(destination: SessionDetailView(session: session)) {
+                                SessionListRow(session: session)
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        ForEach(events) { event in
+                            SyncedCalendarEventRow(event: event)
+                        }
+                    }
+                    .padding(.leading, 8)
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Calendar Event Row
 struct CalendarEventRow: View {
     let event: CalendarEvent
@@ -526,6 +606,54 @@ struct SessionListRow: View {
         self.reminders = QuickNoteService.shared.remindersForSession(session)
     }
 
+    /// Whether this session is cancelled
+    private var isCancelled: Bool {
+        session.status == .cancelled
+    }
+
+    /// Whether this session is a no-show
+    private var isNoShow: Bool {
+        session.status == .noShow
+    }
+
+    /// Background color based on session status
+    private var rowBackgroundColor: Color {
+        if isNoShow {
+            return Color.theme.error.opacity(0.1)  // Red background for no-show
+        } else if isCancelled {
+            return Color.theme.warning.opacity(0.1)  // Yellow background for cancelled
+        }
+        return Color.theme.surfaceSecondary
+    }
+
+    /// Border color based on session status
+    private var rowBorderColor: Color {
+        if isNoShow {
+            return Color.theme.error.opacity(0.3)
+        } else if isCancelled {
+            return Color.theme.warning.opacity(0.3)
+        }
+        return Color.clear
+    }
+
+    /// Text color based on session status
+    private var primaryTextColor: Color {
+        if isNoShow {
+            return Color.theme.error
+        } else if isCancelled {
+            return Color.theme.warning
+        }
+        return Color.theme.primaryText
+    }
+
+    /// Secondary text color based on session status
+    private var secondaryTextColor: Color {
+        if isNoShow || isCancelled {
+            return primaryTextColor.opacity(0.8)
+        }
+        return Color.theme.secondaryText
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
@@ -533,12 +661,14 @@ struct SessionListRow: View {
                     Text(session.scheduledAt.timeString)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(primaryTextColor)
+                        .strikethrough(isCancelled, color: Color.theme.warning)
 
                     if showDate {
                         Text(session.scheduledAt.monthDay)
                             .font(.caption2)
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(secondaryTextColor)
+                            .strikethrough(isCancelled, color: Color.theme.warning)
                     }
                 }
                 .frame(width: 60)
@@ -552,13 +682,15 @@ struct SessionListRow: View {
                     Text(session.client?.name ?? "Client")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(Color.theme.primaryText)
+                        .foregroundColor(primaryTextColor)
+                        .strikethrough(isCancelled, color: Color.theme.warning)
 
                     HStack(spacing: 8) {
                         SessionTypeBadge(type: session.sessionType)
                         Text("\(session.duration) min")
                             .font(.caption)
-                            .foregroundColor(Color.theme.secondaryText)
+                            .foregroundColor(secondaryTextColor)
+                            .strikethrough(isCancelled, color: Color.theme.warning)
 
                         if !reminders.isEmpty {
                             HStack(spacing: 2) {
@@ -572,6 +704,11 @@ struct SessionListRow: View {
                             .padding(.vertical, 2)
                             .background(Color.orange.opacity(0.15))
                             .cornerRadius(4)
+                        }
+
+                        // Status indicator for inactive sessions
+                        if session.status.isInactive {
+                            SessionStatusBadge(status: session.status)
                         }
                     }
                 }
@@ -600,7 +737,11 @@ struct SessionListRow: View {
                 .padding(.bottom, 12)
             }
         }
-        .background(Color.theme.surfaceSecondary)
+        .background(rowBackgroundColor)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(rowBorderColor, lineWidth: session.status.isInactive ? 2 : 0)
+        )
         .cornerRadius(10)
     }
 }

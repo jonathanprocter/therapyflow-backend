@@ -1,8 +1,24 @@
 import SwiftUI
 
+// MARK: - Calendar View Mode
+enum CalendarViewMode: String, CaseIterable {
+    case day = "Day"
+    case week = "Week"
+    case month = "Month"
+
+    var icon: String {
+        switch self {
+        case .day: return "calendar.day.timeline.left"
+        case .week: return "calendar.badge.clock"
+        case .month: return "calendar"
+        }
+    }
+}
+
 struct CalendarView: View {
     @State private var selectedDate = Date()
     @State private var currentMonth = Date()
+    @State private var selectedViewMode: CalendarViewMode = .month
     @State private var sessions: [Session] = []
     @State private var calendarEvents: [SyncedCalendarEvent] = []
     @State private var isLoading = true
@@ -19,6 +35,32 @@ struct CalendarView: View {
     var sessionsForSelectedDate: [Session] {
         sessions.filter { $0.scheduledAt.isSameDay(as: selectedDate) }
             .sorted { $0.scheduledAt < $1.scheduledAt }
+    }
+
+    /// Get sessions for the current week
+    var sessionsForSelectedWeek: [Session] {
+        let calendar = Calendar.current
+        guard let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate)),
+              let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart) else {
+            return []
+        }
+        return sessions.filter { $0.scheduledAt >= weekStart && $0.scheduledAt < weekEnd }
+            .sorted { $0.scheduledAt < $1.scheduledAt }
+    }
+
+    /// Get days of the current week with their sessions
+    var weekDays: [(date: Date, sessions: [Session], events: [SyncedCalendarEvent])] {
+        let calendar = Calendar.current
+        guard let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate)) else {
+            return []
+        }
+        return (0..<7).compactMap { dayOffset in
+            guard let date = calendar.date(byAdding: .day, value: dayOffset, to: weekStart) else { return nil }
+            let daySessions = sessions.filter { $0.scheduledAt.isSameDay(as: date) }
+                .sorted { $0.scheduledAt < $1.scheduledAt }
+            let dayEvents = unlinkedCalendarEvents.filter { $0.startTime.isSameDay(as: date) }
+            return (date: date, sessions: daySessions, events: dayEvents)
+        }
     }
 
     private var unlinkedCalendarEvents: [SyncedCalendarEvent] {
@@ -43,6 +85,178 @@ struct CalendarView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // View Mode Picker
+            Picker("View Mode", selection: $selectedViewMode) {
+                ForEach(CalendarViewMode.allCases, id: \.self) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(Color.theme.background)
+
+            // Content based on selected view mode
+            switch selectedViewMode {
+            case .day:
+                dayView
+            case .week:
+                weekView
+            case .month:
+                monthView
+            }
+        }
+        .background(Color.theme.background)
+        .navigationTitle("Calendar")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: { showingCreateSession = true }) {
+                    Image(systemName: "plus")
+                }
+            }
+
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: { goToToday() }) {
+                    Text("Today")
+                        .font(.subheadline)
+                }
+            }
+        }
+        .sheet(isPresented: $showingCreateSession) {
+            NavigationStack {
+                SessionFormView(initialDate: selectedDate) { newSession in
+                    sessions.append(newSession)
+                    showingCreateSession = false
+                }
+            }
+        }
+        .refreshable {
+            await loadSessionsAsync()
+        }
+        .onAppear {
+            // Update AI context for calendar
+            ContextualAIAssistant.shared.updateContext(.calendar)
+
+            // Cancel any existing task to prevent duplicates
+            loadTask?.cancel()
+            loadTask = Task {
+                await loadSessionsAsync()
+            }
+        }
+        .onChange(of: integrationsService.googleCalendarConnected) { _, isConnected in
+            guard isConnected else { return }
+            loadTask?.cancel()
+            loadTask = Task {
+                await loadSessionsAsync()
+            }
+        }
+        .onDisappear {
+            // Cancel the task when view disappears to prevent -999 errors
+            loadTask?.cancel()
+            loadTask = nil
+        }
+    }
+
+    // MARK: - Day View
+    private var dayView: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                // Day Navigation Header
+                HStack {
+                    Button(action: previousDay) {
+                        Image(systemName: "chevron.left")
+                            .font(.title3)
+                            .foregroundColor(Color.theme.primary)
+                    }
+
+                    Spacer()
+
+                    VStack(spacing: 4) {
+                        Text(selectedDate.dayOfWeek)
+                            .font(.subheadline)
+                            .foregroundColor(Color.theme.secondaryText)
+                        Text(selectedDate.longDate)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(Color.theme.primaryText)
+                    }
+
+                    Spacer()
+
+                    Button(action: nextDay) {
+                        Image(systemName: "chevron.right")
+                            .font(.title3)
+                            .foregroundColor(Color.theme.primary)
+                    }
+                }
+                .padding()
+                .background(Color.theme.surface)
+                .cornerRadius(12)
+
+                // Day's Sessions
+                SelectedDateSectionView(
+                    selectedDate: selectedDate,
+                    sessions: sessionsForSelectedDate,
+                    calendarEvents: unlinkedCalendarEvents.filter { $0.startTime.isSameDay(as: selectedDate) },
+                    onCreateSession: { showingCreateSession = true }
+                )
+            }
+            .padding()
+        }
+    }
+
+    // MARK: - Week View
+    private var weekView: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                // Week Navigation Header
+                HStack {
+                    Button(action: previousWeek) {
+                        Image(systemName: "chevron.left")
+                            .font(.title3)
+                            .foregroundColor(Color.theme.primary)
+                    }
+
+                    Spacer()
+
+                    if let firstDay = weekDays.first?.date, let lastDay = weekDays.last?.date {
+                        Text("\(firstDay.monthDay) - \(lastDay.monthDay)")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(Color.theme.primaryText)
+                    }
+
+                    Spacer()
+
+                    Button(action: nextWeek) {
+                        Image(systemName: "chevron.right")
+                            .font(.title3)
+                            .foregroundColor(Color.theme.primary)
+                    }
+                }
+                .padding()
+                .background(Color.theme.surface)
+                .cornerRadius(12)
+
+                // Week Days
+                ForEach(weekDays, id: \.date) { weekDay in
+                    WeekDaySectionView(
+                        date: weekDay.date,
+                        sessions: weekDay.sessions,
+                        events: weekDay.events,
+                        isSelected: weekDay.date.isSameDay(as: selectedDate),
+                        onTap: { selectedDate = weekDay.date },
+                        onCreateSession: { showingCreateSession = true }
+                    )
+                }
+            }
+            .padding()
+        }
+    }
+
+    // MARK: - Month View (Original View)
+    private var monthView: some View {
+        Group {
             if horizontalSizeClass == .regular {
                 // iPad: Side by side layout
                 HStack(spacing: 0) {
@@ -97,58 +311,30 @@ struct CalendarView: View {
                 }
             }
         }
-        .background(Color.theme.background)
-        .navigationTitle("Calendar")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { showingCreateSession = true }) {
-                    Image(systemName: "plus")
-                }
-            }
-
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: { currentMonth = Date() }) {
-                    Text("Today")
-                        .font(.subheadline)
-                }
-            }
-        }
-        .sheet(isPresented: $showingCreateSession) {
-            NavigationStack {
-                SessionFormView(initialDate: selectedDate) { newSession in
-                    sessions.append(newSession)
-                    showingCreateSession = false
-                }
-            }
-        }
-        .refreshable {
-            await loadSessionsAsync()
-        }
-        .onAppear {
-            // Update AI context for calendar
-            ContextualAIAssistant.shared.updateContext(.calendar)
-
-            // Cancel any existing task to prevent duplicates
-            loadTask?.cancel()
-            loadTask = Task {
-                await loadSessionsAsync()
-            }
-        }
-        .onChange(of: integrationsService.googleCalendarConnected) { _, isConnected in
-            guard isConnected else { return }
-            loadTask?.cancel()
-            loadTask = Task {
-                await loadSessionsAsync()
-            }
-        }
-        .onDisappear {
-            // Cancel the task when view disappears to prevent -999 errors
-            loadTask?.cancel()
-            loadTask = nil
-        }
     }
 
     // MARK: - Navigation
+    private func goToToday() {
+        selectedDate = Date()
+        currentMonth = Date()
+    }
+
+    private func previousDay() {
+        selectedDate = selectedDate.adding(days: -1)
+    }
+
+    private func nextDay() {
+        selectedDate = selectedDate.adding(days: 1)
+    }
+
+    private func previousWeek() {
+        selectedDate = selectedDate.adding(days: -7)
+    }
+
+    private func nextWeek() {
+        selectedDate = selectedDate.adding(days: 7)
+    }
+
     private func previousMonth() {
         currentMonth = currentMonth.adding(months: -1)
     }

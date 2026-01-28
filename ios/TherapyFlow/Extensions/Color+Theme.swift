@@ -139,10 +139,15 @@ extension SessionStatus {
         switch self {
         case .scheduled: return Color.theme.primary
         case .completed: return Color.theme.success
-        case .cancelled: return Color.theme.tertiaryText
-        case .noShow: return Color.theme.error
+        case .cancelled: return Color.theme.warning  // Yellow/orange for cancelled
+        case .noShow: return Color.theme.error       // Red for no-show
         case .unknown: return Color.theme.tertiaryText
         }
+    }
+
+    /// Whether this status indicates the session didn't happen as planned
+    var isInactive: Bool {
+        self == .cancelled || self == .noShow
     }
 }
 

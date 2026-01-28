@@ -194,23 +194,54 @@ export default function AppointmentsPanel() {
           sessions.map((session, index) => {
             // Use timezone utility for consistent EDT formatting
             const sessionTiming = formatSessionTimeRange(session.scheduledAt, session.duration);
-            
-            const getSessionColor = (index: number) => {
-              const colors = [
-                { bg: 'rgba(136, 165, 188, 0.1)', text: '#88A5BC' },
-                { bg: 'rgba(142, 165, 140, 0.1)', text: '#8EA58C' },
-                { bg: 'rgba(115, 138, 110, 0.1)', text: '#738A6E' }
-              ];
-              return colors[index % colors.length];
+
+            // Status-based styling
+            const getStatusStyle = (status: string) => {
+              switch (status) {
+                case 'no-show':
+                case 'no_show':
+                  return {
+                    bg: 'rgba(220, 38, 38, 0.1)', // red background
+                    text: '#DC2626', // red text
+                    border: '2px solid rgba(220, 38, 38, 0.3)',
+                    badge: { bg: 'rgba(220, 38, 38, 0.15)', text: '#DC2626' }
+                  };
+                case 'cancelled':
+                  return {
+                    bg: 'rgba(234, 179, 8, 0.1)', // yellow background
+                    text: '#CA8A04', // yellow text
+                    border: '2px solid rgba(234, 179, 8, 0.3)',
+                    badge: { bg: 'rgba(234, 179, 8, 0.15)', text: '#CA8A04' }
+                  };
+                case 'completed':
+                  return {
+                    bg: 'rgba(142, 165, 140, 0.1)',
+                    text: '#8EA58C',
+                    border: 'none',
+                    badge: { bg: 'rgba(142, 165, 140, 0.15)', text: '#8EA58C' }
+                  };
+                default: // scheduled
+                  return {
+                    bg: 'rgba(242, 243, 241, 0.5)',
+                    text: '#344C3D',
+                    border: 'none',
+                    badge: { bg: 'rgba(136, 165, 188, 0.15)', text: '#88A5BC' }
+                  };
+              }
             };
-            
-            const color = getSessionColor(index);
-            
+
+            const statusStyle = getStatusStyle(session.status);
+            const isCancelled = session.status === 'cancelled';
+            const isNoShow = session.status === 'no-show' || session.status === 'no_show';
+
             return (
               <div
                 key={session.id}
                 className="flex items-center space-x-4 p-4 rounded-lg transition-colors hover:bg-opacity-70"
-                style={{ backgroundColor: 'rgba(242, 243, 241, 0.5)' }}
+                style={{
+                  backgroundColor: statusStyle.bg,
+                  border: statusStyle.border
+                }}
                 data-testid={`appointment-${session.id}`}
               >
                 <div 
@@ -231,14 +262,25 @@ export default function AppointmentsPanel() {
                 
                 <div className="flex-1">
                   <Link href={`/clients/${session.client?.id}`}>
-                    <h4 className="font-medium cursor-pointer transition-colors" style={{ color: '#344C3D' }} data-testid={`appointment-client-${session.id}`}>
+                    <h4
+                      className={`font-medium cursor-pointer transition-colors ${isCancelled ? 'line-through' : ''}`}
+                      style={{ color: isCancelled ? '#CA8A04' : isNoShow ? '#DC2626' : '#344C3D' }}
+                      data-testid={`appointment-client-${session.id}`}
+                    >
                       {session.client?.name || "Unknown Client"}
                     </h4>
                   </Link>
-                  <p className="text-sm" style={{ color: '#738A6E' }} data-testid={`appointment-type-${session.id}`}>
+                  <p
+                    className={`text-sm ${isCancelled ? 'line-through' : ''}`}
+                    style={{ color: isCancelled ? '#CA8A04' : '#738A6E' }}
+                    data-testid={`appointment-type-${session.id}`}
+                  >
                     {session.sessionType}
                   </p>
-                  <div className="flex items-center mt-1 text-xs" style={{ color: '#738A6E' }}>
+                  <div
+                    className={`flex items-center mt-1 text-xs ${isCancelled ? 'line-through' : ''}`}
+                    style={{ color: isCancelled ? '#CA8A04' : '#738A6E' }}
+                  >
                     <i className="fas fa-clock mr-1"></i>
                     <span data-testid={`appointment-time-${session.id}`}>
                       {sessionTiming.timeRange}
@@ -285,12 +327,18 @@ export default function AppointmentsPanel() {
                     <FileText className="w-3 h-3 mr-1" />
                     Prep Session
                   </Button>
-                  <span 
-                    className="inline-flex items-center px-2 py-1 text-xs rounded"
-                    style={{ backgroundColor: color.bg, color: color.text }}
+                  <span
+                    className="inline-flex items-center px-2 py-1 text-xs rounded font-medium"
+                    style={{ backgroundColor: statusStyle.badge.bg, color: statusStyle.badge.text }}
                   >
-                    <i className="fas fa-chart-line mr-1"></i>
-                    {session.status === 'scheduled' ? 'Scheduled' : session.status}
+                    {isNoShow && <i className="fas fa-user-slash mr-1"></i>}
+                    {isCancelled && <i className="fas fa-ban mr-1"></i>}
+                    {session.status === 'completed' && <i className="fas fa-check-circle mr-1"></i>}
+                    {session.status === 'scheduled' && <i className="fas fa-clock mr-1"></i>}
+                    {session.status === 'scheduled' ? 'Scheduled' :
+                     isNoShow ? 'No Show' :
+                     isCancelled ? 'Cancelled' :
+                     session.status === 'completed' ? 'Completed' : session.status}
                   </span>
                 </div>
               </div>

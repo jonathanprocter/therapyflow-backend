@@ -251,6 +251,10 @@ struct SessionDetailPrepView: View {
 
 struct SessionDetailActionsView: View {
     let session: Session
+    var onMarkComplete: (() -> Void)?
+    var onMarkNoShow: (() -> Void)?
+    var onCancelSession: (() -> Void)?
+    var onCreateNote: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -260,25 +264,21 @@ struct SessionDetailActionsView: View {
 
             VStack(spacing: 8) {
                 ActionButton(icon: "doc.badge.plus", title: "Create Note", color: Color.theme.primary) {
-                    // Navigate to create note
-                }
-
-                ActionButton(icon: "video", title: "Start Video Session", color: Color.theme.accent) {
-                    // Start video
+                    onCreateNote?()
                 }
 
                 if session.status == .scheduled {
                     ActionButton(icon: "checkmark.circle", title: "Mark Complete", color: Color.theme.success) {
-                        // Mark complete
+                        onMarkComplete?()
                     }
 
-                    ActionButton(icon: "person.fill.xmark", title: "Mark No Show", color: Color.theme.warning) {
-                        // Mark no show
+                    ActionButton(icon: "person.fill.xmark", title: "Mark No Show", color: .red) {
+                        onMarkNoShow?()
                     }
-                }
 
-                ActionButton(icon: "xmark.circle", title: "Cancel Session", color: Color.theme.error) {
-                    // Cancel
+                    ActionButton(icon: "xmark.circle", title: "Cancel Session", color: .orange) {
+                        onCancelSession?()
+                    }
                 }
             }
         }

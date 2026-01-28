@@ -12,7 +12,7 @@ interface SessionCardProps {
   sessionType: 'Individual' | 'Group' | 'Family';
   time: string;
   duration: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show' | 'no_show';
   onCaseReview?: () => void;
   onEdit?: () => void;
   onPrep?: () => void;
@@ -49,20 +49,50 @@ export function SessionCard({
   onEdit,
   onPrep,
 }: SessionCardProps) {
-  const statusStyles = {
+  // Normalize status
+  const normalizedStatus = status === 'no_show' ? 'no-show' : status;
+  const isNoShow = normalizedStatus === 'no-show';
+  const isCancelled = normalizedStatus === 'cancelled';
+
+  const statusStyles: Record<string, string> = {
     scheduled: 'bg-teal/20 text-ink border-teal/30',
-    completed: 'bg-sepia/20 text-ink border-sepia/30',
-    cancelled: 'bg-parchment text-sepia border-teal/20',
+    completed: 'bg-green-100 text-green-800 border-green-300',
+    cancelled: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    'no-show': 'bg-red-100 text-red-800 border-red-300',
   };
 
+  const statusLabels: Record<string, string> = {
+    scheduled: 'Scheduled',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    'no-show': 'No Show',
+  };
+
+  // Card border color based on status
+  const cardBorderStyle = isNoShow
+    ? 'border-2 border-red-300 bg-red-50/30'
+    : isCancelled
+    ? 'border-2 border-yellow-300 bg-yellow-50/30'
+    : 'border border-teal/20 bg-white';
+
   return (
-    <div className="bg-white rounded-lg border border-teal/20 p-4 hover:shadow-md transition-all">
+    <div className={cn("rounded-lg p-4 hover:shadow-md transition-all", cardBorderStyle)}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <Avatar name={client.name} initials={client.initials} />
           <div>
-            <h4 className="font-semibold text-ink">{client.name}</h4>
-            <p className="text-sm text-sepia">{sessionType} Session</p>
+            <h4 className={cn(
+              "font-semibold",
+              isCancelled ? "line-through text-yellow-700" : isNoShow ? "text-red-700" : "text-ink"
+            )}>
+              {client.name}
+            </h4>
+            <p className={cn(
+              "text-sm",
+              isCancelled ? "line-through text-yellow-600" : "text-sepia"
+            )}>
+              {sessionType} Session
+            </p>
           </div>
         </div>
 
@@ -70,10 +100,10 @@ export function SessionCard({
           <span
             className={cn(
               "px-2 py-1 rounded-full text-xs font-medium border",
-              statusStyles[status]
+              statusStyles[normalizedStatus] || statusStyles.scheduled
             )}
           >
-            {status}
+            {statusLabels[normalizedStatus] || status}
           </span>
           <button className="p-1 hover:bg-teal/10 rounded">
             <MoreVertical className="h-4 w-4 text-sepia/80" />
@@ -81,7 +111,10 @@ export function SessionCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-sepia mb-3">
+      <div className={cn(
+        "flex items-center gap-4 text-sm mb-3",
+        isCancelled ? "line-through text-yellow-600" : "text-sepia"
+      )}>
         <span className="flex items-center gap-1">
           <Clock className="h-3.5 w-3.5" />
           {time}

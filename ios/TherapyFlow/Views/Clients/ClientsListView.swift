@@ -3,7 +3,7 @@ import SwiftUI
 struct ClientsListView: View {
     @State private var clients: [Client] = []
     @State private var searchText = ""
-    @State private var selectedStatus: ClientStatus?
+    @State private var selectedStatus: ClientStatus? = .active  // Default to Active tab
     @State private var isLoading = true
     @State private var error: Error?
     @State private var showingAddClient = false
