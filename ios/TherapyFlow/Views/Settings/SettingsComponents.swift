@@ -276,6 +276,25 @@ struct ChangePasswordView: View {
 }
 
 struct DataManagementView: View {
+    @State private var isCleaningUp = false
+    @State private var cleanupResult: CleanupResult?
+    @State private var showingCleanupResult = false
+    @State private var cleanupError: Error?
+
+    struct CleanupResult: Decodable {
+        let success: Bool
+        let summary: CleanupSummary
+        let sessionsNeedingReview: [String]
+        let message: String
+
+        struct CleanupSummary: Decodable {
+            let totalFound: Int
+            let deleted: Int
+            let orphaned: Int
+            let needingReview: Int
+        }
+    }
+
     var body: some View {
         List {
             Section("Storage") {
@@ -294,6 +313,26 @@ struct DataManagementView: View {
                 }
             }
 
+            Section("Data Cleanup") {
+                Button(action: runCleanup) {
+                    HStack {
+                        Image(systemName: "arrow.3.trianglepath")
+                            .foregroundColor(Color.theme.primary)
+                        Text("Cleanup Orphaned Sessions")
+                        Spacer()
+                        if isCleaningUp {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        }
+                    }
+                }
+                .disabled(isCleaningUp)
+
+                Text("Removes sessions from deleted clients that may still appear in your calendar.")
+                    .font(.caption)
+                    .foregroundColor(Color.theme.secondaryText)
+            }
+
             Section {
                 Button("Clear Cache") {
                     // Clear cache
@@ -303,8 +342,46 @@ struct DataManagementView: View {
         }
         .navigationTitle("Data Management")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Cleanup Result", isPresented: $showingCleanupResult) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            if let result = cleanupResult {
+                Text(result.message)
+            } else if let error = cleanupError {
+                Text("Cleanup failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func runCleanup() {
+        isCleaningUp = true
+        cleanupError = nil
+
+        Task {
+            do {
+                let result: CleanupResult = try await APIClient.shared.request(
+                    endpoint: "/api/admin/cleanup-deactivated-sessions",
+                    method: .post,
+                    body: EmptyBody()
+                )
+                await MainActor.run {
+                    cleanupResult = result
+                    showingCleanupResult = true
+                    isCleaningUp = false
+                }
+            } catch {
+                await MainActor.run {
+                    cleanupError = error
+                    showingCleanupResult = true
+                    isCleaningUp = false
+                }
+            }
+        }
     }
 }
+
+// Empty body for POST requests that don't need a body
+private struct EmptyBody: Encodable {}
 
 struct NotificationSettingsView: View {
     @State private var sessionReminders = true
