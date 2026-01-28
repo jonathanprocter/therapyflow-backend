@@ -501,7 +501,8 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(sessions.therapistId, therapistId),
-          eq(sessions.status, "scheduled"),
+          // Include all session statuses (scheduled, cancelled, no_show, completed)
+          // so they can be displayed with appropriate styling in the UI
           // Only include SimplePractice therapy appointments
           eq(sessions.isSimplePracticeEvent, true),
           // Filter out non-therapy events like birthdays
@@ -520,7 +521,8 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(sessions.therapistId, therapistId),
-          eq(sessions.status, "scheduled"),
+          // Include all session statuses (scheduled, cancelled, no_show, completed)
+          // so they can be displayed with appropriate styling in the UI
           // Only include SimplePractice therapy appointments
           eq(sessions.isSimplePracticeEvent, true),
           // Filter out non-therapy events like birthdays

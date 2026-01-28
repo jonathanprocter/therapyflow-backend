@@ -23,14 +23,13 @@ extension Date {
 
     static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.timeStyle = .short
+        formatter.dateFormat = "HHmm"  // 24-hour military time (e.g., 0900, 1430)
         return formatter
     }()
 
     static let dateTimeFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
+        formatter.dateFormat = "MMM d, yyyy HHmm"  // Military time with date
         return formatter
     }()
 
