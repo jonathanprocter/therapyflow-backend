@@ -1,14 +1,23 @@
 import SwiftUI
 
 struct SessionDetailView: View {
-    let session: Session
+    @State private var session: Session
 
     @State private var sessionPrep: SessionPrep?
     @State private var isLoadingPrep = false
     @State private var showingEditSheet = false
     @State private var prepError: Error?
+    @State private var isUpdatingStatus = false
+    @State private var statusUpdateError: Error?
+    @State private var showingCancelConfirmation = false
+    @State private var showingNoShowConfirmation = false
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dismiss) private var dismiss
+
+    init(session: Session) {
+        _session = State(initialValue: session)
+    }
 
     var body: some View {
         ScrollView {
@@ -29,8 +38,14 @@ struct SessionDetailView: View {
                         }
                         .frame(maxWidth: .infinity)
 
-                        SessionDetailActionsView(session: session)
-                            .frame(width: 300)
+                        SessionDetailActionsView(
+                            session: session,
+                            onMarkComplete: markComplete,
+                            onMarkNoShow: { showingNoShowConfirmation = true },
+                            onCancelSession: { showingCancelConfirmation = true },
+                            onCreateNote: createNote
+                        )
+                        .frame(width: 300)
                     }
                 } else {
                     SessionDetailDetailsView(session: session)
@@ -39,7 +54,13 @@ struct SessionDetailView: View {
                         isLoadingPrep: isLoadingPrep,
                         onGenerate: generatePrep
                     )
-                    SessionDetailActionsView(session: session)
+                    SessionDetailActionsView(
+                        session: session,
+                        onMarkComplete: markComplete,
+                        onMarkNoShow: { showingNoShowConfirmation = true },
+                        onCancelSession: { showingCancelConfirmation = true },
+                        onCreateNote: createNote
+                    )
                 }
             }
             .padding()
@@ -58,10 +79,20 @@ struct SessionDetailView: View {
                         Label("Generate AI Prep", systemImage: "sparkles")
                     }
 
-                    Divider()
+                    if session.status == .scheduled {
+                        Divider()
 
-                    Button(role: .destructive, action: {}) {
-                        Label("Cancel Session", systemImage: "xmark.circle")
+                        Button(action: markComplete) {
+                            Label("Mark Complete", systemImage: "checkmark.circle")
+                        }
+
+                        Button(action: { showingNoShowConfirmation = true }) {
+                            Label("Mark No Show", systemImage: "person.fill.xmark")
+                        }
+
+                        Button(role: .destructive, action: { showingCancelConfirmation = true }) {
+                            Label("Cancel Session", systemImage: "xmark.circle")
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -71,6 +102,7 @@ struct SessionDetailView: View {
         .sheet(isPresented: $showingEditSheet) {
             NavigationStack {
                 SessionFormView(editSession: session) { updatedSession in
+                    session = updatedSession
                     showingEditSheet = false
                 }
             }
@@ -80,6 +112,28 @@ struct SessionDetailView: View {
         } message: {
             Text(prepError?.localizedDescription ?? "Failed to generate session prep")
         }
+        .alert("Error Updating Session", isPresented: .constant(statusUpdateError != nil)) {
+            Button("OK") { statusUpdateError = nil }
+        } message: {
+            Text(statusUpdateError?.localizedDescription ?? "Failed to update session status")
+        }
+        .alert("Cancel Session", isPresented: $showingCancelConfirmation) {
+            Button("Keep Session", role: .cancel) { }
+            Button("Cancel Session", role: .destructive) {
+                cancelSession()
+            }
+        } message: {
+            Text("Are you sure you want to cancel this session with \(session.client?.name ?? "this client")? This will mark the session as cancelled.")
+        }
+        .alert("Mark as No Show", isPresented: $showingNoShowConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Mark No Show", role: .destructive) {
+                markNoShow()
+            }
+        } message: {
+            Text("Are you sure you want to mark this session as a no-show? This indicates the client did not attend.")
+        }
+        .loadingOverlay(isUpdatingStatus)
         .onAppear {
             // Update AI context with session and client info
             ContextualAIAssistant.shared.updateContext(.sessionDetail, client: session.client, session: session)
@@ -105,7 +159,52 @@ struct SessionDetailView: View {
             }
         }
     }
+
+    private func markComplete() {
+        updateSessionStatus(.completed)
+    }
+
+    private func markNoShow() {
+        updateSessionStatus(.noShow)
+    }
+
+    private func cancelSession() {
+        updateSessionStatus(.cancelled)
+    }
+
+    private func updateSessionStatus(_ status: SessionStatus) {
+        isUpdatingStatus = true
+
+        Task {
+            do {
+                let input = UpdateSessionInput(status: status)
+                let updatedSession = try await APIClient.shared.updateSession(id: session.id, input)
+                await MainActor.run {
+                    session = updatedSession
+                    isUpdatingStatus = false
+
+                    // Provide haptic feedback
+                    HapticManager.shared.notification( .success)
+                }
+            } catch {
+                await MainActor.run {
+                    statusUpdateError = error
+                    isUpdatingStatus = false
+
+                    // Provide error haptic feedback
+                    HapticManager.shared.notification( .error)
+                }
+            }
+        }
+    }
+
+    private func createNote() {
+        // Navigate to create note for this session
+        // This will be handled by navigation in a future update
+        // For now, we can show a placeholder or use the Notes tab
+    }
 }
+
 #Preview {
     NavigationStack {
         SessionDetailView(session: Session(
