@@ -66,7 +66,11 @@ actor APIClient {
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         config.waitsForConnectivity = true
-        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        // PERFORMANCE FIX: Use protocol cache policy to respect server Cache-Control headers
+        // This reduces network traffic for cacheable resources (client lists, treatment plans)
+        config.requestCachePolicy = .useProtocolCachePolicy
+        // Configure URL cache (10MB memory, 50MB disk)
+        config.urlCache = URLCache(memoryCapacity: 10 * 1024 * 1024, diskCapacity: 50 * 1024 * 1024)
 
         self.session = URLSession(configuration: config)
 

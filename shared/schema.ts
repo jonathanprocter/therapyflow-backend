@@ -1,15 +1,16 @@
 import { sql, relations } from "drizzle-orm";
-import { 
-  pgTable, 
-  text, 
-  varchar, 
-  timestamp, 
-  integer, 
+import {
+  pgTable,
+  text,
+  varchar,
+  timestamp,
+  integer,
   json,
-  jsonb, 
+  jsonb,
   real,
   boolean,
-  uuid
+  uuid,
+  index
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -43,7 +44,14 @@ export const clients = pgTable("clients", {
   deletedAt: timestamp("deleted_at"), // Track when client was soft-deleted
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // PERFORMANCE: Index for tenant isolation queries
+  therapistIdIdx: index("clients_therapist_id_idx").on(table.therapistId),
+  // PERFORMANCE: Index for status filtering
+  statusIdx: index("clients_status_idx").on(table.status),
+  // PERFORMANCE: Composite index for common query pattern
+  therapistStatusIdx: index("clients_therapist_status_idx").on(table.therapistId, table.status),
+}));
 
 // Sessions table
 export const sessions = pgTable("sessions", {
@@ -61,7 +69,20 @@ export const sessions = pgTable("sessions", {
   isSimplePracticeEvent: boolean("is_simple_practice_event").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // PERFORMANCE: Index for tenant isolation queries (most common)
+  therapistIdIdx: index("sessions_therapist_id_idx").on(table.therapistId),
+  // PERFORMANCE: Index for client-specific session queries
+  clientIdIdx: index("sessions_client_id_idx").on(table.clientId),
+  // PERFORMANCE: Index for status filtering
+  statusIdx: index("sessions_status_idx").on(table.status),
+  // PERFORMANCE: Composite index for therapist + status queries
+  therapistStatusIdx: index("sessions_therapist_status_idx").on(table.therapistId, table.status),
+  // PERFORMANCE: Index for date range queries
+  scheduledAtIdx: index("sessions_scheduled_at_idx").on(table.scheduledAt),
+  // PERFORMANCE: Index for SimplePractice sync
+  simplePracticeIdx: index("sessions_simple_practice_idx").on(table.isSimplePracticeEvent),
+}));
 
 // Progress Notes table
 export const progressNotes = pgTable("progress_notes", {
@@ -86,7 +107,22 @@ export const progressNotes = pgTable("progress_notes", {
   originalDocumentId: varchar("original_document_id").references(() => documents.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // PERFORMANCE: Index for tenant isolation queries (most common)
+  therapistIdIdx: index("progress_notes_therapist_id_idx").on(table.therapistId),
+  // PERFORMANCE: Index for client-specific note queries
+  clientIdIdx: index("progress_notes_client_id_idx").on(table.clientId),
+  // PERFORMANCE: Index for session linking
+  sessionIdIdx: index("progress_notes_session_id_idx").on(table.sessionId),
+  // PERFORMANCE: Composite index for therapist + client queries
+  therapistClientIdx: index("progress_notes_therapist_client_idx").on(table.therapistId, table.clientId),
+  // PERFORMANCE: Index for date range queries
+  sessionDateIdx: index("progress_notes_session_date_idx").on(table.sessionDate),
+  // PERFORMANCE: Index for status filtering (manual review, etc)
+  statusIdx: index("progress_notes_status_idx").on(table.status),
+  // PERFORMANCE: Index for manual review filtering
+  manualReviewIdx: index("progress_notes_manual_review_idx").on(table.requiresManualReview),
+}));
 
 // Case Conceptualization (5 P's Framework)
 export const caseConceptualizations = pgTable("case_conceptualizations", {
@@ -144,7 +180,14 @@ export const documents = pgTable("documents", {
   fileSize: integer("file_size"),
   metadata: jsonb("metadata"),
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // PERFORMANCE: Index for tenant isolation queries
+  therapistIdIdx: index("documents_therapist_id_idx").on(table.therapistId),
+  // PERFORMANCE: Index for client-specific document queries
+  clientIdIdx: index("documents_client_id_idx").on(table.clientId),
+  // PERFORMANCE: Composite index for therapist + client queries
+  therapistClientIdx: index("documents_therapist_client_idx").on(table.therapistId, table.clientId),
+}));
 
 // Cross References between notes
 export const crossReferences = pgTable("cross_references", {
@@ -389,7 +432,12 @@ export const calendarSyncHistory = pgTable("calendar_sync_history", {
   startedAt: timestamp("started_at").notNull(),
   completedAt: timestamp("completed_at"),
   metadata: jsonb("metadata"),
-});
+}, (table) => ({
+  // PERFORMANCE: Index for therapist sync history queries
+  therapistIdIdx: index("calendar_sync_history_therapist_id_idx").on(table.therapistId),
+  // PERFORMANCE: Index for status filtering
+  statusIdx: index("calendar_sync_history_status_idx").on(table.status),
+}));
 
 // Calendar Event Aliases (for client name matching)
 export const calendarEventAliases = pgTable("calendar_event_aliases", {
