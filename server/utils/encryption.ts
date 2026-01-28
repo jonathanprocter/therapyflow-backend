@@ -8,8 +8,12 @@ if (process.env.ENCRYPTION_KEY) {
   ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
   console.log('[ENCRYPTION] Using configured encryption key');
 } else if (IS_PRODUCTION) {
-  console.error('[ENCRYPTION] CRITICAL: No ENCRYPTION_KEY in production! Data encryption will fail.');
-  ENCRYPTION_KEY = ''; // Will cause encryption to fail safely rather than use weak key
+  // SECURITY FIX: Force startup failure in production without encryption key
+  console.error('[ENCRYPTION] CRITICAL: ENCRYPTION_KEY environment variable is required in production!');
+  console.error('[ENCRYPTION] Set ENCRYPTION_KEY to a 64-character hex string (32 bytes)');
+  console.error('[ENCRYPTION] Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+  console.error('[ENCRYPTION] Exiting to prevent unencrypted data storage...');
+  process.exit(1);
 } else {
   // Generate a temporary key for development only
   console.warn('[ENCRYPTION] WARNING: No ENCRYPTION_KEY found, generating temporary key for development');

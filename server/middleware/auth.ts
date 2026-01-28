@@ -32,17 +32,61 @@ interface JwtPayload {
 }
 
 /**
- * Simple JWT decoder (signature verification should use a proper library in production)
- * For now, this provides the structure - integrate with your auth provider (Auth0, Firebase, etc.)
+ * JWT decoder with signature verification
+ * SECURITY FIX: Now verifies JWT signature using HMAC-SHA256
+ * In production, configure JWT_SECRET environment variable
  */
 function decodeJwt(token: string): JwtPayload | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
 
-    const payload = Buffer.from(parts[1], "base64url").toString("utf8");
-    return JSON.parse(payload) as JwtPayload;
-  } catch {
+    const [headerB64, payloadB64, signatureB64] = parts;
+
+    // Get JWT secret - REQUIRED in production
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      if (isProduction()) {
+        console.error("[AUTH] CRITICAL: JWT_SECRET not configured in production!");
+        return null;
+      }
+      // Dev mode without secret - log warning but allow decode-only
+      console.warn("[AUTH] WARNING: JWT_SECRET not set - signature verification disabled in dev mode");
+    } else {
+      // Verify signature using HMAC-SHA256
+      const crypto = require("crypto");
+      const signatureInput = `${headerB64}.${payloadB64}`;
+      const expectedSignature = crypto
+        .createHmac("sha256", jwtSecret)
+        .update(signatureInput)
+        .digest("base64url");
+
+      if (signatureB64 !== expectedSignature) {
+        console.warn("[AUTH] JWT signature verification failed");
+        return null;
+      }
+    }
+
+    // Decode payload with proper error handling
+    let payloadJson: string;
+    try {
+      payloadJson = Buffer.from(payloadB64, "base64url").toString("utf8");
+    } catch (decodeError) {
+      console.error("[AUTH] Failed to decode JWT payload:", decodeError);
+      return null;
+    }
+
+    let payload: JwtPayload;
+    try {
+      payload = JSON.parse(payloadJson) as JwtPayload;
+    } catch (parseError) {
+      console.error("[AUTH] Failed to parse JWT payload as JSON:", parseError);
+      return null;
+    }
+
+    return payload;
+  } catch (error) {
+    console.error("[AUTH] JWT decoding failed:", error);
     return null;
   }
 }

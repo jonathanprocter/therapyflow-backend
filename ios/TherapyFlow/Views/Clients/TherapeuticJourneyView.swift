@@ -116,7 +116,8 @@ struct TherapeuticJourneyView: View {
         themes.append(contentsOf: (analysis.stuckThemes ?? []).map { ($0, 0.8) })
         themes.append(contentsOf: (analysis.resolvingThemes ?? []).map { ($0, 0.6) })
 
-        let uniqueThemes = Array(Dictionary(grouping: themes, by: { $0.0 }).mapValues { $0.first! }.values)
+        // SECURITY FIX: Use compactMapValues instead of force unwrap to safely handle empty groups
+        let uniqueThemes = Array(Dictionary(grouping: themes, by: { $0.0 }).compactMapValues { $0.first }.values)
 
         return JourneyData(
             summary: summaryParts.isEmpty ? "No longitudinal summary available yet." : summaryParts.joined(separator: " • "),

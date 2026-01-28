@@ -382,13 +382,18 @@ struct NoteFormView: View {
         Remember: Output ONLY the modified note. Do not truncate or summarize. Preserve every word of content while making the requested changes.
         """
 
-        let url = URL(string: "https://api.anthropic.com/v1/messages")!
+        // SECURITY FIX: Safe URL construction with proper error handling
+        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
+            throw NSError(domain: "NoteFormView", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid API URL configuration"])
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        // SECURITY FIX: Add request timeout to prevent hanging
+        request.timeoutInterval = 120  // 2 minutes for AI requests
 
         let body: [String: Any] = [
             "model": "claude-sonnet-4-20250514",
@@ -403,9 +408,15 @@ struct NoteFormView: View {
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw NSError(domain: "NoteFormView", code: -2, userInfo: [NSLocalizedDescriptionKey: "AI service temporarily unavailable"])
+        // SECURITY FIX: Improved HTTP error handling with status code logging
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "NoteFormView", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid HTTP response from AI service"])
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "No error details"
+            print("[NoteFormView] AI API error: HTTP \(httpResponse.statusCode), Response: \(errorBody)")
+            throw NSError(domain: "NoteFormView", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "AI service error (HTTP \(httpResponse.statusCode))"])
         }
 
         struct AnthropicResponse: Decodable {
@@ -418,8 +429,13 @@ struct NoteFormView: View {
 
         let anthropicResponse = try JSONDecoder().decode(AnthropicResponse.self, from: data)
 
-        guard let textContent = anthropicResponse.content.first?.text else {
-            throw NSError(domain: "NoteFormView", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid response from AI"])
+        // SECURITY FIX: Check for empty content array before accessing first element
+        guard !anthropicResponse.content.isEmpty else {
+            throw NSError(domain: "NoteFormView", code: -3, userInfo: [NSLocalizedDescriptionKey: "Empty response from AI service"])
+        }
+
+        guard let textContent = anthropicResponse.content[0].text else {
+            throw NSError(domain: "NoteFormView", code: -4, userInfo: [NSLocalizedDescriptionKey: "No text content in AI response"])
         }
 
         return textContent

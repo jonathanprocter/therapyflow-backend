@@ -8,6 +8,26 @@ import { processDocumentWithAI } from "../services/ai";
 import { enhancedDocumentProcessor } from "../services/enhanced-document-processor";
 import { enqueueJob, registerJobHandler } from "../services/jobQueue";
 
+// SECURITY: Upload directory for path traversal protection
+const UPLOAD_DIR = path.resolve(process.cwd(), "uploads");
+
+/**
+ * SECURITY FIX: Validate that a file path is within the allowed upload directory
+ * Prevents path traversal attacks (e.g., ../../etc/passwd)
+ */
+function validateFilePath(filePath: string): string {
+  // Remove leading slash and resolve the path
+  const sanitizedPath = filePath.replace(/^\//, "");
+  const resolvedPath = path.resolve(process.cwd(), sanitizedPath);
+
+  // Ensure the resolved path is within the upload directory
+  if (!resolvedPath.startsWith(UPLOAD_DIR)) {
+    throw new Error(`Invalid file path: path traversal attempt detected`);
+  }
+
+  return resolvedPath;
+}
+
 
 const upload = multer({
   storage: multer.memoryStorage()
@@ -35,14 +55,16 @@ registerJobHandler("smart-process", async (job) => {
 
     let buffer: Buffer | null = null;
     if (doc.filePath) {
-      const resolvedPath = path.resolve(process.cwd(), doc.filePath.replace(/^\//, ""));
       try {
+        // SECURITY FIX: Validate path is within upload directory
+        const resolvedPath = validateFilePath(doc.filePath);
         // Check if file exists before attempting to read
         await fs.access(resolvedPath);
         buffer = await fs.readFile(resolvedPath);
       } catch (fileError) {
-        console.error(`[Documents] Failed to read file at ${resolvedPath}:`, fileError instanceof Error ? fileError.message : 'Unknown error');
-        results.push({ documentId: id, error: "file not found or inaccessible" });
+        const errorMsg = fileError instanceof Error ? fileError.message : 'Unknown error';
+        console.error(`[Documents] Failed to read file:`, errorMsg);
+        results.push({ documentId: id, error: errorMsg.includes("path traversal") ? "invalid file path" : "file not found or inaccessible" });
         continue;
       }
     } else if ((doc.metadata as any)?.buffer) {
@@ -387,8 +409,15 @@ documentsRouter.post("/smart-process", async (req, res) => {
         let buffer: Buffer | null = null;
 
         if (doc.filePath) {
-          const resolvedPath = path.resolve(process.cwd(), doc.filePath.replace(/^\//, ""));
-          buffer = await fs.readFile(resolvedPath);
+          try {
+            // SECURITY FIX: Validate path is within upload directory
+            const resolvedPath = validateFilePath(doc.filePath);
+            buffer = await fs.readFile(resolvedPath);
+          } catch (fileError) {
+            const errorMsg = fileError instanceof Error ? fileError.message : 'Unknown error';
+            results.push({ documentId: id, error: errorMsg.includes("path traversal") ? "invalid file path" : "file read error" });
+            continue;
+          }
         } else if ((doc.metadata as any)?.buffer) {
           buffer = Buffer.from((doc.metadata as any).buffer as number[]);
         }
@@ -476,11 +505,13 @@ documentsRouter.delete("/:id", async (req, res) => {
     }
 
     if (doc.filePath) {
-      const resolvedPath = path.resolve(process.cwd(), doc.filePath.replace(/^\//, ""));
       try {
+        // SECURITY FIX: Validate path is within upload directory before deletion
+        const resolvedPath = validateFilePath(doc.filePath);
         await fs.unlink(resolvedPath);
       } catch (error) {
-        console.warn(`Failed to delete file ${resolvedPath}:`, error);
+        // Log but don't fail - file may have been manually deleted
+        console.warn(`Failed to delete file:`, error instanceof Error ? error.message : error);
       }
     }
 

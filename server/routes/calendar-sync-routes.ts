@@ -61,14 +61,32 @@ router.get("/auth-url", async (req: Request, res: Response) => {
 /**
  * GET /api/calendar-sync/callback
  * OAuth callback handler
+ * SECURITY FIX: No longer accepts unvalidated state parameter as therapist ID
  */
 router.get("/callback", async (req: Request, res: Response) => {
   try {
     const { code, state } = req.query;
-    const therapistId = getTherapistId(req) || state as string;
 
-    if (!code || !therapistId) {
-      return res.status(400).json({ error: "Missing code or therapist ID" });
+    if (!code) {
+      return res.status(400).json({ error: "Missing authorization code" });
+    }
+
+    // SECURITY FIX: Get therapist ID from authenticated session ONLY
+    // The state parameter should be a CSRF token, not used for identity
+    const therapistId = getTherapistId(req);
+
+    if (!therapistId) {
+      // If no authenticated session, check if we stored the state in a secure way
+      // For now, require authentication - OAuth flow should include auth
+      console.error("[Calendar Sync Routes] OAuth callback without authenticated session");
+      return res.redirect("/settings/calendar?error=auth_required");
+    }
+
+    // Validate state parameter if provided (CSRF protection)
+    if (state) {
+      // In a full implementation, validate state against stored nonce
+      // For now, just log that we received it
+      console.log("[Calendar Sync Routes] OAuth callback with state parameter (CSRF token)");
     }
 
     await smartCalendarSync.exchangeCodeForTokens(code as string, therapistId);
