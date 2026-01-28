@@ -137,6 +137,7 @@ extension PersistenceController {
             request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
         }
         request.sortDescriptors = [NSSortDescriptor(keyPath: \ClientEntity.name, ascending: true)]
+        request.fetchBatchSize = 20 // Performance: load in batches
 
         do {
             let entities = try container.viewContext.fetch(request)
@@ -164,6 +165,7 @@ extension PersistenceController {
             request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
         }
         request.sortDescriptors = [NSSortDescriptor(keyPath: \SessionEntity.scheduledAt, ascending: true)]
+        request.fetchBatchSize = 20 // Performance: load in batches
 
         do {
             let entities = try container.viewContext.fetch(request)
@@ -186,6 +188,7 @@ extension PersistenceController {
             request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
         }
         request.sortDescriptors = [NSSortDescriptor(keyPath: \ProgressNoteEntity.createdAt, ascending: false)]
+        request.fetchBatchSize = 20 // Performance: load in batches
 
         do {
             let entities = try container.viewContext.fetch(request)
@@ -203,6 +206,7 @@ extension PersistenceController {
             request.predicate = NSPredicate(format: "clientId == %@", clientId)
         }
         request.sortDescriptors = [NSSortDescriptor(keyPath: \TreatmentPlanEntity.createdAt, ascending: false)]
+        request.fetchBatchSize = 10 // Performance: load in batches
 
         do {
             let entities = try container.viewContext.fetch(request)
@@ -220,6 +224,7 @@ extension PersistenceController {
             request.predicate = NSPredicate(format: "clientId == %@", clientId)
         }
         request.sortDescriptors = [NSSortDescriptor(keyPath: \DocumentEntity.createdAt, ascending: false)]
+        request.fetchBatchSize = 15 // Performance: load in batches
 
         do {
             let entities = try container.viewContext.fetch(request)

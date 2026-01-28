@@ -1,3 +1,4 @@
+import React, { memo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,74 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatToEDT, getDashboardDateDisplay } from "../../../../shared/utils/timezone";
 import type { ProgressNoteWithClient } from "@/types/clinical";
 
-export default function RecentNotes() {
+// Memoized note item for better performance
+const NoteItem = memo(function NoteItem({ note }: { note: ProgressNoteWithClient }) {
+  return (
+    <div
+      className="p-4 border rounded-lg cursor-pointer transition-colors hover:bg-parchment-50"
+      style={{ borderColor: 'rgba(115, 138, 110, 0.2)' }}
+      data-testid={`note-${note.id}`}
+      role="article"
+      aria-label={`Progress note for ${note.client?.name || 'Unknown Client'}`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center space-x-2 mb-2">
+            <h4 className="font-medium" style={{ color: '#344C3D' }} data-testid={`note-client-${note.id}`}>
+              {note.client?.name || "Unknown Client"}
+            </h4>
+            <span className="text-xs" style={{ color: '#738A6E' }} data-testid={`note-date-${note.id}`}>
+              {formatToEDT(note.sessionDate, 'MMM dd, yyyy')}
+            </span>
+          </div>
+          <p className="text-sm mb-3 line-clamp-2" style={{ color: '#738A6E' }} data-testid={`note-content-${note.id}`}>
+            {note.content && note.content.length > 150
+              ? `${note.content.substring(0, 150)}...`
+              : note.content || "No content available"
+            }</p>
+          {note.aiTags.length > 0 && (
+            <div className="flex items-center space-x-2" data-testid={`note-tags-${note.id}`} role="list" aria-label="AI-generated tags">
+              {note.aiTags.slice(0, 3).map((tag, index) => {
+                const tagColors = [
+                  { backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' },
+                  { backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' },
+                  { backgroundColor: 'rgba(115, 138, 110, 0.1)', color: '#738A6E' }
+                ];
+                return (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center px-2 py-1 text-xs rounded"
+                    style={tagColors[index % tagColors.length]}
+                    role="listitem"
+                  >
+                    {tag}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col items-end space-y-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto p-1"
+            style={{ color: '#88A5BC' }}
+            data-testid={`edit-note-${note.id}`}
+            aria-label={`Edit note for ${note.client?.name || 'Unknown Client'}`}
+          >
+            <i className="fas fa-edit" aria-hidden="true"></i>
+          </Button>
+          <span className="text-xs" style={{ color: '#738A6E' }} data-testid={`note-ai-status-${note.id}`}>
+            AI Tagged
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+function RecentNotes() {
   const { data: notes, isLoading } = useQuery<ProgressNoteWithClient[]>({
     queryKey: ["/api/progress-notes?recent=true"],
   });
@@ -101,66 +169,7 @@ export default function RecentNotes() {
         ) : (
           <>
             {notes.map((note) => (
-              <div
-                key={note.id}
-                className="p-4 border rounded-lg cursor-pointer transition-colors hover:bg-parchment-50"
-                style={{ 
-                  borderColor: 'rgba(115, 138, 110, 0.2)'
-                }}
-                data-testid={`note-${note.id}`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h4 className="font-medium" style={{ color: '#344C3D' }} data-testid={`note-client-${note.id}`}>
-                        {note.client?.name || "Unknown Client"}
-                      </h4>
-                      <span className="text-xs" style={{ color: '#738A6E' }} data-testid={`note-date-${note.id}`}>
-                        {formatToEDT(note.sessionDate, 'MMM dd, yyyy')}
-                      </span>
-                    </div>
-                    <p className="text-sm mb-3 line-clamp-2" style={{ color: '#738A6E' }} data-testid={`note-content-${note.id}`}>
-                      {note.content && note.content.length > 150 
-                        ? `${note.content.substring(0, 150)}...`
-                        : note.content || "No content available"
-                      }</p>
-                    {note.aiTags.length > 0 && (
-                      <div className="flex items-center space-x-2" data-testid={`note-tags-${note.id}`}>
-                        {note.aiTags.slice(0, 3).map((tag, index) => {
-                          const tagColors = [
-                            { backgroundColor: 'rgba(142, 165, 140, 0.1)', color: '#8EA58C' },
-                            { backgroundColor: 'rgba(136, 165, 188, 0.1)', color: '#88A5BC' },
-                            { backgroundColor: 'rgba(115, 138, 110, 0.1)', color: '#738A6E' }
-                          ];
-                          return (
-                            <span 
-                              key={tag}
-                              className="inline-flex items-center px-2 py-1 text-xs rounded"
-                              style={tagColors[index % tagColors.length]}
-                            >
-                              {tag}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end space-y-1">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="h-auto p-1"
-                      style={{ color: '#88A5BC' }}
-                      data-testid={`edit-note-${note.id}`}
-                    >
-                      <i className="fas fa-edit"></i>
-                    </Button>
-                    <span className="text-xs" style={{ color: '#738A6E' }} data-testid={`note-ai-status-${note.id}`}>
-                      AI Tagged
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <NoteItem key={note.id} note={note} />
             ))}
 
             <div className="text-center pt-4">
@@ -174,3 +183,5 @@ export default function RecentNotes() {
     </Card>
   );
 }
+
+export default memo(RecentNotes);
