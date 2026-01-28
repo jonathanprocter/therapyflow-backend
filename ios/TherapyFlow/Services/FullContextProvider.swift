@@ -513,17 +513,30 @@ class FullContextProvider: ObservableObject {
 
     /// Get full context for AI queries (uses cache if valid)
     func getFullContext() async -> ComprehensiveContext? {
-        // Check cache
+        // Check cache first
         if let cached = cachedContext,
            let expiry = cacheExpiry,
            Date() < expiry {
             return cached
         }
 
-        // Refresh cache (but don't block if already loading)
-        if !isLoading {
-            await refreshContext()
+        // If already loading, wait for it to complete
+        if isLoading {
+            // Poll until loading completes (max 10 seconds)
+            for _ in 0..<100 {
+                try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+                if !isLoading {
+                    break
+                }
+            }
+            // Return whatever we have now
+            if let cached = cachedContext {
+                return cached
+            }
         }
+
+        // Refresh cache
+        await refreshContext()
         return cachedContext
     }
 

@@ -2181,28 +2181,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let contextInfo = '';
       if (include_context && client_id) {
         try {
-          const client = await storage.getClient(client_id);
+          // SECURITY: Pass therapistId for tenant isolation
+          const client = await storage.getClient(client_id, therapistId);
           if (client) {
-            const notes = await storage.getProgressNotes(client_id);
-            const documents = await storage.getDocuments(client_id);
-            const sessions = await storage.getSessions(client_id);
-            const decryptedNotes = notes.map(note => safeDecrypt(note.content || "") || "");
-            const docSummaries = documents.map(doc => {
-              const metadata = (doc.metadata as Record<string, any>) || {};
-              return metadata.aiAnalysis?.summary || doc.extractedText || "";
+            const notes = await storage.getProgressNotes(client_id, therapistId);
+            const documents = await storage.getDocuments(client_id, therapistId);
+            const sessions = await storage.getSessions(client_id, therapistId);
+
+            // Build rich notes with metadata for better AI context
+            const richNotes = notes.map(note => {
+              const content = safeDecrypt(note.content || "") || "";
+              const date = note.sessionDate ? new Date(note.sessionDate).toLocaleDateString() : 'Unknown date';
+              const riskLevel = note.riskLevel || 'not assessed';
+              // Handle aiTags being either a string (JSON) or already an array
+              let tags = 'no tags';
+              if (note.aiTags) {
+                try {
+                  const parsed = typeof note.aiTags === 'string' ? JSON.parse(note.aiTags) : note.aiTags;
+                  tags = Array.isArray(parsed) ? parsed.join(', ') : String(parsed);
+                } catch { tags = 'no tags'; }
+              }
+              return `[Date: ${date}] [Risk: ${riskLevel}] [Tags: ${tags}]\n${content}`;
             });
 
-            contextInfo = `Client: ${client.name}
+            // Build rich session info
+            const sessionInfo = sessions.slice(0, 20).map(session => {
+              const date = session.scheduledAt ? new Date(session.scheduledAt).toLocaleDateString() : 'Unknown';
+              const type = session.sessionType || 'Individual';
+              const status = session.status || 'unknown';
+              return `- ${date}: ${type} session (${status})`;
+            }).join('\n');
+
+            // Build document summaries with AI analysis
+            const docSummaries = documents.map(doc => {
+              const metadata = (doc.metadata as Record<string, any>) || {};
+              const summary = metadata.aiAnalysis?.summary || doc.extractedText || "No summary available";
+              const docDate = doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'Unknown date';
+              return `[${doc.fileName || 'Document'}] [${docDate}]\n${summary}`;
+            });
+
+            contextInfo = `CLIENT PROFILE: ${client.name}
 Status: ${client.status}
-Sessions: ${sessions.length}
-Documents: ${documents.length}
-Progress Notes: ${notes.length}
+Total Sessions: ${sessions.length}
+Total Documents: ${documents.length}
+Total Progress Notes: ${notes.length}
 
-All Notes:
-${decryptedNotes.join("\n---\n")}
+RECENT SESSIONS:
+${sessionInfo || 'No sessions recorded'}
 
-Documents:
-${docSummaries.join("\n---\n")}
+ALL PROGRESS NOTES (with dates, risk levels, and tags):
+${richNotes.join("\n---\n") || 'No notes available'}
+
+DOCUMENTS AND SUMMARIES:
+${docSummaries.join("\n---\n") || 'No documents available'}
 `;
           }
         } catch (e) {
@@ -2219,18 +2250,69 @@ ${docSummaries.join("\n---\n")}
             .where(eq(progressNotes.therapistId, therapistId))
             .orderBy(desc(progressNotes.sessionDate));
 
-          contextInfo = `Practice Overview:
+          // Build a client-indexed map for looking up client names by ID
+          const clientMap = new Map(clients.map(c => [c.id, c.name]));
+
+          // Build rich notes with client names and full metadata - include ALL notes, not just 50
+          const richNotes = allNotes.map(note => {
+            const content = safeDecrypt(note.content || "") || "";
+            const clientName = note.clientId ? clientMap.get(note.clientId) || 'Unknown Client' : 'Unknown Client';
+            const date = note.sessionDate ? new Date(note.sessionDate).toLocaleDateString() : 'Unknown date';
+            const riskLevel = note.riskLevel || 'not assessed';
+            // Handle aiTags being either string (JSON) or array
+            let tags = 'no tags';
+            if (note.aiTags) {
+              try {
+                const parsed = typeof note.aiTags === 'string' ? JSON.parse(note.aiTags) : note.aiTags;
+                tags = Array.isArray(parsed) ? parsed.join(', ') : String(parsed);
+              } catch { tags = 'no tags'; }
+            }
+            const rating = note.progressRating ? `Progress: ${note.progressRating}/10` : '';
+            return `[CLIENT: ${clientName}] [Date: ${date}] [Risk: ${riskLevel}] [Tags: ${tags}] ${rating}\n${content.substring(0, 500)}${content.length > 500 ? '...' : ''}`;
+          });
+
+          // Group sessions by client for better context
+          const sessionsByClient = new Map<string, typeof allSessions>();
+          for (const session of allSessions) {
+            const clientId = session.clientId;
+            if (!sessionsByClient.has(clientId)) {
+              sessionsByClient.set(clientId, []);
+            }
+            sessionsByClient.get(clientId)!.push(session);
+          }
+
+          // Build client summaries with their session counts
+          const clientSummaries = clients.map(client => {
+            const clientSessions = sessionsByClient.get(client.id) || [];
+            const lastSession = clientSessions[0]?.scheduledAt ? new Date(clientSessions[0].scheduledAt).toLocaleDateString() : 'Never';
+            return `- ${client.name} (${client.status}): ${clientSessions.length} sessions, last: ${lastSession}`;
+          });
+
+          // Include recent document AI analyses
+          const docSummaries = allDocuments.slice(0, 20).map(doc => {
+            const metadata = (doc.metadata as Record<string, any>) || {};
+            const clientName = doc.clientId ? clientMap.get(doc.clientId) || 'Unknown' : 'Unknown';
+            const summary = metadata.aiAnalysis?.summary || 'No AI summary';
+            return `[${clientName}] ${doc.fileName}: ${summary.substring(0, 200)}`;
+          });
+
+          contextInfo = `FULL PRACTICE OVERVIEW:
 Active clients: ${clients.filter(c => c.status === 'active').length}
 Total clients: ${clients.length}
 Total sessions: ${allSessions.length}
 Total documents: ${allDocuments.length}
 Total progress notes: ${allNotes.length}
 
-Clients:
-${clients.map(client => `- ${client.name} (${client.status})`).join("\n")}
+ALL CLIENTS (with session history):
+${clientSummaries.join("\n")}
 
-Recent Notes:
-${allNotes.slice(0, 50).map(note => safeDecrypt(note.content || "") || "").join("\n---\n")}
+ALL PROGRESS NOTES (indexed by client, date, risk, and tags):
+${richNotes.join("\n---\n")}
+
+RECENT DOCUMENTS:
+${docSummaries.join("\n")}
+
+You have FULL access to all client data across all time. You can answer questions about any client, their history, patterns across clients, risk levels, and therapeutic progress.
 `;
         } catch (e) {
           console.log("Could not load full practice context:", e);
@@ -2373,38 +2455,77 @@ ${contextInfo ? `\nCurrent context:\n${contextInfo}` : ''}`,
       const storedVoiceId = preferences?.[req.therapistId] ?? "";
       const effectiveVoiceId = voiceId || storedVoiceId || 'nova';
 
-      // Build full client context if provided
+      // Build context - either for specific client or full practice overview
       let contextInfo = "";
       const clientId = context?.client_id;
+      const therapistId = req.therapistId;
+
       if (clientId) {
+        // Single client context
         try {
           // SECURITY: Pass therapistId for tenant isolation
-          const client = await storage.getClient(clientId, req.therapistId);
-          const notes = await storage.getProgressNotes(clientId, req.therapistId);
-          const documents = await storage.getDocuments(clientId, req.therapistId);
-          const sessions = await storage.getSessions(clientId, req.therapistId);
+          const client = await storage.getClient(clientId, therapistId);
+          const notes = await storage.getProgressNotes(clientId, therapistId);
+          const documents = await storage.getDocuments(clientId, therapistId);
+          const sessions = await storage.getSessions(clientId, therapistId);
 
-          const decryptedNotes = notes.map(note => safeDecrypt(note.content || "") || "");
-          const docSummaries = documents.map(doc => {
-            const metadata = (doc.metadata as Record<string, any>) || {};
-            return metadata.aiAnalysis?.summary || doc.extractedText || "";
+          // Build rich notes with metadata
+          const richNotes = notes.map(note => {
+            const content = safeDecrypt(note.content || "") || "";
+            const date = note.sessionDate ? new Date(note.sessionDate).toLocaleDateString() : 'Unknown';
+            const risk = note.riskLevel || 'not assessed';
+            return `[${date}] [Risk: ${risk}] ${content.substring(0, 300)}`;
           });
 
           contextInfo = `
-Client: ${client?.name || clientId}
+CLIENT: ${client?.name || clientId}
 Status: ${client?.status || "unknown"}
 Sessions: ${sessions.length}
-Documents: ${documents.length}
 Progress Notes: ${notes.length}
 
-All Notes:
-${decryptedNotes.join("\n---\n")}
-
-Documents:
-${docSummaries.join("\n---\n")}
+NOTES:
+${richNotes.join("\n---\n")}
 `;
         } catch (error) {
           console.warn("Failed to load client context for voice assistant:", error);
+        }
+      } else {
+        // FULL PRACTICE CONTEXT - Access to ALL clients and data
+        try {
+          const clients = await storage.getClients(therapistId);
+          const allNotes = await db
+            .select()
+            .from(progressNotes)
+            .where(eq(progressNotes.therapistId, therapistId))
+            .orderBy(desc(progressNotes.sessionDate))
+            .limit(100); // Limit for voice to keep responses faster
+
+          // Build client lookup
+          const clientMap = new Map(clients.map(c => [c.id, c.name]));
+
+          // Build compact notes for voice context
+          const compactNotes = allNotes.map(note => {
+            const content = safeDecrypt(note.content || "") || "";
+            const clientName = note.clientId ? clientMap.get(note.clientId) || 'Unknown' : 'Unknown';
+            const date = note.sessionDate ? new Date(note.sessionDate).toLocaleDateString() : 'Unknown';
+            const risk = note.riskLevel || 'N/A';
+            return `[${clientName}] [${date}] [Risk: ${risk}] ${content.substring(0, 200)}`;
+          });
+
+          contextInfo = `
+FULL PRACTICE ACCESS - You have access to ALL client data.
+Active clients: ${clients.filter(c => c.status === 'active').length}
+Total clients: ${clients.length}
+Total notes available: ${allNotes.length}
+
+CLIENTS:
+${clients.map(c => `- ${c.name} (${c.status})`).join('\n')}
+
+RECENT NOTES (all clients):
+${compactNotes.join('\n---\n')}
+`;
+        } catch (error) {
+          console.warn("Failed to load full practice context for voice assistant:", error);
         }
       }
 
@@ -2434,19 +2555,24 @@ ${docSummaries.join("\n---\n")}
           body: JSON.stringify({
             model: 'claude-sonnet-4-20250514',
             max_tokens: 512,
-            system: `You are a voice assistant for TherapyFlow, a mental health practice app.
+            system: `You are Cipher, the AI voice assistant for TherapyFlow, helping Dr. Jonathan Procter with his mental health practice.
+You have FULL ACCESS to all client data, progress notes, session history, and clinical documentation across the entire practice.
 Keep responses brief and conversational - suitable for spoken delivery.
-Help with practice management, client insights, and clinical questions.
+
+When asked about clients, you CAN:
+- Discuss any client by name from the provided context
+- Reference their session history and progress
+- Note risk levels and clinical patterns
+- Compare trends across clients
+- Recall specific details from progress notes
 
 IMPORTANT: Always respond in plain text only. Do NOT use any markdown formatting:
-- No headers (# or ##)
-- No bold (**text**) or italic (*text*)
-- No bullet points or numbered lists
-- No code blocks or backticks
-- No links or special formatting
-Responses must be natural speech, ready for text-to-speech conversion.`,
+- No headers or special characters
+- No bold, italic, or code blocks
+- Use natural speech patterns ready for text-to-speech
+${contextInfo ? '\nYou have been provided with practice data below. Use it to answer questions accurately.' : ''}`,
             messages: [
-              { role: 'user', content: contextInfo ? `${contextInfo}\n\nUser: ${query}` : query }
+              { role: 'user', content: contextInfo ? `${contextInfo}\n\nUser question: ${query}` : query }
             ]
           }),
           signal: voiceController.signal
