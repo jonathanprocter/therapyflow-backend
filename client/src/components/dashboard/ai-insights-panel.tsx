@@ -1,8 +1,12 @@
+import React, { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AiInsight } from "@/types/clinical";
+
+// Pre-created skeleton array to avoid recreation on each render
+const SKELETON_ITEMS = [0, 1, 2, 3];
 
 const insightConfig = {
   pattern_recognition: {
@@ -31,7 +35,44 @@ const insightConfig = {
   }
 };
 
-export default function AIInsightsPanel() {
+// Memoized insight card to prevent re-renders
+const InsightCard = memo(function InsightCard({ insight }: { insight: AiInsight }) {
+  const config = insightConfig[insight.type] || insightConfig.pattern_recognition;
+
+  return (
+    <div
+      className="p-4 rounded-lg border-l-4 transition-all hover:shadow-sm"
+      style={{
+        backgroundColor: config.bgColor,
+        borderLeftColor: config.borderColor
+      }}
+      data-testid={`insight-${insight.id}`}
+    >
+      <div className="flex items-start space-x-3">
+        <i className={`${config.icon} mt-1`} style={{ color: config.color }} aria-hidden="true"></i>
+        <div className="flex-1">
+          <h4 className="font-medium" style={{ color: '#344C3D' }} data-testid={`insight-title-${insight.id}`}>
+            {insight.title}
+          </h4>
+          <p className="text-sm mt-1" style={{ color: '#738A6E' }} data-testid={`insight-description-${insight.id}`}>
+            {insight.description}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs mt-2 p-0 h-auto font-medium"
+            style={{ color: config.color }}
+            data-testid={`insight-action-${insight.id}`}
+          >
+            View Details →
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+function AIInsightsPanel() {
   const { data: insights, isLoading } = useQuery<AiInsight[]>({
     queryKey: ["/api/ai/insights"],
   });
@@ -65,7 +106,7 @@ export default function AIInsightsPanel() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {[...Array(4)].map((_, i) => (
+          {SKELETON_ITEMS.map((i) => (
             <div key={i} className="p-4 rounded-lg border-l-4" style={{ backgroundColor: 'rgba(242, 243, 241, 0.5)', borderLeftColor: 'rgba(115, 138, 110, 0.3)' }}>
               <div className="flex items-start space-x-3">
                 <div 
@@ -113,44 +154,13 @@ export default function AIInsightsPanel() {
             <p>No new insights available</p>
           </div>
         ) : (
-          insights.map((insight) => {
-            const config = insightConfig[insight.type] || insightConfig.pattern_recognition;
-
-            return (
-              <div
-                key={insight.id}
-                className="p-4 rounded-lg border-l-4 transition-all hover:shadow-sm"
-                style={{ 
-                  backgroundColor: config.bgColor,
-                  borderLeftColor: config.borderColor
-                }}
-                data-testid={`insight-${insight.id}`}
-              >
-                <div className="flex items-start space-x-3">
-                  <i className={`${config.icon} mt-1`} style={{ color: config.color }}></i>
-                  <div className="flex-1">
-                    <h4 className="font-medium" style={{ color: '#344C3D' }} data-testid={`insight-title-${insight.id}`}>
-                      {insight.title}
-                    </h4>
-                    <p className="text-sm mt-1" style={{ color: '#738A6E' }} data-testid={`insight-description-${insight.id}`}>
-                      {insight.description}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs mt-2 p-0 h-auto font-medium"
-                      style={{ color: config.color }}
-                      data-testid={`insight-action-${insight.id}`}
-                    >
-                      View Details →
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            );
-          })
+          insights.map((insight) => (
+            <InsightCard key={insight.id} insight={insight} />
+          ))
         )}
       </CardContent>
     </Card>
   );
 }
+
+export default memo(AIInsightsPanel);
