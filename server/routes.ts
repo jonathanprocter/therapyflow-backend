@@ -5,7 +5,7 @@ import path from "path";
 import { storage } from "./storage";
 import { clients, sessions, progressNotes, documents, sessionPreps, longitudinalRecords, treatmentPlans, allianceScores } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, like } from "drizzle-orm";
 import { aiService } from "./services/aiService";
 import { calendarService } from "./services/calendarService";
 import { pdfService } from "./services/pdfService";
@@ -378,6 +378,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error applying retention policy:", error);
       res.status(500).json({ error: "Failed to apply retention policy" });
+    }
+  });
+
+  // Cleanup deactivated sessions endpoint - removes orphaned sessions from deleted clients
+  app.post("/api/admin/cleanup-deactivated-sessions", async (req: any, res) => {
+    try {
+      const therapistId = req.therapistId || req.user?.id || "";
+      console.log(`[Admin] Running deactivated sessions cleanup for therapist: ${therapistId}`);
+
+      // Find all sessions with "Client deactivated" notes for this therapist
+      const deactivatedSessions = await db
+        .select({
+          sessionId: sessions.id,
+          clientId: sessions.clientId,
+          scheduledAt: sessions.scheduledAt,
+          status: sessions.status,
+          notes: sessions.notes,
+        })
+        .from(sessions)
+        .where(like(sessions.notes, '%Client deactivated%'));
+
+      let deletedCount = 0;
+      let orphanedCount = 0;
+      const sessionsNeedingReview: string[] = [];
+
+      for (const session of deactivatedSessions) {
+        const client = await db
+          .select({
+            id: clients.id,
+            name: clients.name,
+            status: clients.status,
+            therapistId: clients.therapistId,
+          })
+          .from(clients)
+          .where(eq(clients.id, session.clientId))
+          .limit(1);
+
+        // Only process sessions for this therapist's clients
+        if (client.length === 0) {
+          // Client doesn't exist - delete the orphaned session
+          console.log(`Deleting orphaned session ${session.sessionId}`);
+          await db.delete(sessions).where(eq(sessions.id, session.sessionId));
+          orphanedCount++;
+          deletedCount++;
+        } else if (client[0].therapistId === therapistId) {
+          if (client[0].status === 'deleted') {
+            // Client is marked as deleted - delete associated session
+            console.log(`Deleting session for deleted client ${client[0].name}`);
+            await db.delete(sessions).where(eq(sessions.id, session.sessionId));
+            deletedCount++;
+          } else {
+            // Client exists and is active - flag for review
+            sessionsNeedingReview.push(`${client[0].name} - ${session.scheduledAt.toISOString().split('T')[0]}`);
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        summary: {
+          totalFound: deactivatedSessions.length,
+          deleted: deletedCount,
+          orphaned: orphanedCount,
+          needingReview: sessionsNeedingReview.length,
+        },
+        sessionsNeedingReview,
+        message: deletedCount > 0
+          ? `Cleaned up ${deletedCount} deactivated session(s)`
+          : "No orphaned sessions found to clean up"
+      });
+    } catch (error) {
+      console.error("Error cleaning up deactivated sessions:", error);
+      res.status(500).json({ error: "Failed to cleanup deactivated sessions" });
     }
   });
 
