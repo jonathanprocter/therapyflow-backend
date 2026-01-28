@@ -139,16 +139,16 @@ router.get('/related-notes/:noteId', async (req: any, res) => {
     const { noteId } = req.params;
     const { limit = 5 } = req.query;
 
-    console.log('[RELATED-NOTES] Finding related notes for:', noteId);
+    // Validate and clamp limit
+    const rawLimit = parseInt(limit as string, 10);
+    const safeLimit = Math.max(1, Math.min(isNaN(rawLimit) ? 5 : rawLimit, 50));
 
     // Find related notes
     const relatedNotes = await ClinicalSemanticSearch.findRelatedNotes(
       noteId,
       req.therapistId,
-      parseInt(limit as string)
+      safeLimit
     );
-
-    console.log('[RELATED-NOTES] Found related notes:', relatedNotes.length);
 
     res.json({
       success: true,

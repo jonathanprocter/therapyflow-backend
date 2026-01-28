@@ -39,8 +39,10 @@ router.get("/timeline", async (req, res) => {
     }
 
     // Search term filter - push to database with ILIKE for case-insensitive search
+    // Limit length to prevent regex DoS
     if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) {
-      const searchPattern = `%${searchTerm.trim()}%`;
+      const sanitizedTerm = searchTerm.trim().slice(0, 100); // Max 100 chars
+      const searchPattern = `%${sanitizedTerm}%`;
       whereConditions.push(
         or(
           ilike(clients.name, searchPattern),

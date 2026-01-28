@@ -453,7 +453,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients/:clientId/longitudinal/history", verifyClientOwnership, async (req: any, res) => {
     try {
       const clientId = req.params.clientId;
-      const limit = Number(req.query.limit || 10);
+      // Validate and clamp limit to prevent DoS
+      const rawLimit = Number(req.query.limit || 10);
+      const limit = Math.max(1, Math.min(isNaN(rawLimit) ? 10 : rawLimit, 100));
       const history = await storage.getLongitudinalHistory(clientId, limit);
       res.json(history);
     } catch (error) {
@@ -809,7 +811,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sessions/:id/prep-ai/history", async (req: any, res) => {
     try {
       const sessionId = req.params.id;
-      const limit = Number(req.query.limit || 10);
+      // Validate and clamp limit to prevent DoS
+      const rawLimit = Number(req.query.limit || 10);
+      const limit = Math.max(1, Math.min(isNaN(rawLimit) ? 10 : rawLimit, 100));
       const history = await storage.getSessionPrepHistory(sessionId, limit);
       res.json(history);
     } catch (error) {
@@ -1780,14 +1784,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               if (pattern.source.startsWith('(\\d{4})')) {
                 // YYYY-M-D format
-                year = parseInt(match[1]);
-                month = parseInt(match[2]);
-                day = parseInt(match[3]);
+                year = parseInt(match[1], 10);
+                month = parseInt(match[2], 10);
+                day = parseInt(match[3], 10);
               } else {
                 // M-D-YYYY format
-                month = parseInt(match[1]);
-                day = parseInt(match[2]);
-                year = parseInt(match[3]);
+                month = parseInt(match[1], 10);
+                day = parseInt(match[2], 10);
+                year = parseInt(match[3], 10);
               }
 
               extractedDate = new Date(year, month - 1, day);
@@ -1950,13 +1954,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (match) {
               let year: number, month: number, day: number;
               if (pattern.source.startsWith('(\\d{4})')) {
-                year = parseInt(match[1]);
-                month = parseInt(match[2]);
-                day = parseInt(match[3]);
+                year = parseInt(match[1], 10);
+                month = parseInt(match[2], 10);
+                day = parseInt(match[3], 10);
               } else {
-                month = parseInt(match[1]);
-                day = parseInt(match[2]);
-                year = parseInt(match[3]);
+                month = parseInt(match[1], 10);
+                day = parseInt(match[2], 10);
+                year = parseInt(match[3], 10);
               }
               extractedDate = new Date(year, month - 1, day, 12, 0, 0); // Set to noon
               break;

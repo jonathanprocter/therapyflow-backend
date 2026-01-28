@@ -193,6 +193,16 @@ router.post("/tags/session/batch", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "noteIds array is required" });
     }
 
+    // Limit batch size to prevent DoS
+    const MAX_BATCH_SIZE = 100;
+    if (noteIds.length > MAX_BATCH_SIZE) {
+      return res.status(400).json({
+        error: `Batch size exceeds maximum of ${MAX_BATCH_SIZE}`,
+        maxAllowed: MAX_BATCH_SIZE,
+        received: noteIds.length
+      });
+    }
+
     // PERFORMANCE: Fetch all notes in parallel instead of sequentially
     const notePromises = noteIds.map(noteId => storage.getProgressNote(noteId));
     const fetchedNotes = await Promise.all(notePromises);

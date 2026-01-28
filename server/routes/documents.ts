@@ -393,6 +393,16 @@ documentsRouter.post("/smart-process", async (req, res) => {
       });
     }
 
+    // Limit batch size to prevent DoS
+    const MAX_BATCH_SIZE = 50;
+    if (documentIds.length > MAX_BATCH_SIZE) {
+      return res.status(400).json({
+        error: `Batch size exceeds maximum of ${MAX_BATCH_SIZE}`,
+        maxAllowed: MAX_BATCH_SIZE,
+        received: documentIds.length
+      });
+    }
+
     // SECURITY: Get therapist ID for document ownership verification
     const therapistId = getTherapistId(req);
     const results: any[] = [];
