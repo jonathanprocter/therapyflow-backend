@@ -139,9 +139,9 @@ export function CalendarPage() {
                   <SessionCard
                     key={session.id}
                     {...session}
-                    onCaseReview={() => console.log('Case review')}
-                    onEdit={() => console.log('Edit')}
-                    onPrep={() => console.log('Prep')}
+                    onCaseReview={() => window.location.href = `/clients/${session.clientId}`}
+                    onEdit={() => window.location.href = `/sessions/${session.id}/edit`}
+                    onPrep={() => window.location.href = `/sessions/${session.id}/prep?clientId=${session.clientId}`}
                   />
                 ))
               ) : (

@@ -199,21 +199,23 @@ export default function AIDashboard() {
 
         {/* AI Analysis Tab */}
         <TabsContent value="analysis" className="space-y-6">
-          <AIAnalysisPanel 
+          <AIAnalysisPanel
             clientId={selectedClientId !== 'all-clients' ? selectedClientId : undefined}
-            onAnalysisComplete={(analysis) => {
-              console.log('Analysis completed:', analysis);
+            onAnalysisComplete={() => {
+              // Analysis complete - panel handles display internally
             }}
           />
         </TabsContent>
 
         {/* Semantic Search Tab */}
         <TabsContent value="search" className="space-y-6">
-          <SemanticSearchPanel 
+          <SemanticSearchPanel
             clientId={selectedClientId !== 'all-clients' ? selectedClientId : undefined}
             onResultSelect={(result) => {
-              console.log('Search result selected:', result);
-              // TODO: Navigate to the selected note or show details
+              // Navigate to the selected progress note
+              if (result?.noteId) {
+                window.location.href = `/progress-notes/${result.noteId}`;
+              }
             }}
           />
         </TabsContent>
@@ -244,10 +246,10 @@ export default function AIDashboard() {
         {/* Knowledge Graph Tab */}
         <TabsContent value="knowledge" className="space-y-6">
           {selectedClientId !== 'all-clients' ? (
-            <KnowledgeGraphPanel 
+            <KnowledgeGraphPanel
               clientId={selectedClientId}
-              onEntitySelect={(entity) => {
-                console.log('Knowledge graph entity selected:', entity);
+              onEntitySelect={() => {
+                // Entity selection handled by panel's internal state
               }}
             />
           ) : (
