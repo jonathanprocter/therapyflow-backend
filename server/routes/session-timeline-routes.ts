@@ -121,49 +121,54 @@ router.get("/stats", async (req, res) => {
       whereConditions.push(gte(sessions.scheduledAt, cutoffDate));
     }
 
-    // Get basic session counts
-    const sessionStats = await db
-      .select({
-        totalSessions: sql<number>`count(*)`,
-        completedSessions: sql<number>`count(*) filter (where ${sessions.status} = 'completed')`,
-        avgDuration: sql<number>`avg(${sessions.duration})`,
-      })
-      .from(sessions)
-      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+    // PERFORMANCE: Run all independent queries in parallel
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
-    // Get client distribution
-    const clientStats = await db
-      .select({
-        clientId: sessions.clientId,
-        clientName: clients.name,
-        sessionCount: sql<number>`count(*)`,
-      })
-      .from(sessions)
-      .leftJoin(clients, eq(sessions.clientId, clients.id))
-      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-      .groupBy(sessions.clientId, clients.name);
+    const [sessionStats, clientStats, sessionTypeStats, progressStats] = await Promise.all([
+      // Get basic session counts
+      db
+        .select({
+          totalSessions: sql<number>`count(*)`,
+          completedSessions: sql<number>`count(*) filter (where ${sessions.status} = 'completed')`,
+          avgDuration: sql<number>`avg(${sessions.duration})`,
+        })
+        .from(sessions)
+        .where(whereClause),
 
-    // Get session type distribution
-    const sessionTypeStats = await db
-      .select({
-        sessionType: sessions.sessionType,
-        count: sql<number>`count(*)`,
-      })
-      .from(sessions)
-      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-      .groupBy(sessions.sessionType);
+      // Get client distribution
+      db
+        .select({
+          clientId: sessions.clientId,
+          clientName: clients.name,
+          sessionCount: sql<number>`count(*)`,
+        })
+        .from(sessions)
+        .leftJoin(clients, eq(sessions.clientId, clients.id))
+        .where(whereClause)
+        .groupBy(sessions.clientId, clients.name),
 
-    // Get progress note statistics
-    const progressStats = await db
-      .select({
-        avgProgressRating: sql<number>`avg(${progressNotes.progressRating})`,
-        riskLevel: progressNotes.riskLevel,
-        riskCount: sql<number>`count(*)`,
-      })
-      .from(progressNotes)
-      .leftJoin(sessions, eq(progressNotes.sessionId, sessions.id))
-      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-      .groupBy(progressNotes.riskLevel);
+      // Get session type distribution
+      db
+        .select({
+          sessionType: sessions.sessionType,
+          count: sql<number>`count(*)`,
+        })
+        .from(sessions)
+        .where(whereClause)
+        .groupBy(sessions.sessionType),
+
+      // Get progress note statistics
+      db
+        .select({
+          avgProgressRating: sql<number>`avg(${progressNotes.progressRating})`,
+          riskLevel: progressNotes.riskLevel,
+          riskCount: sql<number>`count(*)`,
+        })
+        .from(progressNotes)
+        .leftJoin(sessions, eq(progressNotes.sessionId, sessions.id))
+        .where(whereClause)
+        .groupBy(progressNotes.riskLevel),
+    ]);
 
     res.json({
       sessionStats: sessionStats[0] || { totalSessions: 0, completedSessions: 0, avgDuration: 0 },

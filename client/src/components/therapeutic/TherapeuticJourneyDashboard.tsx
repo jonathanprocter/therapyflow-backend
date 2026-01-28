@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,17 +15,26 @@ interface TherapeuticJourneyProps {
   className?: string;
 }
 
-export default function TherapeuticJourneyDashboard({ 
-  clientId, 
-  className="" 
+// Memoized tab content components to prevent re-renders when switching tabs
+const MemoizedInsightsPanel = memo(InsightsPanel);
+const MemoizedEmotionalTrajectory = memo(EmotionalTrajectory);
+const MemoizedThemeCloud = memo(ThemeCloud);
+const MemoizedCopingStrategies = memo(CopingStrategies);
+const MemoizedQuickRecall = memo(QuickRecall);
+const MemoizedJourneySynthesis = memo(JourneySynthesis);
+
+export default function TherapeuticJourneyDashboard({
+  clientId,
+  className=""
 }: TherapeuticJourneyProps) {
   const [loading, setLoading] = useState(false);
   const [synthesisData, setSynthesisData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  const generateSynthesis = async () => {
+  // Memoized synthesis generator with AbortController support
+  const generateSynthesis = useCallback(async (signal?: AbortSignal) => {
     if (!clientId) return;
-    
+
     setLoading(true);
     try {
       const response = await fetch(`/api/therapeutic/synthesize/${clientId}`, {
@@ -34,25 +43,40 @@ export default function TherapeuticJourneyDashboard({
         body: JSON.stringify({
           startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
           endDate: new Date().toISOString()
-        })
+        }),
+        signal
       });
-      
+
       const data = await response.json();
       if (data.success) {
         setSynthesisData(data.synthesis);
       }
     } catch (error) {
-      console.error('Error generating synthesis:', error);
+      // Ignore abort errors
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Error generating synthesis:', error);
+      }
     } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (clientId) {
-      generateSynthesis();
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   }, [clientId]);
+
+  // Auto-generate synthesis on client change with cleanup
+  useEffect(() => {
+    if (!clientId) return;
+
+    const abortController = new AbortController();
+    generateSynthesis(abortController.signal);
+
+    return () => abortController.abort();
+  }, [clientId, generateSynthesis]);
+
+  // Manual regenerate handler (without abort signal for user-initiated actions)
+  const handleRegenerate = useCallback(() => {
+    generateSynthesis();
+  }, [generateSynthesis]);
 
   if (!clientId) {
     return (
@@ -91,32 +115,32 @@ export default function TherapeuticJourneyDashboard({
             </TabsList>
 
             <TabsContent value="overview" className="mt-6">
-              <JourneySynthesis 
-                clientId={clientId} 
+              <MemoizedJourneySynthesis
+                clientId={clientId}
                 synthesisData={synthesisData}
-                onRegenerate={generateSynthesis}
+                onRegenerate={handleRegenerate}
                 loading={loading}
               />
             </TabsContent>
 
             <TabsContent value="insights" className="mt-6">
-              <InsightsPanel clientId={clientId} />
+              <MemoizedInsightsPanel clientId={clientId} />
             </TabsContent>
 
             <TabsContent value="emotions" className="mt-6">
-              <EmotionalTrajectory clientId={clientId} />
+              <MemoizedEmotionalTrajectory clientId={clientId} />
             </TabsContent>
 
             <TabsContent value="themes" className="mt-6">
-              <ThemeCloud clientId={clientId} />
+              <MemoizedThemeCloud clientId={clientId} />
             </TabsContent>
 
             <TabsContent value="progress" className="mt-6">
-              <CopingStrategies clientId={clientId} />
+              <MemoizedCopingStrategies clientId={clientId} />
             </TabsContent>
 
             <TabsContent value="search" className="mt-6">
-              <QuickRecall clientId={clientId} />
+              <MemoizedQuickRecall clientId={clientId} />
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -86,51 +86,61 @@ export function InteractiveProgressNoteEditor({
     enabled: !!clientId
   });
 
-  // Generate AI suggestions based on current content
-  const generateAISuggestions = useCallback(async (content: string, section: string) => {
-    if (!content.trim() || content.length < 20) return;
-    
-    setIsGeneratingSuggestions(true);
-    try {
-      const response = await fetch(`/api/ai/progress-note-suggestions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId,
-          sessionId,
-          content,
-          section,
-          context: {
-            clientData,
-            recentNotes: Array.isArray(recentNotes) ? recentNotes.slice(0, 3) : [],
-            currentSections: noteContent
-          }
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setAiSuggestions(data.suggestions);
-      }
-    } catch (error) {
-      console.error('Failed to generate AI suggestions:', error);
-    } finally {
-      setIsGeneratingSuggestions(false);
-    }
-  }, [clientId, sessionId, clientData, recentNotes, noteContent]);
-
-  // Debounced suggestion generation
+  // Debounced suggestion generation with cleanup
   useEffect(() => {
+    const abortController = new AbortController();
+    const currentContent = noteContent[activeSection];
+
+    // Don't generate suggestions for empty or short content
+    if (!currentContent || currentContent.trim().length < 20) {
+      return;
+    }
+
     const timer = setTimeout(() => {
-      const currentContent = noteContent[activeSection];
-      if (currentContent) {
-        generateAISuggestions(currentContent, activeSection);
-      }
+      // Generate suggestions with abort signal
+      (async () => {
+        setIsGeneratingSuggestions(true);
+        try {
+          const response = await fetch(`/api/ai/progress-note-suggestions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clientId,
+              sessionId,
+              content: currentContent,
+              section: activeSection,
+              context: {
+                clientData,
+                recentNotes: Array.isArray(recentNotes) ? recentNotes.slice(0, 3) : [],
+                currentSections: noteContent
+              }
+            }),
+            signal: abortController.signal
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            setAiSuggestions(data.suggestions);
+          }
+        } catch (error) {
+          // Ignore abort errors
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.error('Failed to generate AI suggestions:', error);
+          }
+        } finally {
+          if (!abortController.signal.aborted) {
+            setIsGeneratingSuggestions(false);
+          }
+        }
+      })();
     }, 1500);
 
-    return () => clearTimeout(timer);
-  }, [noteContent[activeSection], activeSection, generateAISuggestions]);
+    return () => {
+      clearTimeout(timer);
+      abortController.abort();
+    };
+  }, [noteContent[activeSection], activeSection, clientId, sessionId, clientData, recentNotes]);
 
   const handlePrefill = useCallback(async () => {
     setIsPrefilling(true);
@@ -172,14 +182,24 @@ export function InteractiveProgressNoteEditor({
     }
   }, [clientId, sessionId, preserveEdits]);
 
+  // Auto-prefill on mount only - don't depend on noteContent to avoid running on every keystroke
   useEffect(() => {
-    const hasContent = Object.values(noteContent).some(value => value.trim().length > 0);
-    if (!clientId || hasPrefilled || hasContent) {
+    if (!clientId || hasPrefilled) {
+      return;
+    }
+
+    // Check for initial content - only prefill if all sections are empty
+    const hasInitialContent = initialContent && Object.values(initialContent).some(
+      value => typeof value === 'string' && value.trim().length > 0
+    );
+
+    if (hasInitialContent) {
+      setHasPrefilled(true); // Mark as prefilled to prevent auto-prefill
       return;
     }
 
     handlePrefill();
-  }, [clientId, sessionId, noteContent, hasPrefilled, handlePrefill]);
+  }, [clientId, sessionId, hasPrefilled, handlePrefill, initialContent]);
 
   // Save progress note mutation
   const saveNoteMutation = useMutation({
