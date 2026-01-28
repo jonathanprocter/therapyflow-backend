@@ -134,6 +134,8 @@ private struct IPhoneLayoutView: View {
 
 private struct MoreMenuView: View {
     @Binding var selectedTab: Tab
+    @ObservedObject private var integrationsService = IntegrationsService.shared
+    @ObservedObject private var elevenLabs = ElevenLabsConversationalService.shared
 
     var body: some View {
         List {
@@ -157,6 +159,87 @@ private struct MoreMenuView: View {
                     } icon: {
                         Image(systemName: "mic.badge.plus")
                             .foregroundColor(.green)
+                    }
+                }
+            }
+
+            // Integrations Section - AI, Voice, Calendar
+            Section("Integrations") {
+                // AI Analysis & Insights
+                NavigationLink {
+                    AIConfigurationView()
+                } label: {
+                    Label {
+                        HStack {
+                            Text("AI Analysis & Insights")
+                            Spacer()
+                            if integrationsService.isAIConfigured {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(Color.theme.success)
+                                    .font(.caption)
+                            }
+                        }
+                    } icon: {
+                        Image(systemName: "sparkles")
+                            .foregroundColor(Color.theme.accent)
+                    }
+                }
+
+                // ElevenLabs Voice AI
+                NavigationLink {
+                    ElevenLabsConfigurationView()
+                } label: {
+                    Label {
+                        HStack {
+                            Text("ElevenLabs Voice AI")
+                            Spacer()
+                            if elevenLabs.hasAPIKey() {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(Color.theme.success)
+                                    .font(.caption)
+                            }
+                        }
+                    } icon: {
+                        Image(systemName: "waveform.and.mic")
+                            .foregroundColor(.purple)
+                    }
+                }
+
+                // Google Calendar
+                NavigationLink {
+                    GoogleCalendarSettingsView()
+                } label: {
+                    Label {
+                        HStack {
+                            Text("Google Calendar")
+                            Spacer()
+                            if integrationsService.googleCalendarConnected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(Color.theme.success)
+                                    .font(.caption)
+                            }
+                        }
+                    } icon: {
+                        Image(systemName: "calendar")
+                            .foregroundColor(.blue)
+                    }
+                }
+
+                // All Integrations
+                NavigationLink {
+                    IntegrationsView()
+                } label: {
+                    Label {
+                        HStack {
+                            Text("All Integrations")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(Color.theme.tertiaryText)
+                        }
+                    } icon: {
+                        Image(systemName: "link")
+                            .foregroundColor(Color.theme.primary)
                     }
                 }
             }

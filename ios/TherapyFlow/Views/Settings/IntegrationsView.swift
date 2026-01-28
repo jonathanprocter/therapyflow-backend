@@ -999,6 +999,221 @@ struct ElevenLabsConfigurationView: View {
     }
 }
 
+// MARK: - Google Calendar Settings View (Standalone)
+struct GoogleCalendarSettingsView: View {
+    @ObservedObject private var integrationsService = IntegrationsService.shared
+    @State private var showingGoogleAuth = false
+    @State private var isLoading = false
+    @State private var error: Error?
+    @State private var successMessage: String?
+
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.blue.opacity(0.15))
+                                .frame(width: 56, height: 56)
+
+                            Image(systemName: "calendar")
+                                .font(.title2)
+                                .foregroundColor(.blue)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Google Calendar")
+                                .font(.headline)
+                                .foregroundColor(Color.theme.primaryText)
+
+                            Text(integrationsService.googleCalendarConnected ?
+                                 "Connected and syncing" : "Not connected")
+                                .font(.subheadline)
+                                .foregroundColor(integrationsService.googleCalendarConnected ?
+                                                 Color.theme.success : Color.theme.secondaryText)
+                        }
+
+                        Spacer()
+
+                        if integrationsService.googleCalendarConnected {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(Color.theme.success)
+                        }
+                    }
+
+                    Text("Sync your therapy sessions with Google Calendar to see appointments across all your devices and integrate with SimplePractice.")
+                        .font(.subheadline)
+                        .foregroundColor(Color.theme.secondaryText)
+                }
+                .padding(.vertical, 8)
+            }
+
+            if integrationsService.googleCalendarConnected {
+                Section {
+                    Toggle(isOn: $integrationsService.calendarSyncEnabled) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Auto-sync Sessions")
+                                .font(.subheadline)
+                            Text("Automatically sync sessions to Google Calendar")
+                                .font(.caption)
+                                .foregroundColor(Color.theme.secondaryText)
+                        }
+                    }
+                    .tint(Color.theme.primary)
+                    .onChange(of: integrationsService.calendarSyncEnabled) { _, newValue in
+                        integrationsService.setCalendarSyncEnabled(newValue)
+                    }
+
+                    NavigationLink {
+                        CalendarSyncView()
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .foregroundColor(Color.theme.primary)
+                            Text("Sync Settings")
+                        }
+                    }
+                } header: {
+                    Text("Sync Options")
+                }
+
+                Section {
+                    Button(action: syncNow) {
+                        HStack {
+                            if isLoading {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                            Text("Sync Now")
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .disabled(isLoading)
+
+                    Button(role: .destructive, action: disconnectGoogle) {
+                        HStack {
+                            Image(systemName: "xmark.circle")
+                            Text("Disconnect Google Calendar")
+                        }
+                        .foregroundColor(Color.theme.error)
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+            } else {
+                Section {
+                    Button(action: connectGoogle) {
+                        HStack {
+                            Image(systemName: "link")
+                            Text("Connect Google Calendar")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .cornerRadius(8)
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                    .padding(.vertical, 8)
+                }
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(Color.theme.primary)
+                        Text("SimplePractice Integration")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+
+                    Text("If you use SimplePractice, your appointments will automatically sync through Google Calendar. Make sure SimplePractice is connected to Google Calendar in your SimplePractice settings.")
+                        .font(.caption)
+                        .foregroundColor(Color.theme.secondaryText)
+                }
+                .padding(.vertical, 8)
+            } header: {
+                Text("About")
+            }
+        }
+        .navigationTitle("Google Calendar")
+        .navigationBarTitleDisplayMode(.inline)
+        .loadingOverlay(isLoading)
+        .sheet(isPresented: $showingGoogleAuth) {
+            GoogleAuthWebView { url in
+                handleGoogleCallback(url)
+            }
+        }
+        .alert("Error", isPresented: .constant(error != nil)) {
+            Button("OK") { error = nil }
+        } message: {
+            Text(error?.localizedDescription ?? "")
+        }
+        .alert("Success", isPresented: .constant(successMessage != nil)) {
+            Button("OK") { successMessage = nil }
+        } message: {
+            Text(successMessage ?? "")
+        }
+    }
+
+    private func connectGoogle() {
+        showingGoogleAuth = true
+    }
+
+    private func handleGoogleCallback(_ url: URL) {
+        showingGoogleAuth = false
+        isLoading = true
+
+        Task {
+            do {
+                try await integrationsService.handleGoogleOAuthCallback(url: url)
+                await MainActor.run {
+                    isLoading = false
+                    successMessage = "Google Calendar connected successfully!"
+                }
+            } catch {
+                await MainActor.run {
+                    self.error = error
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    private func disconnectGoogle() {
+        do {
+            try integrationsService.disconnectGoogleCalendar()
+        } catch {
+            self.error = error
+        }
+    }
+
+    private func syncNow() {
+        isLoading = true
+
+        Task {
+            do {
+                let sessions = try await integrationsService.syncAllCalendarAppointments()
+                await MainActor.run {
+                    isLoading = false
+                    successMessage = "Synced \(sessions.count) appointments"
+                }
+            } catch {
+                await MainActor.run {
+                    self.error = error
+                    isLoading = false
+                }
+            }
+        }
+    }
+}
+
 #Preview {
     NavigationStack {
         IntegrationsView()
