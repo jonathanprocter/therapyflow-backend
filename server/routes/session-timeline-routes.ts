@@ -1,26 +1,29 @@
 import { Router } from "express";
 import { db } from "../db";
 import { sessions, progressNotes, clients } from "../../shared/schema";
-import { eq, desc, and, gte, like, sql } from "drizzle-orm";
+import { eq, desc, and, gte, like, sql, ilike, or } from "drizzle-orm";
 
 const router = Router();
+
+// Maximum results to prevent memory issues
+const MAX_TIMELINE_RESULTS = 500;
 
 // Get timeline data for sessions with progress notes and client info
 router.get("/timeline", async (req, res) => {
   try {
     const { clientId, sessionType, dateRange, riskLevel, searchTerm } = req.query;
-    
-    // Build the query with filters
+
+    // Build the query with filters - push ALL filters to database
     let whereConditions = [];
-    
+
     if (clientId && clientId !== 'all') {
       whereConditions.push(eq(sessions.clientId, clientId as string));
     }
-    
+
     if (sessionType && sessionType !== 'all') {
       whereConditions.push(eq(sessions.sessionType, sessionType as string));
     }
-    
+
     // Date range filter
     if (dateRange) {
       const now = new Date();
@@ -29,8 +32,25 @@ router.get("/timeline", async (req, res) => {
       cutoffDate.setMonth(now.getMonth() - months);
       whereConditions.push(gte(sessions.scheduledAt, cutoffDate));
     }
-    
-    // Build the main query
+
+    // Risk level filter - push to database instead of filtering in memory
+    if (riskLevel && riskLevel !== 'all') {
+      whereConditions.push(eq(progressNotes.riskLevel, riskLevel as string));
+    }
+
+    // Search term filter - push to database with ILIKE for case-insensitive search
+    if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) {
+      const searchPattern = `%${searchTerm.trim()}%`;
+      whereConditions.push(
+        or(
+          ilike(clients.name, searchPattern),
+          // Search in aiTags array using PostgreSQL array containment
+          sql`${progressNotes.aiTags}::text ILIKE ${searchPattern}`
+        )
+      );
+    }
+
+    // Build the main query with limit to prevent memory issues
     const timelineQuery = db
       .select({
         id: sessions.id,
@@ -52,22 +72,10 @@ router.get("/timeline", async (req, res) => {
       .leftJoin(clients, eq(sessions.clientId, clients.id))
       .leftJoin(progressNotes, eq(sessions.id, progressNotes.sessionId))
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-      .orderBy(desc(sessions.scheduledAt));
+      .orderBy(desc(sessions.scheduledAt))
+      .limit(MAX_TIMELINE_RESULTS);
 
-    let results = await timelineQuery;
-    
-    // Apply additional filters
-    if (riskLevel && riskLevel !== 'all') {
-      results = results.filter(r => r.riskLevel === riskLevel);
-    }
-    
-    if (searchTerm) {
-      const searchLower = (searchTerm as string).toLowerCase();
-      results = results.filter(r => 
-        r.clientName?.toLowerCase().includes(searchLower) ||
-        r.themes?.some((theme: string) => theme.toLowerCase().includes(searchLower))
-      );
-    }
+    const results = await timelineQuery;
 
     // Transform the data to match the frontend interface
     const timelineData = results.map(result => ({

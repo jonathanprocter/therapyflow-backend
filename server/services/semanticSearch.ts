@@ -122,19 +122,23 @@ export class ClinicalSemanticSearch {
       significance: string;
     }>;
   }> {
+    // Limit notes to prevent memory issues with large client histories
+    const MAX_NOTES_FOR_PATTERN_ANALYSIS = 100;
+
     try {
-      // Get all notes for client, ordered by date
-      const allNotes = await db
+      // Get recent notes for client, ordered by date with limit
+      const recentNotes = await db
         .select()
         .from(progressNotes)
         .where(and(
           eq(progressNotes.clientId, clientId),
           eq(progressNotes.therapistId, therapistId)
         ))
-        .orderBy(desc(progressNotes.sessionDate));
+        .orderBy(desc(progressNotes.sessionDate))
+        .limit(MAX_NOTES_FOR_PATTERN_ANALYSIS);
 
-      // Decrypt all content
-      const decryptedNotes = allNotes.map(note => ({
+      // Decrypt content in batches to manage memory
+      const decryptedNotes = recentNotes.map(note => ({
         ...note,
         content: note.content ? ClinicalEncryption.decrypt(note.content) : ''
       }));

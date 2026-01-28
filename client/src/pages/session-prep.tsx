@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,55 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Clock, User, AlertTriangle, Target, BookOpen, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { formatInTimeZone } from "date-fns-tz";
+
+// Memoized diff helper functions moved outside component to prevent recreation
+const createDiffList = (current: string[] = [], previous: string[] = []) => {
+  const currentSet = new Set(current);
+  const previousSet = new Set(previous);
+  return {
+    added: current.filter(item => !previousSet.has(item)),
+    removed: previous.filter(item => !currentSet.has(item))
+  };
+};
+
+// LCS-based word diff algorithm - expensive O(n*m) operation
+const createDiffWords = (current: string, previous: string) => {
+  const currentTokens = current.split(/\s+/).filter(Boolean);
+  const previousTokens = previous.split(/\s+/).filter(Boolean);
+  const rows = previousTokens.length + 1;
+  const cols = currentTokens.length + 1;
+  const dp = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      if (previousTokens[i - 1] === currentTokens[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  const parts: Array<{ text: string; type: "added" | "removed" | "unchanged" }> = [];
+  let i = previousTokens.length;
+  let j = currentTokens.length;
+
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && previousTokens[i - 1] === currentTokens[j - 1]) {
+      parts.unshift({ text: currentTokens[j - 1], type: "unchanged" });
+      i -= 1;
+      j -= 1;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      parts.unshift({ text: currentTokens[j - 1], type: "added" });
+      j -= 1;
+    } else if (i > 0) {
+      parts.unshift({ text: previousTokens[i - 1], type: "removed" });
+      i -= 1;
+    }
+  }
+
+  return parts;
+};
 
 interface SessionPrepData {
   session: {
@@ -141,52 +190,9 @@ export default function SessionPrep() {
   const comparisonPrep = prepHistory.length > 1 ? prepHistory[compareIndex]?.prep : null;
   const activePrep = aiPrepMutation.data?.prep || historyPrep || savedPrep?.prep;
 
-  const diffList = (current: string[] = [], previous: string[] = []) => {
-    const currentSet = new Set(current);
-    const previousSet = new Set(previous);
-    return {
-      added: current.filter(item => !previousSet.has(item)),
-      removed: previous.filter(item => !currentSet.has(item))
-    };
-  };
-
-  const diffWords = (current: string, previous: string) => {
-    const currentTokens = current.split(/\s+/).filter(Boolean);
-    const previousTokens = previous.split(/\s+/).filter(Boolean);
-    const rows = previousTokens.length + 1;
-    const cols = currentTokens.length + 1;
-    const dp = Array.from({ length: rows }, () => Array(cols).fill(0));
-
-    for (let i = 1; i < rows; i++) {
-      for (let j = 1; j < cols; j++) {
-        if (previousTokens[i - 1] === currentTokens[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1] + 1;
-        } else {
-          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-        }
-      }
-    }
-
-    const parts: Array<{ text: string; type: "added" | "removed" | "unchanged" }> = [];
-    let i = previousTokens.length;
-    let j = currentTokens.length;
-
-    while (i > 0 || j > 0) {
-      if (i > 0 && j > 0 && previousTokens[i - 1] === currentTokens[j - 1]) {
-        parts.unshift({ text: currentTokens[j - 1], type: "unchanged" });
-        i -= 1;
-        j -= 1;
-      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-        parts.unshift({ text: currentTokens[j - 1], type: "added" });
-        j -= 1;
-      } else if (i > 0) {
-        parts.unshift({ text: previousTokens[i - 1], type: "removed" });
-        i -= 1;
-      }
-    }
-
-    return parts;
-  };
+  // Memoized diff functions using stable references
+  const diffList = useCallback(createDiffList, []);
+  const diffWords = useCallback(createDiffWords, []);
 
   const sessionTime = formatInTimeZone(new Date(session.scheduledAt), 'America/New_York', 'PPpp');
 

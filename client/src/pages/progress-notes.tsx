@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -83,23 +83,26 @@ export default function ProgressNotes() {
     }
   });
 
-  const filteredNotes = Array.isArray(notes) ? notes.filter(note => 
-    selectedClient === "all" || note.clientId === selectedClient
-  ) : [];
+  // Memoize filtered notes to prevent recalculation on every render
+  const filteredNotes = useMemo(() => {
+    if (!Array.isArray(notes)) return [];
+    if (selectedClient === "all") return notes;
+    return notes.filter(note => note.clientId === selectedClient);
+  }, [notes, selectedClient]);
 
-  // Handlers for note actions
-  const handleViewNote = (note: ProgressNoteWithClient) => {
+  // Memoized handlers for note actions to prevent unnecessary re-renders
+  const handleViewNote = useCallback((note: ProgressNoteWithClient) => {
     setViewNoteDialog({ open: true, note });
-  };
+  }, []);
 
-  const handleEditNote = (note: ProgressNoteWithClient) => {
+  const handleEditNote = useCallback((note: ProgressNoteWithClient) => {
     setEditContent(note.content || "");
     setEditNoteDialog({ open: true, note });
-  };
+  }, []);
 
-  const handleDeleteNote = (note: ProgressNoteWithClient) => {
+  const handleDeleteNote = useCallback((note: ProgressNoteWithClient) => {
     setDeleteNoteDialog({ open: true, note });
-  };
+  }, []);
 
   const confirmDelete = () => {
     if (deleteNoteDialog.note) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ export default function LongitudinalTracking() {
   const { data: clients = [] } = useQuery<any[]>({
     queryKey: ["/api/clients"],
     enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes - client list doesn't change frequently
   });
 
   const { data: latestRecord } = useQuery<LongitudinalRecord | null>({
@@ -76,7 +77,8 @@ export default function LongitudinalTracking() {
   const analysis = activeRecord?.analysis || {};
   const record = activeRecord?.record || {};
 
-  const renderList = (items: string[] = [], emptyLabel = "None noted") => (
+  // Memoized renderList function to prevent re-creation on every render
+  const renderList = useCallback((items: string[] = [], emptyLabel = "None noted") => (
     items.length > 0 ? (
       <ul className="space-y-1">
         {items.map((item) => (
@@ -86,7 +88,7 @@ export default function LongitudinalTracking() {
     ) : (
       <p className="text-sm text-muted-foreground">{emptyLabel}</p>
     )
-  );
+  ), []);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
