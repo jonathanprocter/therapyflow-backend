@@ -9,6 +9,10 @@ import { OAuth2Client } from 'google-auth-library';
 import { storage } from '../storage';
 import { aiRouter } from './ai-router';
 
+// Only log in development
+const IS_DEV = process.env.NODE_ENV !== 'production';
+const devLog = (...args: any[]) => IS_DEV && console.log(...args);
+
 // Types
 interface CalendarEvent {
   id: string;
@@ -91,7 +95,7 @@ class CalendarSyncScheduler {
     if (this.isRunning) return;
 
     this.isRunning = true;
-    console.log('[Calendar Scheduler] Started - checking every 2 minutes');
+    devLog('[Calendar Scheduler] Started - checking every 2 minutes');
 
     this.checkAndExecuteScheduledSyncs();
 
@@ -106,14 +110,14 @@ class CalendarSyncScheduler {
       this.schedulerInterval = null;
     }
     this.isRunning = false;
-    console.log('[Calendar Scheduler] Stopped');
+    devLog('[Calendar Scheduler] Stopped');
   }
 
   private async checkAndExecuteScheduledSyncs() {
     try {
       // For now, scheduled syncs are triggered manually per-therapist
       // Future enhancement: track last sync time and auto-sync periodically
-      console.log('[Calendar Scheduler] Scheduled sync check - manual trigger required');
+      devLog('[Calendar Scheduler] Scheduled sync check - manual trigger required');
     } catch (error) {
       console.error('[Calendar Scheduler] Error in scheduled sync:', error);
     }
@@ -123,7 +127,7 @@ class CalendarSyncScheduler {
     this.activeSyncs.add(therapistId);
 
     try {
-      console.log(`[Calendar Scheduler] Starting sync for ${therapistId}`);
+      devLog(`[Calendar Scheduler] Starting sync for ${therapistId}`);
       const result = await smartCalendarSync.syncWithDetailedTracking(
         therapistId,
         'system_scheduled',
@@ -131,9 +135,9 @@ class CalendarSyncScheduler {
       );
 
       if (result.success) {
-        console.log(`[Calendar Scheduler] Completed for ${therapistId} - ${result.eventsTotal} events`);
+        devLog(`[Calendar Scheduler] Completed for ${therapistId} - ${result.eventsTotal} events`);
       } else {
-        console.log(`[Calendar Scheduler] Failed for ${therapistId}: ${result.errors.join(', ')}`);
+        devLog(`[Calendar Scheduler] Failed for ${therapistId}: ${result.errors.join(', ')}`);
       }
     } catch (error) {
       console.error(`[Calendar Scheduler] Error for ${therapistId}:`, error);
@@ -229,7 +233,7 @@ class SmartCalendarSyncService {
       });
       this.oauth2Client.setCredentials(tokens);
 
-      console.log(`[Smart Calendar] OAuth tokens stored for ${therapistId}`);
+      devLog(`[Smart Calendar] OAuth tokens stored for ${therapistId}`);
     } catch (error) {
       console.error('[Smart Calendar] Error exchanging tokens:', error);
       throw new Error('Failed to authenticate with Google Calendar');
@@ -244,7 +248,7 @@ class SmartCalendarSyncService {
       const tokens = await storage.getOAuthTokens?.(therapistId);
 
       if (!tokens) {
-        console.log('[Smart Calendar] No stored tokens found');
+        devLog('[Smart Calendar] No stored tokens found');
         return false;
       }
 
@@ -263,7 +267,7 @@ class SmartCalendarSyncService {
       const shouldRefresh = expiresAtMs && expiresAtMs <= (now + refreshBuffer);
 
       if (shouldRefresh) {
-        console.log('[Smart Calendar] Proactively refreshing tokens');
+        devLog('[Smart Calendar] Proactively refreshing tokens');
         await this.refreshTokens(therapistId);
       }
 
@@ -294,7 +298,7 @@ class SmartCalendarSyncService {
       });
 
       this.oauth2Client.setCredentials(credentials);
-      console.log('[Smart Calendar] Tokens refreshed successfully');
+      devLog('[Smart Calendar] Tokens refreshed successfully');
     } catch (error) {
       console.error('[Smart Calendar] Token refresh failed:', error);
       throw new Error('Failed to refresh OAuth tokens');
@@ -456,7 +460,7 @@ class SmartCalendarSyncService {
         throw new Error('Not authenticated with Google Calendar');
       }
 
-      console.log('[Smart Calendar] Starting sync...');
+      devLog('[Smart Calendar] Starting sync...');
 
       // Fetch events
       const events = await this.fetchCalendarEvents(therapistId);
@@ -527,7 +531,7 @@ class SmartCalendarSyncService {
       pageToken = response.data.nextPageToken;
 
       if (allEvents.length >= this.MAX_EVENTS_PER_SYNC) {
-        console.log(`[Smart Calendar] Reached max events limit: ${this.MAX_EVENTS_PER_SYNC}`);
+        devLog(`[Smart Calendar] Reached max events limit: ${this.MAX_EVENTS_PER_SYNC}`);
         break;
       }
     } while (pageToken);
@@ -859,7 +863,7 @@ Do not include any other text or explanation.`;
             scheduledAt: startTime,
             duration: Math.round((endTime.getTime() - startTime.getTime()) / (60 * 1000))
           });
-          console.log(`[Smart Calendar] Updated session ${existingSession.id}`);
+          devLog(`[Smart Calendar] Updated session ${existingSession.id}`);
         }
       } else {
         // Create new session
@@ -874,7 +878,7 @@ Do not include any other text or explanation.`;
           calendarMatchMethod: match.matchReason,
           calendarMatchConfidence: match.confidence
         });
-        console.log(`[Smart Calendar] Created session for ${match.client.firstName} ${match.client.lastName}`);
+        devLog(`[Smart Calendar] Created session for ${match.client.firstName} ${match.client.lastName}`);
       }
     } catch (error) {
       console.error('[Smart Calendar] Error processing matched event:', error);
@@ -906,7 +910,7 @@ Do not include any other text or explanation.`;
 
     if (state.failures >= this.CIRCUIT_BREAKER_FAILURE_THRESHOLD) {
       state.isOpen = true;
-      console.log(`[Smart Calendar] Circuit breaker opened for ${therapistId}`);
+      devLog(`[Smart Calendar] Circuit breaker opened for ${therapistId}`);
     }
 
     this.circuitBreakerState.set(therapistId, state);
@@ -957,7 +961,7 @@ Do not include any other text or explanation.`;
       matchType,
       createdAt: new Date()
     });
-    console.log(`[Smart Calendar] Created alias: "${pattern}" -> ${clientId}`);
+    devLog(`[Smart Calendar] Created alias: "${pattern}" -> ${clientId}`);
   }
 
   /**

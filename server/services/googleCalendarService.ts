@@ -5,6 +5,10 @@ import type { Session } from '@shared/schema';
 // Configurable timezone - defaults to America/New_York (Eastern Time)
 const DEFAULT_TIMEZONE = process.env.CALENDAR_TIMEZONE || 'America/New_York';
 
+// Only log in development
+const IS_DEV = process.env.NODE_ENV !== 'production';
+const devLog = (...args: any[]) => IS_DEV && console.log(...args);
+
 export class GoogleCalendarService {
   private oauth2Client: OAuth2Client;
   private calendar: any;
@@ -20,7 +24,7 @@ export class GoogleCalendarService {
         ? `https://${process.env.REPLIT_DOMAINS}/api/calendar/callback`
         : 'http://localhost:5000/api/calendar/callback';
       
-    console.log('Using OAuth2 redirect URI:', redirectUri);
+    devLog('[GoogleCalendar] Using OAuth2 redirect URI:', redirectUri);
       
     this.oauth2Client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
@@ -33,12 +37,12 @@ export class GoogleCalendarService {
       this.oauth2Client.setCredentials({
         refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
       });
-      
+
       // Automatically refresh the access token when needed
       this.oauth2Client.on('tokens', (tokens) => {
-        console.log('Received new tokens:', tokens.access_token ? 'Access token refreshed' : 'No access token');
+        devLog('[GoogleCalendar] Token refresh:', tokens.access_token ? 'Access token refreshed' : 'No access token');
         if (tokens.refresh_token) {
-          console.log('New refresh token received');
+          devLog('[GoogleCalendar] New refresh token received');
         }
       });
     }
@@ -48,11 +52,10 @@ export class GoogleCalendarService {
 
   async getAuthUrl(): Promise<string> {
     try {
-      console.log('Google OAuth2 Configuration Check:');
-      console.log('- Client ID:', process.env.GOOGLE_CLIENT_ID ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...` : 'MISSING');
-      console.log('- Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'Present' : 'MISSING');
-      console.log('- Redirect URI:', 'configured');
-      
+      devLog('[GoogleCalendar] OAuth2 Configuration Check:');
+      devLog('- Client ID:', process.env.GOOGLE_CLIENT_ID ? 'Present' : 'MISSING');
+      devLog('- Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'Present' : 'MISSING');
+
       if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
         throw new Error('Missing Google OAuth credentials. Please check your Secrets configuration.');
       }
@@ -68,36 +71,35 @@ export class GoogleCalendarService {
         prompt: 'consent', // Force consent screen to ensure refresh token
       });
 
-      console.log('Generated auth URL successfully');
+      devLog('[GoogleCalendar] Generated auth URL successfully');
       return url;
     } catch (error) {
-      console.error('Error generating auth URL:', error);
+      console.error('[GoogleCalendar] Error generating auth URL:', error);
       throw error;
     }
   }
 
   async exchangeCodeForTokens(code: string): Promise<any> {
     try {
-      console.log('Attempting to exchange authorization code for tokens...');
+      devLog('[GoogleCalendar] Exchanging authorization code for tokens...');
       const { tokens } = await this.oauth2Client.getToken(code);
-      
-      console.log('Token exchange successful:');
-      console.log('- Access token:', tokens.access_token ? 'Received' : 'Missing');
-      console.log('- Refresh token:', tokens.refresh_token ? 'Received' : 'Missing');
-      console.log('- Token type:', tokens.token_type);
-      console.log('- Expires in:', tokens.expiry_date ? new Date(tokens.expiry_date) : 'No expiry');
+
+      devLog('[GoogleCalendar] Token exchange successful:', {
+        hasAccessToken: !!tokens.access_token,
+        hasRefreshToken: !!tokens.refresh_token,
+        tokenType: tokens.token_type,
+        hasExpiry: !!tokens.expiry_date
+      });
 
       this.oauth2Client.setCredentials(tokens);
 
-      // Note: Refresh token received - stored securely via app settings, not logged
       if (tokens.refresh_token) {
-        console.log('✅ Refresh token received and will be stored securely');
+        devLog('[GoogleCalendar] Refresh token received and stored securely');
       }
 
       return tokens;
     } catch (error) {
-      console.error('Error exchanging authorization code:', error);
-      console.error('Error details:', error instanceof Error ? error.message : String(error));
+      console.error('[GoogleCalendar] Error exchanging authorization code:', error instanceof Error ? error.message : String(error));
       throw new Error(`Failed to exchange authorization code: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -113,9 +115,9 @@ export class GoogleCalendarService {
         expiry_date: tokens.expiry_date,
         token_type: tokens.token_type || 'Bearer'
       });
-      console.log('Google Calendar tokens set from iOS app');
+      devLog('[GoogleCalendar] Tokens set from iOS app');
     } catch (error) {
-      console.error('Error setting Google Calendar tokens:', error);
+      console.error('[GoogleCalendar] Error setting tokens:', error);
     }
   }
 
@@ -125,22 +127,21 @@ export class GoogleCalendarService {
   clearTokens(): void {
     try {
       this.oauth2Client.setCredentials({});
-      console.log('Google Calendar tokens cleared');
+      devLog('[GoogleCalendar] Tokens cleared');
     } catch (error) {
-      console.error('Error clearing Google Calendar tokens:', error);
+      console.error('[GoogleCalendar] Error clearing tokens:', error);
     }
   }
 
   async syncCalendarEvents(therapistId: string, startDate = '2010-01-01', endDate = '2030-12-31'): Promise<Session[]> {
     try {
-      // Check if we have any credentials
+      // Check if we have any credentials (SECURITY: never log token values)
       const currentCredentials = this.oauth2Client.credentials;
-      console.log('Current credentials status:', {
+      devLog('[GoogleCalendar] Credentials status:', {
         hasAccessToken: !!currentCredentials.access_token,
         hasRefreshToken: !!currentCredentials.refresh_token,
-        envRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN,
-        accessTokenPreview: currentCredentials.access_token ? `${currentCredentials.access_token.substring(0, 20)}...` : 'none',
-        refreshTokenPreview: currentCredentials.refresh_token ? `${currentCredentials.refresh_token.substring(0, 20)}...` : 'none'
+        envRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN
+        // SECURITY: Token values are never logged
       });
 
       // If no current credentials, try using environment refresh token (new or old)
@@ -160,21 +161,21 @@ export class GoogleCalendarService {
         if (!this.oauth2Client.credentials.access_token) {
           const { credentials } = await this.oauth2Client.refreshAccessToken();
           this.oauth2Client.setCredentials(credentials);
-          console.log('Successfully refreshed access token');
+          devLog('[GoogleCalendar] Successfully refreshed access token');
         }
       } catch (error) {
-        console.error('Error refreshing access token:', error);
+        console.error('[GoogleCalendar] Error refreshing access token:', error);
         throw new Error('Failed to refresh authentication token. Please re-authenticate with Google Calendar.');
       }
 
-      console.log(`Starting comprehensive calendar sync for ${startDate} to ${endDate}`);
+      devLog(`[GoogleCalendar] Starting comprehensive calendar sync for ${startDate} to ${endDate}`);
       
       // Strategy: Fetch in smaller chunks to avoid API limitations
       const yearlyChunks = this.createDateChunks(startDate, endDate, 'yearly');
       const allEvents: any[] = [];
       
       for (const chunk of yearlyChunks) {
-        console.log(`Syncing chunk: ${chunk.start} to ${chunk.end}`);
+        devLog(`[GoogleCalendar] Syncing chunk: ${chunk.start} to ${chunk.end}`);
         
         let pageToken: string | undefined;
         let chunkEvents = 0;
@@ -182,7 +183,7 @@ export class GoogleCalendarService {
         // Fetch from ALL calendars, not just primary
         try {
           const calendars = await this.getCalendarList();
-          console.log(`  Found ${calendars.length} calendars to sync`);
+          devLog(`[GoogleCalendar]   Found ${calendars.length} calendars to sync`);
           
           for (const calendar of calendars) {
             try {
@@ -211,16 +212,16 @@ export class GoogleCalendarService {
                 chunkEvents += events.length;
                 calendarPageToken = response.data.nextPageToken;
                 
-                console.log(`  Calendar "${calendar.summary}": fetched ${events.length} events`);
+                devLog(`[GoogleCalendar]   Calendar "${calendar.summary}": fetched ${events.length} events`);
               } while (calendarPageToken);
               
             } catch (calendarError: any) {
-              console.log(`  Skipping calendar "${calendar.summary}": ${calendarError.message}`);
+              devLog(`[GoogleCalendar]   Skipping calendar "${calendar.summary}": ${calendarError.message}`);
             }
           }
         } catch (calendarListError: any) {
           // Fallback to primary calendar only
-          console.log(`  Falling back to primary calendar only: ${calendarListError.message}`);
+          devLog(`[GoogleCalendar]   Falling back to primary calendar only: ${calendarListError.message}`);
           
           do {
             const response = await this.calendar.events.list({
@@ -240,10 +241,10 @@ export class GoogleCalendarService {
           } while (pageToken);
         }
         
-        console.log(`Completed chunk ${chunk.start}: ${chunkEvents} events`);
+        devLog(`[GoogleCalendar] Completed chunk ${chunk.start}: ${chunkEvents} events`);
       }
 
-      console.log(`Total events fetched from Google Calendar: ${allEvents.length}`);
+      devLog(`[GoogleCalendar] Total events fetched: ${allEvents.length}`);
       
       // Filter ONLY for SimplePractice events
       const relevantEvents = allEvents.filter((event: any) => {
@@ -285,19 +286,19 @@ export class GoogleCalendarService {
            /^[A-Z][a-z]+ [A-Z][a-z]+( [A-Z][a-z]+)?\s*(appointment|session)?$/i.test(summary.trim()));
         
         if (isActualAppointment) {
-          console.log(`Found SimplePractice appointment: "${event.summary}" from ${organizerEmail || calendarName}`);
+          devLog(`[GoogleCalendar] Found SimplePractice appointment: "${event.summary}"`);
           return true;
         }
-        
-        // Debug: Log some sample events to see what's being filtered out
-        if (Math.random() < 0.01) { // Log 1% of events for debugging
-          console.log(`Sample filtered out event: "${event.summary}" | Organizer: ${organizerEmail} | Calendar: ${calendarName} | Source: ${event.sourceCalendarName}`);
+
+        // Debug: Log sample filtered events in dev only
+        if (IS_DEV && Math.random() < 0.01) {
+          devLog(`[GoogleCalendar] Sample filtered: "${event.summary}"`);
         }
         
         return false;
       });
 
-      console.log(`Filtered to ${relevantEvents.length} relevant events`);
+      devLog(`[GoogleCalendar] Filtered to ${relevantEvents.length} relevant events`);
 
       // Convert Google Calendar events to Session format
       const sessions: Session[] = relevantEvents.map((event: any, index: number) => {
@@ -342,7 +343,7 @@ export class GoogleCalendarService {
         };
       });
 
-      console.log(`Converted ${sessions.length} events to sessions`);
+      devLog(`[GoogleCalendar] Converted ${sessions.length} events to sessions`);
       return sessions;
     } catch (error) {
       console.error('Error syncing Google Calendar:', error);

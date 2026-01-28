@@ -3,6 +3,10 @@ import { db } from '../db';
 import { clients, progressNotes } from '@shared/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 
+// Only log in development
+const IS_DEV = process.env.NODE_ENV !== 'production';
+const devLog = (...args: any[]) => IS_DEV && console.log(...args);
+
 // Extend Express Request to include authenticated user
 declare global {
   namespace Express {
@@ -26,16 +30,16 @@ export const verifyClientOwnership = async (
   res: Response,
   next: NextFunction
 ) => {
-  // Debug entry point
-  console.log('[CLIENT_AUTH] Starting verification for:', req.originalUrl);
+  // Debug entry point (dev only)
+  devLog('[CLIENT_AUTH] Starting verification for:', req.originalUrl);
 
   try {
     // Support both :clientId and :id parameter names for flexibility
     const clientId = req.params?.clientId || req.params?.id;
     const therapistId = req.therapistId || (req as any).user?.id || (req as any).therapistId;
 
-    // Debug logging for troubleshooting
-    console.log('[CLIENT_AUTH] Details:', {
+    // Debug logging for troubleshooting (dev only)
+    devLog('[CLIENT_AUTH] Details:', {
       params: JSON.stringify(req.params || {}),
       url: req.originalUrl,
       clientId: clientId || 'MISSING',
@@ -43,7 +47,7 @@ export const verifyClientOwnership = async (
     });
 
     if (!therapistId) {
-      console.log('[CLIENT_AUTH] No therapistId found');
+      devLog('[CLIENT_AUTH] No therapistId found');
       return res.status(401).json({
         error: 'Authentication required',
         code: 'AUTH_REQUIRED'
@@ -51,7 +55,7 @@ export const verifyClientOwnership = async (
     }
 
     if (!clientId) {
-      console.log('[CLIENT_AUTH] No clientId found in params:', req.params);
+      devLog('[CLIENT_AUTH] No clientId found in params:', req.params);
       return res.status(400).json({
         error: 'Client ID required',
         code: 'CLIENT_ID_REQUIRED'
@@ -61,7 +65,7 @@ export const verifyClientOwnership = async (
     // Validate UUID format to catch malformed IDs early
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(clientId)) {
-      console.log('[CLIENT_AUTH] Invalid client ID format:', clientId);
+      devLog('[CLIENT_AUTH] Invalid client ID format:', clientId);
       return res.status(400).json({
         error: 'Invalid client ID format',
         code: 'INVALID_CLIENT_ID'
@@ -89,7 +93,7 @@ export const verifyClientOwnership = async (
         .limit(1);
 
       if (anyClient.length === 0) {
-        console.log('[CLIENT_AUTH] Client does not exist:', clientId);
+        devLog('[CLIENT_AUTH] Client does not exist:', clientId);
         return res.status(404).json({
           error: 'Client not found',
           code: 'CLIENT_NOT_FOUND'
@@ -113,7 +117,7 @@ export const verifyClientOwnership = async (
 
     // Store verified client for use in route handlers
     req.verifiedClient = client[0];
-    console.log('[CLIENT_AUTH] Verified access for client:', clientId);
+    devLog('[CLIENT_AUTH] Verified access for client:', clientId);
     next();
   } catch (error) {
     console.error('[SECURITY] Client verification error:', error);

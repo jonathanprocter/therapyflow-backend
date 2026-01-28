@@ -3,17 +3,21 @@ import Anthropic from '@anthropic-ai/sdk';
 import { anthropicService } from "./anthropicService";
 import { stripMarkdownCodeBlocks, safeJsonParse } from "../utils/text-utils";
 
+// Only log in development
+const IS_DEV = process.env.NODE_ENV !== 'production';
+const devLog = (...args: any[]) => IS_DEV && console.log(...args);
+
 /**
  * Safely extract content from OpenAI chat completion response
  */
 function getOpenAIContent(response: OpenAI.Chat.Completions.ChatCompletion): string | null {
   if (!response?.choices?.length) {
-    console.warn('[AI Service] OpenAI response has no choices');
+    devLog('[AI Service] OpenAI response has no choices');
     return null;
   }
   const content = response.choices[0]?.message?.content;
   if (!content) {
-    console.warn('[AI Service] OpenAI response choice has no content');
+    devLog('[AI Service] OpenAI response choice has no content');
     return null;
   }
   return content;
@@ -64,7 +68,7 @@ export class AIService {
    */
   async processTherapyDocument(text: string, prompt: string): Promise<string> {
     try {
-      console.log('Processing therapy document with AI...');
+      devLog('[AI Service] Processing therapy document...');
       
       // Try OpenAI first
       try {
@@ -87,11 +91,11 @@ export class AIService {
 
         const result = response.choices[0]?.message?.content;
         if (result) {
-          console.log('OpenAI analysis completed successfully');
+          devLog('[AI Service] OpenAI analysis completed');
           return result;
         }
       } catch (openaiError) {
-        console.warn('OpenAI failed, falling back to Anthropic:', openaiError);
+        devLog('[AI Service] OpenAI failed, trying Anthropic:', openaiError);
       }
 
       // Fallback to Anthropic
@@ -110,7 +114,7 @@ export class AIService {
 
       const content = anthropicResponse.content[0];
       if (content && 'text' in content) {
-        console.log('Anthropic analysis completed successfully');
+        devLog('[AI Service] Anthropic analysis completed');
         // Strip any markdown code blocks that Anthropic might wrap JSON in
         return stripMarkdownCodeBlocks(content.text);
       }
@@ -398,7 +402,7 @@ export class AIService {
     }
     // Ensure vectors are the same length
     if (vecA.length !== vecB.length) {
-      console.warn(`[AI] Vector length mismatch: ${vecA.length} vs ${vecB.length}`);
+      devLog(`[AI Service] Vector length mismatch: ${vecA.length} vs ${vecB.length}`);
       return 0;
     }
 

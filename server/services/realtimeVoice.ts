@@ -13,6 +13,10 @@ import WebSocket, { WebSocketServer } from 'ws';
 import { IncomingMessage, Server as HttpServer } from 'http';
 import { EventEmitter } from 'events';
 
+// Only log in development
+const IS_DEV = process.env.NODE_ENV !== 'production';
+const devLog = (...args: any[]) => IS_DEV && console.log(...args);
+
 // OpenAI Voice options for TTS
 export const OPENAI_VOICE_OPTIONS = [
   { id: 'alloy', name: 'Alloy', description: 'Neutral and balanced', premium: false, provider: 'openai' },
@@ -88,14 +92,14 @@ export class RealtimeVoiceService extends EventEmitter {
     if (config.openaiApiKey) {
       this.openai = new OpenAI({ apiKey: config.openaiApiKey });
       this.isInitialized = true;
-      console.log('[RealtimeVoice] Service initialized with OpenAI');
+      devLog('[RealtimeVoice] Service initialized with OpenAI');
     }
 
     if (config.elevenlabsApiKey) {
       this.elevenlabs = new ElevenLabsClient({ apiKey: config.elevenlabsApiKey });
       this.isInitialized = true;
       this.defaultProvider = config.defaultProvider || 'elevenlabs';
-      console.log('[RealtimeVoice] Service initialized with ElevenLabs');
+      devLog('[RealtimeVoice] Service initialized with ElevenLabs');
     }
 
     if (!this.isInitialized) {
@@ -191,7 +195,7 @@ export class RealtimeVoiceService extends EventEmitter {
       console.error('[RealtimeVoice] ElevenLabs TTS generation failed:', error);
       // Fallback to OpenAI if ElevenLabs fails
       if (this.openai) {
-        console.log('[RealtimeVoice] Falling back to OpenAI TTS');
+        devLog('[RealtimeVoice] Falling back to OpenAI TTS');
         return this.generateOpenAISpeech(text, voiceId);
       }
       return null;
@@ -292,7 +296,7 @@ export class RealtimeVoiceService extends EventEmitter {
       });
     });
 
-    console.log('[RealtimeVoice] WebSocket server initialized on /ws/voice');
+    devLog('[RealtimeVoice] WebSocket server initialized on /ws/voice');
 
     // Start periodic cleanup of stale sessions
     this.startSessionCleanup();

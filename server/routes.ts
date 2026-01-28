@@ -3549,7 +3549,8 @@ ${sourceText}
       const expiresIn = req.body.expiresIn || req.body.expires_in;
 
       if (!accessToken) {
-        console.log("store-tokens received:", JSON.stringify(req.body));
+        // SECURITY: Never log token values or request body containing tokens
+        console.warn("[Integrations] store-tokens called without access token");
         return res.status(400).json({ error: "Access token is required" });
       }
 

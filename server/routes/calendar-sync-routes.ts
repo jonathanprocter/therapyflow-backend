@@ -7,6 +7,10 @@ import { Router, Request, Response } from "express";
 import { smartCalendarSync, syncScheduler, TriggerSource } from "../services/smart-calendar-sync";
 import { storage } from "../storage";
 
+// Only log in development
+const IS_DEV = process.env.NODE_ENV !== 'production';
+const devLog = (...args: any[]) => IS_DEV && console.log(...args);
+
 const router = Router();
 
 // Middleware to get therapist ID from authenticated session only
@@ -86,7 +90,7 @@ router.get("/callback", async (req: Request, res: Response) => {
     if (state) {
       // In a full implementation, validate state against stored nonce
       // For now, just log that we received it
-      console.log("[Calendar Sync Routes] OAuth callback with state parameter (CSRF token)");
+      devLog("[Calendar Sync Routes] OAuth callback with state parameter (CSRF token)");
     }
 
     await smartCalendarSync.exchangeCodeForTokens(code as string, therapistId);
