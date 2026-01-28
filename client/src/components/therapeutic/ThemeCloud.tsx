@@ -7,13 +7,21 @@ export default function ThemeCloud({ clientId }: { clientId: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/therapeutic/tags/${clientId}?category=themes`)
+    const abortController = new AbortController();
+
+    fetch(`/api/therapeutic/tags/${clientId}?category=themes`, { signal: abortController.signal })
       .then(res => res.json())
       .then(data => {
         if (data.success) setThemes(data.tags || []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((error) => {
+        if (error.name !== 'AbortError') {
+          setLoading(false);
+        }
+      });
+
+    return () => abortController.abort();
   }, [clientId]);
 
   const getThemeSize = (index: number) => {

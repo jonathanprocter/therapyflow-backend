@@ -7,13 +7,21 @@ export default function EmotionalTrajectory({ clientId }: { clientId: string }) 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/therapeutic/tags/${clientId}?category=emotions`)
+    const abortController = new AbortController();
+
+    fetch(`/api/therapeutic/tags/${clientId}?category=emotions`, { signal: abortController.signal })
       .then(res => res.json())
       .then(data => {
         if (data.success) setEmotionData(data.tags || []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((error) => {
+        if (error.name !== 'AbortError') {
+          setLoading(false);
+        }
+      });
+
+    return () => abortController.abort();
   }, [clientId]);
 
   return (

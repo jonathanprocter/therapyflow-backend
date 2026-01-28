@@ -8,13 +8,21 @@ export default function CopingStrategies({ clientId }: { clientId: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/therapeutic/tags/${clientId}?category=coping_strategies`)
+    const abortController = new AbortController();
+
+    fetch(`/api/therapeutic/tags/${clientId}?category=coping_strategies`, { signal: abortController.signal })
       .then(res => res.json())
       .then(data => {
         if (data.success) setStrategies(data.tags || []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((error) => {
+        if (error.name !== 'AbortError') {
+          setLoading(false);
+        }
+      });
+
+    return () => abortController.abort();
   }, [clientId]);
 
   return (

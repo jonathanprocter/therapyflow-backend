@@ -8,13 +8,22 @@ export default function InsightsPanel({ clientId }: { clientId: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/therapeutic/insights/${clientId}`)
+    const abortController = new AbortController();
+
+    fetch(`/api/therapeutic/insights/${clientId}`, { signal: abortController.signal })
       .then(res => res.json())
       .then(data => {
         if (data.success) setInsights(data.insights || []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((error) => {
+        // Ignore abort errors (component unmounted)
+        if (error.name !== 'AbortError') {
+          setLoading(false);
+        }
+      });
+
+    return () => abortController.abort();
   }, [clientId]);
 
   if (loading) return <div className="text-center py-4">Loading insights...</div>;

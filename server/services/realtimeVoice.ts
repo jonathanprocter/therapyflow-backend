@@ -66,14 +66,20 @@ interface VoiceSession {
  * Real-time Voice Service
  * Handles TTS, WebSocket communication, and OpenAI Realtime API
  */
+// Session timeout constants
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // Check every 5 minutes
+
 export class RealtimeVoiceService extends EventEmitter {
   private openai: OpenAI | null = null;
   private elevenlabs: ElevenLabsClient | null = null;
   private wss: WebSocketServer | null = null;
   private sessions: Map<string, VoiceSession> = new Map();
+  private sessionLastActivity: Map<string, number> = new Map();
   private config: RealtimeConfig;
   private isInitialized = false;
   private defaultProvider: TTSProvider = 'openai';
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(config: RealtimeConfig) {
     super();
@@ -243,6 +249,7 @@ export class RealtimeVoiceService extends EventEmitter {
       };
 
       this.sessions.set(sessionId, session);
+      this.sessionLastActivity.set(sessionId, Date.now());
 
       // Send welcome message with session config
       this.sendToClient(ws, {
@@ -260,6 +267,9 @@ export class RealtimeVoiceService extends EventEmitter {
       });
 
       ws.on('message', async (data: Buffer) => {
+        // Update last activity timestamp
+        this.sessionLastActivity.set(sessionId, Date.now());
+
         try {
           await this.handleClientMessage(session, data);
         } catch (error) {
@@ -283,6 +293,42 @@ export class RealtimeVoiceService extends EventEmitter {
     });
 
     console.log('[RealtimeVoice] WebSocket server initialized on /ws/voice');
+
+    // Start periodic cleanup of stale sessions
+    this.startSessionCleanup();
+  }
+
+  /**
+   * Start periodic cleanup of stale sessions
+   */
+  private startSessionCleanup(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+
+    this.cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      const staleSessions: string[] = [];
+
+      this.sessions.forEach((session, sessionId) => {
+        const lastActivity = this.sessionLastActivity.get(sessionId) || 0;
+        if (now - lastActivity > SESSION_TIMEOUT_MS) {
+          staleSessions.push(sessionId);
+        }
+      });
+
+      for (const sessionId of staleSessions) {
+        console.log(`[RealtimeVoice] Cleaning up stale session: ${sessionId}`);
+        this.cleanupSession(sessionId);
+      }
+
+      if (staleSessions.length > 0) {
+        console.log(`[RealtimeVoice] Cleaned up ${staleSessions.length} stale sessions`);
+      }
+    }, CLEANUP_INTERVAL_MS);
+
+    // Ensure cleanup interval doesn't prevent process exit
+    this.cleanupInterval.unref();
   }
 
   /**
@@ -712,7 +758,21 @@ Guidelines:
       if (session.realtimeWs) {
         session.realtimeWs.close();
       }
+      if (session.ws.readyState === WebSocket.OPEN) {
+        session.ws.close(1000, 'Session timeout');
+      }
       this.sessions.delete(sessionId);
+    }
+    this.sessionLastActivity.delete(sessionId);
+  }
+
+  /**
+   * Stop the cleanup interval (for graceful shutdown)
+   */
+  public stopCleanup(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
     }
   }
 
