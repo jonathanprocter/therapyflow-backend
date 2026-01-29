@@ -10,7 +10,7 @@ import { semanticRouter } from "./routes/semantic.js";
 import { knowledgeGraphRoutes } from "./routes/knowledge-graph-routes-fixed.js";
 import { storage } from "./storage.js";
 import { db } from "./db.js";
-import { sql, eq, like, and, gte, lte } from "drizzle-orm";
+import { sql, eq, like } from "drizzle-orm";
 import { sessions, clients, sessionPreps, progressNotes, documents } from "@shared/schema";
 
 // Import middleware
