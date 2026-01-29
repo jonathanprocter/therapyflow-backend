@@ -118,6 +118,7 @@ app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
     version: process.env.APP_VERSION || "dev",
+    build: "2026-01-29-v3",
     time: new Date().toISOString(),
     services: {
       pdf: getPdfServiceStatus(),
