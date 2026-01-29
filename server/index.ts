@@ -10,8 +10,8 @@ import { semanticRouter } from "./routes/semantic.js";
 import { knowledgeGraphRoutes } from "./routes/knowledge-graph-routes-fixed.js";
 import { storage } from "./storage.js";
 import { db } from "./db.js";
-import { sql, eq, like } from "drizzle-orm";
-import { sessions, clients, sessionPreps, progressNotes } from "@shared/schema";
+import { sql, eq, like, and, gte, lte } from "drizzle-orm";
+import { sessions, clients, sessionPreps, progressNotes, documents } from "@shared/schema";
 
 // Import middleware
 import { standardRateLimit, aiProcessingRateLimit } from './middleware/rateLimit';
@@ -250,7 +250,6 @@ app.post('/api/public/process-documents', async (req: any, res) => {
 
   try {
     const { limit = 5 } = req.body || {};
-    const { documents } = await import('@shared/schema');
     const { desc: descOrder } = await import('drizzle-orm');
     const { aiService: ai } = await import('./services/aiService');
 
@@ -319,6 +318,144 @@ Return JSON only:
     });
   } catch (error) {
     console.error("Error in public process-documents:", error);
+    res.status(500).json({ error: "Failed", details: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+// Public endpoint to link AI-processed documents to matching clients and sessions
+app.post('/api/public/link-documents', async (req: any, res) => {
+  const adminKey = req.headers['x-admin-key'] || req.query.key;
+  const expectedKey = process.env.ADMIN_SECRET_KEY || 'therapyflow-admin-2024';
+  if (adminKey !== expectedKey) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    // Get all AI-processed documents
+    const allDocs = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.therapistId, 'therapist-1'));
+
+    const aiProcessedDocs = allDocs.filter((doc: any) => {
+      const meta = doc.metadata as any;
+      return meta && meta.aiProcessed === true;
+    });
+
+    console.log(`[LinkDocs] Found ${aiProcessedDocs.length} AI-processed documents to link`);
+
+    // Get all clients for name matching
+    const allClients = await db
+      .select({ id: clients.id, name: clients.name, status: clients.status })
+      .from(clients)
+      .where(eq(clients.therapistId, 'therapist-1'));
+
+    // Get all sessions for date matching
+    const allSessions = await db
+      .select({ id: sessions.id, clientId: sessions.clientId, scheduledAt: sessions.scheduledAt, status: sessions.status })
+      .from(sessions)
+      .where(eq(sessions.therapistId, 'therapist-1'));
+
+    const results: any[] = [];
+
+    for (const doc of aiProcessedDocs) {
+      const meta = doc.metadata as any;
+      const detectedName = (meta.detectedClientName || '').trim().toLowerCase();
+      const detectedDate = meta.detectedSessionDate || '';
+      const currentClientId = doc.clientId;
+
+      let matchedClient: any = null;
+      let matchedSession: any = null;
+      let clientMismatch = false;
+
+      // Find best client match by name
+      if (detectedName && detectedName.length > 1) {
+        // Exact match first
+        matchedClient = allClients.find((c: any) =>
+          c.name.toLowerCase() === detectedName
+        );
+        // Partial match (first name or last name)
+        if (!matchedClient) {
+          matchedClient = allClients.find((c: any) => {
+            const cName = c.name.toLowerCase();
+            const parts = detectedName.split(' ');
+            return parts.some((p: string) => p.length > 2 && cName.includes(p)) ||
+                   cName.split(' ').some((p: string) => p.length > 2 && detectedName.includes(p));
+          });
+        }
+
+        if (matchedClient && matchedClient.id !== currentClientId) {
+          clientMismatch = true;
+        }
+      }
+
+      // Find matching session by date
+      if (detectedDate) {
+        const targetDate = new Date(detectedDate);
+        if (!isNaN(targetDate.getTime())) {
+          // Find session within ±24 hours for the assigned client
+          const clientIdToMatch = matchedClient?.id || currentClientId;
+          const clientSessions = allSessions.filter((s: any) => s.clientId === clientIdToMatch);
+
+          matchedSession = clientSessions.find((s: any) => {
+            const sessionDate = new Date(s.scheduledAt);
+            const diffMs = Math.abs(sessionDate.getTime() - targetDate.getTime());
+            return diffMs < 24 * 60 * 60 * 1000; // within 24 hours
+          });
+        }
+      }
+
+      // Update document metadata with linking results
+      const updatedMeta = {
+        ...meta,
+        linkedAt: new Date().toISOString(),
+        matchedClientId: matchedClient?.id || null,
+        matchedClientName: matchedClient?.name || null,
+        clientMismatch,
+        matchedSessionId: matchedSession?.id || null,
+        matchedSessionDate: matchedSession?.scheduledAt?.toISOString() || null,
+        linkingStatus: matchedSession ? 'linked' : (matchedClient ? 'client_matched' : 'unmatched'),
+      };
+
+      // If we found a matching session, store it in metadata.sessionId
+      if (matchedSession) {
+        updatedMeta.sessionId = matchedSession.id;
+        updatedMeta.sessionDate = matchedSession.scheduledAt.toISOString().split('T')[0];
+      }
+
+      await db.update(documents).set({
+        metadata: updatedMeta,
+        // Update clientId if mismatch detected and matched client is active
+        ...(clientMismatch && matchedClient.status === 'active'
+          ? { clientId: matchedClient.id }
+          : {}),
+      } as any).where(eq(documents.id, doc.id));
+
+      results.push({
+        fileName: doc.fileName,
+        currentClient: allClients.find((c: any) => c.id === currentClientId)?.name || currentClientId,
+        detectedClient: meta.detectedClientName || 'none',
+        matchedClient: matchedClient?.name || 'none',
+        clientMismatch,
+        clientUpdated: clientMismatch && matchedClient?.status === 'active',
+        sessionLinked: !!matchedSession,
+        matchedSessionDate: matchedSession?.scheduledAt?.toISOString()?.split('T')[0] || 'none',
+        linkingStatus: updatedMeta.linkingStatus,
+      });
+    }
+
+    const linked = results.filter(r => r.sessionLinked).length;
+    const clientMatched = results.filter(r => r.matchedClient !== 'none').length;
+    const mismatches = results.filter(r => r.clientMismatch).length;
+
+    res.json({
+      success: true,
+      total: results.length,
+      summary: { linked, clientMatched, mismatches, unmatched: results.length - clientMatched },
+      results,
+    });
+  } catch (error) {
+    console.error("Error in link-documents:", error);
     res.status(500).json({ error: "Failed", details: error instanceof Error ? error.message : String(error) });
   }
 });
