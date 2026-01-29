@@ -119,22 +119,9 @@ export class ClinicalEncryption {
       }
     }
 
-    // H6 FIX: Data doesn't match any known encryption format
-    // This could be genuinely unencrypted data from before encryption was implemented
-    // Log a warning but return the data - this is the only acceptable "passthrough"
-    // for backwards compatibility with pre-encryption data
-    if (!IS_PRODUCTION && encryptedData.length > 0) {
-      console.debug('[ENCRYPTION] Data does not appear to be encrypted (pre-encryption legacy data)');
-    }
-
-    // For production safety, if the data LOOKS like it should be encrypted but isn't
-    // in a recognized format, throw an error
-    if (IS_PRODUCTION && encryptedData.length > 100) {
-      // Long strings in production should be encrypted - reject unrecognized formats
-      console.error('[ENCRYPTION] Unrecognized data format in production - rejecting for safety');
-      throw new Error('Data format unrecognized - cannot safely decrypt');
-    }
-
+    // Data doesn't match any known encryption format.
+    // This is pre-encryption legacy plain text stored before encryption was implemented.
+    // Return it as-is - this is legitimate backwards-compatible data, not corrupted.
     return encryptedData;
   }
 

@@ -45,22 +45,26 @@ import { buildRetentionReport, applyRetention } from "./services/retentionServic
 import { reconcileCalendar } from "./services/calendarReconciliation";
 
 // Helper function to safely decrypt content (handles non-encrypted legacy data)
-// H6 FIX: Returns null on decryption failure instead of original content
+// Precisely detects encrypted format: {32-hex}:{32-hex}:{hex} (iv:authTag:data)
+const ENCRYPTED_FORMAT_REGEX = /^[0-9a-fA-F]{32}:[0-9a-fA-F]{32}:[0-9a-fA-F]+$/;
+
 function safeDecrypt(content: string): string | null {
   if (!content) return null;
 
   try {
-    // Check if content looks encrypted (new format with colons or legacy hex)
-    if ((content.includes(':') && content.length > 50) ||
-        (/^[0-9a-fA-F]+$/.test(content) && content.length > 32)) {
+    // Check for new AES-256-GCM format: exactly iv(32hex):authTag(32hex):data(hex)
+    if (ENCRYPTED_FORMAT_REGEX.test(content)) {
       return ClinicalEncryption.decrypt(content);
     }
-    // Return as-is if not encrypted (legacy data)
+    // Check for legacy hex-only encrypted format
+    if (/^[0-9a-fA-F]+$/.test(content) && content.length > 32) {
+      return ClinicalEncryption.decrypt(content);
+    }
+    // Not encrypted - return plain text as-is (pre-encryption legacy data)
     return content;
   } catch (error: any) {
-    // H6 FIX: Return null on failure instead of original content to prevent data corruption exposure
     console.error('[DECRYPTION] Failed to decrypt content:', error.message);
-    return null; // Return null instead of potentially corrupted/tampered data
+    return null;
   }
 }
 
