@@ -240,6 +240,89 @@ app.post('/api/public/cleanup-sessions', async (req: any, res) => {
   }
 });
 
+// Public endpoint to process documents using already-extracted text
+app.post('/api/public/process-documents', async (req: any, res) => {
+  const adminKey = req.headers['x-admin-key'] || req.query.key;
+  const expectedKey = process.env.ADMIN_SECRET_KEY || 'therapyflow-admin-2024';
+  if (adminKey !== expectedKey) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const { limit = 5 } = req.body || {};
+    const { documents } = await import('@shared/schema');
+    const { desc: descOrder } = await import('drizzle-orm');
+    const { aiService: ai } = await import('./services/aiService');
+
+    // Get documents with extracted text
+    const allDocs = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.therapistId, 'therapist-1'))
+      .orderBy(descOrder(documents.uploadedAt));
+
+    const docsToProcess = allDocs
+      .filter((doc: any) => doc.extractedText && doc.extractedText.length > 100)
+      .slice(0, limit);
+
+    console.log(`[PublicProcess] Found ${docsToProcess.length} docs with extractedText to process`);
+
+    const results: any[] = [];
+
+    for (const doc of docsToProcess) {
+      try {
+        const text = (doc as any).extractedText.substring(0, 8000);
+        const prompt = `Analyze this therapy document and extract information.
+Document: ${doc.fileName}
+
+Content:
+${text}
+
+Return JSON only:
+{
+  "clientName": "client first name if found",
+  "sessionDate": "YYYY-MM-DD if found",
+  "clinicalThemes": ["theme1", "theme2"],
+  "summary": "2-3 sentence summary"
+}`;
+
+        const aiResponse = await ai.processTherapyDocument(text, prompt);
+        let extracted: any = {};
+        try { extracted = JSON.parse(aiResponse); } catch { extracted = { summary: aiResponse.substring(0, 200) }; }
+
+        // Update document metadata
+        await db.update(documents).set({
+          processingStatus: 'completed',
+          status: 'processed',
+          metadata: {
+            ...((doc.metadata as any) || {}),
+            aiProcessed: true,
+            processedAt: new Date().toISOString(),
+            extractedThemes: extracted.clinicalThemes || [],
+            summary: extracted.summary || '',
+            detectedClientName: extracted.clientName || '',
+            detectedSessionDate: extracted.sessionDate || '',
+          }
+        } as any).where(eq(documents.id, doc.id));
+
+        results.push({ fileName: doc.fileName, success: true, extracted });
+      } catch (docError: any) {
+        results.push({ fileName: doc.fileName, success: false, error: docError.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      totalWithText: allDocs.filter((d: any) => d.extractedText && d.extractedText.length > 100).length,
+      processed: results.length,
+      results
+    });
+  } catch (error) {
+    console.error("Error in public process-documents:", error);
+    res.status(500).json({ error: "Failed", details: error instanceof Error ? error.message : String(error) });
+  }
+});
+
 // Authentication: In production, enforce proper JWT auth; in development, use hardcoded therapist
 if (process.env.NODE_ENV === 'production' && process.env.ENABLE_AUTH !== 'false') {
   // Production: Apply JWT authentication middleware to protected routes
