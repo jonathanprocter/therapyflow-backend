@@ -2071,18 +2071,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
             buffer = Buffer.from((doc.metadata as any).buffer as number[]);
           }
 
-          if (!buffer) {
-            results.errors.push(`${doc.fileName}: No file data available`);
+          // Use extractedText if buffer not available
+          let textContent: string | null = null;
+          if (!buffer && doc.extractedText) {
+            textContent = doc.extractedText;
+            console.log(`[BatchAI] Using existing extractedText for: ${doc.fileName}`);
+          }
+
+          if (!buffer && !textContent) {
+            results.errors.push(`${doc.fileName}: No file data or extracted text available`);
             continue;
           }
 
-          // Process with AI
-          const processingResult = await enhancedDocumentProcessor.processDocument(
-            buffer,
-            doc.fileName || "document",
-            therapistId,
-            doc.id
-          );
+          // Process with AI - use text directly if available, otherwise process buffer
+          let processingResult: any;
+          if (textContent) {
+            // Directly analyze the extracted text with AI
+            const analysisPrompt = `Analyze this therapy session document and extract key information.
+Document filename: ${doc.fileName}
+
+Document content:
+${textContent.substring(0, 8000)}
+
+Please extract and return a JSON object with:
+{
+  "clientName": "extracted client name if mentioned",
+  "sessionDate": "YYYY-MM-DD format if date mentioned",
+  "clinicalThemes": ["array of key therapeutic themes"],
+  "emotions": ["array of emotional themes"],
+  "interventions": ["array of therapeutic interventions mentioned"],
+  "summary": "brief 2-3 sentence summary"
+}
+
+Return ONLY valid JSON, no markdown.`;
+
+            try {
+              const aiResponse = await aiService.processTherapyDocument(textContent.substring(0, 8000), analysisPrompt);
+              const extractedData = JSON.parse(aiResponse);
+              processingResult = {
+                success: true,
+                extractedData: extractedData
+              };
+            } catch (parseError) {
+              console.warn(`[BatchAI] Failed to parse AI response for ${doc.fileName}`);
+              processingResult = { success: false };
+            }
+          } else {
+            processingResult = await enhancedDocumentProcessor.processDocument(
+              buffer!,
+              doc.fileName || "document",
+              therapistId,
+              doc.id
+            );
+          }
 
           if (!processingResult.success) {
             results.errors.push(`${doc.fileName}: AI processing failed`);
