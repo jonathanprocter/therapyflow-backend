@@ -10,7 +10,8 @@ import { semanticRouter } from "./routes/semantic.js";
 import { knowledgeGraphRoutes } from "./routes/knowledge-graph-routes-fixed.js";
 import { storage } from "./storage.js";
 import { db } from "./db.js";
-import { sql, eq } from "drizzle-orm";
+import { sql, eq, like } from "drizzle-orm";
+import { sessions, clients, sessionPreps, progressNotes } from "@shared/schema";
 
 // Import middleware
 import { standardRateLimit, aiProcessingRateLimit } from './middleware/rateLimit';
@@ -185,10 +186,6 @@ app.post('/api/public/cleanup-sessions', async (req: any, res) => {
 
   try {
     console.log('[Admin] Running public cleanup endpoint');
-
-    // Import needed items
-    const { sessions, clients, sessionPreps, progressNotes } = await import('@shared/schema');
-    const { like } = await import('drizzle-orm');
 
     // Find all sessions with "Client deactivated" notes
     const deactivatedSessions = await db
