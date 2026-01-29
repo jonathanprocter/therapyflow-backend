@@ -187,7 +187,7 @@ app.post('/api/public/cleanup-sessions', async (req: any, res) => {
     console.log('[Admin] Running public cleanup endpoint');
 
     // Import needed items
-    const { sessions, clients } = await import('@shared/schema');
+    const { sessions, clients, sessionPreps, progressNotes } = await import('@shared/schema');
     const { like } = await import('drizzle-orm');
 
     // Find all sessions with "Client deactivated" notes
@@ -214,6 +214,12 @@ app.post('/api/public/cleanup-sessions', async (req: any, res) => {
 
       if (client.length === 0 || client[0].status === 'deleted') {
         console.log(`Deleting session ${session.sessionId} (client: ${session.clientId.substring(0, 8)}...)`);
+
+        // Delete related records first (foreign key constraints)
+        await db.delete(sessionPreps).where(eq(sessionPreps.sessionId, session.sessionId));
+        await db.delete(progressNotes).where(eq(progressNotes.sessionId, session.sessionId));
+
+        // Now delete the session
         await db.delete(sessions).where(eq(sessions.id, session.sessionId));
         if (client.length === 0) orphanedCount++;
         deletedCount++;
