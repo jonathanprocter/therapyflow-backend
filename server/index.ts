@@ -173,6 +173,70 @@ app.get("/api/health/routes", (req, res) => {
   });
 });
 
+// Public admin endpoints (before auth middleware)
+// These use a simple secret key check instead of JWT
+app.post('/api/public/cleanup-sessions', async (req: any, res) => {
+  const adminKey = req.headers['x-admin-key'] || req.query.key;
+  const expectedKey = process.env.ADMIN_SECRET_KEY || 'therapyflow-admin-2024';
+
+  if (adminKey !== expectedKey) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    console.log('[Admin] Running public cleanup endpoint');
+
+    // Import needed items
+    const { sessions, clients } = await import('@shared/schema');
+    const { like } = await import('drizzle-orm');
+
+    // Find all sessions with "Client deactivated" notes
+    const deactivatedSessions = await db
+      .select({
+        sessionId: sessions.id,
+        clientId: sessions.clientId,
+        scheduledAt: sessions.scheduledAt,
+        status: sessions.status,
+        notes: sessions.notes,
+      })
+      .from(sessions)
+      .where(like(sessions.notes, '%Client deactivated%'));
+
+    let deletedCount = 0;
+    let orphanedCount = 0;
+
+    for (const session of deactivatedSessions) {
+      const client = await db
+        .select({ id: clients.id, name: clients.name, status: clients.status })
+        .from(clients)
+        .where(eq(clients.id, session.clientId))
+        .limit(1);
+
+      if (client.length === 0 || client[0].status === 'deleted') {
+        console.log(`Deleting session ${session.sessionId} (client: ${session.clientId.substring(0, 8)}...)`);
+        await db.delete(sessions).where(eq(sessions.id, session.sessionId));
+        if (client.length === 0) orphanedCount++;
+        deletedCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      summary: {
+        totalFound: deactivatedSessions.length,
+        deleted: deletedCount,
+        orphaned: orphanedCount,
+      },
+      message: deletedCount > 0
+        ? `Cleaned up ${deletedCount} deactivated session(s)`
+        : "No orphaned sessions found to clean up"
+    });
+  } catch (error) {
+    console.error("Error in public cleanup:", error);
+    res.status(500).json({ error: "Failed to cleanup", details: error instanceof Error ? error.message : String(error) });
+  }
+});
+
 // Authentication: In production, enforce proper JWT auth; in development, use hardcoded therapist
 if (process.env.NODE_ENV === 'production' && process.env.ENABLE_AUTH !== 'false') {
   // Production: Apply JWT authentication middleware to protected routes
